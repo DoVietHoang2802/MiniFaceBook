@@ -3,15 +3,22 @@
 ## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE
 *Mục tiêu: Thiết lập bộ khung kỹ thuật chuẩn để mở rộng dự án không bị rối.*
 
-- [ ] **Sprint 0.1: Project Setup**
-    - [ ] Khởi tạo NestJS với kiến trúc Modular[cite: 1].
-    - [ ] Cấu hình ESLint, Prettier, Husky & Lint-staged để chuẩn hóa code style[cite: 1, 2].
-    - [ ] Viết file `docker-compose.yml` cho MongoDB & Redis[cite: 1, 2].
+- [x] **Sprint 0.1: Project Setup**
+    - [x] Khởi tạo NestJS với kiến trúc Modular[cite: 1].
+    - [x] Cấu hình ESLint, Prettier, Husky & Lint-staged để chuẩn hóa code style[cite: 1, 2].
+    - [x] Viết file `docker-compose.yml` cho MongoDB & Redis[cite: 1, 2].
 - [ ] **Sprint 0.2: Common Utilities**
-    - [ ] Cấu hình `ValidationPipe` toàn cục (Class-validator & Class-transformer)[cite: 1].
-    - [ ] Triển khai `Global Exception Filter` xử lý lỗi đồng nhất toàn hệ thống[cite: 1].
-    - [ ] Setup Winston Logging để theo dõi log và debug[cite: 1].
-    - [ ] Cấu hình NestJS Throttler chống Spam và DDoS API[cite: 2].
+    - [x] Cấu hình `ValidationPipe` toàn cục (Class-validator & Class-transformer)[cite: 1].
+        - *💡 Tối ưu thêm:* Đã cấu hình `enableImplicitConversion: true` giúp tự động ép kiểu dữ liệu từ DTO mà không cần dùng `@Type()`.
+        - *💡 Tối ưu thêm:* Đã dùng `exceptionFactory` gộp chung lỗi Validate vào `BadRequestException`.
+    - [x] Triển khai `Global Exception Filter` xử lý lỗi đồng nhất toàn hệ thống[cite: 1].
+        - *💡 Tối ưu bảo mật:* Ẩn chi tiết lỗi nhạy cảm của server khi gặp lỗi 500. Format gọn gàng mảng lỗi của ValidationPipe vào trường `details`.
+    - [x] Bật `CORS` trong main.ts[cite: 1].
+        - *⚠️ Lưu ý sau này:* Hiện đang dùng `origin: '*'` và `credentials: true`. Khi lên Phase 1 ghép Frontend, cần sửa `origin` thành domain cụ thể (vd: `http://localhost:5173`) để trình duyệt không chặn token.
+    - [x] Setup Winston Logging để theo dõi log và debug[cite: 1].
+        - *💡 Tối ưu kiến trúc:* Chuyển `GlobalExceptionFilter` vào `app.module.ts` (Dependency Injection) để Filter tự động gọi Winston ghi lại lỗi ra file `logs/error.log`. NestJS giờ đã dùng Winston làm Logger mặc định.
+    - [x] Cấu hình NestJS Throttler chống Spam và DDoS API[cite: 2].
+        - *💡 Tối ưu bảo mật:* Đã cấu hình giới hạn 100 requests / 60 giây cho mỗi IP. Khai báo `ThrottlerGuard` toàn cục bằng Dependency Injection.
 
 ---
 
