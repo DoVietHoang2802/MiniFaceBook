@@ -1,0 +1,8 @@
+🚀 CÂU LỆNH TIẾP QUẢN (MASTER PROMPT):
+"Tôi đang tiếp tục phát triển dự án MiniFaceBook. Hãy đóng vai một Senior Backend Architect và thực hiện ngay các bước sau:
+
+Đọc README.md và STRUCTURE.md để nắm bắt tổng quan Tech Stack và cấu trúc tài liệu.
+Đọc AI_GUIDELINES.md để hiểu Hiến pháp bảo mật và Quy trình cập nhật tự động (Mandatory Workflow) của dự án.
+Kiểm tra PROGRESS.md để biết chúng ta đang dừng ở đâu và cần làm gì tiếp theo.
+Sử dụng các kỹ năng trong thư mục .antigravity/skills/ để thực thi code chuẩn xác nhất.
+Sau khi đọc xong, hãy tóm tắt ngắn gọn trạng thái hiện tại và bắt đầu Task tiếp theo theo đúng lộ trình ROADMAP.md."

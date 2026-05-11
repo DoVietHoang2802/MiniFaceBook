@@ -1,19 +1,48 @@
-# AI Assistant Guidelines
+# 📘 Sổ tay lập trình & Quy chuẩn AI (Coding Guidelines)
+*Tài liệu này là "Kim chỉ nam" duy nhất cho việc viết code trong dự án MiniFaceBook. Mọi AI và Developer phải tuân thủ tuyệt đối.*
 
-*Tài liệu này dùng để cung cấp Context cho AI khi hỗ trợ code.*
+---
 
-## 🛠 Coding Standards
-1. **Language:** Luôn sử dụng TypeScript.
-2. **Framework:** NestJS Modular Architecture.
-3. **Database:** Sử dụng `@nestjs/mongoose` và Mongoose Schema.
-4. **Validation:** Sử dụng DTO + `class-validator` + `ValidationPipe` toàn cục.
-5. **Logic:** Business logic phải nằm ở Service, Controller chỉ điều phối.
+## 🛠️ 1. Tech Stack & Công cụ sử dụng
+*Để bạn không cần phải quay lại README để tra cứu:*
 
-## 🔐 Security Rules
-- Luôn sử dụng `Passport JWT` cho xác thực.
-- Sử dụng `@GetUser()` custom decorator để lấy user từ request.
-- Validate đầu vào Frontend bằng **Zod** đồng bộ với Backend DTO.
+- **Backend:** NestJS (TypeScript) + Modular Architecture.
+- **Realtime:** Socket.IO + **Redis Adapter** (Bắt buộc để scale).
+- **Database:** MongoDB (Mongoose) + Redis (Caching).
+- **Search & Event:** **ElasticSearch** (Search) & **Kafka** (Messaging Broker).
+- **Security:** Passport JWT + **Refresh Token Rotation** + HttpOnly Cookies.
+- **Frontend:** React + shadcn/ui + Tailwind + **Zod** + **TanStack Query**.
+- **Testing:** **Jest** (Unit Test) & **Playwright** (E2E Test).
 
-## 🚀 Workflow nhắc nhở
-- Khi viết Gateway cho Socket.IO, phải sử dụng `WBSocket Guard` để verify token.
-- Luôn xử lý lỗi qua `Global Exception Filter`.
+---
+
+## 🛡️ 2. Quy tắc Bảo mật & Dữ liệu (Bắt buộc)
+- **Tuyệt mật:** Không bao giờ trả về mật khẩu người dùng trong API. Luôn dùng `.select('-password')` trong Mongoose.
+- **Xác thực:** Access Token ngắn hạn, Refresh Token dài hạn lưu trong HttpOnly Cookie.
+- **Validation:** Mọi dữ liệu đầu vào (Request Body/Query) PHẢI qua **DTO** với class-validator.
+- **Zod:** Sử dụng Zod để định nghĩa schema chung cho cả Backend và Frontend để đảm bảo Type-Safety tuyệt đối.
+
+---
+
+## 🏗️ 3. Quy chuẩn viết code (Senior Standard)
+- **Modular:** Mỗi tính năng (Auth, Users, Chats) phải là một Module riêng biệt.
+- **Swagger:** Mọi Endpoint phải có `@ApiTags()`, `@ApiOperation()` và mô tả dữ liệu rõ ràng.
+- **Realtime:** Mọi logic Chat phải dùng **Room-based**, không gửi tin nhắn trực tiếp qua Socket ID cá nhân.
+- **Error Handling:** Luôn dùng `GlobalExceptionFilter` và ghi log lỗi qua **Winston**.
+- **Frontend:** Ưu tiên dùng **TanStack Query** để gọi API, cấm dùng `useEffect` tràn lan để fetch dữ liệu.
+
+---
+
+## 🔄 4. Quy trình cập nhật tự động (Mandatory Workflow)
+*Sau khi xong mỗi Task, AI phải tự thực hiện:*
+1. Cập nhật **PROGRESS.md**: Ghi rõ "Đã làm gì? Tại sao?".
+2. Cập nhật **ROADMAP.md**: Đánh dấu [x] hoàn thành.
+3. Kiểm tra tính đồng bộ giữa các file tài liệu.
+4. **Cập nhật Internal Skills:** Nếu trong task có kiến thức mới hoặc quy chuẩn mới cần lưu lại cho module tương ứng.
+5. Báo cáo danh sách file đã cập nhật cho người dùng.
+
+---
+
+## 💡 Triết lý thực thi
+> **"Thà làm ít mà chất lượng điểm 10, còn hơn làm nhiều mà lỗi điểm 5."** 
+> Luôn ưu tiên bảo mật và sự ổn định của hệ thống lên hàng đầu.
