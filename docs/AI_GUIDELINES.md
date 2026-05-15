@@ -8,7 +8,7 @@
 
 - **Backend:** NestJS (TypeScript) + Modular Architecture.
 - **Realtime:** Socket.IO + **Redis Adapter** (Bắt buộc để scale).
-- **Database:** MongoDB (Mongoose) + Redis (Caching).
+- **Database:** MongoDB (Mongoose) + Redis (Caching) + **Neo4j (Social Graph)**.
 - **Search & Event:** **ElasticSearch** (Search) & **Kafka** (Messaging Broker).
 - **Security:** Passport JWT + **Refresh Token Rotation** + HttpOnly Cookies.
 - **Frontend:** React + shadcn/ui + Tailwind + **Zod** + **TanStack Query**.

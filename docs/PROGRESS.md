@@ -60,6 +60,9 @@
 #### 2. Resend (Email Service)
 - **Lý do:** Dịch vụ gửi Email thế hệ mới với độ tin cậy cao và cấu hình siêu đơn giản.
 - **Lợi ích:** Giải quyết bài toán gửi Email xác thực (OTP), thông báo tin nhắn mới một cách chuyên nghiệp, thay thế cho các phương pháp cũ rườm rà.
+#### 3. Neo4j (Social Graph Database)
+- **Lý do:** Khi mạng xã hội phát triển, việc tìm "bạn của bạn" hoặc "gợi ý kết bạn" trên SQL/NoSQL truyền thống sẽ cực kỳ chậm do phải JOIN nhiều bảng.
+- **Lợi ích:** Neo4j xử lý các mối quan hệ đồ thị với tốc độ milisecond, giúp tính năng gợi ý kết bạn mượt mà ngay cả khi có hàng triệu kết nối.
 
 #### 6. Tài liệu hóa API với `Swagger (OpenAPI 3.0)`
 - **Đã làm:** Tích hợp `@nestjs/swagger` và cấu hình tại `main.ts`.

@@ -14,7 +14,7 @@ Dự án xây dựng hệ thống Backend cho mạng xã hội thu nhỏ, tập 
 ## 🛠 Tech Stack (Production Ready)
 - **Backend:** NestJS (TypeScript) - Modular Architecture.
 - **Realtime:** Socket.IO + Redis Adapter.
-- **Database:** MongoDB (Atlas) + Redis (Caching & Sessions).
+- **Database:** MongoDB (Atlas) + Redis (Caching & Sessions) + **Neo4j (Graph Database cho Social Connections)**.
 - **Search & Broker:** **ElasticSearch** (Search), **Kafka/RabbitMQ** (Event-Driven).
 - **Security:** Passport JWT + Refresh Token Rotation + HttpOnly Cookies.
 - **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI).

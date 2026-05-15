@@ -6,6 +6,15 @@
 - **Chats:** `members` (array of ID), `lastMessage` (Denormalized object), `updatedAt`.
 - **Friends:** `requesterId`, `recipientId`, `status`, `unique_pair` (Compound Index).
 
+#### 🕸️ Graph Database (Neo4j)
+- **Nodes:**
+  - `User`: `{ userId: UUID }`
+- **Relationships:**
+  - `FRIEND`: `(u1:User)-[:FRIEND]->(u2:User)`
+  - `FOLLOW`: `(u1:User)-[:FOLLOW]->(u2:User)`
+  - `BLOCK`: `(u1:User)-[:BLOCK]->(u2:User)`
+
+
 ## ⚙️ Backend Architecture
 - **Modular Pattern:** Tách biệt `AuthModule`, `UsersModule`, `ChatsModule`.
 - **Realtime Flow:** Frontend -> Socket Gateway -> Service -> DB -> Broadcast.
@@ -22,6 +31,8 @@
 - **Stateless Gateway:** Sử dụng Redis Adapter cho Socket.IO ngay từ đầu để đảm bảo hệ thống có thể Scale-out (chạy trên nhiều server) mà vẫn đồng bộ realtime mượt mà.
 - **Event-Driven Architecture (Future):** Sẵn sàng tích hợp Kafka/RabbitMQ để tách rời các xử lý nặng (Gửi mail, thông báo, xử lý ảnh) ra khỏi luồng chính của API.
 - **High-performance Search (Future):** Thay thế Regex MongoDB bằng ElasticSearch để đảm bảo tốc độ tìm kiếm tin nhắn trong hàng tỷ record.
+- **Polyglot Persistence:** Tích hợp Neo4j để quản lý Social Graph, thay thế các phép JOIN/Lookup chéo phức tạp của MongoDB để tối ưu hiệu năng đồ thị.
+
 
 ## 📂 Project Structure
 - `/src/modules`: Logic nghiệp vụ chính.

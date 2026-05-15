@@ -66,6 +66,9 @@
 - [ ] **Sprint 3.1: Friend Request**
     - [ ] Thiết kế Friend Schema (Trạng thái: Pending, Accepted, Rejected)[cite: 1].
     - [ ] API Gửi/Hủy lời mời kết bạn (Handle logic tránh duplicate request)[cite: 1].
+    - [ ] Khởi tạo Neo4j Connection và đồng bộ dữ liệu Node (User ID) từ MongoDB sang Neo4j.
+    - [ ] Tích hợp Cypher Query để tính toán số lượng bạn chung và thuật toán gợi ý kết bạn.
+
 - [ ] **Sprint 3.2: Social Interactions**
     - [ ] API lấy danh sách bạn bè và danh sách lời mời đang chờ[cite: 1].
     - [ ] API Chấp nhận hoặc Từ chối lời mời kết bạn[cite: 1].
