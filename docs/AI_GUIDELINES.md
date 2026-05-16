@@ -6,33 +6,35 @@
 ## 🛠️ 1. Tech Stack & Công cụ sử dụng
 *Để bạn không cần phải quay lại README để tra cứu:*
 
-- **Backend:** NestJS (TypeScript) + Modular Architecture.
-- **Realtime:** Socket.IO + **Redis Adapter** (Bắt buộc để scale).
-- **Database:** MongoDB (Mongoose) + Redis (Caching) + **Neo4j (Social Graph)**.
+- **Backend:** Java 21 + Spring Boot 3.x + Modular Clean Architecture.
+- **Realtime:** Spring WebFlux / WebSocket + **Redis Adapter**.
+- **Database:** MongoDB (Spring Data) + Redis (Caching) + **Neo4j (Social Graph)**.
 - **Search & Event:** **ElasticSearch** (Search) & **Kafka** (Messaging Broker).
-- **Security:** Passport JWT + **Refresh Token Rotation** + HttpOnly Cookies.
-- **Frontend:** React + shadcn/ui + Tailwind + **Zod** + **TanStack Query**.
-- **Testing:** **Jest** (Unit Test), **Supertest** (Integration Test - gọi thẳng vào DB thật) & **Playwright** (E2E Test).
+- **Security:** Spring Security + **JWT + Refresh Token Rotation**.
+- **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
+- **Frontend:** React + TypeScript + shadcn/ui + Tailwind + **Zod**.
+- **Testing:** **JUnit 5**, **Mockito**, **Supertest** & **Testcontainers**.
 
 ---
 
 ## 🛡️ 2. Quy tắc Bảo mật & Dữ liệu (Bắt buộc)
 - **Tuyệt mật:** Không bao giờ trả về mật khẩu người dùng trong API. Luôn dùng `.select('-password')` trong Mongoose.
-- **Xác thực:** Access Token ngắn hạn, Refresh Token dài hạn lưu trong HttpOnly Cookie.
-- **Validation:** Mọi dữ liệu đầu vào (Request Body/Query) PHẢI qua **DTO** với class-validator.
-- **Zod:** Sử dụng Zod để định nghĩa schema chung cho cả Backend và Frontend để đảm bảo Type-Safety tuyệt đối.
-- **Environment:** Bắt buộc sử dụng **Joi** trong `ConfigModule` để validate toàn bộ file `.env` khi khởi động. Nếu thiếu biến quan trọng (như `JWT_SECRET`, `NEO4J_URI`), server phải văng lỗi và dừng chạy ngay lập tức, tuyệt đối không chạy tiếp.
+- **Xác thực:** Access Token ngắn hạn, Refresh Token dài hạn lưu trong HttpOnly Cookie qua Spring Security Filters.
+- **Validation:** Mọi dữ liệu đầu vào (Request Body/Query) PHẢI qua **DTO** với **Jakarta Bean Validation** (@Valid, @NotNull, @Email...).
+- **Environment:** Bắt buộc sử dụng `@ConfigurationProperties` và **Bean Validation** để validate file `.env` hoặc `application.yml` khi khởi động. Nếu thiếu biến quan trọng, server phải dừng ngay lập tức.
 
 
 ---
 
 ## 🏗️ 3. Quy chuẩn viết code (Senior Standard)
-- **Modular:** Mỗi tính năng (Auth, Users, Chats) phải là một Module riêng biệt.
-- **Swagger:** Mọi Endpoint phải có `@ApiTags()`, `@ApiOperation()` và mô tả dữ liệu rõ ràng.
-- **Realtime:** Mọi logic Chat phải dùng **Room-based**, không gửi tin nhắn trực tiếp qua Socket ID cá nhân.
-- **Error Handling:** Luôn dùng `GlobalExceptionFilter` và ghi log lỗi qua **Winston**.
-- **Frontend:** Ưu tiên dùng **TanStack Query** để gọi API, cấm dùng `useEffect` tràn lan để fetch dữ liệu.
-- **Database Migration:** Không bao giờ tạo bảng hoặc sửa cấu trúc Database thủ công. Mọi thay đổi về cấu trúc của MongoDB và Neo4j phải được quản lý thông qua script Migration (ví dụ: `migrate-mongo`).
+- **Modular Clean Architecture:** Tuân thủ tuyệt đối 4 lớp: `Domain`, `Application`, `Infrastructure`, `Presentation`.
+- **Mapping:** Sử dụng **MapStruct** để chuyển đổi giữa Entity và DTO. Tuyệt đối không trả về Entity trực tiếp ra API.
+- **Boilerplate:** Sử dụng **Lombok** cho mọi Class (Entity, DTO, Service) để code sạch sẽ.
+- **Architecture Governance:** Sử dụng **ArchUnit** để kiểm tra tính toàn vẹn của các lớp (ví dụ: cấm Domain phụ thuộc vào Infrastructure).
+- **Error Handling:** Sử dụng `@RestControllerAdvice` và `@ExceptionHandler` để xử lý lỗi tập trung.
+- **Logging:** Sử dụng **SLF4J + Logback**. Không sử dụng `System.out.println`.
+- **Rate Limiting:** Sử dụng **Bucket4j** để chống spam request.
+- **Database Migration:** Mọi thay đổi cấu trúc DB phải qua script Migration (ví dụ: `migrate-mongo` hoặc Liquibase cho SQL nếu có).
 
 
 ---

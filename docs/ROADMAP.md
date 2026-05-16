@@ -3,25 +3,19 @@
 ## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE
 *Mục tiêu: Thiết lập bộ khung kỹ thuật chuẩn để mở rộng dự án không bị rối.*
 
-- [x] **Sprint 0.1: Project Setup**
-    - [x] Khởi tạo NestJS với kiến trúc Modular[cite: 1].
-    - [x] Cấu hình ESLint, Prettier, Husky & Lint-staged để chuẩn hóa code style[cite: 1, 2].
-    - [x] Viết file `docker-compose.yml` cho MongoDB & Redis[cite: 1, 2].
+- [ ] **Sprint 0.1: Spring Boot Setup**
+    - [ ] Khởi tạo dự án Spring Boot 3.x với Java 21 (Maven/Gradle)[cite: 1].
+    - [ ] Cấu hình **Checkstyle** và **Spotless** cho code style.
+    - [ ] Thiết lập **Docker Compose** cho MongoDB, Redis và Neo4j.
 - [ ] **Sprint 0.2: Common Utilities**
-    - [x] Cấu hình `ValidationPipe` toàn cục (Class-validator & Class-transformer)[cite: 1].
-        - *💡 Tối ưu thêm:* Đã cấu hình `enableImplicitConversion: true` giúp tự động ép kiểu dữ liệu từ DTO mà không cần dùng `@Type()`.
-        - *💡 Tối ưu thêm:* Đã dùng `exceptionFactory` gộp chung lỗi Validate vào `BadRequestException`.
-    - [x] Triển khai `Global Exception Filter` xử lý lỗi đồng nhất toàn hệ thống[cite: 1].
-        - *💡 Tối ưu bảo mật:* Ẩn chi tiết lỗi nhạy cảm của server khi gặp lỗi 500. Format gọn gàng mảng lỗi của ValidationPipe vào trường `details`.
-    - [x] Bật `CORS` trong main.ts[cite: 1].
-        - *⚠️ Lưu ý sau này:* Hiện đang dùng `origin: '*'` và `credentials: true`. Khi lên Phase 1 ghép Frontend, cần sửa `origin` thành domain cụ thể (vd: `http://localhost:5173`) để trình duyệt không chặn token.
-    - [x] Setup Winston Logging để theo dõi log và debug[cite: 1].
-        - *💡 Tối ưu kiến trúc:* Chuyển `GlobalExceptionFilter` vào `app.module.ts` (Dependency Injection) để Filter tự động gọi Winston ghi lại lỗi ra file `logs/error.log`. NestJS giờ đã dùng Winston làm Logger mặc định.
-    - [x] Cấu hình NestJS Throttler chống Spam và DDoS API[cite: 2].
-        - *💡 Tối ưu bảo mật:* Đã cấu hình giới hạn 100 requests / 60 giây cho mỗi IP. Khai báo `ThrottlerGuard` toàn cục bằng Dependency Injection.
-    - [x] **Sprint 0.3: API Documentation & Professional Tools**
-        - [x] Tích hợp **Swagger (OpenAPI 3.0)** để tự động hóa tài liệu API.
-        - [x] Đã cấu hình Bearer Auth sẵn sàng cho Phase 1.
+    - [ ] Cấu hình **Modular Clean Architecture** (Domain, Application, Infrastructure, Presentation).
+    - [ ] Thiết lập Global Exception Handling với `@RestControllerAdvice`.
+    - [ ] Tích hợp **Lombok** và **MapStruct**.
+    - [ ] Cấu hình **Spring Security** (Stateless JWT).
+    - [ ] Tích hợp **Bucket4j** cho Rate Limiting.
+    - [ ] **Sprint 0.3: API Documentation & Quality Assurance**
+        - [ ] Tích hợp **SpringDoc OpenAPI** (Swagger).
+        - [ ] Cấu hình **ArchUnit** để kiểm tra tính toàn vẹn của kiến trúc.
 
 ---
 
@@ -29,8 +23,8 @@
 *Mục tiêu: Quản lý người dùng và xác thực bảo mật.*
 
 - [ ] **Sprint 1.1: Core Auth**
-    - [x] Thiết kế User Schema (Mongoose) có đánh Index cho field `email`[cite: 1].
-    - [ ] API Login: Triển khai cơ chế **Refresh Token Rotation** (Access Token ngắn hạn, Refresh Token lưu vào Redis/DB).
+    - [ ] Thiết kế User Entity (Domain) và Repository (Infrastructure - Spring Data MongoDB).
+    - [ ] Triển khai Security Filters cho **Refresh Token Rotation**.
     - [ ] Triển khai **Passport JWT Strategy** với Cookie-based (HttpOnly) để chống XSS/CSRF.
     - [ ] Tích hợp **Resend** để gửi email xác thực tài khoản & thông báo.
 - [ ] **Sprint 1.2: Frontend Foundation (React + shadcn/ui + Zod + TanStack Query)**
@@ -47,11 +41,10 @@
 ## 💬 PHASE 2: THE HEART - REALTIME CHAT (MVP)
 *Mục tiêu: Triển khai tính năng quan trọng nhất của dự án.*
 
-- [ ] **Sprint 2.1: Socket Foundation**
-    - [ ] Khởi tạo Socket.IO Gateway trong NestJS[cite: 1].
-    - [ ] Triển khai **Redis Adapter** cho Socket.IO để sẵn sàng cho việc Scale-out (nhiều server chạy song song).
-    - [ ] Triển khai WebSocket Guard để verify JWT ngay khi handshake[cite: 1].
-    - [ ] Quản lý trạng thái Online/Offline bằng **Redis** (Tối ưu tốc độ truy xuất).
+- [ ] **Sprint 2.1: Messaging Foundation**
+    - [ ] Khởi tạo WebSocket Server với **Spring WebSocket**.
+    - [ ] Cấu hình **Redis Pub/Sub** để đồng bộ trạng thái giữa các server.
+    - [ ] Quản lý trạng thái Online/Offline bằng Redis.
 - [ ] **Sprint 2.2: Messaging Logic**
     - [ ] Thiết kế Messages & Chats Collection (Denormalization field `lastMessage`)[cite: 1].
     - [ ] Luồng: Client -> Socket -> Service -> Save DB -> Emit cho người nhận[cite: 1].

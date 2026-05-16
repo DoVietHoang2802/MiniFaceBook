@@ -4,10 +4,10 @@
 
 ---
 
-## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE (HOÀN THÀNH 100%)
-**Đánh giá tổng quan:** Nền móng hệ thống Backend đã được xây dựng cực kỳ vững chắc, đạt tiêu chuẩn của các dự án thực tế (Production-ready) ở các công ty công nghệ lớn. Việc thiết lập kỹ lưỡng ở Phase 0 giúp loại bỏ 80% rủi ro bảo mật và bug lặt vặt khi scale dự án sau này.
+## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE (ĐANG TRIỂN KHAI 🏗️ - PIVOT TO SPRING BOOT)
+**Đánh giá tổng quan:** Dự án đã thực hiện bước chuyển mình (Pivot) quan trọng sang **Spring Boot 3.x (Java 21)**. Quyết định này nhằm tận dụng sức mạnh của hệ sinh thái Java Enterprise và áp dụng **Modular Clean Architecture** để đảm bảo tính bền vững và khả năng mở rộng tối đa.
 
-### 🏆 Các tính năng & Kiến trúc đã triển khai thành công:
+### 🏆 Các tính năng & Kiến trúc đang thiết lập:
 
 #### 1. Kiến trúc Modular chuẩn NestJS
 - **Đã làm:** Khởi tạo cấu trúc dự án chia theo từng module độc lập.

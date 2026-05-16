@@ -12,15 +12,16 @@ Dự án xây dựng hệ thống Backend cho mạng xã hội thu nhỏ, tập 
 ---
 
 ## 🛠 Tech Stack (Production Ready)
-- **Backend:** NestJS (TypeScript) - Modular Architecture.
+- **Backend:** Java 21 (LTS) + Spring Boot 3.x - Modular Clean Architecture.
 - **Realtime:** Socket.IO + Redis Adapter.
 - **Database:** MongoDB (Atlas) + Redis (Caching & Sessions) + **Neo4j (Graph Database cho Social Connections)**.
 - **Search & Broker:** **ElasticSearch** (Search), **Kafka/RabbitMQ** (Event-Driven).
-- **Security:** Passport JWT + Refresh Token Rotation + HttpOnly Cookies.
+- **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation.
+- **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
 - **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI).
-- **Frontend:** React + shadcn/ui + Tailwind + **Zod** + **TanStack Query**.
-- **DevOps & Monitoring:** Docker Compose, GitHub Actions, **Prometheus & Grafana**.
-- **Testing:** **Jest** (Unit), **Playwright** (E2E).
+- **Frontend:** React + TypeScript + shadcn/ui + Tailwind + Zod + TanStack Query.
+- **DevOps & Monitoring:** Docker Compose, GitHub Actions, Prometheus & Grafana.
+- **Testing:** JUnit 5, Mockito, Supertest, Testcontainers, Playwright.
 
 ---
 
@@ -53,12 +54,12 @@ Dự án được chia làm 6 giai đoạn phát triển chính.
    ```bash
    docker-compose up -d
    ```
-4. **Cài đặt & Chạy Backend:**
+4. **Cài đặt & Chạy Backend (Maven):**
    ```bash
-   npm install
-   npm run start:dev
+   cd backend
+   ./mvnw spring-boot:run
    ```
-5. **Truy cập Swagger:** `http://localhost:3000/api/docs`
+5. **Truy cập Swagger:** `http://localhost:8080/api/docs`
 
 ---
 

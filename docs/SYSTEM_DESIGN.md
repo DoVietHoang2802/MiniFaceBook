@@ -15,15 +15,14 @@
   - `BLOCK`: `(u1:User)-[:BLOCK]->(u2:User)`
 
 
-## ⚙️ Backend Architecture
-- **Modular Pattern:** Tách biệt `AuthModule`, `UsersModule`, `ChatsModule`.
-- **Realtime Flow:** Frontend -> Socket Gateway -> Service -> DB -> Broadcast.
-- **Security:**
-  - `ThrottlerModule` chống brute-force.
-  - `JwtAuthGuard` & `Cookie-based Auth`.
-  - **Refresh Token Rotation:** Chống chiếm đoạt phiên đăng nhập.
-- **Documentation:**
-  - **Swagger UI:** Tự động hóa tài liệu API cho Frontend.
+## ⚙️ Backend Architecture (Modular Clean Architecture)
+- **Domain Layer:** Chứa Entities, Value Objects và Repository Interfaces. Không phụ thuộc vào Framework.
+- **Application Layer:** Chứa Use Cases và Application Services định nghĩa logic nghiệp vụ.
+- **Infrastructure Layer:** Cài đặt thực tế của Repositories (Spring Data), External Clients và Configurations.
+- **Presentation Layer:** REST Controllers và DTOs.
+- **Security:** Spring Security + JWT Stateless + Refresh Token Rotation.
+- **Tools:** Lombok (Code generation), MapStruct (Mapping), ArchUnit (Governance).
+- **Documentation:** Swagger UI (SpringDoc OpenAPI).
 
 ## 📐 Scalability Strategy (Chiến lược mở rộng)
 - **Room-based Architecture:** Mọi cuộc hội thoại (1-1 hay Group) đều được quản lý bằng Socket.IO Rooms. Điều này giúp nâng cấp lên Group Chat ở Phase 6 mà không cần thay đổi logic Gateway.
@@ -34,11 +33,14 @@
 - **Polyglot Persistence:** Tích hợp Neo4j để quản lý Social Graph, thay thế các phép JOIN/Lookup chéo phức tạp của MongoDB để tối ưu hiệu năng đồ thị.
 
 
-## 📂 Project Structure
-- `/src/modules`: Logic nghiệp vụ chính.
-- `/src/common`: Guards, Interceptors, Filters, Decorators.
-- `/src/shared`: CloudinaryService, MailService.
-- `/src/configs`: Cấu hình hệ thống.
+## 📂 Project Structure (Gradle/Maven)
+- `src/main/java/com/minifacebook/modules/<module-name>/`:
+  - `domain/`: Entities, Interfaces.
+  - `application/`: Services, Use Cases.
+  - `infrastructure/`: Persistence, External Clients.
+  - `presentation/`: Controllers, DTOs.
+- `src/main/resources/`: Configurations, SQL/NoSQL migrations.
+- `src/test/java/`: JUnit 5, Mockito, Testcontainers tests.
 
 ## 🌐 External Services
 - **Cloudinary:** Quản lý hình ảnh và media.
