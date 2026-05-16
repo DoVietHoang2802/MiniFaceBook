@@ -19,10 +19,10 @@ Tài liệu hướng dẫn AI cách thiết kế và triển khai cơ sở dữ 
      ```
 
 3. **Cơ chế đồng bộ (Sync Mechanism):**
-   - Sử dụng **Mongoose Middleware (Hooks)**:
-     - Khi một User mới được tạo thành công trong MongoDB, tự động tạo một Node `User` tương ứng trong Neo4j.
-     - Khi xóa User trong MongoDB, tự động xóa Node và mọi quan hệ liên quan trong Neo4j.
-   - Ưu tiên xử lý đồng bộ này qua một Event Bus hoặc xử lý bất đồng bộ để không làm chậm luồng API chính.
+   - Sử dụng **Spring Data MongoDB Events (AbstractMongoEventListener)**:
+     - Khi một User mới được tạo thành công trong MongoDB, tự động tạo một Node `User` tương ứng trong Neo4j qua `onAfterSave`.
+     - Khi xóa User trong MongoDB, tự động xóa Node và mọi quan hệ liên quan trong Neo4j qua `onAfterDelete`.
+   - Ưu tiên xử lý đồng bộ này qua **Spring ApplicationEventPublisher** hoặc xử lý bất đồng bộ (@Async) để không làm chậm luồng API chính.
 
 ## 🚀 Các tính năng ứng dụng
 - **Mutual Friends:** Tính toán số lượng bạn chung giữa 2 người dùng.

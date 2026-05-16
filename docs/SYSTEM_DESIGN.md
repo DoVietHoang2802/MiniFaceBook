@@ -47,6 +47,6 @@
 - **Resend:** Dịch vụ gửi Email (Auth, Notifications).
 - **Vercel:** Hosting Frontend React.
 - **MongoDB Atlas:** Database Cloud.
-- **Redis:** Caching trạng thái Online, Session và hỗ trợ Socket.IO Adapter.
+- **Redis:** Caching trạng thái Online, Session và hỗ trợ Spring WebSocket (STOMP) qua Redis Pub/Sub.
 - **Prometheus & Grafana:** Hệ thống Monitoring và Dashboard theo dõi sức khỏe server.
 - **Google Gemini API:** Cung cấp các tính năng thông minh (Tóm tắt hội thoại, Phân tích cảm xúc).

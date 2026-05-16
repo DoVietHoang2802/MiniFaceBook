@@ -21,7 +21,7 @@ Dự án xây dựng hệ thống Backend cho mạng xã hội thu nhỏ, tập 
 - **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI).
 - **Frontend:** React + TypeScript + shadcn/ui + Tailwind + Zod + TanStack Query.
 - **DevOps & Monitoring:** Docker Compose, GitHub Actions, Prometheus & Grafana.
-- **Testing:** JUnit 5, Mockito, Supertest, Testcontainers, Playwright.
+- **Testing:** JUnit 5, Mockito, MockMvc, Testcontainers, Playwright.
 
 ---
 

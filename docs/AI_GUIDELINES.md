@@ -13,7 +13,7 @@
 - **Security:** Spring Security + **JWT + Refresh Token Rotation**.
 - **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
 - **Frontend:** React + TypeScript + shadcn/ui + Tailwind + **Zod**.
-- **Testing:** **JUnit 5**, **Mockito**, **Supertest** & **Testcontainers**.
+- **Testing:** **JUnit 5**, **Mockito**, **MockMvc** & **Testcontainers**.
 
 ---
 
@@ -34,7 +34,7 @@
 - **Error Handling:** Sử dụng `@RestControllerAdvice` và `@ExceptionHandler` để xử lý lỗi tập trung.
 - **Logging:** Sử dụng **SLF4J + Logback**. Không sử dụng `System.out.println`.
 - **Rate Limiting:** Sử dụng **Bucket4j** để chống spam request.
-- **Database Migration:** Mọi thay đổi cấu trúc DB phải qua script Migration (ví dụ: `migrate-mongo` hoặc Liquibase cho SQL nếu có).
+- **Database Migration:** Mọi thay đổi cấu trúc DB phải qua script Migration (ví dụ: **Mongock** cho MongoDB hoặc Liquibase cho SQL nếu có).
 
 
 ---
