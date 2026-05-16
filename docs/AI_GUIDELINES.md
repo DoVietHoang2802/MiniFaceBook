@@ -18,7 +18,7 @@
 ---
 
 ## 🛡️ 2. Quy tắc Bảo mật & Dữ liệu (Bắt buộc)
-- **Tuyệt mật:** Không bao giờ trả về mật khẩu người dùng trong API. Luôn dùng `.select('-password')` trong Mongoose.
+- **Tuyệt mật:** Không bao giờ trả về mật khẩu người dùng trong API. Sử dụng `@JsonIgnore` hoặc loại bỏ field password trong Mapper.
 - **Xác thực:** Access Token ngắn hạn, Refresh Token dài hạn lưu trong HttpOnly Cookie qua Spring Security Filters.
 - **Validation:** Mọi dữ liệu đầu vào (Request Body/Query) PHẢI qua **DTO** với **Jakarta Bean Validation** (@Valid, @NotNull, @Email...).
 - **Environment:** Bắt buộc sử dụng `@ConfigurationProperties` và **Bean Validation** để validate file `.env` hoặc `application.yml` khi khởi động. Nếu thiếu biến quan trọng, server phải dừng ngay lập tức.

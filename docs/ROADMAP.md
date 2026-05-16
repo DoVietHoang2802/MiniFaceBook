@@ -25,7 +25,7 @@
 - [ ] **Sprint 1.1: Core Auth**
     - [ ] Thiết kế User Entity (Domain) và Repository (Infrastructure - Spring Data MongoDB).
     - [ ] Triển khai Security Filters cho **Refresh Token Rotation**.
-    - [ ] Triển khai **Passport JWT Strategy** với Cookie-based (HttpOnly) để chống XSS/CSRF.
+    - [ ] Triển khai **Spring Security JWT** với Cookie-based (HttpOnly) để chống XSS/CSRF.
     - [ ] Tích hợp **Resend** để gửi email xác thực tài khoản & thông báo.
 - [ ] **Sprint 1.2: Frontend Foundation (React + shadcn/ui + Zod + TanStack Query)**
     - [ ] Khởi tạo dự án React (Vite).
@@ -92,7 +92,7 @@
 - [ ] **Sprint 5.1: Optimization**
     - [ ] Áp dụng Soft Delete cho tin nhắn và bài viết (không xóa vật lý)[cite: 1].
     - [ ] Caching dữ liệu tĩnh hoặc danh sách bạn bè bằng Redis[cite: 1].
-    - [ ] Viết Unit Test bằng **Jest** cho các logic nghiệp vụ quan trọng[cite: 1, 2].
+    - [ ] Viết Unit Test bằng **JUnit 5** cho các logic nghiệp vụ quan trọng[cite: 1, 2].
 - [ ] **Sprint 5.2: CI/CD & Production**
     - [ ] Viết E2E Test bằng **Playwright** cho các luồng chính.
     - [ ] Thiết lập GitHub Actions tự động chạy Build & Test khi push code[cite: 2].
