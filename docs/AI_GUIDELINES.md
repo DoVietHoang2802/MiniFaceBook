@@ -7,7 +7,7 @@
 *Để bạn không cần phải quay lại README để tra cứu:*
 
 - **Backend:** Java 21 + Spring Boot 3.x + Modular Clean Architecture.
-- **Realtime:** Spring WebFlux / WebSocket + **Redis Adapter**.
+- **Realtime:** Spring WebSocket (STOMP) + **Redis Pub/Sub**.
 - **Database:** MongoDB (Spring Data) + Redis (Caching) + **Neo4j (Social Graph)**.
 - **Search & Event:** **ElasticSearch** (Search) & **Kafka** (Messaging Broker).
 - **Security:** Spring Security + **JWT + Refresh Token Rotation**.

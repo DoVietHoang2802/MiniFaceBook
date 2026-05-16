@@ -67,6 +67,6 @@ Dự án được chia làm 6 giai đoạn phát triển chính.
 Trước khi thực hiện bất kỳ Task nào, AI phải đọc tài liệu theo thứ tự:
 1. `README.md` -> 2. `docs/STRUCTURE.md` -> 3. `docs/ROADMAP.md` -> 4. `docs/PROGRESS.md`.
 - Tuân thủ nghiêm ngặt các Skill trong thư mục `.antigravity/skills/`.
-- Luôn sử dụng Swagger Decorators cho mọi Controller.
+- Luôn sử dụng Swagger Annotations (springdoc-openapi) cho mọi Controller.
 - Business logic nằm hoàn toàn trong Service.
 - **Git Automation:** Khi người dùng yêu cầu "đẩy lên git", hãy tự động stage (`git add .`), commit với message mô tả đúng các thay đổi, và push lên remote ngay lập tức.

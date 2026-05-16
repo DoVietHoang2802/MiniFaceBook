@@ -12,7 +12,7 @@ Câu hỏi của bạn rất tinh tế! Đây là cách phân biệt rõ ràng n
 ### 2. File Skill (trong folder `.antigravity/skills/`)
 *   **Mục đích:** Là **"Bộ quy tắc thực thi"**.
 *   **Cho ai:** Chủ yếu cho **TÔI (AI)**. 
-    *   Nó chứa các kỹ thuật "ngầm" mà Docs không ghi chi tiết (ví dụ: cách đặt tên biến, cách config Redis Adapter, cách handle lỗi Swagger...). 
+    *   Nó chứa các kỹ thuật "ngầm" mà Docs không ghi chi tiết (ví dụ: cách đặt tên package, cách config Redis Pub/Sub, cách handle lỗi Swagger...). 
     *   Nó ép tôi phải code theo đúng "đẳng cấp Senior" mà bạn muốn.
 *   **Giống như:** Một cuốn **Cẩm nang kỹ thuật** (Technical Manual).
 
@@ -30,9 +30,9 @@ Dưới đây là danh sách toàn bộ các "vũ khí" chúng ta đã thiết l
 5.  **[AI_GUIDELINES.md](file:///d:/Project_MiniFace/docs/AI_GUIDELINES.md):** "Hiến pháp" bắt buộc AI phải tuân theo khi làm việc.
 
 **Nhóm 2: Thực thi & Kỹ thuật (Internal Skills)**
-1.  **[nestjs-mastery](file:///d:/Project_MiniFace/.antigravity/skills/nestjs-mastery/SKILL.md):** Kỹ năng viết code Backend chuẩn Senior.
+1.  **[spring-boot-mastery](file:///d:/Project_MiniFace/.antigravity/skills/spring-boot-mastery/SKILL.md):** Kỹ năng viết code Backend chuẩn Senior Java.
 2.  **[security-expert](file:///d:/Project_MiniFace/.antigravity/skills/security-expert/SKILL.md):** Kỹ năng bảo mật Auth & Refresh Token.
-3.  **[realtime-architect](file:///d:/Project_MiniFace/.antigravity/skills/realtime-architect/SKILL.md):** Kỹ năng làm Chat với Socket.io & Redis.
+3.  **[realtime-architect](file:///d:/Project_MiniFace/.antigravity/skills/realtime-architect/SKILL.md):** Kỹ năng làm Chat với Spring WebSocket & STOMP.
 4.  **[frontend-master](file:///d:/Project_MiniFace/.antigravity/skills/frontend-master/SKILL.md):** Kỹ năng làm UI Premium & Type Safety (Zod).
 5.  **[db-optimization](file:///d:/Project_MiniFace/.antigravity/skills/db-optimization/SKILL.md):** Kỹ năng tối ưu MongoDB & Caching.
 6.  **[devops-testing](file:///d:/Project_MiniFace/.antigravity/skills/devops-testing/SKILL.md):** Kỹ năng Testing, Docker & CI/CD.
