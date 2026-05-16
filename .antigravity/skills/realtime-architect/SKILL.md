@@ -1,10 +1,10 @@
-# Realtime Architect (Socket.IO)
+# Realtime Architect (Spring WebSocket)
 
 ## 🎯 Mục tiêu
 Xây dựng hệ thống giao tiếp thời gian thực ổn định và có khả năng mở rộng cực cao.
 
 ## 🛠 Quy tắc vàng
-- **Scalability:** Luôn sử dụng **Redis Adapter** cho Socket.IO.
+- **Scalability:** Luôn sử dụng **Redis Pub/Sub** để đồng bộ trạng thái giữa các instance.
 - **Communication:** Sử dụng **Room-based architecture** cho mọi cuộc hội thoại.
 - **Security:** Bảo vệ Gateway bằng JWT Guard riêng cho WebSocket.
 - **State:** Lưu trạng thái Online/Offline vào Redis thay vì bộ nhớ cục bộ của server.

@@ -6,7 +6,7 @@ Bảo vệ hệ thống khỏi các cuộc tấn công phổ biến và quản l
 ## 🛠 Quy tắc vàng
 - **Authentication:** Sử dụng **Refresh Token Rotation** + HttpOnly Cookies.
 - **Password:** Luôn băm mật khẩu bằng `bcrypt`. Tuyệt đối không trả về mật khẩu trong API.
-- **Protection:** Cấu hình `ThrottlerModule` để chống Brute-force và Spam.
+- **Protection:** Cấu hình **Bucket4j** hoặc Spring Security Rate Limiting để chống Brute-force và Spam.
 - **Validation:** Validate chặt chẽ dữ liệu đầu vào qua DTO và Zod.
 
 ## 🔄 Mandatory Post-Task Workflow (BẮT BUỘC)

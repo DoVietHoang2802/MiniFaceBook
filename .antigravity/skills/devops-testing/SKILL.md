@@ -6,7 +6,7 @@
 ## 🛠 Quy tắc vàng
 - **Quality Assurance:**
     - **Testing Mindset:** Luôn viết code dễ kiểm thử.
-    - **Automated Testing:** Viết Unit Test bằng **Jest** và E2E Test bằng **Playwright**.
+    - **Automated Testing:** Viết Unit Test bằng **JUnit 5/Mockito** và Integration Test bằng **Testcontainers**.
 - **CI/CD Pipeline:**
     - Thiết lập GitHub Actions tự động chạy Lint, Build và Test khi có Pull Request hoặc Push code.
 - **Containerization:**

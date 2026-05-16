@@ -13,7 +13,7 @@ Dự án xây dựng hệ thống Backend cho mạng xã hội thu nhỏ, tập 
 
 ## 🛠 Tech Stack (Production Ready)
 - **Backend:** Java 21 (LTS) + Spring Boot 3.x - Modular Clean Architecture.
-- **Realtime:** Socket.IO + Redis Adapter.
+- **Realtime:** Spring WebSocket (STOMP) + Redis Pub/Sub.
 - **Database:** MongoDB (Atlas) + Redis (Caching & Sessions) + **Neo4j (Graph Database cho Social Connections)**.
 - **Search & Broker:** **ElasticSearch** (Search), **Kafka/RabbitMQ** (Event-Driven).
 - **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation.
