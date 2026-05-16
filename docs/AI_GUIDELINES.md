@@ -12,7 +12,7 @@
 - **Search & Event:** **ElasticSearch** (Search) & **Kafka** (Messaging Broker).
 - **Security:** Passport JWT + **Refresh Token Rotation** + HttpOnly Cookies.
 - **Frontend:** React + shadcn/ui + Tailwind + **Zod** + **TanStack Query**.
-- **Testing:** **Jest** (Unit Test) & **Playwright** (E2E Test).
+- **Testing:** **Jest** (Unit Test), **Supertest** (Integration Test - gọi thẳng vào DB thật) & **Playwright** (E2E Test).
 
 ---
 
@@ -21,6 +21,8 @@
 - **Xác thực:** Access Token ngắn hạn, Refresh Token dài hạn lưu trong HttpOnly Cookie.
 - **Validation:** Mọi dữ liệu đầu vào (Request Body/Query) PHẢI qua **DTO** với class-validator.
 - **Zod:** Sử dụng Zod để định nghĩa schema chung cho cả Backend và Frontend để đảm bảo Type-Safety tuyệt đối.
+- **Environment:** Bắt buộc sử dụng **Joi** trong `ConfigModule` để validate toàn bộ file `.env` khi khởi động. Nếu thiếu biến quan trọng (như `JWT_SECRET`, `NEO4J_URI`), server phải văng lỗi và dừng chạy ngay lập tức, tuyệt đối không chạy tiếp.
+
 
 ---
 
@@ -30,6 +32,8 @@
 - **Realtime:** Mọi logic Chat phải dùng **Room-based**, không gửi tin nhắn trực tiếp qua Socket ID cá nhân.
 - **Error Handling:** Luôn dùng `GlobalExceptionFilter` và ghi log lỗi qua **Winston**.
 - **Frontend:** Ưu tiên dùng **TanStack Query** để gọi API, cấm dùng `useEffect` tràn lan để fetch dữ liệu.
+- **Database Migration:** Không bao giờ tạo bảng hoặc sửa cấu trúc Database thủ công. Mọi thay đổi về cấu trúc của MongoDB và Neo4j phải được quản lý thông qua script Migration (ví dụ: `migrate-mongo`).
+
 
 ---
 
