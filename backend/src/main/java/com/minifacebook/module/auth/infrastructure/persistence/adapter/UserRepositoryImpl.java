@@ -38,4 +38,9 @@ public class UserRepositoryImpl implements UserRepository {
   public Optional<User> findById(String id) {
     return mongoUserRepository.findById(id).map(userDocumentMapper::toDomain);
   }
+
+  @Override
+  public Optional<User> findByVerificationToken(String token) {
+    return mongoUserRepository.findByVerificationToken(token).map(userDocumentMapper::toDomain);
+  }
 }

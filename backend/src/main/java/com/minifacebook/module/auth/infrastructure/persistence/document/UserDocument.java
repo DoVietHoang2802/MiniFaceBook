@@ -30,4 +30,8 @@ public class UserDocument extends BaseEntity {
   private String bio;
 
   private Set<Role> roles;
+
+  private boolean verified;
+
+  private String verificationToken;
 }

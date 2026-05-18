@@ -41,3 +41,5 @@ app:
     secret: ${JWT_SECRET:vM6Yp9Xz2B8nL5K3rJ7hG4dF1sA0qW2eR5tY8uI1oP4aS7dF0gH3jK6lL9zX}
     access-token-expiration: 3600 # 1 giờ (giây)
     refresh-token-expiration: 604800 # 7 ngày (giây)
+  resend:
+    api-key: ${RESEND_API_KEY:re_123456789}

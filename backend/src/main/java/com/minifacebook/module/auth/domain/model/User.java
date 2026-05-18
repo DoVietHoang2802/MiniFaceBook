@@ -24,6 +24,8 @@ public class User {
   private String avatar;
   private String bio;
   private Set<Role> roles;
+  private boolean verified;
+  private String verificationToken;
   private Instant createdAt;
   private Instant updatedAt;
 }

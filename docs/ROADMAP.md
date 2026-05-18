@@ -32,12 +32,12 @@
 ## 🔐 PHASE 1: AUTHENTICATION & IDENTITY
 *Mục tiêu: Quản lý người dùng và xác thực bảo mật.*
 
-- [ ] **Sprint 1.1: Core Auth & RBAC**
-    - [ ] Thiết kế User Entity (Domain) và Repository (Infrastructure - Spring Data MongoDB).
-    - [ ] Triển khai **RBAC** (Role-Based Access Control) với các quyền ADMIN, USER.
-    - [ ] Triển khai Security Filters cho **Refresh Token Rotation**.
-    - [ ] Triển khai **Spring Security JWT** với Cookie-based (HttpOnly).
-    - [ ] Tích hợp **Resend** để gửi email xác thực tài khoản.
+- [x] **Sprint 1.1: Core Auth & RBAC**
+    - [x] Thiết kế User Entity (Domain) và Repository (Infrastructure - Spring Data MongoDB).
+    - [x] Triển khai **RBAC** (Role-Based Access Control) với các quyền ADMIN, USER.
+    - [x] Triển khai Security Filters cho **Refresh Token Rotation**.
+    - [x] Triển khai **Spring Security JWT** với Cookie-based (HttpOnly).
+    - [x] Tích hợp **Resend** để gửi email xác thực tài khoản.
 - [ ] **Sprint 1.2: Frontend Foundation (React + shadcn/ui + Zod + TanStack Query)**
     - [ ] Khởi tạo dự án React (Vite).
     - [ ] Cài đặt **Tailwind CSS**, **shadcn/ui**, **Zod** và **TanStack Query**.

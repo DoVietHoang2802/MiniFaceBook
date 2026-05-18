@@ -4,8 +4,12 @@
 
 ---
 
-## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE (ĐANG TRIỂN KHAI 🏗️ - PIVOT TO SPRING BOOT)
+## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE (ĐÃ HOÀN THÀNH 🏆)
 **Đánh giá tổng quan:** Dự án đã thực hiện bước chuyển mình (Pivot) quan trọng sang **Spring Boot 3.x (Java 21)**. Quyết định này nhằm tận dụng sức mạnh của hệ sinh thái Java Enterprise và áp dụng **Modular Clean Architecture** để đảm bảo tính bền vững và khả năng mở rộng tối đa.
+
+## 🔐 PHASE 1: AUTHENTICATION & IDENTITY (ĐÃ HOÀN THÀNH 🔐)
+**Đánh giá tổng quan:** Triển khai thành công hệ thống xác thực bảo mật Cookie-based HttpOnly JWT kết hợp với cơ chế **Refresh Token Rotation** chống replay attack, tích hợp xác thực tài khoản qua **Resend** Email API.
+
 
 ### 🏆 Các tính năng & Kiến trúc đang thiết lập:
 
@@ -97,7 +101,21 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Tích hợp **SpringDoc OpenAPI** tại `/api/docs`.
   - [x] Cấu hình **JWT Authorization** ngay trên giao diện Swagger UI.
   - [x] Viết bộ kiểm tra kiến trúc **ArchUnit** đảm bảo tuân thủ Clean Architecture.
-  - [x] Kết thúc Phase 0 - Foundation. Sẵn sàng cho Phase 1.
+- **Phiên 18/05/2026 (Sprint 1.1 - Core Auth & RBAC & Cookie-based HttpOnly JWT):**
+  - [x] Thiết kế domain model User & UserRepository độc lập hoàn toàn với Spring Data.
+  - [x] Triển khai `UserRepositoryImpl` và `UserDocument` mapping dữ liệu MongoDB.
+  - [x] Triển khai **Xác thực Email qua Resend** sử dụng RestTemplate gửi email xác thực tài khoản.
+  - [x] Triển khai **HttpOnly Cookies** cho cả Access Token và Refresh Token để bảo vệ chống XSS/CSRF.
+  - [x] Triển khai **Refresh Token Rotation** chống replay attack, lưu trữ và thu hồi token trong MongoDB.
+  - [x] Triển khai phân quyền **RBAC** ADMIN/USER qua JWT.
+  - [x] Hoàn thiện tài liệu OpenAPI trên Swagger cho AuthController, bổ sung API `/verify`, `/refresh`, `/logout`.
+  - [x] Vượt qua 100% kiểm thử kiến trúc ArchUnit sau khi di chuyển DTOs, Mappers và Security hạ tầng về đúng phân lớp Clean Architecture.
+
+#### 🔧 Technical Debugging Log (Phase 1 Stabilization)
+| Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
+| :--- | :--- | :--- | :--- |
+| **ArchUnit Layer Violation** | Tầng Presentation (`presentation.dto`) bị Application sử dụng trực tiếp và Mapper nằm ở Infrastructure. | Di chuyển DTOs về `application.dto`, mapper về `application.mapper` và di chuyển Security về module của nó. | Kiến trúc sạch 100% đạt chuẩn ArchUnit. |
+| **Lack of Cookie Auth & Rotation** | Thiếu cookie bảo mật và cơ chế chống replay attack cho Refresh Token. | Triển khai `RefreshToken` Entity ở Domain và Cookie-based HttpOnly JWT cho cả Access/Refresh token. | Hệ thống bảo mật tối đa chuẩn doanh nghiệp. |
 
 #### 🔧 Technical Debugging Log (Phase 0 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |

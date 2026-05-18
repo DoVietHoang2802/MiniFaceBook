@@ -5,19 +5,24 @@ import com.minifacebook.module.auth.application.dto.LoginResult;
 import com.minifacebook.module.auth.application.dto.RegisterRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
 import com.minifacebook.module.auth.application.mapper.AuthMapper;
+import com.minifacebook.module.auth.domain.model.RefreshToken;
 import com.minifacebook.module.auth.domain.model.Role;
 import com.minifacebook.module.auth.domain.model.User;
+import com.minifacebook.module.auth.domain.repository.RefreshTokenRepository;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
+import com.minifacebook.module.auth.domain.service.EmailService;
 import com.minifacebook.module.auth.domain.service.TokenService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
+import java.time.Instant;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-/** Service xử lý các nghiệp vụ xác thực tài khoản (Đăng ký, Đăng nhập). */
+/** Service xử lý các nghiệp vụ xác thực tài khoản (Đăng ký, Đăng nhập, Xác thực, Refresh). */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,8 +32,10 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final TokenService tokenService;
   private final AuthMapper authMapper;
+  private final EmailService emailService;
+  private final RefreshTokenRepository refreshTokenRepository;
 
-  /** Đăng ký người dùng mới. */
+  /** Đăng ký người dùng mới và gửi email kích hoạt qua Resend. */
   public UserResponse register(RegisterRequest request) {
     if (userRepository.existsByEmail(request.getEmail())) {
       log.warn("Registration failed: Email {} already exists", request.getEmail());
@@ -38,14 +45,19 @@ public class AuthService {
     User user = authMapper.toUser(request);
     user.setPassword(passwordEncoder.encode(request.getPassword()));
     user.setRoles(Set.of(Role.USER));
+    user.setVerified(false);
+    user.setVerificationToken(UUID.randomUUID().toString());
 
     User savedUser = userRepository.save(user);
-    log.info("User registered successfully with ID: {}", savedUser.getId());
+    log.info("User registered successfully with ID: {}. Sending verification email...", savedUser.getId());
+
+    // Gửi email xác thực bất đồng bộ/đồng bộ qua Resend
+    emailService.sendVerificationEmail(savedUser.getEmail(), savedUser.getVerificationToken());
 
     return authMapper.toUserResponse(savedUser);
   }
 
-  /** Đăng nhập hệ thống và phát sinh Token. */
+  /** Đăng nhập hệ thống và phát sinh Token đồng thời đăng ký Refresh Token. */
   public LoginResult login(LoginRequest request) {
     User user =
         userRepository
@@ -61,8 +73,26 @@ public class AuthService {
       throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 
+    // Yêu cầu tài khoản phải được xác minh email trước khi đăng nhập
+    if (!user.isVerified()) {
+      log.warn("Login failed: Email {} is not verified yet", request.getEmail());
+      throw new AppException(ErrorCode.USER_NOT_VERIFIED);
+    }
+
     String accessToken = tokenService.generateAccessToken(user.getEmail());
     String refreshToken = tokenService.generateRefreshToken(user.getEmail());
+
+    // Xoá tất cả refresh token cũ của người dùng này để tránh rác
+    refreshTokenRepository.deleteByEmail(user.getEmail());
+
+    // Lưu Refresh Token mới
+    RefreshToken refreshTokenEntity = RefreshToken.builder()
+        .token(refreshToken)
+        .email(user.getEmail())
+        .expiryDate(Instant.now().plusSeconds(604800)) // Hạn dùng 7 ngày
+        .revoked(false)
+        .build();
+    refreshTokenRepository.save(refreshTokenEntity);
 
     log.info("User {} logged in successfully", user.getEmail());
 
@@ -72,4 +102,64 @@ public class AuthService {
         .user(authMapper.toUserResponse(user))
         .build();
   }
+
+  /** Xác thực tài khoản người dùng qua Token nhận được từ email. */
+  public void verify(String token) {
+    User user = userRepository.findByVerificationToken(token)
+        .orElseThrow(() -> new AppException(ErrorCode.INVALID_VERIFICATION_TOKEN));
+
+    user.setVerified(true);
+    user.setVerificationToken(null);
+    userRepository.save(user);
+
+    log.info("User email verified successfully: {}", user.getEmail());
+  }
+
+  /** Refresh Token Rotation: Xoay vòng và cấp phát cặp token mới. */
+  public LoginResult refresh(String refreshTokenStr) {
+    RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshTokenStr)
+        .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_EXPIRED));
+
+    // Phát hiện tấn công phát lại (Replay Attack): Nếu token đã bị thu hồi trước đó
+    if (tokenEntity.isRevoked()) {
+      refreshTokenRepository.deleteByEmail(tokenEntity.getEmail());
+      log.error("Detect Replay Attack! Revoked all Refresh Tokens of email: {}", tokenEntity.getEmail());
+      throw new AppException(ErrorCode.UNAUTHENTICATED);
+    }
+
+    // Kiểm tra hạn dùng
+    if (tokenEntity.getExpiryDate().isBefore(Instant.now())) {
+      throw new AppException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+    }
+
+    // Đánh dấu thu hồi token cũ
+    tokenEntity.setRevoked(true);
+    refreshTokenRepository.save(tokenEntity);
+
+    // Tìm người dùng sở hữu token
+    User user = userRepository.findByEmail(tokenEntity.getEmail())
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    // Sinh cặp token mới
+    String newAccessToken = tokenService.generateAccessToken(user.getEmail());
+    String newRefreshToken = tokenService.generateRefreshToken(user.getEmail());
+
+    // Lưu Refresh Token mới
+    RefreshToken newRefreshTokenEntity = RefreshToken.builder()
+        .token(newRefreshToken)
+        .email(user.getEmail())
+        .expiryDate(Instant.now().plusSeconds(604800))
+        .revoked(false)
+        .build();
+    refreshTokenRepository.save(newRefreshTokenEntity);
+
+    log.info("Token rotated successfully for user {}", user.getEmail());
+
+    return LoginResult.builder()
+        .accessToken(newAccessToken)
+        .refreshToken(newRefreshToken)
+        .user(authMapper.toUserResponse(user))
+        .build();
+  }
 }
+

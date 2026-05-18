@@ -20,6 +20,9 @@ public enum ErrorCode {
   EMAIL_INVALID(1010, "Email address is invalid", HttpStatus.BAD_REQUEST),
   EMAIL_REQUIRED(1011, "Email cannot be blank", HttpStatus.BAD_REQUEST),
   PASSWORD_REQUIRED(1012, "Password cannot be blank", HttpStatus.BAD_REQUEST),
+  USER_NOT_VERIFIED(1013, "User email is not verified", HttpStatus.FORBIDDEN),
+  INVALID_VERIFICATION_TOKEN(1014, "Invalid or expired verification token", HttpStatus.BAD_REQUEST),
+  REFRESH_TOKEN_EXPIRED(1015, "Refresh token has expired or is invalid", HttpStatus.UNAUTHORIZED),
   ;
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {
