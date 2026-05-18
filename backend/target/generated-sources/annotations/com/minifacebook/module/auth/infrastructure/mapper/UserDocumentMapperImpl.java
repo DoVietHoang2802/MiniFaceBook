@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-05-18T15:08:08+0700",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.11 (Eclipse Adoptium)"
+    date = "2026-05-18T15:35:09+0700",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.46.0.v20260407-0427, environment: Java 21.0.10 (Eclipse Adoptium)"
 )
 @Component
 public class UserDocumentMapperImpl implements UserDocumentMapper {
@@ -24,19 +24,19 @@ public class UserDocumentMapperImpl implements UserDocumentMapper {
 
         UserDocument userDocument = new UserDocument();
 
-        userDocument.setId( user.getId() );
         userDocument.setCreatedAt( map( user.getCreatedAt() ) );
+        userDocument.setId( user.getId() );
         userDocument.setUpdatedAt( map( user.getUpdatedAt() ) );
-        userDocument.setEmail( user.getEmail() );
-        userDocument.setPassword( user.getPassword() );
         userDocument.setAvatar( user.getAvatar() );
         userDocument.setBio( user.getBio() );
+        userDocument.setEmail( user.getEmail() );
+        userDocument.setPassword( user.getPassword() );
         Set<Role> set = user.getRoles();
         if ( set != null ) {
             userDocument.setRoles( new LinkedHashSet<Role>( set ) );
         }
-        userDocument.setVerified( user.isVerified() );
         userDocument.setVerificationToken( user.getVerificationToken() );
+        userDocument.setVerified( user.isVerified() );
 
         return userDocument;
     }
@@ -49,19 +49,19 @@ public class UserDocumentMapperImpl implements UserDocumentMapper {
 
         User.UserBuilder user = User.builder();
 
-        user.id( document.getId() );
-        user.email( document.getEmail() );
-        user.password( document.getPassword() );
         user.avatar( document.getAvatar() );
         user.bio( document.getBio() );
+        user.createdAt( map( document.getCreatedAt() ) );
+        user.email( document.getEmail() );
+        user.id( document.getId() );
+        user.password( document.getPassword() );
         Set<Role> set = document.getRoles();
         if ( set != null ) {
             user.roles( new LinkedHashSet<Role>( set ) );
         }
-        user.verified( document.isVerified() );
-        user.verificationToken( document.getVerificationToken() );
-        user.createdAt( map( document.getCreatedAt() ) );
         user.updatedAt( map( document.getUpdatedAt() ) );
+        user.verificationToken( document.getVerificationToken() );
+        user.verified( document.isVerified() );
 
         return user.build();
     }

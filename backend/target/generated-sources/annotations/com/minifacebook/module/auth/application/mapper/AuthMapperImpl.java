@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-05-18T15:08:08+0700",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.11 (Eclipse Adoptium)"
+    date = "2026-05-18T15:35:09+0700",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.46.0.v20260407-0427, environment: Java 21.0.10 (Eclipse Adoptium)"
 )
 @Component
 public class AuthMapperImpl implements AuthMapper {
@@ -25,15 +25,15 @@ public class AuthMapperImpl implements AuthMapper {
 
         UserResponse.UserResponseBuilder userResponse = UserResponse.builder();
 
-        userResponse.id( user.getId() );
-        userResponse.email( user.getEmail() );
         userResponse.avatar( user.getAvatar() );
         userResponse.bio( user.getBio() );
+        userResponse.createdAt( user.getCreatedAt() );
+        userResponse.email( user.getEmail() );
+        userResponse.id( user.getId() );
         Set<Role> set = user.getRoles();
         if ( set != null ) {
             userResponse.roles( new LinkedHashSet<Role>( set ) );
         }
-        userResponse.createdAt( user.getCreatedAt() );
         userResponse.updatedAt( user.getUpdatedAt() );
 
         return userResponse.build();
@@ -47,10 +47,10 @@ public class AuthMapperImpl implements AuthMapper {
 
         User.UserBuilder user = User.builder();
 
-        user.email( request.getEmail() );
-        user.password( request.getPassword() );
         user.avatar( request.getAvatar() );
         user.bio( request.getBio() );
+        user.email( request.getEmail() );
+        user.password( request.getPassword() );
 
         return user.build();
     }
