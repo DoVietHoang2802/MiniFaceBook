@@ -15,7 +15,7 @@
   - 📁 Package Application: `application/` (Chứa Use Cases, Services)
   - 📁 Package Infrastructure: `infrastructure/` (Chứa Persistence, Config)
   - 📁 Package Presentation: `presentation/` (Chứa Controllers, DTOs)
-- **Giúp ích gì?** 
+- **Giúp ích gì?**
   - Đảm bảo tính "Độc lập": Logic nghiệp vụ không bị dính chặt vào Framework hay Database.
   - Dễ bảo trì và Test: Mỗi lớp có một nhiệm vụ riêng biệt, giảm thiểu rủi ro khi thay đổi code.
 
@@ -68,3 +68,42 @@
 
 ## ✅ TỔNG KẾT
 Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **Spring Boot**. Mọi tài liệu và quy chuẩn đã được đồng bộ hóa. Chúng ta đã có một bệ phóng chuyên nghiệp nhất để bắt đầu code các tính năng thực tế.
+
+---
+
+## 📝 NHẬT KÝ PHIÊN LÀM VIỆC (WORK LOG)
+
+- **Phiên 16/05/2026 (Sprint 0.1 - Scaffolding):**
+  - [x] Khởi tạo Monorepo: `backend/` và `frontend/`.
+  - [x] Cấu hình `backend/pom.xml`: Spring Boot 3.3, Java 21, MapStruct, Lombok, Mongock.
+  - [x] Tích hợp công cụ chất lượng code: Checkstyle, Spotless.
+  - [x] Thiết lập cấu trúc **Modular Clean Architecture** cho module `auth`.
+  - [x] Khởi tạo `frontend/` với Vite + React + TypeScript.
+  - [x] Đồng bộ hạ tầng Docker (MongoDB, Redis, Neo4j).
+
+- **Phiên 16/05/2026 (Sprint 0.2 - Part 1):**
+  - [x] Thiết lập chuẩn phản hồi API (`ApiResponse`).
+  - [x] Triển khai bộ mã lỗi tập trung (`ErrorCode`).
+  - [x] Hoàn tất bộ xử lý lỗi toàn cục (`GlobalExceptionHandler`) hỗ trợ Validation và Security.
+
+- **Phiên 16/05/2026 (Sprint 0.2 - Part 2):**
+  - [x] Triển khai **Security Foundation** với Spring Security & JWT.
+  - [x] Tích hợp **Nimbus JOSE + JWT** (Chuẩn Senior cho Java 21).
+  - [x] Xây dựng `AuthenticationService` xử lý logic Access/Refresh Token.
+  - [x] Cấu hình **SecurityConfig** hỗ trợ Stateless JWT và chuẩn hóa lỗi 401.
+  - [x] Triển khai **Rate Limiting** với Bucket4j (Giới hạn 10 request/phút/IP).
+
+- **Phiên 16/05/2026 (Sprint 0.3 - API Docs & QA):**
+  - [x] Tích hợp **SpringDoc OpenAPI** tại `/api/docs`.
+  - [x] Cấu hình **JWT Authorization** ngay trên giao diện Swagger UI.
+  - [x] Viết bộ kiểm tra kiến trúc **ArchUnit** đảm bảo tuân thủ Clean Architecture.
+  - [x] Kết thúc Phase 0 - Foundation. Sẵn sàng cho Phase 1.
+
+#### 🔧 Technical Debugging Log (Phase 0 Stabilization)
+| Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
+| :--- | :--- | :--- | :--- |
+| **DuplicateKeyException** | Lặp key `springdoc` trong `application.yml`. | Gộp và chuẩn hóa cấu hình Swagger. | App khởi động thành công. |
+| **ArchUnit Syntax Error** | Dùng hàm không tồn tại trong v1.3.0. | Chuyển sang `mayOnlyBeAccessedByLayers`. | Bộ quét kiến trúc hoạt động chính xác. |
+| **Swagger 401 Error** | Sai cấu hình path so với `context-path`. | Bỏ tiền tố `/api` trong `SecurityConfig`. | Truy cập tài liệu công khai OK. |
+| **Pom Conflict** | Trùng lặp dependency trong `pom.xml`. | Dọn dẹp và thống nhất phiên bản. | Tối ưu hóa quá trình Build. |
+| **ArchUnit Strictness & Empty Layer Error** | ArchUnit mặc định không cho phép layer trống và thiếu khai báo tầng `GlobalInfrastructure` truy cập `Shared` DTOs. | Định nghĩa rõ lớp `GlobalInfrastructure`, cấu hình cho phép tầng trống `.withOptionalLayers(true)` trong thời gian bootstrapping. | Vượt qua kiểm thử kiến trúc (ArchitectureTest) 100% xanh. |

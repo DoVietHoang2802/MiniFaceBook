@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="9.3">
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\BackendApplication.java">
+<error line="7" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\config\OpenApiConfig.java">
+<error line="12" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+<error line="15" column="3" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocMethodCheck"/>
+<error line="16" column="18" severity="warning" message="Abbreviation in name &apos;miniFaceBookOpenAPI&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="22" severity="warning" message="Line is longer than 100 characters (found 107)." source="com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\filter\RateLimitingFilter.java">
+<error line="21" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\security\SecurityConfig.java">
+<error line="25" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+<error line="33" column="26" severity="warning" message="Abbreviation in name &apos;PUBLIC_ENDPOINTS&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="33" column="26" severity="warning" message="Member name &apos;PUBLIC_ENDPOINTS&apos; must match pattern &apos;^[a-z][a-z0-9][a-zA-Z0-9]*$&apos;." source="com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck"/>
+<error line="37" column="26" severity="warning" message="Abbreviation in name &apos;SWAGGER_ENDPOINTS&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="37" column="26" severity="warning" message="Member name &apos;SWAGGER_ENDPOINTS&apos; must match pattern &apos;^[a-z][a-z0-9][a-zA-Z0-9]*$&apos;." source="com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck"/>
+<error line="42" column="18" severity="warning" message="Abbreviation in name &apos;SIGNER_KEY&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="42" column="18" severity="warning" message="Member name &apos;SIGNER_KEY&apos; must match pattern &apos;^[a-z][a-z0-9][a-zA-Z0-9]*$&apos;." source="com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck"/>
+<error line="44" column="3" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocMethodCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\AuthResponse.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\LoginRequest.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\LoginResult.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\RegisterRequest.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\UserResponse.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\mapper\AuthMapper.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\service\AuthService.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\model\Role.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\model\User.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\repository\UserRepository.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\TokenService.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\mapper\UserDocumentMapper.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\adapter\UserRepositoryImpl.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\document\UserDocument.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\repository\MongoUserRepository.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\security\AuthenticationService.java">
+<error line="37" column="20" severity="warning" message="Abbreviation in name &apos;SIGNER_KEY&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="37" column="20" severity="warning" message="Member name &apos;SIGNER_KEY&apos; must match pattern &apos;^[a-z][a-z0-9][a-zA-Z0-9]*$&apos;." source="com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck"/>
+<error line="41" column="18" severity="warning" message="Abbreviation in name &apos;ACCESS_TOKEN_EXPIRATION&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="41" column="18" severity="warning" message="Member name &apos;ACCESS_TOKEN_EXPIRATION&apos; must match pattern &apos;^[a-z][a-z0-9][a-zA-Z0-9]*$&apos;." source="com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck"/>
+<error line="45" column="18" severity="warning" message="Abbreviation in name &apos;REFRESH_TOKEN_EXPIRATION&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+<error line="45" column="18" severity="warning" message="Member name &apos;REFRESH_TOKEN_EXPIRATION&apos; must match pattern &apos;^[a-z][a-z0-9][a-zA-Z0-9]*$&apos;." source="com.puppycrawl.tools.checkstyle.checks.naming.MemberNameCheck"/>
+<error line="81" column="15" severity="warning" message="Abbreviation in name &apos;signedJWT&apos; must contain no more than &apos;1&apos; consecutive capital letters." source="com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\security\TokenServiceAdapter.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\presentation\AuthController.java">
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\domain\BaseEntity.java">
+<error line="12" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\dto\ApiResponse.java">
+<error line="10" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\AppException.java">
+<error line="5" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\ErrorCode.java">
+<error line="7" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\GlobalExceptionHandler.java">
+<error line="13" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+<file name="D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\mapper\GlobalMapperConfig.java">
+<error line="6" column="1" severity="warning" message="Missing a Javadoc comment." source="com.puppycrawl.tools.checkstyle.checks.javadoc.MissingJavadocTypeCheck"/>
+</file>
+</checkstyle>

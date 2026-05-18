@@ -1,6 +1,8 @@
 # 🚀 MiniFaceBook - Professional Backend Foundation
 
-Dự án xây dựng hệ thống Backend cho mạng xã hội thu nhỏ, tập trung vào kiến trúc Scalable, Realtime Chat và bảo mật chuẩn Enterprise.
+> [!CAUTION]
+> ### 🛑 BẮT BUỘC ĐỐI VỚI AI (MANDATORY STARTUP PROTOCOL)
+> Trước khi thực hiện bất kỳ hành động nào trong phiên chat mới, AI PHẢI đọc file **[docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md)** để đồng bộ bối cảnh và các quyết định chiến lược. Không được bỏ qua bước này!
 
 ---
 
@@ -16,12 +18,23 @@ Dự án xây dựng hệ thống Backend cho mạng xã hội thu nhỏ, tập 
 - **Realtime:** Spring WebSocket (STOMP) + Redis Pub/Sub.
 - **Database:** MongoDB (Atlas) + Redis (Caching & Sessions) + **Neo4j (Graph Database cho Social Connections)**.
 - **Search & Broker:** **ElasticSearch** (Search), **Kafka/RabbitMQ** (Event-Driven).
-- **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation.
+
+---
+
+## 🏃‍♂️ Khởi chạy nhanh (Quick Start)
+1. **Hạ tầng:** `docker-compose up -d`
+2. **Backend:** Truy cập `backend/` và chạy `mvn spring-boot:run`
+3. **Tài liệu API:** Truy cập [http://localhost:8080/api/docs](http://localhost:8080/api/docs)
+
+Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui lòng xem tại: **[docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)**
+
+---
+- **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation + **RBAC (Role-Based Access Control)**.
 - **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
-- **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI).
+- **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI), **Sentry (Error Tracking)**.
 - **Frontend:** React + TypeScript + shadcn/ui + Tailwind + Zod + TanStack Query.
 - **DevOps & Monitoring:** Docker Compose, GitHub Actions, Prometheus & Grafana.
-- **Testing:** JUnit 5, Mockito, MockMvc, Testcontainers, Playwright.
+- **Testing:** JUnit 5, Mockito, MockMvc, Testcontainers, Playwright, **K6 (Load Testing)**.
 
 ---
 

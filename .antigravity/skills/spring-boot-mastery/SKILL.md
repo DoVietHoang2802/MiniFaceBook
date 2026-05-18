@@ -32,3 +32,17 @@ Mỗi Module phải được chia thành 4 lớp rõ rệt:
 
 ## ⚡ Performance (Java 21)
 - Tận dụng **Virtual Threads** cho các tác vụ I/O nặng (như Chat Realtime) để tối ưu throughput.
+
+---
+
+## ⚠️ MANDATORY POST-TASK WORKFLOW (QUY TRÌNH BẮT BUỘC)
+Sau khi hoàn thành bất kỳ thay đổi code nào, AI **PHẢI** thực hiện các bước sau trước khi báo cáo kết quả:
+
+1. **Verify:** Chạy `ArchitectureTest.java` để đảm bảo không vi phạm Clean Architecture.
+2. **Document:** 
+    - Cập nhật `docs/PROGRESS.md` (Ghi lại logic kỹ thuật).
+    - Cập nhật `docs/ROADMAP.md` (Đánh dấu tiến độ).
+3. **Context Handoff:** Nếu là task cuối của phiên, phải cập nhật `docs/SESSION_HANDOFF.md`.
+4. **Consistency Check:** Đảm bảo `docs/SYSTEM_DESIGN.md` phản ánh đúng các thay đổi hạ tầng (Port, DB, Security).
+
+**TUYỆT ĐỐI KHÔNG ĐỂ USER PHẢI NHẮC VIỆC CẬP NHẬT TÀI LIỆU.**

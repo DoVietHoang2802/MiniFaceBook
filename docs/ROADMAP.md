@@ -3,30 +3,41 @@
 ## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE
 *Mục tiêu: Thiết lập bộ khung kỹ thuật chuẩn để mở rộng dự án không bị rối.*
 
-- [ ] **Sprint 0.1: Spring Boot Setup**
-    - [ ] Khởi tạo dự án Spring Boot 3.x với Java 21 (Maven/Gradle)[cite: 1].
-    - [ ] Cấu hình **Checkstyle** và **Spotless** cho code style.
-    - [ ] Thiết lập **Docker Compose** cho MongoDB, Redis và Neo4j.
-- [ ] **Sprint 0.2: Common Utilities**
-    - [ ] Cấu hình **Modular Clean Architecture** (Domain, Application, Infrastructure, Presentation).
-    - [ ] Thiết lập Global Exception Handling với `@RestControllerAdvice`.
-    - [ ] Tích hợp **Lombok** và **MapStruct**.
-    - [ ] Cấu hình **Spring Security** (Stateless JWT).
-    - [ ] Tích hợp **Bucket4j** cho Rate Limiting.
-    - [ ] **Sprint 0.3: API Documentation & Quality Assurance**
-        - [ ] Tích hợp **SpringDoc OpenAPI** (Swagger).
-        - [ ] Cấu hình **ArchUnit** để kiểm tra tính toàn vẹn của kiến trúc.
+- [x] **Sprint 0.1: Spring Boot Setup**
+    - [x] Khởi tạo dự án Spring Boot 3.x với Java 21 (Maven).
+    - [x] Cấu hình **Mongock** để quản lý Database Migration cho MongoDB.
+    - [x] Cấu hình **Checkstyle** và **Spotless** cho code style.
+    - [x] Thiết lập **Docker Compose** cho MongoDB, Redis và Neo4j.
+- [x] **Sprint 0.2: Common Utilities & Security Foundation**
+    - [x] Thiết lập bộ khung phản hồi chuẩn **ApiResponse** (Unified JSON Structure).
+    - [x] Triển khai bảng mã lỗi tập trung **ErrorCode** & Custom **AppException**.
+    - [x] Xây dựng **Global Exception Handling** (Tấm khiên bảo mật & đồng nhất lỗi).
+    - [x] Triển khai **BaseEntity với Auditing** (Tự động theo dõi ngày tạo/sửa - chuẩn Industry).
+    - [x] Thiết lập **Global Mapper Config** (MapStruct - tối ưu hiệu năng chuyển đổi dữ liệu).
+    - [x] Cấu hình **Spring Security** (Stateless JWT với **Refresh Token Rotation** - Nền tảng lõi).
+        - *Highlight:* **Stateless Architecture** (Không Session, dễ dàng Scale-out).
+        - *Highlight:* **OAuth2 Resource Server** (Chuẩn Spring Security 6 mới nhất).
+        - *Highlight:* **Custom 401 Response** (Đồng nhất lỗi Unauthenticated với ApiResponse).
+        - *Highlight:* **Bcrypt Password Encoder** (Mã hóa mật khẩu chuẩn an toàn).
+        - *Lưu ý:* Cơ chế Revoke Token sẽ được triển khai lưu DB ở Phase 1.
+    - [x] Tích hợp **Bucket4j** cho Rate Limiting (Chống Spam API).
+    - [x] **Sprint 0.3: API Documentation & Quality Assurance**
+        - [x] Tích hợp **SpringDoc OpenAPI** (Swagger).
+            - *Strategic Value:* **"Single Source of Truth"** - Thiết lập hợp đồng dữ liệu chuẩn xác giữa Backend và Frontend, loại bỏ rủi ro sai sót và tối ưu hóa quá trình tích hợp hệ thống.
+        - [x] Cấu hình **ArchUnit** để kiểm tra tính toàn vẹn của kiến trúc.
+            - *Strategic Value:* **"Architecture as Code"** - Tự động hóa việc giám sát các quy tắc Clean Architecture, đảm bảo hệ thống luôn nhất quán và không phát sinh nợ kỹ thuật (Tech Debt) khi mở rộng.
 
 ---
 
 ## 🔐 PHASE 1: AUTHENTICATION & IDENTITY
 *Mục tiêu: Quản lý người dùng và xác thực bảo mật.*
 
-- [ ] **Sprint 1.1: Core Auth**
+- [ ] **Sprint 1.1: Core Auth & RBAC**
     - [ ] Thiết kế User Entity (Domain) và Repository (Infrastructure - Spring Data MongoDB).
+    - [ ] Triển khai **RBAC** (Role-Based Access Control) với các quyền ADMIN, USER.
     - [ ] Triển khai Security Filters cho **Refresh Token Rotation**.
-    - [ ] Triển khai **Spring Security JWT** với Cookie-based (HttpOnly) để chống XSS/CSRF.
-    - [ ] Tích hợp **Resend** để gửi email xác thực tài khoản & thông báo.
+    - [ ] Triển khai **Spring Security JWT** với Cookie-based (HttpOnly).
+    - [ ] Tích hợp **Resend** để gửi email xác thực tài khoản.
 - [ ] **Sprint 1.2: Frontend Foundation (React + shadcn/ui + Zod + TanStack Query)**
     - [ ] Khởi tạo dự án React (Vite).
     - [ ] Cài đặt **Tailwind CSS**, **shadcn/ui**, **Zod** và **TanStack Query**.
@@ -89,15 +100,16 @@
 ## 🛠️ PHASE 5: ADVANCED & DEPLOYMENT
 *Mục tiêu: Hoàn thiện kỹ thuật chuyên sâu và đưa sản phẩm lên môi trường thật.*
 
-- [ ] **Sprint 5.1: Optimization**
-    - [ ] Áp dụng Soft Delete cho tin nhắn và bài viết (không xóa vật lý)[cite: 1].
-    - [ ] Caching dữ liệu tĩnh hoặc danh sách bạn bè bằng Redis[cite: 1].
-    - [ ] Viết Unit Test bằng **JUnit 5** cho các logic nghiệp vụ quan trọng[cite: 1, 2].
+- [ ] **Sprint 5.1: Optimization & Quality Audit**
+    - [ ] Áp dụng Soft Delete cho tin nhắn và bài viết.
+    - [ ] Caching dữ liệu tĩnh hoặc danh sách bạn bè bằng Redis.
+    - [ ] Viết Unit Test bằng **JUnit 5** và Integration Test bằng **MockMvc** + **Testcontainers**.
 - [ ] **Sprint 5.2: CI/CD & Production**
     - [ ] Viết E2E Test bằng **Playwright** cho các luồng chính.
     - [ ] Thiết lập GitHub Actions tự động chạy Build & Test khi push code[cite: 2].
     - [ ] Deploy Backend lên Render/Railway[cite: 1].
     - [ ] Deploy Frontend lên Vercel/Netlify[cite: 1].
+    - [ ] Tích hợp **Sentry** để theo dõi lỗi Realtime trên Production cho cả Backend và Frontend.
 
 ---
 
@@ -105,11 +117,11 @@
 *Mục tiêu: Đưa dự án lên tầm cao mới với các tính năng phức tạp sau khi Core đã đạt 10/10.*
 
 - [ ] **Sprint 6.1: Advanced Messaging & Search**
-    - [ ] **Group Chat:** Triển khai logic nhóm, quản lý quyền Admin/Member và thông báo nhóm.
+    - [ ] **Group Chat:** Triển khai logic nhóm, quản lý quyền **Admin/Member (RBAC)** và thông báo nhóm.
     - [ ] **Message Search (ElasticSearch):** Tích hợp ElasticSearch để xử lý tìm kiếm dữ liệu lớn với tốc độ cao, thay thế Regex MongoDB.
 - [ ] **Sprint 6.2: Rich Media & Social**
     - [ ] **Video & Story:** Hỗ trợ định dạng video và tính năng tin tức 24h (Stories).
     - [ ] **Voice/Video Call:** Nghiên cứu tích hợp WebRTC cho cuộc gọi realtime trực tiếp.
 - [ ] **Sprint 6.3: Infrastructure Scaling & Monitoring**
     - [ ] **Message Broker (Kafka/RabbitMQ):** Triển khai kiến trúc Event-Driven để xử lý Notification và tác vụ nền khi hệ thống có hàng triệu user.
-    - [ ] Tích hợp **Prometheus & Grafana** để theo dõi hiệu năng hệ thống chuyên sâu.
+    - [ ] Tích hợp **Prometheus & Grafana** để theo dõi hiệu năng hệ thống chuyên sâu.    - [ ] Thực hiện **Load Testing với K6** để đảm bảo hệ thống chịu tải được triệu user.

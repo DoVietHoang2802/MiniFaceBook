@@ -1,27 +1,39 @@
-# Project Structure & Management Guide
+# 🏗️ PROJECT STRUCTURE & GOVERNANCE
 
-## 🛠 Cách vận hành hệ thống Tài liệu (Docs)
-Dự án MiniFaceBook sử dụng hệ thống tài liệu phân lớp để đảm bảo tính nhất quán:
-
-1. **README.md (Thư mục gốc):** Điểm khởi đầu. Chứa Stack công nghệ, Triết lý phát triển và Hướng dẫn cho AI.
-2. **docs/ROADMAP.md:** Lộ trình chi tiết 6 Phase. Dùng để theo dõi những gì SẼ làm.
-3. **docs/PROGRESS.md:** Nhật ký tiến độ. Dùng để ghi lại những gì ĐÃ làm và tại sao làm thế.
-4. **docs/SYSTEM_DESIGN.md:** Bản thiết kế kỹ thuật (DB, Security, Architecture).
-5. **docs/AI_GUIDELINES.md:** Quy tắc bắt buộc AI phải tuân theo khi viết code.
+*Tài liệu này giải thích cách vận hành hệ thống Tài liệu (Docs) và Kỹ năng (Skills) để đảm bảo tính nhất quán và kỷ luật của dự án MiniFaceBook.*
 
 ---
 
-## 🧠 Cách vận hành hệ thống Kỹ năng (Internal Skills)
-Các kỹ năng nằm trong thư mục `.antigravity/skills/` là các "Manual" hướng dẫn thực thi chuyên sâu cho AI:
+## 📘 1. Hệ thống tài liệu (Documentation System)
+Hệ thống tài liệu là **"Sách lược & Nhật ký"** của dự án. Nó giúp duy trì bối cảnh (Context) cho cả Developer và AI.
 
-- **spring-boot-mastery:** Tiêu chuẩn viết Backend (Modular Clean Architecture, MapStruct, Lombok).
-- **security-expert:** Tiêu chuẩn bảo mật (Refresh Token, HttpOnly Cookies).
-- **realtime-architect:** Tiêu chuẩn làm Chat (Spring WebSocket + STOMP).
-- **frontend-master:** Tiêu chuẩn làm giao diện (React, shadcn/ui, Zod).
-- **db-optimization:** Tiêu chuẩn tối ưu Database (Index, Soft Delete).
-- **devops-testing:** Tiêu chuẩn triển khai (Docker, JUnit 5, Testcontainers).
+| File | Chức năng |
+| :--- | :--- |
+| **README.md** | Cổng vào dự án. Chứa Tech Stack, triết lý và hướng dẫn khởi chạy nhanh. |
+| **ROADMAP.md** | Lộ trình chiến lược 6 Phase. Dùng để theo dõi những gì **SẼ** làm. |
+| **PROGRESS.md** | Nhật ký tiến độ thực tế. Dùng để ghi lại những gì **ĐÃ** làm và lý do kỹ thuật. |
+| **SYSTEM_DESIGN.md** | Bản thiết kế kỹ thuật tổng thể (Database, Security, Architecture). |
+| **AI_GUIDELINES.md** | **Hiến pháp tối cao.** Quy định quy chuẩn viết code và kỷ luật cho AI. |
+| **SESSION_HANDOFF.md** | Cầu nối giữa các phiên làm việc. Ghi lại trạng thái hiện tại và việc cần làm tiếp theo. |
+| **TESTING_GUIDE.md** | Cẩm nang kiểm thử. Hướng dẫn cách chạy và test các tính năng đã hoàn thiện. |
 
 ---
 
-## 💡 Lưu ý cho AI Assistant
-Trước khi thực hiện bất kỳ thay đổi nào vào Source Code, AI phải đảm bảo thay đổi đó không vi phạm các nguyên tắc đã ghi trong **AI_GUIDELINES.md** và phù hợp với giai đoạn hiện tại trong **ROADMAP.md**.
+## 🧠 2. Hệ thống kỹ năng (Internal Skills)
+Nằm trong thư mục `.antigravity/skills/`. Đây là **"Cẩm nang thực thi chuyên sâu"** dành riêng cho AI, đảm bảo mọi dòng code đều đạt chuẩn Senior.
+
+- **spring-boot-mastery:** Tiêu chuẩn Modular Clean Architecture, MapStruct, Lombok.
+- **security-expert:** Tiêu chuẩn bảo mật (Refresh Token Rotation, HttpOnly Cookies).
+- **realtime-architect:** Tiêu chuẩn làm Chat với Spring WebSocket & STOMP.
+- **frontend-master:** Tiêu chuẩn React, TypeScript, Tailwind & Zod.
+- **db-optimization:** Tiêu chuẩn tối ưu MongoDB, Neo4j và Caching.
+- **devops-testing:** Tiêu chuẩn JUnit 5, Testcontainers, K6 và Docker.
+
+---
+
+## ⚖️ 3. Docs vs Skills: Sự khác biệt
+- **Docs (Sách lược):** Trả lời câu hỏi **"Cần làm gì?"** và **"Tại sao làm thế?"**. Dành cho cả người và AI.
+- **Skills (Kỹ thuật):** Trả lời câu hỏi **"Làm nó như thế nào cho xịn?"**. Tập trung vào việc ép AI tuân thủ các chuẩn mực kỹ thuật ngầm.
+
+---
+> **"Tài liệu tốt là nền tảng của một dự án trường tồn."**
