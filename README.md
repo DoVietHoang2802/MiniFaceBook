@@ -42,7 +42,7 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 Dự án được chia làm 6 giai đoạn phát triển chính. 
 > 📑 Xem chi tiết tại: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 
-- **Phase 1:** Core Auth & Identity (🏗️ *Đang triển khai*).
+- **Phase 1:** Core Auth & Identity (✅ *Đã hoàn thành*).
 - **Phase 2:** Realtime Chat (MVP).
 - **Phase 3:** Social Graph & Friends.
 - **Phase 4:** Content & Engagement (AI Integration).

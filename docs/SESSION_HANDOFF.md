@@ -1,32 +1,34 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 18/05/2026
-## 🏁 Trạng thái hiện tại: Đã hoàn thành PHASE 0 & Chuẩn bị bước vào PHASE 1
+## 🏁 Trạng thái hiện tại: Đã hoàn thành SPRINT 1.1 (Core Auth, RBAC, HttpOnly Cookie JWT & Refresh Token Rotation & Resend Email) & Chuẩn bị bước vào SPRINT 1.2
 
 ---
 
 ## 🛑 MANDATORY PROTOCOLS (BẮT BUỘC TUÂN THỦ)
 1. **Docs Over Skills:** Nếu Skill mâu thuẫn với Docs, AI PHẢI dừng lại, báo cáo USER và sửa Skill theo Docs. Tuyệt đối không tự ý làm sai lệch cấu trúc dự án.
 2. **Anomaly Reporting:** Bất kỳ dấu hiệu bất thường nào (Lỗi Build, xung đột thư viện, mâu thuẫn logic) đều phải báo cáo ngay cho USER trước khi can thiệp.
-3. **Architecture Guard:** Cấm phá vỡ quy tắc Clean Architecture. Phải chạy `ArchitectureTest.java` sau mỗi thay đổi lớn.
+3. **Architecture Guard:** Cấm phá vỡ quy tắc Clean Architecture. Phải chạy `mvn test` để kiểm tra `ArchitectureTest.java` sau mỗi thay đổi lớn.
 
 ---
 
-### ✅ Công việc đã hoàn thành (Phase 0)
-- **Architecture:** Thiết lập bộ khung Modular Clean Architecture chuẩn Senior.
-- **Security:** Stateless JWT, BCrypt, Rate Limiting (Bucket4j), cùng bộ xử lý Unauthenticated toàn cục.
-- **Quality:** ArchUnit, Checkstyle, Spotless đã kích hoạt và hoạt động hoàn hảo.
-- **Docs:** Swagger UI hoạt động tại `/api/docs`.
+### ✅ Công việc đã hoàn thành (Sprint 1.1)
+- **Domain Modeling & Persistence:** Thiết kế domain model `User` độc lập hoàn toàn với framework, triển khai `UserRepositoryImpl` mapping qua `UserDocument` lưu trong MongoDB.
+- **High-Security Cookies:** Đổi toàn bộ luồng lưu token sang **HttpOnly Cookie** (chống XSS/CSRF) cho cả `accessToken` và `refreshToken`.
+- **Refresh Token Rotation & Anti-Replay:** Triển khai xoay vòng refresh token, thu hồi token cũ ngay khi sử dụng lại. Nếu phát hiện token cũ đã bị sử dụng lại (kẻ gian replay attack), hệ thống lập tức xoá sạch toàn bộ active tokens của user đó để bảo vệ tài khoản.
+- **Xác thực Email qua Resend:** Tích hợp Resend Email API gửi link xác thực kích hoạt tài khoản (`/auth/verify?token=...`), bắt buộc xác thực trước khi đăng nhập.
+- **Swagger Documentation:** Cập nhật 100% Swagger OpenAPI cho các endpoint `/auth/register`, `/auth/login`, `/auth/verify`, `/auth/refresh`, `/auth/logout`.
+- **ArchUnit Compliance:** Sắp xếp toàn bộ DTOs, Mappers, và các lớp hạ tầng bảo mật về đúng phân lớp Clean Architecture, đảm bảo kiểm thử kiến trúc pass 100%.
 
-### 🔧 Fix History (Lịch sử kỷ luật)
-- **ArchUnit 1.3.0 Standardized:** Cấu hình thành công `.withOptionalLayers(true)` trong [ArchitectureTest.java](file:///d:/Project_MiniFace/backend/src/test/java/com/minifacebook/ArchitectureTest.java#L23) để hỗ trợ các tầng trống khi bootstrapping tính năng mới.
-- **Global Unauthenticated Standardized:** Tạo [JwtAuthenticationEntryPoint.java](file:///d:/Project_MiniFace/backend/src/main/java/com/minifacebook/infrastructure/security/JwtAuthenticationEntryPoint.java) và cấu hình toàn cục trong [SecurityConfig.java](file:///d:/Project_MiniFace/backend/src/main/java/com/minifacebook/infrastructure/security/SecurityConfig.java#L70) giúp chặn đứng rò rỉ trang HTML mặc định của Tomcat và thay bằng JSON `{ "status": 1002, "message": "Unauthenticated" }` cho toàn bộ các request không truyền Token.
-- **PowerShell Compatibility:** Đồng bộ toàn bộ tài liệu kiểm thử [TESTING_GUIDE.md](file:///d:/Project_MiniFace/docs/TESTING_GUIDE.md#L35) sử dụng lệnh `curl.exe` tương thích tuyệt đối với môi trường Windows PowerShell.
+### 🔧 Lịch sử sửa đổi quan trọng
+- Loại bỏ DTO thừa `AuthResponse.java` do token đã được tự động lưu trữ và quản lý qua HttpOnly Cookies ở tầng HTTP header.
+- Thêm `RefreshToken` Entity ở Domain và `MongoRefreshTokenRepository` ở Infrastructure.
 
-### 🚀 Nhiệm vụ tiếp theo (Sprint 1.1 - Phase 1: Authentication)
-*   **Mở đầu:** Thiết kế **User Entity** (Domain Layer tại `com.minifacebook.module.auth.domain.model.User`) theo đúng chuẩn Domain-Driven Design (không chứa annotation JPA/Framework) và **UserRepository** interface.
-*   **Tiếp theo:** Phát triển Service đăng ký (Register - mã hóa BCrypt) và đăng nhập (Login - phát sinh Access/Refresh Token).
-*   **Bảo mật nâng cao:** Tích hợp RBAC (Role-Based Access Control) để phân quyền API.
+### 🚀 Nhiệm vụ tiếp theo (Sprint 1.2 - Phase 1: Frontend Foundation)
+*   **Khởi tạo:** Thiết lập dự án React sử dụng Vite trong thư mục `frontend/`.
+*   **Cài đặt UI Stack:** Tích hợp **Tailwind CSS v4**, **shadcn/ui**, và cấu hình các design tokens ban đầu.
+*   **Client Core:** Cài đặt **TanStack Query** (React Query) để quản lý state và fetching API, **Zod** để validate form nhập liệu và Axios để gửi request kèm cookie bảo mật.
+*   **Base Layout:** Xây dựng màn hình Đăng ký, Đăng nhập, và Trang chủ cơ bản tương thích với luồng Cookie-based Auth mới của Backend.
 
 ---
 *Ghi chú: Luôn giữ file `TESTING_GUIDE.md` cập nhật để đảm bảo tính sẵn sàng của hệ thống.*
