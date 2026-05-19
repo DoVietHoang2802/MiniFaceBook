@@ -16,12 +16,10 @@ D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\mo
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\repository\RefreshTokenRepository.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\repository\UserRepository.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\EmailService.java
-D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\MediaService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\TokenService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\email\ResendEmailAdapter.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\mapper\RefreshTokenMapper.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\mapper\UserDocumentMapper.java
-D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\media\CloudinaryService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\adapter\RefreshTokenRepositoryImpl.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\adapter\UserRepositoryImpl.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\document\RefreshTokenDocument.java
@@ -33,8 +31,10 @@ D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastru
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\presentation\AuthController.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\presentation\UserController.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\domain\BaseEntity.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\domain\service\MediaService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\dto\ApiResponse.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\AppException.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\ErrorCode.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\GlobalExceptionHandler.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\infrastructure\media\CloudinaryService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\mapper\GlobalMapperConfig.java

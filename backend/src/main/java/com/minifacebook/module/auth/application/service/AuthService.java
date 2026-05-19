@@ -13,7 +13,7 @@ import com.minifacebook.module.auth.domain.repository.RefreshTokenRepository;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.auth.domain.service.EmailService;
 import com.minifacebook.module.auth.domain.service.TokenService;
-import com.minifacebook.module.auth.domain.service.MediaService;
+import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.time.Instant;

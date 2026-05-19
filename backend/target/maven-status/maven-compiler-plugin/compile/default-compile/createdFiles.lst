@@ -1,5 +1,4 @@
 com\minifacebook\module\auth\application\mapper\AuthMapperImpl.class
-com\minifacebook\module\auth\domain\service\MediaService.class
 com\minifacebook\BackendApplication.class
 com\minifacebook\shared\exception\GlobalExceptionHandler.class
 com\minifacebook\module\auth\domain\model\User$UserBuilder.class
@@ -11,6 +10,7 @@ com\minifacebook\shared\exception\ErrorCode.class
 com\minifacebook\module\auth\infrastructure\email\ResendEmailAdapter.class
 com\minifacebook\module\auth\application\dto\UpdateProfileRequest$UpdateProfileRequestBuilder.class
 com\minifacebook\module\auth\application\dto\LoginResult$LoginResultBuilder.class
+com\minifacebook\shared\infrastructure\media\CloudinaryService.class
 com\minifacebook\module\auth\application\dto\LoginResult.class
 com\minifacebook\shared\domain\BaseEntity.class
 com\minifacebook\module\auth\domain\service\EmailService.class
@@ -19,11 +19,11 @@ com\minifacebook\module\auth\application\dto\LoginRequest$LoginRequestBuilder.cl
 com\minifacebook\module\auth\domain\model\User.class
 com\minifacebook\module\auth\infrastructure\persistence\repository\MongoUserRepository.class
 com\minifacebook\module\auth\infrastructure\mapper\UserDocumentMapperImpl.class
-com\minifacebook\module\auth\infrastructure\media\CloudinaryService.class
 com\minifacebook\shared\dto\ApiResponse.class
 com\minifacebook\module\auth\domain\repository\UserRepository.class
 com\minifacebook\module\auth\infrastructure\mapper\UserDocumentMapper.class
 com\minifacebook\module\auth\presentation\UserController.class
+com\minifacebook\shared\domain\service\MediaService.class
 com\minifacebook\module\auth\infrastructure\persistence\repository\MongoRefreshTokenRepository.class
 com\minifacebook\module\auth\infrastructure\persistence\adapter\RefreshTokenRepositoryImpl.class
 com\minifacebook\module\auth\domain\repository\RefreshTokenRepository.class

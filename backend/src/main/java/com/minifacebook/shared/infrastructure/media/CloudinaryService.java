@@ -1,7 +1,7 @@
-package com.minifacebook.module.auth.infrastructure.media;
+package com.minifacebook.shared.infrastructure.media;
 
 import com.cloudinary.Cloudinary;
-import com.minifacebook.module.auth.domain.service.MediaService;
+import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Triển khai dịch vụ lưu trữ Media sử dụng Cloudinary kết hợp kiểm soát Magic Bytes qua Apache Tika.
- * Đặt tại phân lớp Infrastructure của Auth module để tuân thủ kiến trúc Clean Architecture.
+ * Đặt tại phân lớp Shared Infrastructure để tất cả các module (Auth, Post, Chat,...) có thể tái sử dụng sạch sẽ.
  */
 @Service
 @RequiredArgsConstructor
