@@ -4,6 +4,10 @@ server:
     context-path: /api
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 25MB
   application:
     name: minifacebook-backend
   
@@ -11,6 +15,16 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27018/miniface_db}
       auto-index-creation: true
+
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
   # Cấu hình Mongock cho Migration
   mongock:

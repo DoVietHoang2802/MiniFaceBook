@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 19/05/2026
-## 🏁 Trạng thái hiện tại: Đã hoàn thành 100% SPRINT 1.4 (Profile & Media - Hoàn tất Task 1 & Tái cấu trúc Sạch) và sẵn sàng bước vào SPRINT 2.1 (Post System) của Phase 2
+## 🏁 Trạng thái hiện tại: Đã hoàn thành 100% SPRINT 2.1 (Post System - Giao diện 3 cột Premium, vi tương tác và Đồng bộ Tài liệu/Skill) và sẵn sàng bước vào SPRINT 2.2 (Reactions & Comments) của Phase 2
 
 ---
 
@@ -14,7 +14,7 @@
 
 ---
 
-### ✅ Công việc đã hoàn thành (Sprint 1.1 -> Sprint 1.4)
+### ✅ Công việc đã hoàn thành (Sprint 1.1 -> Sprint 2.1)
 
 #### A. Backend (Spring Boot 3.x)
 - **Domain Modeling & Persistence:** Thiết kế domain model `User` độc lập framework, triển khai `UserRepositoryImpl` mapping qua `UserDocument` lưu trong MongoDB.
@@ -25,37 +25,51 @@
 - **ArchUnit & Security Auditing:** Sắp xếp phân lớp Clean Architecture đạt chuẩn 100% test case ArchUnit. Vá thành công lỗ hổng bảo mật vô hiệu hóa token trong database (`revoked: true`) khi người dùng logout.
 - **Media Upload Bảo mật (Sprint 1.4):** Tích hợp Cloudinary kết hợp bộ quét nhị phân **Apache Tika (Magic Bytes)** ngăn chặn hoàn toàn việc tải lên file độc hại giả dạng đuôi ảnh. Thiết lập xử lý ngoại lệ `MaxUploadSizeExceededException` mượt mà cho file >5MB.
 - **Tái cấu trúc Sạch - Shared Core (Sprint 1.4):** Tránh phụ thuộc chéo khi bước sang Phase 2 bằng cách đưa `MediaService` (Domain Interface) và `CloudinaryService` (Adapter) ra phân vùng `shared` dùng chung. Được xác thực hoàn toàn qua ArchUnit với 0 lỗi vi phạm.
+- **Hạ tầng bài viết & API (Sprint 2.1):** Tạo module `post` hoàn chỉnh chuẩn Clean Architecture. Hỗ trợ tạo bài viết (`POST /api/posts`) có nhiều ảnh qua Cloudinary và API lấy bảng tin phân trang (`GET /api/posts/newsfeed`).
+- **Nâng cấp Cấu hình File Upload (Sprint 2.1 - Part 4):** Thiết lập `spring.servlet.multipart` trong `application.yml` cho phép file lên tới 5MB và request tối đa 25MB, ngăn ngừa triệt để lỗi Tomcat `ERR_CONNECTION_RESET`.
 
 #### B. Frontend (React 19 + Vite + TypeScript)
 - **Kiến trúc Modular Phân Lớp:** Tổ chức dự án theo chuẩn [docs/architecture/FRONTEND_ARCHITECTURE.md](file:///d:/Project_MiniFace/docs/architecture/FRONTEND_ARCHITECTURE.md) với core, components, và modules nghiệp vụ khép kín.
 - **Form & Zod Validations:** Thiết kế `LoginForm`, `RegisterForm` và `authSchema` đảm bảo lọc và chuẩn hóa dữ liệu sạch từ Client-side.
 - **Silent Refresh & Axios Mutex Lock:** Triển khai Axios Client có Interceptor tự động xoay vòng Access Token ngầm sử dụng cơ chế hàng chờ Promise Queue (`failedQueue`) và cờ hiệu `isRefreshing` để triệt tiêu lỗi Token Refresh Storm.
 - **TS verbatimModuleSyntax Optimization:** Giải quyết triệt để lỗi biên dịch ES module runtime bằng cách phân tách độc lập import type.
-- **Premium UI/UX Integration (Sprint 1.3):**
-  - **Khắc phục lỗi responsive tràn Viewport:** Sửa đổi cấu trúc layout container bên ngoài từ vị trí cố định (`h-screen overflow-hidden`) sang dạng linh động (`min-h-screen overflow-x-hidden overflow-y-auto w-full md:h-screen md:overflow-hidden`) kết hợp giảm padding trên mobile (`pt-4 pb-8 md:p-0`). Nhờ đó, tiêu đề *"Chào mừng trở lại"*, *"Tạo tài khoản mới"*, nút Google Login, và các thông tin pháp lý bên dưới đều hiển thị 100% rõ nét, không bị vỡ hay cắt xén trên mọi độ phân giải.
-  - **Thanh đo mật khẩu Password Strength Meter:** Tích hợp bộ đo độ mạnh mật khẩu thời gian thực (5 mức độ: *Yếu, Trung bình, Tốt, Mạnh, Rất Mạnh*) với màu sắc progress bar sống động và thông điệp hướng dẫn rõ ràng.
-  - **Hiệu ứng vi chuyển động cao cấp (Premium Animations):**
-    - `animate-fade-in-up`: Xuất hiện mượt mà từ dưới lên khi tải trang hoặc đổi tab.
-    - `animate-shake`: Rung lắc nhẹ phản hồi trực quan khi điền sai thông tin đầu vào.
-    - `.glass-focus-glow`: Hộp nhập liệu phát sáng mờ ảo khi được active.
-- **Premium Profile Page (Sprint 1.4):** Xây dựng trang cá nhân [ProfilePage.tsx](file:///d:/Project_MiniFace/frontend/src/modules/profile/components/ProfilePage.tsx) với các hiệu ứng Glassmorphic Glow, Avatar Ripple Pulse và uploader kéo thả trực quan. Validate dung lượng file (<=5MB) và định dạng ảnh bằng Zod cục bộ.
+- **Premium UI/UX Integration (Sprint 1.3 & 1.4):**
+  - Khắc phục lỗi responsive tràn Viewport trên mọi dòng máy di động.
+  - Trang cá nhân [ProfilePage.tsx](file:///d:/Project_MiniFace/frontend/src/modules/profile/components/ProfilePage.tsx) với các hiệu ứng Glassmorphic Glow, Avatar Ripple Pulse và uploader kéo thả trực quan.
+- **Giao diện 3 Cột Premium & Vi Chuyển Động (Sprint 2.1 - Đã Tối Ưu Tối Thượng):**
+  - Tái cấu trúc trang chủ `App.tsx` thành hệ lưới 3 cột hoàn chỉnh khớp 100% bản thiết kế `GiaoDienChinh.png` và `TrangChu4.png`.
+  - Thiết kế **Responsive Collapsing Sidebar** trái: Tự động co dãn cực mịn sang **Icon-Only Mode (`w-[80px]`)** trên tablet/laptop và bung rộng đầy đủ nhãn chữ (`275px`) trên màn hình lớn với chuyển động 300ms.
+  - Cố định hoàn hảo tầm mắt hai cột biên nhờ thuộc tính `sticky top-6 h-[calc(100vh-48px)]` giúp tăng tối đa khả năng tập trung thị giác vào feed chính.
+  - Suggested Friends cột phải chứa 5 gương mặt từ mockup cùng vi chuyển động `Add Friend` giả lập loading và chuyển `Requested` viền lục bảo.
+  - Tích hợp cơ chế **Placeholder Toast Alerts**: Bất kỳ nút bấm hoặc chức năng nào chưa liên kết API đều kích hoạt Floating Glassmorphic Toast lơ lửng thông báo lộ trình tinh tế, triệt tiêu mọi điểm chết UI.
+- **Vizo Light Slate Aesthetics & Notion Theme (Sprint 2.1 - Part 3):**
+  - Đồng bộ toàn bộ hệ màu sang sáng Notion cao cấp HSL (`bg-slate-50`, `bg-white`, `border-slate-200/80`).
+  - Lược bỏ cấu trúc Story rườm rà tập trung 100% vào Feed tối giản.
+  - Nút Like active đổi sắc hồng rực rỡ kèm uploader `CreatePostCard` có 4 biểu tượng màu Notion quyến rũ.
+- **Client-side File Validation (Sprint 2.1 - Part 4):**
+  - Viết logic kiểm định dung lượng ảnh tại máy khách trong `CreatePostCard.tsx`, lọc bỏ ảnh lớn hơn 5MB trước khi upload và kích hoạt Toast cảnh báo trực quan cho người dùng.
+
+#### C. Đồng bộ hóa Tài liệu & Skills Thiết kế (Sprint 2.1 - Part 5 & 6)
+- **Đồng bộ hóa 100% hệ thống Docs:** Đã thực hiện kiểm thử và cập nhật toàn bộ file tài liệu `.md` (gồm `UI_UX_DESIGN.md`, `STRUCTURE.md`, `FRONTEND_ARCHITECTURE.md`) để xóa sạch các từ khóa Sleek Dark Mode cũ, thay thế và thiết lập đồng bộ **Notion-inspired Light Slate Mode (Vizo Slate Light Theme)** làm ngôn ngữ thiết kế chính thức của dự án.
+- **Tập hợp Thành tựu STAR:** Tự động hóa cập nhật và ghi nhận đầy đủ 15 Highlight kỹ thuật cao cấp vào CV/Portfolio Ledger (`CV_PORTFOLIO_HIGHLIGHTS.md`).
+- **Nâng Cấp Kỹ Năng Spring Boot Mastery:** Tích hợp các hướng dẫn Tomcat limits (5MB/25MB), Magic Bytes nhị phân bằng Apache Tika, Testcontainers với `.withOptionalLayers(true)` và cấu trúc 4 phân lớp tối tân vào `spring-boot-mastery/SKILL.md`.
+- **Cập Nhật Cẩm Nang AI:** Thống nhất các quy chuẩn an toàn file size và Client-side Size Guard vào `AI_GUIDELINES.md`.
+- **Tư duy Senior 10 năm kinh nghiệm:** Biên soạn các hướng dẫn với lập luận chặt chẽ, mạch lạc, dễ hiểu, bảo toàn trọn vẹn giá trị kỹ thuật đã tích lũy từ các phiên làm việc trước.
 
 ---
 
 ### 🚀 Nhiệm vụ tiếp theo (Phase 2 - Content & News Feed)
 
-1. **Sprint 2.1: Post System (Hạ tầng bài viết):**
+1. **Sprint 2.2: Reactions & Comments (Tương tác bài viết):**
    * **Backend:**
-     * Thiết kế Document `Post` kết nối MongoDB (chứa trường authorId, content, list imageUrls, list reactIds, createdAt, updatedAt).
-     * Xây dựng API Đăng bài viết (`POST /api/posts`) hỗ trợ tải đa hình ảnh (multiple images) tái sử dụng hạ tầng `MediaService` (Cloudinary) dùng chung vừa hoàn thiện ở `shared`.
-     * API News Feed (`GET /api/posts/newsfeed`): Lấy danh sách bài viết mới nhất từ bạn bè hoặc bài đăng công khai thời gian thực.
+     * Thiết kế thêm các trường `reactCount` hoặc bảng/collection `Reaction` lưu trữ trạng thái tương tác bài viết (Like, Love, Haha, Wow, Sad, Angry).
+     * Xây dựng API Like/React bài viết (`POST /api/posts/{id}/react`) và API hủy react.
+     * Thiết kế collection `Comment` lưu trữ các bình luận cấp 1 của người dùng (authorId, content, postId, createdAt, updatedAt).
+     * Xây dựng API bình luận bài đăng (`POST /api/posts/{id}/comments`) và lấy bình luận phân trang (`GET /api/posts/{id}/comments`).
    * **Frontend:**
-     * Xây dựng Component `CreatePostCard` với giao diện kéo thả nhiều ảnh trực quan, hiển thị preview ảnh động.
-     * Xây dựng dòng thời gian bài viết (Timeline/News Feed Card) hỗ trợ tải trang tự động (Infinite Scroll) kết hợp với các vi hiệu ứng xuất hiện mượt mà.
-
-2. **Sprint 2.2: Reactions & Comments (Tương tác bài viết):**
-   * Xây dựng API Like/React tương tác nhanh.
-   * Xây dựng hệ thống bình luận (Comments) cấp 1 cho bài viết.
+     * Bổ sung nút Like/React thông minh trên `PostCard.tsx`: Hover hiển thị thanh chọn biểu tượng cảm xúc nhấp nháy, click đổi màu biểu tượng theo đúng tương tác.
+     * Thiết kế khu vực bình luận tích hợp dưới mỗi `PostCard.tsx`, hỗ trợ tải thêm bình luận mượt mờ và hiển thị Optimistic Update ngay khi nhấn Enter.
+     * **Tự động nén ảnh (Client-side Image Compression):** Tích hợp `browser-image-compression` để nén tự động ảnh trước khi gửi đi, tối ưu hóa băng thông.
 
 ---
 *Ghi chú: Luôn giữ file `TESTING_GUIDE.md` cập nhật để đảm bảo tính sẵn sàng kiểm thử của hệ thống.*

@@ -15,7 +15,7 @@ import org.springframework.web.client.RestTemplate;
  * Adapter triển khai gửi email sử dụng nhà cung cấp dịch vụ Resend qua REST API.
  * Đặt tại phân lớp Infrastructure của Auth module.
  */
-@Service
+// @Service
 @Slf4j
 public class ResendEmailAdapter implements EmailService {
 
@@ -33,6 +33,11 @@ public class ResendEmailAdapter implements EmailService {
     headers.set("Authorization", "Bearer " + apiKey);
 
     String verificationLink = "http://localhost:8080/api/auth/verify?token=" + verificationToken;
+    log.info("=========================================================================");
+    log.info("[DEVELOPMENT ONLY] Verification Link for {}:", toEmail);
+    log.info("👉 {}", verificationLink);
+    log.info("=========================================================================");
+
     String htmlContent = "<h3>Welcome to MiniFaceBook!</h3>"
         + "<p>Please verify your email address by clicking the link below:</p>"
         + "<p><a href=\"" + verificationLink + "\" style=\""

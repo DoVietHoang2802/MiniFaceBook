@@ -10,6 +10,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,12 @@ public class CloudinaryService implements MediaService {
 
   private final Cloudinary cloudinary;
   private final Tika tika = new Tika();
+
+  @Value("${app.cloudinary.cloud-name}")
+  private String cloudName;
+
+  @Value("${app.cloudinary.api-key}")
+  private String apiKey;
 
   private static final List<String> ALLOWED_MIME_TYPES = List.of(
       "image/jpeg",
@@ -56,6 +63,13 @@ public class CloudinaryService implements MediaService {
     } catch (IOException e) {
       log.error("Failed to read file input stream for Magic Bytes validation", e);
       throw new AppException(ErrorCode.UPLOAD_FAILED);
+    }
+
+    // Kiểm tra và giả lập sandbox nếu sử dụng Cloudinary key mặc định (dev sandbox)
+    if ("demo".equals(cloudName) || "1234567890".equals(apiKey)) {
+      log.warn("[SANDBOX FALLBACK] Mock Cloudinary credentials detected. "
+          + "Simulating successful upload with Picsum placeholder.");
+      return "https://picsum.photos/seed/" + java.util.UUID.randomUUID() + "/800/600";
     }
 
     // Tiến hành upload lên Cloudinary

@@ -183,15 +183,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
       </div>
 
       {/* Main Glassmorphic Profile Card */}
-      <div className="rounded-3xl border border-slate-800/80 bg-[hsl(var(--card))]/50 backdrop-blur-xl shadow-2xl overflow-hidden hover:border-slate-700/50 transition-all duration-500">
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all duration-500">
         
         {/* Banner trang trí Gradient thanh lịch */}
-        <div className="h-44 w-full bg-gradient-to-r from-blue-600/30 via-indigo-600/30 to-purple-600/30 relative">
-          <div className="absolute inset-0 bg-slate-950/20"></div>
+        <div className="h-44 w-full bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-blue-600/20 relative">
+          <div className="absolute inset-0 bg-white/20"></div>
           {/* Nút Đăng xuất ở góc banner */}
           <button
             onClick={handleLogoutClick}
-            className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-slate-950/60 hover:bg-red-500/10 border border-slate-800 hover:border-red-500/20 text-xs font-bold text-slate-400 hover:text-red-400 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm"
+            className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm shadow-sm"
           >
             <LogOut className="h-4 w-4" />
             <span>Đăng xuất</span>
@@ -207,10 +207,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
             {/* Avatar Container với Ripple Pulse Animation */}
             <div className="relative group mx-auto md:mx-0">
               {/* Vòng tròn hiệu ứng lấp lánh (Avatar Ripple Pulse) */}
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 blur-sm opacity-50 group-hover:opacity-100 transition duration-500 group-hover:scale-105 animate-pulse"></div>
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 blur-sm opacity-50 group-hover:opacity-100 transition duration-500 group-hover:scale-105 animate-pulse"></div>
               
               {/* Hình ảnh chính */}
-              <div className="h-36 w-36 rounded-full border-4 border-slate-900 overflow-hidden bg-slate-950 relative shadow-2xl flex items-center justify-center">
+              <div className="h-36 w-36 rounded-full border-4 border-white overflow-hidden bg-slate-100 relative shadow-md flex items-center justify-center">
                 {user.avatar ? (
                   <img 
                     src={user.avatar} 
@@ -218,14 +218,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (
-                  <UserIcon className="h-16 w-16 text-slate-600" />
+                  <UserIcon className="h-16 w-16 text-slate-400" />
                 )}
 
                 {/* Loading Overlay khi đang upload */}
                 {isUploadingAvatar && (
-                  <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center">
-                    <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-                    <span className="text-[10px] text-blue-400 mt-1 font-bold">Tải lên...</span>
+                  <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
+                    <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+                    <span className="text-[10px] text-violet-600 mt-1 font-bold">Tải lên...</span>
                   </div>
                 )}
 
@@ -253,15 +253,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
             {/* Thông tin văn bản User */}
             <div className="text-center md:text-left mt-6 md:mt-0 flex-grow">
-              <h2 className="text-3xl font-black text-white tracking-tight font-outfit mb-1">
+              <h2 className="text-3xl font-black text-slate-800 tracking-tight font-outfit mb-1">
                 {user.email.split('@')[0]}
               </h2>
-              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-sm text-[hsl(var(--muted))] mt-2 font-medium">
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-sm text-slate-500 mt-2 font-medium">
                 <span className="flex items-center space-x-1">
-                  <Mail className="h-4 w-4 text-blue-400" />
+                  <Mail className="h-4 w-4 text-violet-400" />
                   <span>{user.email}</span>
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-700 hidden sm:inline-block"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-300 hidden sm:inline-block"></span>
                 <span className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4 text-indigo-400" />
                   <span>{formatJoinedDate(user.createdAt)}</span>
@@ -271,14 +271,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
           </div>
 
           {/* Grid Layout 2 Cột chi tiết */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-t border-slate-800/60 pt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-t border-slate-200 pt-8">
             
             {/* Cột trái: Cập nhật Tiểu sử (Bio) với Focus Glassmorphic Glow */}
             <div className="lg:col-span-7 space-y-6">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                    <BookOpen className="h-5 w-5 text-blue-400" />
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                    <BookOpen className="h-5 w-5 text-violet-500" />
                     <span>Tiểu sử cá nhân</span>
                   </h3>
                   {!isEditingBio && (
@@ -299,7 +299,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         placeholder="Hãy chia sẻ đôi chút về bản thân bạn..."
-                        className="w-full h-32 p-4 rounded-xl border border-slate-800 bg-slate-950/40 text-white placeholder-slate-600 glass-focus-glow resize-none text-sm leading-relaxed"
+                        className="w-full h-32 p-4 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none text-sm leading-relaxed transition-all"
                         maxLength={255}
                         disabled={isSavingBio}
                       />
@@ -314,7 +314,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                           setBio(user.bio || '');
                           setIsEditingBio(false);
                         }}
-                        className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-bold text-slate-400 hover:bg-slate-850 hover:text-white transition cursor-pointer"
+                        className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition cursor-pointer"
                         disabled={isSavingBio}
                       >
                         Huỷ bỏ
@@ -336,13 +336,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-5 rounded-xl border border-slate-800/60 bg-slate-950/20 min-h-24 flex items-center justify-center text-center">
+                  <div className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 min-h-24 flex items-center justify-center text-center">
                     {user.bio ? (
-                      <p className="text-slate-300 text-sm leading-relaxed text-left w-full whitespace-pre-wrap">
+                      <p className="text-slate-600 text-sm leading-relaxed text-left w-full whitespace-pre-wrap">
                         {user.bio}
                       </p>
                     ) : (
-                      <span className="text-slate-600 text-sm italic">Chưa cấu hình tiểu sử cá nhân. Hãy chia sẻ gì đó với mọi người!</span>
+                      <span className="text-slate-400 text-sm italic">Chưa cấu hình tiểu sử cá nhân. Hãy chia sẻ gì đó với mọi người!</span>
                     )}
                   </div>
                 )}

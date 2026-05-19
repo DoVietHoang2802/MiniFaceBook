@@ -37,8 +37,11 @@ axiosClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Nếu gặp lỗi 401 Unauthorized và request này chưa từng được thử lại (chống lặp vô hạn)
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    // Nếu gặp lỗi 401 Unauthorized, không phải request refresh, và chưa từng được thử lại
+    if (error.response?.status === 401 && 
+        originalRequest && 
+        !originalRequest.url?.includes('/auth/refresh') && 
+        !originalRequest._retry) {
       
       // Nếu đang có 1 tiến trình đi xin token mới, đưa request này vào hàng đợi chờ đợi
       if (isRefreshing) {
@@ -65,8 +68,8 @@ axiosClient.interceptors.response.use(
           })
           .catch((err) => {
             processQueue(err, null);
-            // Xóa sạch dấu vết, chuyển hướng về trang đăng nhập
-            window.location.href = '/login';
+            // Phát sự kiện tùy biến để thông báo đăng xuất toàn cục trên UI
+            window.dispatchEvent(new Event('unauthorized'));
             reject(err);
           })
           .finally(() => {

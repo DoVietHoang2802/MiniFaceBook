@@ -65,6 +65,9 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 - **Fail-fast:** Validate cấu hình ngay khi startup qua `@ConfigurationProperties`. Thiếu biến môi trường => Shutdown ngay.
 - **Zero Trust:** Luôn validate dữ liệu đầu vào tại Controller. Password phải được băm ngay tại lớp Application trước khi xuống DB.
 - **Database:** Mọi query MongoDB phải có Index phù hợp. Sử dụng **Mongock** để quản lý versioning của Database Schema.
+- **File Upload Limits & Guard:** 
+  - Cấu hình server Tomcat giới hạn tải lên tối đa là **5MB** cho mỗi file và **25MB** tổng request (qua `spring.servlet.multipart` trong `application.yml`) để tránh lỗi ngắt kết nối Tomcat `ERR_CONNECTION_RESET`.
+  - Luôn đi kèm bộ lọc kích thước file phía máy khách (Client-side Size Guard) ở Frontend để cảnh báo sớm cho người dùng và chặn đứng file >5MB trước khi truyền mạng.
 
 ---
 

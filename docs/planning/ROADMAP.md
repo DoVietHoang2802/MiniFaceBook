@@ -59,12 +59,15 @@
 ## 📝 PHASE 2: CONTENT & NEWS FEED (Trang chủ & Dòng thời gian)
 *Mục tiêu: Cho phép người dùng tương tác thông qua việc chia sẻ nội dung bài viết và hình ảnh thực tế.*
 
-- [ ] **Sprint 2.1: Post System (Hạ tầng bài viết)**
-    - [ ] API Đăng bài viết (Hỗ trợ định dạng Text và Image qua hạ tầng Cloudinary đã xây dựng ở Sprint 1.4).
-    - [ ] API Newsfeed: Hiển thị bài viết từ danh sách bạn bè thời gian thực.
+- [x] **Sprint 2.1: Post System (Hạ tầng bài viết - ĐÃ HOÀN THÀNH 🎉)**
+    - [x] API Đăng bài viết (Hỗ trợ định dạng Text và Image qua hạ tầng Cloudinary đã xây dựng ở Sprint 1.4).
+    - [x] API Newsfeed: Hiển thị bài viết phân trang chuẩn Clean Architecture.
+    - [x] Giao diện 3 cột Premium (`3-Column Grid Layout` matching `GiaoDienChinh.png` & `TrangChu4.png`).
+    - [x] Tích hợp khả năng co dãn Responsive cực mịn sang Icon-Only và các phím hành động lơ lửng, vi tương tác kết bạn mượt mà.
 - [ ] **Sprint 2.2: Reactions & Comments (Tương tác bài viết)**
     - [ ] Logic Like/React cho bài viết.
     - [ ] Hệ thống Comment cấp 1 (đơn giản) cho các bài đăng.
+    - [ ] **Tối ưu hóa hình ảnh (Tương lai):** Tích hợp giải pháp **Client-side Image Compression** (tự động nén ảnh xuống dưới 1MB trước khi gửi đi) để tiết kiệm 90% chi phí đám mây và tối ưu trải nghiệm mạng yếu.
 
 ---
 

@@ -46,6 +46,25 @@ Quản lý vòng đời của Refresh Tokens phục vụ cho cơ chế xoay vòn
 
 ---
 
+### C. Collection: `posts`
+Lưu trữ thông tin bài viết của người dùng trên News Feed.
+
+*   **Indexes:**
+    *   `createdAt` (Descending) -> Tối ưu hóa truy vấn lấy News Feed theo thời gian mới nhất (Phân trang).
+    *   `authorId` (Hashed/Ascending) -> Tối ưu hóa truy vấn lấy danh sách bài viết trên trang cá nhân (Profile Page).
+
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `authorId` | String | Liên kết tới `users._id` của người đăng bài. |
+| `content` | String | Nội dung văn bản của bài viết (có thể rỗng nếu chỉ đăng ảnh). |
+| `imageUrls` | Array (String) | Danh sách link ảnh đã được mã hóa và tải lên Cloudinary. |
+| `reactIds` | Array (String) | Danh sách `users._id` đã thả tương tác (Like) vào bài viết. |
+| `createdAt` | Instant (ISODate) | Thời điểm đăng bài. **(Index Descending)** |
+| `updatedAt` | Instant (ISODate) | Thời điểm chỉnh sửa bài viết gần nhất. |
+
+---
+
 ## 🕸️ 2. Neo4j Graph Model (Social Connections)
 
 Neo4j được thiết kế chuyên biệt để quản lý mạng lưới kết nối bạn bè, giúp xử lý các truy vấn quan hệ có độ sâu lớn (như gợi ý kết bạn, bạn chung) với thời gian phản hồi cực nhanh.

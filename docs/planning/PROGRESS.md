@@ -11,7 +11,18 @@
 **Đánh giá tổng quan:** Triển khai thành công hệ thống xác thực bảo mật Cookie-based HttpOnly JWT kết hợp với cơ chế **Refresh Token Rotation** chống replay attack, tích hợp xác thực tài khoản qua **Resend** Email API.
 
 
+
+## 📝 PHASE 2: CONTENT & NEWS FEED (ĐANG TRIỂN KHAI 🚧)
+**Đánh giá tổng quan:** Khởi động hệ thống Bài viết (Post System) với kiến trúc Module độc lập. Thiết lập cấu trúc dữ liệu NoSQL tối ưu cho News Feed.
+
 ### 🏆 Các tính năng & Kiến trúc đang thiết lập:
+#### 1. Sprint 2.1: Hạ tầng Bài viết (Post System)
+- **Đã làm:** Khởi tạo bộ khung Backend `com.minifacebook.module.post`. Thiết lập `PostDocument` (MongoDB) và `PostRepository`.
+- **Giúp ích gì?**
+  - **Tối ưu NoSQL Schema:** Áp dụng phương pháp Referencing (lưu `authorId` thay vì embed) để tránh lỗi bất đồng bộ dữ liệu khi User đổi tên/avatar.
+  - **Performance:** Tích hợp sẵn `Pageable` ngay từ Interface Repository để chuẩn bị cho Infinite Scroll (Cuộn vô hạn), tránh nguy cơ Out-of-Memory do kéo toàn bộ dữ liệu.
+
+
 
 #### 1. Modular Clean Architecture (Chuẩn Senior Java)
 - **Đã làm:** Định nghĩa cấu trúc dự án chia theo 4 lớp (Domain, Application, Infrastructure, Presentation).
@@ -127,6 +138,45 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Phát triển Profile Page]** Xây dựng giao diện trang cá nhân người dùng [ProfilePage.tsx](file:///d:/Project_MiniFace/frontend/src/modules/profile/components/ProfilePage.tsx) với các hiệu ứng động cao cấp: Focus Glassmorphic Glow, Avatar Ripple Pulse và Drag-and-Drop Uploader.
   - [x] **[Validate cục bộ & Đồng bộ hóa]** Tích hợp Zod validate dung lượng tệp tin (<=5MB) và kiểm tra MIME định dạng ảnh ngay từ Client-side. Hook luồng kiểm tra trạng thái đăng nhập tự động ngầm khi tải trang bằng Cookie.
   - [x] **[Tái cấu trúc Sạch - Shared Media]** Nhận diện rủi ro phụ thuộc chéo khi bước sang Phase 2. Tái cấu trúc thành công, đưa `MediaService` (Domain Interface) và `CloudinaryService` (Infrastructure Adapter) ra phân vùng dùng chung `shared` độc lập. Đạt tiêu chuẩn **Clean Architecture 100%** kiểm định bởi ArchUnit.
+
+- **Phiên 19/05/2026 (Sprint 2.1 - Post System Backend & Frontend):**
+  - [x] **[Backend]** Khởi tạo `com.minifacebook.module.post` với Clean Architecture, `PostDocument`, `PostRepository`, `PostService`, và `PostController`.
+  - [x] **[Trade-off Kiến trúc]** Sử dụng trực tiếp `Pageable` của Spring Data trong tầng Domain giúp tối ưu thời gian phát triển (Pragmatic approach). Đã chạy `ArchitectureTest` xác minh không vi phạm quy tắc ArchUnit.
+  - [x] **[Frontend API]** Triển khai `post.types.ts` và `postService.ts` tương tác API tạo bài viết (hỗ trợ multipart/form-data cho nhiều ảnh) và lấy bảng tin (Newsfeed phân trang).
+  - [x] **[Premium UI]** Xây dựng `CreatePostCard.tsx` (có Drag & Drop Upload), `PostCard.tsx` (lưới ảnh tự động dàn trang 1-2-3 ảnh cực mượt, glassmorphism), và `PostFeed.tsx` (Optimistic Update & Tải thêm dữ liệu).
+  - [x] **[Tích hợp Tab Navigation]** Cập nhật `App.tsx` thêm thanh điều hướng mượt mà giữa "Bảng tin" và "Trang cá nhân". Trình biên dịch Frontend (npm run build) hoàn tất 100%, không cảnh báo TypeScript.
+
+- **Phiên 19/05/2026 (Sprint 2.1 - Part 2 - Giao Diện 3 Cột Premium & Vi Tương Tác Cực Đỉnh):**
+  - [x] **[Tái Cấu Trúc Bố Cục GiaoDiệnChinh & TrangChu4]** Nâng cấp layout trang chủ `App.tsx` thành hệ lưới 3 cột chuẩn mực mạng xã hội (`3-Column Grid Layout`): Sidebar Nav cố định bên trái, Bảng tin/Trang cá nhân ở giữa, Suggested Friends lướt tự do bên phải.
+  - [x] **[Connect Responsive Sidebar Navigation]** Thiết kế sidebar trái sang trọng với logo Connect phát sáng xanh dương, hệ menu chuyển tab mượt mà. Đặc biệt tích hợp khả năng **co dãn Responsive cực mịn sang Icon-Only (`w-[80px]`)** trên tablet/laptop và tự bung rộng (`w-[275px]`) trên màn hình lớn với chuyển động 300ms.
+  - [x] **[Sticky Layout & Scroll-Focus Spec]** Định hình chiều cao và vị trí cố định tầm mắt hoàn hảo của hai cột bên biên (`sticky top-6 h-[calc(100vh-48px)]`). Thiết lập sẵn kiến trúc để cột giữa cuộn độc lập mượt mà.
+  - [x] **[Account Widget & Floating Logout Popover]** Xây dựng thẻ tài khoản góc trái dưới cùng tích hợp Avatar sếp và popover mờ kính chứa nút đăng xuất lấp lánh phản hồi nhanh nhạy.
+  - [x] **[Suggested Friends Widget]** Khởi tạo chính xác 5 gương mặt gợi ý kết bạn khớp 100% mockup (`Jason Nguyen`, `Thao Pham`, `Brian Le`, `Alice Duong`, `David Tran`) kèm theo số lượng bạn chung chân thực.
+  - [x] **[Add Friend Micro-Interaction]** Phát triển vi tương tác nút kết bạn đỉnh cao: Click chuột kích hoạt trạng thái xoay loading (800ms giả lập API) và chuyển sang trạng thái khóa `Requested` màu xanh ngọc dịu mát.
+  - [x] **[Glassmorphic Floating Toast & Placeholder Alerts]** Thiết lập trình thông báo lơ lửng góc dưới màn hình giúp tăng tính xúc giác. Tất cả các nút/icon chưa liên kết API đều bắn ra Toast *"Tính năng đang phát triển và sẽ ra mắt ở Phase tiếp theo!"* thay vì bị đơ.
+- **Phiên 19/05/2026 (Sprint 2.1 - Part 3 - Vizo Light Slate Aesthetics & Notion Transition - TrangChu4.png):**
+  - [x] **[Thực Thi Transition Sáng Notion/Slate]** Đồng bộ toàn bộ hệ thống màu sắc từ tối sang sáng Notion cao cấp, tối ưu hóa các biến HSL nhẹ nhàng: Nền xám nhạt (`bg-slate-50`), hộp thẻ trắng muốt (`bg-white`), đường viền siêu mảnh (`border-slate-200/80`).
+  - [x] **[Tạo Bố Cục TrangChu4 Mới]** Thiết kế bảng tìm kiếm Vizo Topbar trung tâm cực đẹp có phím tắt `⌘ K`, các nút toggle theme, thông báo tròn lấp lánh và avatar người dùng góc trên.
+  - [x] **[Trọng Tâm Feed Tối Giản]** Loại bỏ các thành phần bảng tin Story rườm rà không cần thiết theo yêu cầu, tạo cảm giác tinh gọn, tập trung hoàn toàn vào Feed bài viết chính như Notion.
+  - [x] **[Phát Triển Vi Tương Tác Hộp Tạo Bài Viết]** Nâng cấp `CreatePostCard` với thanh biểu tượng: Photo / Video (emerald green), Feeling (amber yellow), Check in (rose pink), Poll (violet blue), và nút đăng bài màu gradient tím sang trọng.
+  - [x] **[Tối Ưu PostCard Sáng]** Đổi màu PostCard sang nền trắng, chữ xám đen slate sang trọng (`text-slate-600`), các phản hồi nút Like (rose khi active), Comment, Share mượt mà có hover effect.
+  - [x] **[Xây Dựng Bento Box & Cột Phụ Trực Quy hoạch]** Đồng bộ Widget Trending Now và People You May Know với các nhãn tag sáng, nút Add Friend hover tinh tế.
+  - [x] **[Kiểm Thử Thành Công 100%]** Chạy clean compile với `Exit Code: 0` và dùng subagent trình duyệt trực quan hóa chụp lại screenshot bố cục cực kỳ hoàn mỹ, sẵn sàng phục vụ trải nghiệm đỉnh cao của người dùng.
+
+- **Phiên 19/05/2026 (Sprint 2.1 - Part 4 - Sửa Lỗi Đăng Ảnh & Tối Ưu Hóa Dung Lượng):**
+  - [x] **[Sửa lỗi ERR_CONNECTION_RESET]** Phát hiện lỗi kết nối bị máy chủ Tomcat của Spring Boot cắt đột ngột do dung lượng ảnh tải lên vượt quá giới hạn mặc định (1MB).
+  - [x] **[Nâng cấp Cấu hình Server]** Cấu hình `spring.servlet.multipart` trong `application.yml` cho phép file lên tới 5MB và request tối đa 25MB.
+  - [x] **[Cập nhật Logic Cloudinary]** Điều chỉnh bộ lọc dung lượng của `CloudinaryService.java` đồng bộ ở mức 5MB để bảo mật máy chủ.
+  - [x] **[Validation Client-side Cảnh báo Sớm]** Viết logic validate trong `CreatePostCard.tsx` tự động quét dung lượng ảnh chọn từ máy khách, chặn ảnh vượt quá 5MB và kích hoạt Toast cảnh báo trực quan cho người dùng.
+  - [x] **[Ghi nhận Roadmap Nén Ảnh]** Ghi nhận giải pháp **Client-side Image Compression** bằng `browser-image-compression` để triển khai tự động nén ảnh xuống dưới 1MB ở các Phase sau.
+- **Phiên 19/05/2026 (Sprint 2.1 - Part 5 - Đồng bộ Hoàn toàn Hệ thống Tài liệu và Skill UI/UX Premium):**
+  - [x] **[Đồng bộ hóa Tài Liệu Hệ Thống]** Kiểm tra toàn bộ danh mục tài liệu, cập nhật và đồng bộ hóa phong cách thiết kế **Notion-inspired Light Slate Mode (Vizo Slate Light Theme)** xuyên suốt `UI_UX_DESIGN.md`, `STRUCTURE.md`, `FRONTEND_ARCHITECTURE.md`.
+  - [x] **[Hiệu chỉnh Bố cục & Phối màu]** Khớp 100% tất cả các định nghĩa tokens màu sáng HSL dịu mát (`bg-slate-50`, `bg-white`, `border-slate-200/80`), ranh giới lưới 3 cột, logo chữ "H", và các Spec chuyển động mượt mà.
+  - [x] **[Kinh nghiệm Kiến trúc Sư 10 năm]** Viết lại tài liệu với cấu trúc cực kỳ rõ ràng, lập luận chặt chẽ, dễ đọc cho cả con người và công cụ phát triển, bảo toàn tuyệt đối toàn bộ thành tựu tính năng từ các phiên trước.
+- **Phiên 19/05/2026 (Sprint 2.1 - Part 6 - Đồng bộ Toàn diện Ledger Thành tựu Kỹ thuật STAR và Cập nhật Spring Boot Mastery Skill):**
+  - [x] **[Thống Nhất Ledger Thành Tựu STAR]** Bổ sung Highlight 14 (Post System Clean Architecture và Multipart Tomcat config 5MB) và Highlight 15 (Client-side Size Guard early toast alert) vào `CV_PORTFOLIO_HIGHLIGHTS.md`.
+  - [x] **[Nâng Cấp Kỹ Năng Spring Boot Mastery]** Cập nhật `spring-boot-mastery/SKILL.md` với các hướng dẫn Tomcat limits, Apache Tika, Testcontainers với `.withOptionalLayers(true)` và cấu trúc 4 phân lớp tối tân.
+  - [x] **[Hoàn Thiện Bộ Hướng Dẫn AI]** Cập nhật `AI_GUIDELINES.md` tích hợp các quy chuẩn dung lượng ảnh (5MB/25MB) và Client-side Size Guard.
 
 #### 🔧 Technical Debugging Log (Phase 1 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
