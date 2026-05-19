@@ -122,10 +122,11 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Tối ưu hóa Compile TS]** Khắc phục triệt để lỗi biên dịch ES module runtime bằng cách phân tách import type độc lập đáp ứng cờ `"verbatimModuleSyntax": true` của TypeScript Compiler.
 
 - **Phiên 19/05/2026 (Sprint 1.4 - Profile & Media Completion):**
-  - [x] **[Hạ tầng Cloudinary & Apache Tika]** Tích hợp dịch vụ lưu trữ media Cloudinary vào tầng Infrastructure của module Auth, tuân thủ nguyên lý Đảo ngược Phụ thuộc (Dependency Inversion) thông qua Domain `MediaService`. Tích hợp Apache Tika kiểm tra chữ ký nhị phân Magic Bytes chống mã độc ngụy trang.
+  - [x] **[Hạ tầng Cloudinary & Apache Tika]** Tích hợp dịch vụ lưu trữ media Cloudinary kết hợp Apache Tika kiểm tra chữ ký nhị phân Magic Bytes chống mã độc ngụy trang.
   - [x] **[Trình xử lý lỗi dung lượng]** Thiết lập `@ExceptionHandler` cho `MaxUploadSizeExceededException` trả về JSON ApiResponse chuẩn khi payload vượt quá 5MB.
   - [x] **[Phát triển Profile Page]** Xây dựng giao diện trang cá nhân người dùng [ProfilePage.tsx](file:///d:/Project_MiniFace/frontend/src/modules/profile/components/ProfilePage.tsx) với các hiệu ứng động cao cấp: Focus Glassmorphic Glow, Avatar Ripple Pulse và Drag-and-Drop Uploader.
   - [x] **[Validate cục bộ & Đồng bộ hóa]** Tích hợp Zod validate dung lượng tệp tin (<=5MB) và kiểm tra MIME định dạng ảnh ngay từ Client-side. Hook luồng kiểm tra trạng thái đăng nhập tự động ngầm khi tải trang bằng Cookie.
+  - [x] **[Tái cấu trúc Sạch - Shared Media]** Nhận diện rủi ro phụ thuộc chéo khi bước sang Phase 2. Tái cấu trúc thành công, đưa `MediaService` (Domain Interface) và `CloudinaryService` (Infrastructure Adapter) ra phân vùng dùng chung `shared` độc lập. Đạt tiêu chuẩn **Clean Architecture 100%** kiểm định bởi ArchUnit.
 
 #### 🔧 Technical Debugging Log (Phase 1 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
@@ -136,6 +137,7 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 | **ArchUnit Layer Violation** | Tầng Presentation (`presentation.dto`) bị Application sử dụng trực tiếp và Mapper nằm ở Infrastructure. | Di chuyển DTOs về `application.dto`, mapper về `application.mapper` và di chuyển Security về module của nó. | Kiến trúc sạch 100% đạt chuẩn ArchUnit. |
 | **Lack of Cookie Auth & Rotation** | Thiếu cookie bảo mật và cơ chế chống replay attack cho Refresh Token. | Triển khai `RefreshToken` Entity ở Domain và Cookie-based HttpOnly JWT cho cả Access/Refresh token. | Hệ thống bảo mật tối đa chuẩn doanh nghiệp. |
 | **Logout Security Leak** | Giao dịch logout chỉ xóa cookie ở client mà quên vô hiệu hóa token trong MongoDB. | Cập nhật Controller trích xuất `@CookieValue` và gọi `authService.logout()` để cập nhật `revoked: true` trong Database. | Token được vô hiệu hóa chính xác trong MongoDB khi logout, chặn đứng Replay Attack. |
+| **Tight Modular Coupling** | MediaService và CloudinaryService ban đầu nằm trong Auth Module, gây rủi ro phụ thuộc chéo khi bước sang Phase 2. | Tái cấu trúc tách rời MediaService sang tầng Shared Domain, CloudinaryService sang Shared Infrastructure. | Độc lập module hoàn hảo, ArchUnit vượt qua 100% không phát sinh cảnh báo phụ thuộc chéo. |
 
 
 #### 🔧 Technical Debugging Log (Phase 0 Stabilization)
