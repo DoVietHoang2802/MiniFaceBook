@@ -42,11 +42,12 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 Dự án được chia làm 6 giai đoạn phát triển chính. 
 > 📑 Xem chi tiết tại: **[docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)**
 
-- **Phase 1:** Core Auth & Identity (✅ *Đã hoàn thành*).
-- **Phase 2:** Realtime Chat (MVP).
-- **Phase 3:** Social Graph & Friends.
-- **Phase 4:** Content & Engagement (AI Integration).
-- **Phase 5:** Optimization & Deployment.
+- **Phase 0:** Foundation & Infrastructure (✅ *Đã hoàn thành*).
+- **Phase 1:** Authentication & Identity (✅ *Đã hoàn thành*).
+- **Phase 2:** Content & News Feed (Trang chủ & Dòng thời gian - *Sắp tới*).
+- **Phase 3:** The Heart - Realtime Chat (MVP).
+- **Phase 4:** Social Graph & Friends (Neo4j Graph Database).
+- **Phase 5:** Optimization, Deployment & AI Integration.
 - **Phase 6:** Scaling & Extended Features.
 
 ---
