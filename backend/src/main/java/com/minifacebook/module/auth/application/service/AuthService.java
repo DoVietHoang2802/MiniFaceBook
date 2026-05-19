@@ -3,6 +3,7 @@ package com.minifacebook.module.auth.application.service;
 import com.minifacebook.module.auth.application.dto.LoginRequest;
 import com.minifacebook.module.auth.application.dto.LoginResult;
 import com.minifacebook.module.auth.application.dto.RegisterRequest;
+import com.minifacebook.module.auth.application.dto.UpdateProfileRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
 import com.minifacebook.module.auth.application.mapper.AuthMapper;
 import com.minifacebook.module.auth.domain.model.RefreshToken;
@@ -12,6 +13,7 @@ import com.minifacebook.module.auth.domain.repository.RefreshTokenRepository;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.auth.domain.service.EmailService;
 import com.minifacebook.module.auth.domain.service.TokenService;
+import com.minifacebook.module.auth.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.time.Instant;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 /** Service xử lý các nghiệp vụ xác thực tài khoản (Đăng ký, Đăng nhập, Xác thực, Refresh). */
 @Service
@@ -34,6 +37,7 @@ public class AuthService {
   private final AuthMapper authMapper;
   private final EmailService emailService;
   private final RefreshTokenRepository refreshTokenRepository;
+  private final MediaService mediaService;
 
   /** Đăng ký người dùng mới và gửi email kích hoạt qua Resend. */
   public UserResponse register(RegisterRequest request) {
@@ -160,6 +164,54 @@ public class AuthService {
         .refreshToken(newRefreshToken)
         .user(authMapper.toUserResponse(user))
         .build();
+  }
+
+  /** Đăng xuất: Vô hiệu hóa Refresh Token trong Database. */
+  public void logout(String accessToken, String refreshTokenStr) {
+    if (refreshTokenStr != null && !refreshTokenStr.isBlank()) {
+      refreshTokenRepository.findByToken(refreshTokenStr).ifPresent(tokenEntity -> {
+        tokenEntity.setRevoked(true);
+        refreshTokenRepository.save(tokenEntity);
+        log.info("Refresh Token revoked successfully on logout for email: {}", tokenEntity.getEmail());
+      });
+    }
+  }
+
+  /** Lấy thông tin tài khoản người dùng hiện tại đang đăng nhập. */
+  public UserResponse getCurrentUser(String email) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    return authMapper.toUserResponse(user);
+  }
+
+  /** Cập nhật thông tin Trang cá nhân (avatar, bio). */
+  public UserResponse updateProfile(String email, UpdateProfileRequest request) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    if (request.getAvatar() != null) {
+      user.setAvatar(request.getAvatar());
+    }
+    if (request.getBio() != null) {
+      user.setBio(request.getBio());
+    }
+
+    User savedUser = userRepository.save(user);
+    log.info("User profile updated successfully for: {}", email);
+    return authMapper.toUserResponse(savedUser);
+  }
+
+  /** Tải lên hình ảnh đại diện qua Cloudinary và cập nhật thông tin cá nhân. */
+  public UserResponse uploadAvatar(String email, MultipartFile file) {
+    String avatarUrl = mediaService.uploadAvatar(file);
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    user.setAvatar(avatarUrl);
+    User savedUser = userRepository.save(user);
+    log.info("Avatar uploaded and updated successfully for user: {}", email);
+    return authMapper.toUserResponse(savedUser);
   }
 }
 

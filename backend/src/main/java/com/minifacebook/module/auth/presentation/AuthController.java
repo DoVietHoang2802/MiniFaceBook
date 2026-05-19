@@ -126,7 +126,11 @@ public class AuthController {
   @Operation(
       summary = "Đăng xuất",
       description = "Xoá bỏ các HttpOnly Cookies chứa Access Token và Refresh Token.")
-  public ResponseEntity<ApiResponse<String>> logout(HttpServletResponse response) {
+  public ResponseEntity<ApiResponse<String>> logout(
+      @CookieValue(name = "accessToken", required = false) String accessToken,
+      @CookieValue(name = "refreshToken", required = false) String refreshToken,
+      HttpServletResponse response) {
+    authService.logout(accessToken, refreshToken);
     clearTokenCookies(response);
 
     ApiResponse<String> apiResponse =
@@ -134,6 +138,26 @@ public class AuthController {
             .status(HttpStatus.OK.value())
             .message("Logout successful")
             .data("Cookies cleared.")
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
+  /** Lấy thông tin tài khoản người dùng đang đăng nhập hiện tại. */
+  @GetMapping("/me")
+  @Operation(
+      summary = "Lấy thông tin cá nhân hiện tại",
+      description = "Trả về thông tin của tài khoản người dùng tương ứng với Access Token đang lưu trong Cookie.")
+  public ResponseEntity<ApiResponse<UserResponse>> getMe() {
+    String email = org.springframework.security.core.context.SecurityContextHolder.getContext()
+        .getAuthentication().getName();
+    UserResponse userResponse = authService.getCurrentUser(email);
+
+    ApiResponse<UserResponse> apiResponse =
+        ApiResponse.<UserResponse>builder()
+            .status(HttpStatus.OK.value())
+            .message("Get user profile successfully")
+            .data(userResponse)
             .build();
 
     return ResponseEntity.ok(apiResponse);

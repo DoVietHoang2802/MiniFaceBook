@@ -26,6 +26,14 @@ services:
     volumes:
       - neo4j_data:/data
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: miniface-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
 volumes:
   mongodb_data:
   neo4j_data:

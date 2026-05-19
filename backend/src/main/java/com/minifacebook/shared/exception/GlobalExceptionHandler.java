@@ -16,6 +16,20 @@ public class GlobalExceptionHandler {
 
   private static final String MIN_ATTRIBUTE = "min";
 
+  // Bắt lỗi kích thước file upload vượt quá giới hạn tối đa
+  @ExceptionHandler(value = org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+  ResponseEntity<ApiResponse<?>> handlingMaxUploadSizeExceededException(
+      org.springframework.web.multipart.MaxUploadSizeExceededException exception) {
+    log.warn("Upload size limit exceeded: ", exception);
+    ApiResponse<?> apiResponse = new ApiResponse<>();
+
+    apiResponse.setStatus(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED.getCode());
+    apiResponse.setMessage(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED.getMessage());
+
+    return ResponseEntity.status(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED.getStatusCode())
+        .body(apiResponse);
+  }
+
   // Bắt mọi lỗi chưa được định nghĩa
   @ExceptionHandler(value = Exception.class)
   ResponseEntity<ApiResponse<?>> handlingRuntimeException(RuntimeException exception) {

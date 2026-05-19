@@ -43,3 +43,7 @@ app:
     refresh-token-expiration: 604800 # 7 ngày (giây)
   resend:
     api-key: ${RESEND_API_KEY:re_123456789}
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:demo}
+    api-key: ${CLOUDINARY_API_KEY:1234567890}
+    api-secret: ${CLOUDINARY_API_SECRET:abcdefghijklmnopqrstuvwxyz}

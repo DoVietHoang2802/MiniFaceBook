@@ -1,10 +1,12 @@
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\BackendApplication.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\config\CloudinaryConfig.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\config\OpenApiConfig.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\filter\RateLimitingFilter.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\infrastructure\security\SecurityConfig.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\LoginRequest.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\LoginResult.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\RegisterRequest.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\UpdateProfileRequest.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\dto\UserResponse.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\mapper\AuthMapper.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\application\service\AuthService.java
@@ -14,10 +16,12 @@ D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\mo
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\repository\RefreshTokenRepository.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\repository\UserRepository.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\EmailService.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\MediaService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\domain\service\TokenService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\email\ResendEmailAdapter.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\mapper\RefreshTokenMapper.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\mapper\UserDocumentMapper.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\media\CloudinaryService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\adapter\RefreshTokenRepositoryImpl.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\adapter\UserRepositoryImpl.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\persistence\document\RefreshTokenDocument.java
@@ -27,6 +31,7 @@ D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastru
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\security\AuthenticationService.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\infrastructure\security\TokenServiceAdapter.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\presentation\AuthController.java
+D:\Project_MiniFace\backend\src\main\java\com\minifacebook\module\auth\presentation\UserController.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\domain\BaseEntity.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\dto\ApiResponse.java
 D:\Project_MiniFace\backend\src\main\java\com\minifacebook\shared\exception\AppException.java

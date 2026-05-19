@@ -23,6 +23,10 @@ public enum ErrorCode {
   USER_NOT_VERIFIED(1013, "User email is not verified", HttpStatus.FORBIDDEN),
   INVALID_VERIFICATION_TOKEN(1014, "Invalid or expired verification token", HttpStatus.BAD_REQUEST),
   REFRESH_TOKEN_EXPIRED(1015, "Refresh token has expired or is invalid", HttpStatus.UNAUTHORIZED),
+  MAX_UPLOAD_SIZE_EXCEEDED(1016, "File upload size exceeded limit (Max 5MB)", HttpStatus.BAD_REQUEST),
+  INVALID_FILE_TYPE(1017, "Invalid file type. Only JPG, PNG, WEBP, and GIF images are allowed.", HttpStatus.BAD_REQUEST),
+  UPLOAD_FAILED(1018, "File upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
+  FILE_REQUIRED(1019, "File is required", HttpStatus.BAD_REQUEST),
   ;
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {

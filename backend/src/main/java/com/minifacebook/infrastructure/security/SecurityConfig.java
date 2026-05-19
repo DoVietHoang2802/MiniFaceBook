@@ -30,8 +30,12 @@ public class SecurityConfig {
 
   private final RateLimitingFilter rateLimitingFilter;
 
-  private final String[] PUBLIC_ENDPOINTS = {
+  private final String[] PUBLIC_POST_ENDPOINTS = {
     "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect"
+  };
+
+  private final String[] PUBLIC_GET_ENDPOINTS = {
+    "/auth/verify"
   };
 
   private final String[] SWAGGER_ENDPOINTS = {
@@ -46,7 +50,9 @@ public class SecurityConfig {
     httpSecurity.authorizeHttpRequests(
         request ->
             request
-                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
+                .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS)
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
                 .permitAll()
                 .requestMatchers(SWAGGER_ENDPOINTS)
                 .permitAll()
@@ -57,6 +63,21 @@ public class SecurityConfig {
         oauth2 ->
             oauth2
                 .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()))
+                .bearerTokenResolver(
+                    request -> {
+                      if (request.getCookies() != null) {
+                        for (var cookie : request.getCookies()) {
+                          if ("accessToken".equals(cookie.getName())) {
+                            return cookie.getValue();
+                          }
+                        }
+                      }
+                      String authorization = request.getHeader("Authorization");
+                      if (authorization != null && authorization.startsWith("Bearer ")) {
+                        return authorization.substring(7);
+                      }
+                      return null;
+                    })
                 .authenticationEntryPoint(
                     (request, response, authException) -> {
                       ErrorCode errorCode = ErrorCode.UNAUTHENTICATED;

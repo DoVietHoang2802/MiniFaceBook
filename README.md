@@ -2,7 +2,7 @@
 
 > [!CAUTION]
 > ### 🛑 BẮT BUỘC ĐỐI VỚI AI (MANDATORY STARTUP PROTOCOL)
-> Trước khi thực hiện bất kỳ hành động nào trong phiên chat mới, AI PHẢI đọc file **[docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md)** để đồng bộ bối cảnh và các quyết định chiến lược. Không được bỏ qua bước này!
+> Trước khi thực hiện bất kỳ hành động nào trong phiên chat mới, AI PHẢI đọc file **[docs/session/SESSION_HANDOFF.md](docs/session/SESSION_HANDOFF.md)** để đồng bộ bối cảnh và các quyết định chiến lược. Không được bỏ qua bước này!
 
 ---
 
@@ -26,7 +26,7 @@
 2. **Backend:** Truy cập `backend/` và chạy `mvn spring-boot:run`
 3. **Tài liệu API:** Truy cập [http://localhost:8080/api/docs](http://localhost:8080/api/docs)
 
-Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui lòng xem tại: **[docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)**
+Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui lòng xem tại: **[docs/testing/TESTING_GUIDE.md](docs/testing/TESTING_GUIDE.md)**
 
 ---
 - **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation + **RBAC (Role-Based Access Control)**.
@@ -40,7 +40,7 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 
 ## 🗺️ Project Roadmap (Tóm tắt)
 Dự án được chia làm 6 giai đoạn phát triển chính. 
-> 📑 Xem chi tiết tại: **[docs/ROADMAP.md](docs/ROADMAP.md)**
+> 📑 Xem chi tiết tại: **[docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)**
 
 - **Phase 1:** Core Auth & Identity (✅ *Đã hoàn thành*).
 - **Phase 2:** Realtime Chat (MVP).
@@ -53,32 +53,39 @@ Dự án được chia làm 6 giai đoạn phát triển chính.
 
 ## 📂 Tài liệu hướng dẫn (Documentation)
 Để hiểu sâu hơn về dự án, vui lòng đọc các tài liệu sau:
-- **[STRUCTURE.md](docs/STRUCTURE.md):** Cách vận hành Docs & Skills.
-- **[SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md):** Bản thiết kế DB và Kiến trúc hệ thống.
-- **[PROGRESS.md](docs/PROGRESS.md):** Nhật ký tiến độ và các quyết định kỹ thuật.
-- **[AI_GUIDELINES.md](docs/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
+- **[STRUCTURE.md](docs/architecture/STRUCTURE.md):** Cách vận hành Docs & Skills.
+- **[SYSTEM_DESIGN.md](docs/architecture/SYSTEM_DESIGN.md):** Bản thiết kế DB và Kiến trúc hệ thống.
+- **[PROGRESS.md](docs/planning/PROGRESS.md):** Nhật ký tiến độ và các quyết định kỹ thuật.
+- **[AI_GUIDELINES.md](docs/guidelines/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
+- **[DOCUMENTATION_STANDARDS.md](docs/guidelines/DOCUMENTATION_STANDARDS.md):** Đề án chuẩn hóa thư mục tài liệu mới.
 
 ---
 
 ## 🚀 Quick Start (Dành cho Developer)
-1. **Clone project:** `git clone ...`
-2. **Cấu hình môi trường:** Copy `.env.example` thành `.env` và điền các tham số.
-3. **Chạy hạ tầng (Docker):**
+1. **Khởi chạy Hạ tầng (Docker Compose):**
    ```bash
    docker-compose up -d
    ```
-4. **Cài đặt & Chạy Backend (Maven):**
+   *Mailpit Web UI sẽ chạy tại `http://localhost:8025` để xem và click email xác nhận.*
+2. **Khởi chạy Backend (Spring Boot):**
    ```bash
    cd backend
    ./mvnw spring-boot:run
    ```
-5. **Truy cập Swagger:** `http://localhost:8080/api/docs`
+   *Swagger API UI sẽ chạy tại `http://localhost:8080/api/docs`*
+3. **Khởi chạy Frontend (React + Vite):**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   *Ứng dụng Web sẽ chạy tại `http://localhost:5173`*
 
 ---
 
 ## 🤖 Guide for AI Assistant (BẮT BUỘC)
 Trước khi thực hiện bất kỳ Task nào, AI phải đọc tài liệu theo thứ tự:
-1. `README.md` -> 2. `docs/STRUCTURE.md` -> 3. `docs/ROADMAP.md` -> 4. `docs/PROGRESS.md`.
+1. `README.md` -> 2. `docs/architecture/STRUCTURE.md` -> 3. `docs/planning/ROADMAP.md` -> 4. `docs/planning/PROGRESS.md`.
 - Tuân thủ nghiêm ngặt các Skill trong thư mục `.antigravity/skills/`.
 - Luôn sử dụng Swagger Annotations (springdoc-openapi) cho mọi Controller.
 - Business logic nằm hoàn toàn trong Service.
