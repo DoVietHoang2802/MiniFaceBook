@@ -66,7 +66,7 @@ backend/src/main/java/com/minifacebook/
     *   Các interface Repository (ví dụ: `UserRepository`) được khai báo ở đây để tầng Application gọi, nhưng sẽ được hiện thực hóa ở tầng Infrastructure.
 
 ### D. Infrastructure Layer (Tầng Hạ Tầng Kỹ Thuật)
-*   **Nhiệm vụ:** Hiện thực hóa tất cả các kết nối kỹ thuật chi tiết như lưu trữ database (MongoDB, Neo4j), cấu hình Spring Security (JWT Filter), và gọi dịch vụ bên thứ ba (Resend API, Cloudinary).
+*   **Nhiệm vụ:** Hiện thực hóa tất cả các kết nối kỹ thuật chi tiết như lưu trữ database (MongoDB), cấu hình Spring Security (JWT Filter), và gọi dịch vụ bên thứ ba (Resend API, Cloudinary).
 *   **Quy tắc:**
     *   Các class truy cập DB (`UserRepositoryImpl`) sẽ implement interface ở tầng Domain, thực hiện mapping Domain Entity sang Database Document (`UserDocument` cho MongoDB) và lưu xuống DB.
     *   Cơ chế mapping phải sử dụng **MapStruct** hiệu năng cao để giảm thiểu boilerplate code.

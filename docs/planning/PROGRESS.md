@@ -77,7 +77,7 @@
 
 #### 3. Testcontainers
 - **Lý do:** Mocking đôi khi không phản ánh đúng thực tế Database.
-- **Lợi ích:** Chạy Database thật (MongoDB/Neo4j) trong Docker khi chạy test, đảm bảo code chạy đúng 100% khi lên Production.
+- **Lợi ích:** Chạy Database thật (MongoDB) trong Docker khi chạy test, đảm bảo code chạy đúng 100% khi lên Production.
 
 ---
 
@@ -94,7 +94,7 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Tích hợp công cụ chất lượng code: Checkstyle, Spotless.
   - [x] Thiết lập cấu trúc **Modular Clean Architecture** cho module `auth`.
   - [x] Khởi tạo `frontend/` với Vite + React + TypeScript.
-  - [x] Đồng bộ hạ tầng Docker (MongoDB, Redis, Neo4j).
+  - [x] Đồng bộ hạ tầng Docker (MongoDB, Redis).
 
 - **Phiên 16/05/2026 (Sprint 0.2 - Part 1):**
   - [x] Thiết lập chuẩn phản hồi API (`ApiResponse`).

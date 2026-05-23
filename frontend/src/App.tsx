@@ -141,10 +141,10 @@ function App() {
 
       {user ? (
         /* TRANG CHÍNH 3 CỘT (MATCHING GiaoDienChinh.png & TrangChu4.png - VIZO LIGHT MODE) */
-        <div className="flex-grow w-full max-w-full 2xl:max-w-[1800px] mx-auto px-4 md:px-8 lg:px-12 flex justify-center gap-6 min-h-screen relative">
+        <div className="flex-grow w-[96%] md:w-[92%] lg:w-[85%] max-w-[1400px] mx-auto flex justify-center lg:justify-between gap-4 lg:gap-8 min-h-screen relative">
           
-          {/* CỘT TRÁI: SIDEBAR ĐIỀU HƯỚNG (Responsive Icon-Only) */}
-          <aside className="w-[80px] lg:w-[275px] shrink-0 sticky top-3 h-[calc(100vh-24px)] flex flex-col justify-between py-3 lg:pr-4 border-r border-slate-200/60 hidden md:flex transition-all duration-300">
+          {/* CỘT TRÁI: SIDEBAR ĐIỀU HƯỚNG (~20%) */}
+          <aside className="hidden md:flex flex-col w-[80px] lg:w-[22%] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 lg:pr-2 transition-all duration-300">
             <div className="space-y-2">
               {/* Logo Hizo (Khớp 100% TrangChu4.png) */}
               <div className="flex items-center space-x-3 px-3">
@@ -268,11 +268,11 @@ function App() {
             </div>
           </aside>
 
-            {/* CỘT GIỮA: BẢNG TIN HOẶC PROFILE */}
-            <main className="flex-grow w-full max-w-[720px] lg:max-w-[760px] 2xl:max-w-[820px] py-6 min-h-screen transition-all duration-300">
+            {/* CỘT GIỮA: BẢNG TIN HOẶC PROFILE (~56%) */}
+            <main className="flex-1 w-full min-w-0 lg:w-[56%] max-w-[760px] mx-auto py-6 min-h-screen transition-all duration-300">
             {/* Top Bar toàn năng (Khớp 100% TrangChu4.png) */}
             <div className="flex items-center justify-between gap-4 mb-6">
-              <div className="relative flex-grow max-w-[420px]">
+              <div className="relative flex-grow">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input 
                   type="text" 
@@ -342,8 +342,8 @@ function App() {
             </div>
           </main>
 
-          {/* CỘT PHẢI: SUGGESTED FRIENDS & TRENDING NOW */}
-          <aside className="w-[320px] lg:w-[350px] shrink-0 sticky top-3 h-[calc(100vh-24px)] py-3 pl-4 hidden lg:flex flex-col justify-between border-l border-slate-200/60 transition-all duration-300">
+          {/* CỘT PHẢI: SUGGESTED FRIENDS & TRENDING NOW (~22%) */}
+          <aside className="hidden lg:flex flex-col w-[22%] max-w-[320px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 pl-2 transition-all duration-300">
             <div className="space-y-4 overflow-y-auto pr-1">
               
               {/* Widget 1: Trending Now (Khớp 100% TrangChu4.png) */}

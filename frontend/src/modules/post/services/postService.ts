@@ -1,5 +1,5 @@
 import axiosClient from '../../../core/api/axiosClient';
-import type { PostResponse, Page } from '../types/post.types';
+import type { PostResponse, Page, ReactionRequest, CommentResponse } from '../types/post.types';
 
 export const postService = {
   createPost: async (content: string, files: File[]) => {
@@ -9,16 +9,35 @@ export const postService = {
       formData.append('images', file);
     });
     
-    const response = await axiosClient.post<{ data: PostResponse }>('/posts', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axiosClient.post<{ data: PostResponse }>('/posts', formData);
     return response.data;
   },
 
   getNewsFeed: async (page: number = 0, size: number = 10) => {
     const response = await axiosClient.get<{ data: Page<PostResponse> }>(`/posts/newsfeed`, {
+      params: { page, size },
+    });
+    return response.data;
+  },
+
+  reactToPost: async (postId: string, request: ReactionRequest) => {
+    const response = await axiosClient.post<{ data: void }>(`/posts/${postId}/react`, request);
+    return response.data;
+  },
+
+  addComment: async (postId: string, content: string, image?: File) => {
+    const formData = new FormData();
+    formData.append('content', content);
+    if (image) {
+      formData.append('image', image);
+    }
+    
+    const response = await axiosClient.post<{ data: CommentResponse }>(`/posts/${postId}/comments`, formData);
+    return response.data;
+  },
+
+  getComments: async (postId: string, page: number = 0, size: number = 10) => {
+    const response = await axiosClient.get<{ data: Page<CommentResponse> }>(`/posts/${postId}/comments`, {
       params: { page, size },
     });
     return response.data;

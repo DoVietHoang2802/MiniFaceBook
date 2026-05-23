@@ -17,16 +17,17 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 
 ## 🏗️ 2. TECH STACK & ECOSYSTEM (PRODUCTION READY)
 - **Core:** Java 21 (Virtual Threads ready) + Spring Boot 3.3.
-- **Architecture:** Modular Clean Architecture (Đảm bảo tính độc lập giữa các Module).
+- **Architecture:** Modular Monolith trên 1 VPS (Modular Clean Architecture — đảm bảo tính độc lập giữa các Module).
 - **Persistence:** 
-    - **MongoDB:** Lưu trữ dữ liệu chính (Post, Profile, Comment). Port: 27018.
-    - **Redis:** Caching, Pub/Sub cho Realtime, Session management.
-    - **Neo4j:** Quản lý đồ thị quan hệ bạn bè (Friendship Graph).
+    - **MongoDB:** Lưu trữ dữ liệu chính (Post, Profile, Comment, Friendship). Port: 27018.
+    - **Redis:** Cache (`user:profile`, `feed:user`), JWT Blacklist (logout), Rate Limiting. **Không** sử dụng Pub/Sub.
 - **Security:** OAuth2 Resource Server (JWT) + Refresh Token Rotation + RBAC + Bcrypt.
-- **Communication:** Spring WebSocket (STOMP) + Kafka (Event-Driven).
+- **Communication:** Spring WebSocket (STOMP) cho Realtime Chat.
+- **Async Tasks:** Spring `@Async` + `@EnableAsync` cho tác vụ nền (gửi mail, xử lý ảnh).
 - **Quality Tools:** ArchUnit, Checkstyle (Google), Spotless, Sentry, Bucket4j.
     - *Quy chuẩn ArchUnit Bootstrapping:* Luôn thiết lập `.withOptionalLayers(true)` để tránh lỗi build giả trên các thư mục trống ở các Phase đầu.
     - *Quy chuẩn Global Infrastructure:* Định nghĩa rõ và cho phép `GlobalInfrastructure` (`com.minifacebook.infrastructure..`) gọi xuống `Shared` DTOs để thống nhất API trả về (không vi phạm ranh giới Clean Architecture).
+- **Load Testing:** K6 — bắt buộc chạy trước mỗi lần deploy lên Production.
 
 ---
 

@@ -25,9 +25,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
   // Lưu trữ các "xô" (bucket) cho từng IP
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
-  // Định nghĩa băng thông: 10 requests mỗi phút
+  // Định nghĩa băng thông: 100 requests mỗi phút (Khoảng 1.5 request/giây)
   private Bucket createNewBucket() {
-    Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
+    Bandwidth limit = Bandwidth.classic(100, Refill.greedy(100, Duration.ofMinutes(1)));
     return Bucket.builder().addLimit(limit).build();
   }
 

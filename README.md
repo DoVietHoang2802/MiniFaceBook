@@ -11,13 +11,16 @@
 - **Single Source of Truth:** Tài liệu được phân lớp rõ ràng, tránh dư thừa và sai lệch thông tin.
 - **Security First:** Triển khai các cơ chế bảo mật hiện đại nhất (Refresh Token Rotation, HttpOnly Cookies, Throttler).
 
+## 🏗 Kiến trúc dự án (Architecture & Repository)
+**Dự án của chúng ta được quản lý theo dạng Monorepo. Trong đó, Backend được xây dựng theo mô hình Modular Monolith, và bên trong mỗi Module đều tuân thủ chặt chẽ nguyên tắc phân lớp của Clean Architecture.**
+
 ---
 
 ## 🛠 Tech Stack (Production Ready)
 - **Backend:** Java 21 (LTS) + Spring Boot 3.x - Modular Clean Architecture.
 - **Realtime:** Spring WebSocket (STOMP) + Redis Pub/Sub.
-- **Database:** MongoDB (Atlas) + Redis (Caching & Sessions) + **Neo4j (Graph Database cho Social Connections)**.
-- **Search & Broker:** **ElasticSearch** (Search), **Kafka/RabbitMQ** (Event-Driven).
+- **Database:** MongoDB (Atlas) làm DB chính + Redis (Caching & JWT Blacklist).
+- **Task & Search:** Xử lý nền bằng Spring `@Async` và tìm kiếm bằng MongoDB Text Index/Regex.
 
 ---
 
@@ -32,8 +35,8 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 - **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation + **RBAC (Role-Based Access Control)**.
 - **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
 - **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI), **Sentry (Error Tracking)**.
-- **Frontend:** React + TypeScript + shadcn/ui + Tailwind + Zod + TanStack Query.
-- **DevOps & Monitoring:** Docker Compose, GitHub Actions, Prometheus & Grafana.
+- **Frontend:** React + TypeScript + shadcn/ui + Tailwind v4 + Zod + TanStack Query.
+- **DevOps:** Docker Compose, GitHub Actions.
 - **Testing:** JUnit 5, Mockito, MockMvc, Testcontainers, Playwright, **K6 (Load Testing)**.
 
 ---
@@ -44,11 +47,11 @@ Dự án được chia làm 6 giai đoạn phát triển chính.
 
 - **Phase 0:** Foundation & Infrastructure (✅ *Đã hoàn thành*).
 - **Phase 1:** Authentication & Identity (✅ *Đã hoàn thành*).
-- **Phase 2:** Content & News Feed (Trang chủ & Dòng thời gian - *Sắp tới*).
+- **Phase 2:** Content & News Feed (Trang chủ & Dòng thời gian - *Đang tiến hành*).
 - **Phase 3:** The Heart - Realtime Chat (MVP).
-- **Phase 4:** Social Graph & Friends (Neo4j Graph Database).
+- **Phase 4:** Social Graph & Friends.
 - **Phase 5:** Optimization, Deployment & AI Integration.
-- **Phase 6:** Scaling & Extended Features.
+- **Phase 6:** Extended Features.
 
 ---
 

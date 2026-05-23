@@ -1,6 +1,6 @@
-# 🗄️ DATABASE SCHEMA & POLYGLOT PERSISTENCE SPECIFICATION
+# 🗄️ DATABASE SCHEMA — MINIFACEBOOK
 
-Tài liệu này đặc tả chi tiết kiến trúc lưu trữ đa cơ sở dữ liệu (Polyglot Persistence Layer) của dự án **MiniFaceBook**, bao gồm MongoDB, Neo4j, Redis và Chiến lược di cư cơ sở dữ liệu (Database Migration Strategy).
+Tài liệu này đặc tả chi tiết lược đồ cơ sở dữ liệu của dự án **MiniFaceBook**, bao gồm MongoDB (database chính), Redis (cache & bảo mật) và Chiến lược di cư dữ liệu (Mongock Migration).
 
 ---
 
@@ -65,52 +65,36 @@ Lưu trữ thông tin bài viết của người dùng trên News Feed.
 
 ---
 
-## 🕸️ 2. Neo4j Graph Model (Social Connections)
+## 🤝 2. MongoDB — Collection: `friendships`
+Lưu trữ quan hệ kết bạn giữa người dùng. Sử dụng Compound Index để đảm bảo không có cặp bạn bè trùng lặp và tốc độ truy vấn nhanh.
 
-Neo4j được thiết kế chuyên biệt để quản lý mạng lưới kết nối bạn bè, giúp xử lý các truy vấn quan hệ có độ sâu lớn (như gợi ý kết bạn, bạn chung) với thời gian phản hồi cực nhanh.
+*   **Indexes:**
+    *   `(requesterId, recipientId)` — Compound Unique Index → Chặn duplicate request và tăng tốc kiểm tra trạng thái.
+    *   `status` (Ascending) → Tối ưu truy vấn lọc bạn bè theo trạng thái.
 
-### A. Graph Nodes: `(:User)`
-Mỗi tài khoản người dùng tương ứng với một Node trong đồ thị.
-
-```cypher
-(:User {
-  id: "664bdf6e4f3a8b27c5b19e21", // Trùng khớp hoàn toàn với users._id của MongoDB
-  name: "Do Viet Hoang"
-})
-```
-
-### B. Relationships: `[:FRIEND]`
-Mối quan hệ bạn bè là quan hệ **Vô hướng (Undirected)** hoặc **Hai chiều (Bi-directional)**:
-
-```cypher
-(:User {id: "UserA_ID"}) -[:FRIEND {createdAt: timestamp()}]-> (:User {id: "UserB_ID"})
-```
-
-### C. Chiến lược truy vấn hiệu năng cao:
-*   **Tìm Bạn Chung (Friends of Friends):**
-    ```cypher
-    MATCH (userA:User {id: $idA})-[:FRIEND]-(mutual:User)-[:FRIEND]-(userB:User {id: $idB})
-    RETURN mutual.name
-    ```
-*   **Gợi ý kết bạn (Friend Recommendation):**
-    ```cypher
-    MATCH (me:User {id: $myId})-[:FRIEND*2]-(stranger:User)
-    WHERE NOT (me)-[:FRIEND]-(stranger) AND stranger.id <> $myId
-    RETURN stranger, count(stranger) AS MutualCount
-    ORDER BY MutualCount DESC LIMIT 10
-    ```
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `requesterId` | String | `users._id` của người gửi lời mời. |
+| `recipientId` | String | `users._id` của người nhận lời mời. |
+| `status` | String (Enum) | Trạng thái: `PENDING`, `ACCEPTED`, `REJECTED`. |
+| `createdAt` | Instant (ISODate) | Thời điểm gửi lời mời. |
+| `updatedAt` | Instant (ISODate) | Thời điểm cập nhật trạng thái gần nhất. |
 
 ---
 
-## ⚡ 3. Redis Key Patterns (Caching & Security Session)
+## ⚡ 3. Redis — Chiến lược sử dụng (Cache & Security)
 
-Redis hoạt động như một InMemory Cache để tăng tốc độ phản hồi News Feed và quản lý danh sách đen các token bị lộ hoặc vô hiệu hóa.
+Redis được sử dụng với **3 mục đích rõ ràng**, không mở rộng thêm ngoài phạm vi này:
 
-| Tên Key Pattern | Kiểu dữ liệu Redis | Chức năng / Thời gian sống (TTL) |
-| :--- | :--- | :--- |
-| `auth:revoked-token:<token>` | String | Lưu trữ Access Token bị thu hồi (đăng xuất sớm). TTL = Thời gian hết hạn còn lại của JWT. |
-| `user:profile:<userId>` | Hash | Caching hồ sơ cá nhân người dùng để giảm tải cho MongoDB. TTL = 3600s (1 giờ). |
-| `feed:user:<userId>` | List | Lưu trữ danh sách IDs bài viết trên News Feed của từng người dùng. TTL = 1800s (30 phút). |
+### Phạm vi sử dụng Redis
+| Mục đích | Key Pattern | Kiểu dữ liệu | TTL |
+| :--- | :--- | :--- | :--- |
+| **JWT Blacklist** (Logout) | `auth:revoked-token:<token>` | String | Bằng thời gian hết hạn còn lại của JWT |
+| **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) |
+| **Cache Newsfeed** | `feed:user:<userId>` | List | 1800s (30 phút) |
+
+> **Lưu ý:** Redis trong dự án này **không** sử dụng Pub/Sub. Phạm vi sử dụng giới hạn ở Cache và JWT Blacklist.
 
 ---
 

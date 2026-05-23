@@ -5,7 +5,9 @@ import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.post.application.dto.CreatePostRequest;
 import com.minifacebook.module.post.application.dto.PostResponse;
 import com.minifacebook.module.post.domain.entity.Post;
+import com.minifacebook.module.post.domain.entity.Reaction;
 import com.minifacebook.module.post.domain.repository.PostRepository;
+import com.minifacebook.module.post.domain.repository.ReactionRepository;
 import com.minifacebook.shared.domain.service.MediaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ReactionRepository reactionRepository;
     private final MediaService mediaService;
 
     public PostResponse createPost(String email, CreatePostRequest request) {
@@ -55,6 +58,18 @@ public class PostService {
     private PostResponse mapToResponse(Post post, String currentUserId) {
         User author = userRepository.findById(post.getAuthorId()).orElse(null);
         
+        int totalReacts = post.getReactionsCount().values().stream().mapToInt(Integer::intValue).sum();
+        java.util.Map<String, Integer> stringReactionMap = new java.util.HashMap<>();
+        post.getReactionsCount().forEach((k, v) -> stringReactionMap.put(k.name(), v));
+        
+        String myReactionType = null;
+        if (currentUserId != null) {
+            java.util.Optional<Reaction> myReaction = reactionRepository.findByPostIdAndUserId(post.getId(), currentUserId);
+            if (myReaction.isPresent()) {
+                myReactionType = myReaction.get().getType().name();
+            }
+        }
+        
         return PostResponse.builder()
                 .id(post.getId())
                 .authorId(post.getAuthorId())
@@ -62,8 +77,10 @@ public class PostService {
                 .authorAvatar(author != null ? author.getAvatar() : null)
                 .content(post.getContent())
                 .imageUrls(post.getImageUrls())
-                .reactCount(post.getReactIds().size())
-                .isReactedByMe(post.getReactIds().contains(currentUserId))
+                .reactCount(totalReacts)
+                .commentCount(post.getCommentCount())
+                .reactionsCount(stringReactionMap)
+                .myReactionType(myReactionType)
                 .createdAt(post.getCreatedAt())
                 .build();
     }

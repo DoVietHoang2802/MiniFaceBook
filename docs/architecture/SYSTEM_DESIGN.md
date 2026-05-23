@@ -22,13 +22,6 @@
 - **Chats:** `members` (array of ID), `lastMessage` (Denormalized object), `updatedAt`.
 - **Friends:** `requesterId`, `recipientId`, `status`, `unique_pair` (Compound Index).
 
-#### 🕸️ Graph Database (Neo4j)
-- **Nodes:**
-  - `User`: `{ userId: UUID }`
-- **Relationships:**
-  - `FRIEND`: `(u1:User)-[:FRIEND]->(u2:User)`
-  - `FOLLOW`: `(u1:User)-[:FOLLOW]->(u2:User)`
-  - `BLOCK`: `(u1:User)-[:BLOCK]->(u2:User)`
 
 
 ## 🏗️ Kiến trúc Hệ thống (System Architecture)
@@ -115,16 +108,14 @@ Mỗi module bên trong Backend được tổ chức thành 4 lớp để đảm
 Dự án sử dụng Docker Compose để quản lý các Service phụ trợ. Cần lưu ý các Port đã được tùy chỉnh để tránh xung đột:
 - **MongoDB:** `localhost:27018` (Port mặc định 27017 đã được thay đổi).
 - **Redis:** `localhost:6379`.
-- **Neo4j:** `localhost:7474` (HTTP) / `7687` (Bolt).
 - **Backend:** `localhost:8080` (Context-path: `/api`).
 
-## 📐 Scalability Strategy (Chiến lược mở rộng)
-- **Topic/Queue-based Architecture:** Mọi cuộc hội thoại được định tuyến bằng STOMP Destinations (/topic, /queue). Điều này giúp nâng cấp lên Group Chat ở Phase 6 thông qua Message Broker (RabbitMQ) cực kỳ dễ dàng.
-- **Extensible DB Schema:** Thiết kế `Chats` collection sử dụng mảng `members` linh hoạt, sẵn sàng cho việc mở rộng số lượng thành viên cuộc hội thoại mà không cần Migration Database.
-- **Stateless Gateway:** Sử dụng Redis Pub/Sub ngay từ đầu để đồng bộ tin nhắn WebSocket giữa các instances khi scale-out.
-- **Event-Driven Architecture (Future):** Sẵn sàng tích hợp Kafka/RabbitMQ để tách rời các xử lý nặng (Gửi mail, thông báo, xử lý ảnh) ra khỏi luồng chính của API.
-- **High-performance Search (Future):** Thay thế Regex MongoDB bằng ElasticSearch để đảm bảo tốc độ tìm kiếm tin nhắn trong hàng tỷ record.
-- **Polyglot Persistence:** Tích hợp Neo4j để quản lý Social Graph, thay thế các phép JOIN/Lookup chéo phức tạp của MongoDB để tối ưu hiệu năng đồ thị.
+## 📀 Quyết định Kiến trúc Hiện tại
+- **Modular Monolith trên 1 VPS:** Toàn bộ Backend chạy trên một instance duy nhất. Đơn giản, dễ vận hành, phù hợp giai đoạn hiện tại.
+- **MongoDB là database duy nhất:** Quản lý toàn bộ dữ liệu (User, Post, Chat, Friendship). Không sử dụng Graph Database.
+- **Redis phạm vi giới hạn:** Chỉ dùng cho Cache, JWT Blacklist và Rate Limiting. Không sử dụng Pub/Sub.
+- **Tạc vụ nền bằng Spring `@Async`:** Giải quyết các tác vụ bất đồng bộ (gửi mail, xử lý ảnh) mà không cần Message Broker.
+- **K6 Load Testing:** Bắt buộc chạy kiểm tra sức chịu tải trước mỗi lần deploy lên Production.
 
 
 ## 📂 Project Structure (Gradle/Maven)
@@ -138,9 +129,8 @@ Dự án sử dụng Docker Compose để quản lý các Service phụ trợ. C
 
 ## 🐳 Local Infrastructure (Docker Compose)
 Dự án cung cấp một file `docker-compose.yml` để chạy toàn bộ hạ tầng cần thiết cho môi trường phát triển cục bộ (Local Dev):
-*   **MongoDB (Port 27017):** Cơ sở dữ liệu chính của hệ thống.
-*   **Redis (Port 6379):** Cache trạng thái Online/Offline, Session và Pub/Sub WebSocket.
-*   **Neo4j (Port 7474 Web UI / 7687 Bolt):** Cơ sở dữ liệu đồ thị quản lý Social Graph.
+*   **MongoDB (Port 27018):** Cơ sở dữ liệu chính của hệ thống — lưu toàn bộ dữ liệu.
+*   **Redis (Port 6379):** Cache, JWT Blacklist và Rate Limiting.
 *   **Mailpit (Port 8025 Web UI / Port 1025 SMTP):** Giả lập Mail SMTP Server cục bộ. Khi chạy môi trường Local Dev, Spring Boot sẽ cấu hình gửi mail qua SMTP Mailpit cục bộ. Bạn có thể mở giao diện Web UI tại `http://localhost:8025` để xem và click link xác thực như thật. Giải pháp này giúp kiểm thử email nhanh chóng, trực quan và bảo vệ quota miễn phí của API Resend thật (chỉ dùng trên Production).
 
 ## 🌐 External Services
@@ -148,7 +138,5 @@ Dự án cung cấp một file `docker-compose.yml` để chạy toàn bộ hạ
 - **Resend:** Dịch vụ gửi Email (Auth, Notifications).
 - **Vercel:** Hosting Frontend React.
 - **MongoDB Atlas:** Database Cloud.
-- **Redis:** Caching trạng thái Online, Session và hỗ trợ Spring WebSocket (STOMP) qua Redis Pub/Sub.
-- **Prometheus & Grafana:** Hệ thống Monitoring và Dashboard theo dõi sức khỏe server.
-- **Google Gemini API:** Cung cấp các tính năng thông minh (Tóm tắt hội thoại, Phân tích cảm xúc).
+- **Redis:** Caching và JWT Blacklist (Token bị thu hồi sau khi logout).
 - **Sentry:** Theo dõi và báo cáo lỗi Realtime trên Production cho cả Backend và Frontend.

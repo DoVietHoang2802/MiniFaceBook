@@ -62,7 +62,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser }) => {
       ) : (
         <div className="space-y-6 mt-4">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard key={post.id} post={post} currentUser={currentUser} />
           ))}
           
           {hasMore && (

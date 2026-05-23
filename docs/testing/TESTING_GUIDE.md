@@ -9,7 +9,7 @@
 Dự án sử dụng Docker để quản lý Database. Hãy đảm bảo bạn đã cài đặt Docker Desktop.
 
 ```bash
-# Khởi động MongoDB, Redis, Neo4j
+# Khởi động MongoDB và Redis
 docker-compose up -d
 ```
 *Lưu ý: MongoDB chạy tại port **27018** để tránh xung đột.*

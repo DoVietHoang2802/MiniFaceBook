@@ -19,7 +19,9 @@ public class Post {
     private List<String> imageUrls = new ArrayList<>();
     
     @Builder.Default
-    private List<String> reactIds = new ArrayList<>();
+    private java.util.Map<ReactionType, Integer> reactionsCount = new java.util.HashMap<>();
+    
+    private int commentCount;
     
     private Instant createdAt;
     private Instant updatedAt;

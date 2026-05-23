@@ -7,7 +7,7 @@
     - [x] Khởi tạo dự án Spring Boot 3.x với Java 21 (Maven).
     - [x] Cấu hình **Mongock** để quản lý Database Migration cho MongoDB.
     - [x] Cấu hình **Checkstyle** và **Spotless** cho code style.
-    - [x] Thiết lập **Docker Compose** cho MongoDB, Redis và Neo4j.
+    - [x] Thiết lập **Docker Compose** cho MongoDB và Redis.
 - [x] **Sprint 0.2: Common Utilities & Security Foundation**
     - [x] Thiết lập bộ khung phản hồi chuẩn **ApiResponse** (Unified JSON Structure).
     - [x] Triển khai bảng mã lỗi tập trung **ErrorCode** & Custom **AppException**.
@@ -65,8 +65,8 @@
     - [x] Giao diện 3 cột Premium (`3-Column Grid Layout` matching `GiaoDienChinh.png` & `TrangChu4.png`).
     - [x] Tích hợp khả năng co dãn Responsive cực mịn sang Icon-Only và các phím hành động lơ lửng, vi tương tác kết bạn mượt mà.
 - [ ] **Sprint 2.2: Reactions & Comments (Tương tác bài viết)**
-    - [ ] Logic Like/React cho bài viết.
-    - [ ] Hệ thống Comment cấp 1 (đơn giản) cho các bài đăng.
+    - [x] Logic Like/React cho bài viết (UI mượt mà, API kết nối).
+    - [x] Hệ thống Comment cấp 1 (đơn giản) cho các bài đăng.
     - [ ] **Tối ưu hóa hình ảnh (Tương lai):** Tích hợp giải pháp **Client-side Image Compression** (tự động nén ảnh xuống dưới 1MB trước khi gửi đi) để tiết kiệm 90% chi phí đám mây và tối ưu trải nghiệm mạng yếu.
 
 ---
@@ -92,10 +92,8 @@
 *Mục tiêu: Xây dựng mạng lưới kết nối giữa các người dùng.*
 
 - [ ] **Sprint 4.1: Friend Request**
-    - [ ] Thiết kế Friend Schema (Trạng thái: Pending, Accepted, Rejected).
+    - [ ] Thiết kế collection `friendships` trong MongoDB (Trạng thái: Pending, Accepted, Rejected).
     - [ ] API Gửi/Hủy lời mời kết bạn (Handle logic tránh duplicate request).
-    - [ ] Khởi tạo Neo4j Connection và đồng bộ dữ liệu Node (User ID) từ MongoDB sang Neo4j.
-    - [ ] Tích hợp Cypher Query để tính toán số lượng bạn chung và gợi ý kết bạn.
 - [ ] **Sprint 4.2: Social Interactions**
     - [ ] API lấy danh sách bạn bè và danh sách lời mời đang chờ.
     - [ ] API Chấp nhận hoặc Từ chối lời mời kết bạn.
@@ -116,23 +114,19 @@
     - [ ] Deploy Backend lên Render/Railway.
     - [ ] Deploy Frontend lên Vercel/Netlify.
     - [ ] Tích hợp **Sentry** để theo dõi lỗi Realtime trên Production cho cả Backend và Frontend.
+    - [ ] **K6 Load Testing:** Bắt buộc chạy kiểm tra sức chịu tải trước khi go-live.
 
 ---
 
-## 🚀 PHASE 6: SCALING & EXTENDED FEATURES (MỞ RỘNG)
-*Mục tiêu: Đưa dự án lên tầm cao mới với các tính năng phức tạp Event-Driven.*
+## 🚀 PHASE 6: EXTENDED FEATURES (MỞ RỘNG)
+*Mục tiêu: Đưa dự án lên tầm cao mới với các tính năng mở rộng.*
 
-- [ ] **Sprint 6.1: Advanced Messaging & Search**
+- [ ] **Sprint 6.1: Advanced Messaging**
     - [ ] **Group Chat:** Triển khai logic nhóm, quản lý quyền **Admin/Member (RBAC)** và thông báo nhóm.
-    - [ ] **Message Search (ElasticSearch):** Tích hợp ElasticSearch để xử lý tìm kiếm dữ liệu lớn với tốc độ cao, thay thế Regex MongoDB.
 - [ ] **Sprint 6.2: Rich Media & Social**
     - [ ] **Video & Story:** Hỗ trợ định dạng video và tính năng tin tức 24h (Stories).
     - [ ] **Voice/Video Call:** Nghiên cứu tích hợp WebRTC cho cuộc gọi realtime trực tiếp.
-- [ ] **Sprint 6.3: Infrastructure Scaling & Monitoring**
-    - [ ] **Message Broker (Kafka/RabbitMQ):** Triển khai kiến trúc Event-Driven để xử lý Notification và tác vụ nền khi hệ thống có hàng triệu user.
-    - [ ] Tích hợp **Prometheus & Grafana** để theo dõi hiệu năng hệ thống chuyên sâu.
-    - [ ] Thực hiện **Load Testing với K6** để đảm bảo hệ thống chịu tải được triệu user.
-- [ ] **Sprint 6.4: AI-Assisted Features (Trend 2026)**
+- [ ] **Sprint 6.3: AI-Assisted Features (Trend 2026)**
     - [ ] Tích hợp **Google Gemini API** để tóm tắt nội dung hội thoại dài.
     - [ ] AI Sentiment Analysis: Phân tích cảm xúc tin nhắn/bài viết bằng Gemini.
 

@@ -56,6 +56,13 @@
 - **Cập Nhật Cẩm Nang AI:** Thống nhất các quy chuẩn an toàn file size và Client-side Size Guard vào `AI_GUIDELINES.md`.
 - **Tư duy Senior 10 năm kinh nghiệm:** Biên soạn các hướng dẫn với lập luận chặt chẽ, mạch lạc, dễ hiểu, bảo toàn trọn vẹn giá trị kỹ thuật đã tích lũy từ các phiên làm việc trước.
 
+#### D. Cuộc Đại Phẫu Thuật Kiến Trúc - Architectural Pivot (Cập nhật mới nhất)
+- **Loại bỏ Over-Engineering:** Đã rà soát và xóa sổ **100%** các từ khóa, kế hoạch và thiết kế liên quan đến **Neo4j, ElasticSearch, Kafka, RabbitMQ, Prometheus, và Grafana** khỏi tất cả các tài liệu dự án (`ROADMAP.md`, `SYSTEM_DESIGN.md`, `DATABASE_SCHEMA.md`, `BACKEND_ARCHITECTURE.md`, `TESTING_GUIDE.md`).
+- **Chốt Kiến trúc Thực dụng:** Hệ thống hiện tại và tương lai gần được chốt cứng ở mô hình **Modular Monolith** chạy trên 1 VPS duy nhất, sử dụng **MongoDB** làm cơ sở dữ liệu chính (bao gồm cả collection `friendships` thay cho Neo4j) và **Redis** để cache + rate limiting.
+- **Xử lý Tác vụ nền:** Thay thế toàn bộ định hướng dùng Message Broker (Kafka) bằng **Spring `@Async`**.
+- **Tiêu chuẩn Scale:** Đã thống nhất chỉ bổ sung công nghệ mới khi hệ thống thực sự vượt ngưỡng 5.000 users và có chỉ số đo lường nghẽn cổ chai cụ thể. Bắt buộc sử dụng **K6 Load Testing** trước khi go-live Production.
+- **Docker Clean up:** Đã xóa container `neo4j` khỏi `docker-compose.yml` để tiết kiệm RAM cho môi trường dev.
+
 ---
 
 ### 🚀 Nhiệm vụ tiếp theo (Phase 2 - Content & News Feed)

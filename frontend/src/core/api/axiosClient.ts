@@ -11,13 +11,12 @@ interface FailedRequest {
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
   withCredentials: true, // Bắt buộc gửi và lưu trữ HttpOnly Cookies xuyên suốt domain
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 let isRefreshing = false;
 let failedQueue: FailedRequest[] = [];
+
+
 
 // Hàm xử lý duyệt hàng đợi request khi lấy được token mới hoặc lỗi
 const processQueue = (error: any, token: string | null = null) => {
@@ -37,10 +36,12 @@ axiosClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Nếu gặp lỗi 401 Unauthorized, không phải request refresh, và chưa từng được thử lại
+    // Nếu gặp lỗi 401 Unauthorized, không phải request refresh/login/register, và chưa từng được thử lại
     if (error.response?.status === 401 && 
         originalRequest && 
         !originalRequest.url?.includes('/auth/refresh') && 
+        !originalRequest.url?.includes('/auth/login') && 
+        !originalRequest.url?.includes('/auth/register') && 
         !originalRequest._retry) {
       
       // Nếu đang có 1 tiến trình đi xin token mới, đưa request này vào hàng đợi chờ đợi

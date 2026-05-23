@@ -39,7 +39,7 @@ graph TD
 
 | Phân vùng thư mục | Mục đích sử dụng | Lợi ích cho AI & Developer |
 | :--- | :--- | :--- |
-| 📁 **`docs/architecture/`** | Lưu trữ các thiết kế lõi: Sơ đồ lớp, quy định package, cơ chế map cơ sở dữ liệu MongoDB/Neo4j/Redis. | Giúp AI nắm rõ cấu trúc phân lớp Clean Architecture của dự án trước khi viết code mới. |
+| 📁 **`docs/architecture/`** | Lưu trữ các thiết kế lõi: Sơ đồ lớp, quy định package, cơ chế map cơ sở dữ liệu MongoDB/Redis. | Giúp AI nắm rõ cấu trúc phân lớp Clean Architecture của dự án trước khi viết code mới. |
 | 📁 **`docs/guidelines/`** | Tập hợp các quy tắc "luật pháp": Hiến pháp AI, cẩm nang thiết kế UI/UX, quy chuẩn định dạng code (Spotless/Checkstyle). | Là cẩm nang bắt buộc AI phải đọc và tuân thủ 100% khi phát triển giao diện hoặc logic. |
 | 📁 **`docs/planning/`** | Quản lý tiến độ dự án: Lộ trình chi tiết (Roadmap), nhật ký phiên làm việc (Work Log) và lịch sử gỡ lỗi kỹ thuật. | Nơi duy nhất lưu trữ trạng thái lộ trình của dự án. Bảo vệ nghiêm ngặt chống ghi đè trái phép. |
 | 📁 **`docs/testing/`** | Hướng dẫn kiểm thử và triển khai: Hướng dẫn viết Testcase (ArchUnit, JUnit 5, Playwright) và cấu hình CI/CD. | Đảm bảo AI luôn có thể tự động chạy test và xác minh chất lượng sản phẩm trước khi bàn giao. |
