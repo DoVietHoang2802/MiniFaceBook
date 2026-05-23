@@ -144,6 +144,18 @@ Sử dụng chuẩn **Conventional Commits**: `<type>: <description>`
 ### 9.6. Giao thức Khởi động Phiên (Session Bootstrap Protocol)
 - **Luật:** Trong lượt phản hồi đầu tiên của mỗi phiên làm việc mới, AI **bắt buộc** phải đọc và chạy lệnh rà soát toàn bộ các tệp tin tài liệu sau: `README.md`, `docs/session/SESSION_HANDOFF.md`, `docs/planning/ROADMAP.md`, `docs/planning/PROGRESS.md`, `docs/guidelines/AI_GUIDELINES.md` bằng công cụ đọc file. AI phải chứng minh việc này bằng cách xuất bản một bảng **Startup Verification Table** hiển thị trạng thái đã đọc và 1 dòng tóm tắt mục tiêu chính của phiên đó trước khi thực hiện bất kỳ hành động code nào.
 
+### 9.7. Lệnh Tự Động Hóa "Update Full" (The "Update Full" Protocol)
+- **Luật:** Bất cứ khi nào USER ra lệnh `"Update Full"`, AI **BẮT BUỘC** phải tự động rà soát, đồng bộ và cập nhật ngay lập tức tất cả các tệp tài liệu kiến trúc của dự án mà không cần USER phải chỉ đích danh từng file.
+- **Danh sách file bắt buộc phải quét và cập nhật khi có lệnh Update Full:**
+  1. `docs/architecture/DATABASE_SCHEMA.md` (Cấu trúc bảng/DB)
+  2. `docs/architecture/BACKEND_ARCHITECTURE.md` (Quy chuẩn code)
+  3. `docs/planning/PROGRESS.md` (Nhật ký phiên bản)
+  4. `docs/planning/ROADMAP.md` (Lộ trình phát triển)
+  5. `docs/session/SESSION_HANDOFF.md` (Báo cáo bàn giao)
+  6. `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md` (Thành tựu STAR)
+  7. `docs/guidelines/UI_UX_DESIGN.md` (Quy chuẩn giao diện)
+- Sau khi rà soát và cập nhật xong, AI bắt buộc phải tự động gom nhóm bằng `git add docs/`, tiến hành `git commit` và đẩy code lên kho lưu trữ.
+
 ---
 **Mọi hành động đẩy code là một dấu ấn lịch sử của dự án. Hãy làm nó chuyên nghiệp.**
 
