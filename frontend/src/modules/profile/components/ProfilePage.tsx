@@ -12,6 +12,7 @@ import {
   Calendar, 
   UploadCloud 
 } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import { profileService } from '../services/profileService';
 import type { UserProfileResponse } from '../services/profileService';
 import { authService } from '../../auth/services/authService';
@@ -77,7 +78,19 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     setIsUploadingAvatar(true);
 
     try {
-      const response = await profileService.uploadAvatar(file);
+      // Bắt đầu quá trình nén ảnh ở Client
+      const options = {
+        maxSizeMB: 1, // Ép nén về dưới 1MB
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      const compressedBlob = await imageCompression(file, options);
+      const compressedFile = new File([compressedBlob], file.name, {
+        type: file.type,
+        lastModified: Date.now(),
+      });
+
+      const response = await profileService.uploadAvatar(compressedFile);
       setUser(response.data);
       setSuccessMessage('Cập nhật ảnh đại diện thành công!');
     } catch (err: any) {

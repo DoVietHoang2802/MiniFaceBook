@@ -67,7 +67,7 @@
 - [ ] **Sprint 2.2: Reactions & Comments (Tương tác bài viết)**
     - [x] Logic Like/React cho bài viết (UI mượt mà, API kết nối).
     - [x] Hệ thống Comment cấp 1 (đơn giản) cho các bài đăng.
-    - [ ] **Tối ưu hóa hình ảnh (Tương lai):** Tích hợp giải pháp **Client-side Image Compression** (tự động nén ảnh xuống dưới 1MB trước khi gửi đi) để tiết kiệm 90% chi phí đám mây và tối ưu trải nghiệm mạng yếu.
+    - [x] **Tối ưu hóa hình ảnh (Tương lai):** Tích hợp giải pháp **Client-side Image Compression** (tự động nén ảnh xuống dưới 1MB trước khi gửi đi) bằng Web Worker để tiết kiệm 90% chi phí đám mây và tối ưu trải nghiệm mạng yếu.
 
 ---
 

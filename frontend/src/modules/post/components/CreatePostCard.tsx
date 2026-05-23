@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Image as ImageIcon, Loader2, Send } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import { postService } from '../services/postService';
 import type { PostResponse } from '../types/post.types';
 
@@ -14,25 +15,49 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
       const validFiles: File[] = [];
       const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
       let hasOversizedFile = false;
+      setIsSubmitting(true);
 
-      selectedFiles.forEach((file) => {
+      for (const file of selectedFiles) {
         if (file.size > MAX_SIZE) {
           hasOversizedFile = true;
         } else {
-          validFiles.push(file);
+          try {
+            // Options cho Client-side Image Compression
+            const options = {
+              maxSizeMB: 1, // Nén xuống dưới 1MB
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+            };
+            // Nén ảnh bằng WebWorker ngầm
+            const compressedBlob = await imageCompression(file, options);
+            
+            // Convert Blob về File giữ nguyên tên ban đầu
+            const compressedFile = new File([compressedBlob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            
+            validFiles.push(compressedFile);
+          } catch (error) {
+            console.error('Lỗi khi nén ảnh:', error);
+            // Fallback: nếu lỗi nén thì dùng ảnh gốc
+            validFiles.push(file);
+          }
         }
-      });
+      }
+      
+      setIsSubmitting(false);
 
       if (hasOversizedFile && typeof window !== 'undefined') {
         const event = new CustomEvent('toast', { 
-          detail: 'Vui lòng chọn ảnh có dung lượng tối đa 5MB!' 
+          detail: 'Có ảnh vượt quá 5MB đã bị loại bỏ!' 
         });
         window.dispatchEvent(event);
       }
