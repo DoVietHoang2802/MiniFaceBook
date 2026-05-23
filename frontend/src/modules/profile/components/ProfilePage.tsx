@@ -18,11 +18,11 @@ import type { UserProfileResponse } from '../services/profileService';
 import { authService } from '../../auth/services/authService';
 
 // Định nghĩa Zod Schema cho Client-side Validation (Bảo mật Zero-Trust)
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // Mở rộng lên 20MB để thuật toán nén tự xử lý
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif'];
 
 const avatarFileSchema = z.instanceof(File)
-  .refine((file) => file.size <= MAX_FILE_SIZE, 'Dung lượng ảnh tối đa là 5MB')
+  .refine((file) => file.size <= MAX_FILE_SIZE, 'Dung lượng ảnh tối đa là 20MB')
   .refine(
     (file) => ALLOWED_MIME_TYPES.includes(file.type.toLowerCase()), 
     'Chỉ hỗ trợ định dạng JPG, JPEG, PNG, WEBP và GIF'
@@ -78,15 +78,33 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     setIsUploadingAvatar(true);
 
     try {
+      if (file.type === 'image/gif') {
+        // Up thẳng ảnh GIF không nén để giữ animation
+        console.log(`[Compression Test - Avatar] Bỏ qua nén ảnh GIF: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+        const response = await profileService.uploadAvatar(file);
+        setUser(response.data);
+        setSuccessMessage('Cập nhật ảnh đại diện thành công!');
+        return;
+      }
+
       // Bắt đầu quá trình nén ảnh ở Client
       const options = {
         maxSizeMB: 1, // Ép nén về dưới 1MB
         maxWidthOrHeight: 1920,
         useWebWorker: true,
+        fileType: 'image/webp' as const, // Ép nén sang WebP
       };
       const compressedBlob = await imageCompression(file, options);
-      const compressedFile = new File([compressedBlob], file.name, {
-        type: file.type,
+      
+      // Console log để Test tỷ lệ nén (F12)
+      console.log(`[Compression Test - Avatar] Ảnh gốc: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`[Compression Test - Avatar] Ảnh WebP sau nén: ${(compressedBlob.size / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`[Compression Test - Avatar] Tiết kiệm băng thông: ${Math.round((1 - compressedBlob.size / file.size) * 100)}%`);
+
+      // Đổi đuôi file sang .webp
+      const newFileName = file.name.replace(/\.[^/.]+$/, ".webp");
+      const compressedFile = new File([compressedBlob], newFileName, {
+        type: 'image/webp',
         lastModified: Date.now(),
       });
 

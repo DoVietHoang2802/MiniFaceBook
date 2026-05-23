@@ -170,6 +170,16 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
 *   **Nguyên tắc:** Các Popup/Dropdown hiện ra khi Hover tuyệt đối không được có khe hở vật lý gây ra hiện tượng "sụp đổ" (Drop) khi người dùng di chuyển chuột từ Nút kích hoạt sang Popup.
 *   **Áp dụng:** Bắt buộc sử dụng Padding trong suốt (`pb-X` hoặc `pt-X`) để mở rộng diện tích tương tác (Hit-area), tạo thành "cây cầu vô hình" nối liền Nút và Popup. (Ví dụ: `pb-4 bottom-full` trên thanh Emoji Bar).
 
+### 3. Bouncy Micro-animations (Chuyển động có hồn)
+- **Tư duy:** UI tĩnh là UI chết. Mọi thao tác click/hover đều phải có phản hồi thị giác.
+- **Giải pháp:** Sử dụng CSS `@keyframes` với quỹ đạo `cubic-bezier(0.175, 0.885, 0.32, 1.275)` để tạo độ nảy (Pop-In Bouncy).
+- **Ứng dụng:** Khi người dùng thả cảm xúc, nút icon phải bật lên 1 phát rồi mới rớt xuống, mô phỏng phản hồi vật lý.
+
+### 4. Magic UX Image Compression (Zero-Friction Uploads)
+- **Tư duy:** Không bao giờ dùng Hard Limit (ví dụ chặn 5MB) để block người dùng tải ảnh lớn từ điện thoại hiện đại. Việc báo lỗi file lớn là một trải nghiệm cực kỳ ức chế (Friction).
+- **Giải pháp:** Mở rộng cổng giới hạn dung lượng lên tới **20MB** để đón nhận mọi bức ảnh. Âm thầm sử dụng **Web Worker** ở luồng nền để nén ảnh (Client-side) xuống `<1MB`, ép toàn bộ sang định dạng `WebP` siêu nhẹ và bypass ảnh `.gif`.
+- **Trải nghiệm:** Người dùng cảm thấy ném ảnh to cỡ nào vào tải lên cũng siêu mượt mà không hề biết trình duyệt đã tự động bóp dung lượng giúp bảo vệ Server khỏi bị tràn RAM (OOM).
+
 ### 6.3. Bouncy Micro-animations (Chuyển động đàn hồi Cubic-Bezier)
 *   **Nguyên tắc:** Các hiệu ứng hiện cửa sổ (như thanh cảm xúc, popup thông báo) không được bật ra một cách cứng nhắc, mà phải có độ nảy nhẹ, trơn tru tạo cảm giác sống động (Pop-in).
 *   **Áp dụng:** Bắt buộc sử dụng CSS Keyframes kết hợp với hàm biến thiên `cubic-bezier` tùy chỉnh vượt ngưỡng (overshoot) để tạo độ nảy.

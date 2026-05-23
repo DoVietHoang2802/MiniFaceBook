@@ -98,6 +98,10 @@
     - [ ] API lấy danh sách bạn bè và danh sách lời mời đang chờ.
     - [ ] API Chấp nhận hoặc Từ chối lời mời kết bạn.
     - [ ] Tích hợp Search người dùng bằng Regex MongoDB.
+- [ ] **Phase 4: Expansion (Mở rộng & Tối ưu hóa)**
+    - [ ] Hệ thống Gợi ý kết bạn thuật toán (Mutual Friends).
+    - [ ] UX Tương lai: Thêm hiệu ứng Progress Bar/Spinner ghi chữ "Đang nén ảnh..." hiển thị riêng biệt lên từng bức ảnh lúc đăng bài để tránh làm người dùng hiểu lầm máy bị lag khi đẩy nhiều ảnh to.
+    - [ ] Các tính năng Story, Group, Page (Mục tiêu dài hạn).
 
 ---
 

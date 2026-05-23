@@ -19,7 +19,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
       const validFiles: File[] = [];
-      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      const MAX_SIZE = 20 * 1024 * 1024; // Mở rộng lên 20MB để thuật toán nén tự xử lý
 
       let hasOversizedFile = false;
       setIsSubmitting(true);
@@ -28,19 +28,35 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
         if (file.size > MAX_SIZE) {
           hasOversizedFile = true;
         } else {
+          if (file.type === 'image/gif') {
+            // Bỏ qua nén ảnh GIF để bảo toàn Animation
+            validFiles.push(file);
+            console.log(`[Compression Test - Bài viết] Bỏ qua nén ảnh GIF: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            continue;
+          }
+
           try {
             // Options cho Client-side Image Compression
             const options = {
               maxSizeMB: 1, // Nén xuống dưới 1MB
               maxWidthOrHeight: 1920,
               useWebWorker: true,
+              fileType: 'image/webp' as const, // Ép nén sang chuẩn WebP
             };
             // Nén ảnh bằng WebWorker ngầm
             const compressedBlob = await imageCompression(file, options);
             
-            // Convert Blob về File giữ nguyên tên ban đầu
-            const compressedFile = new File([compressedBlob], file.name, {
-              type: file.type,
+            // Console log để Test tỷ lệ nén (F12)
+            console.log(`[Compression Test - Bài viết] Ảnh gốc: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            console.log(`[Compression Test - Bài viết] Ảnh WebP sau nén: ${(compressedBlob.size / 1024 / 1024).toFixed(2)} MB`);
+            console.log(`[Compression Test - Bài viết] Tiết kiệm băng thông: ${Math.round((1 - compressedBlob.size / file.size) * 100)}%`);
+
+            // Đổi đuôi file sang .webp
+            const newFileName = file.name.replace(/\.[^/.]+$/, ".webp");
+
+            // Convert Blob về File
+            const compressedFile = new File([compressedBlob], newFileName, {
+              type: 'image/webp',
               lastModified: Date.now(),
             });
             
@@ -57,7 +73,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
 
       if (hasOversizedFile && typeof window !== 'undefined') {
         const event = new CustomEvent('toast', { 
-          detail: 'Có ảnh vượt quá 5MB đã bị loại bỏ!' 
+          detail: 'Có ảnh vượt quá 20MB đã bị loại bỏ!' 
         });
         window.dispatchEvent(event);
       }

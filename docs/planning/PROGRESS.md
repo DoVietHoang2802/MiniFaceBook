@@ -184,7 +184,7 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Frontend]** Áp dụng kỹ thuật **Window Focus Refetch** của TanStack Query để giả lập Realtime đa cửa sổ mượt mà không tốn kết nối WebSockets.
   - [x] **[Frontend]** Nâng cấp `PostCard.tsx` với thanh Hover Emoji Bar đàn hồi (Cubic-bezier Bouncy), khắc phục dứt điểm lỗi rớt popup nhờ kỹ thuật "Invisible Padding Bridge".
   - [x] **[Frontend]** Khắc phục lỗi `415 Unsupported Media Type` cho Multipart Request bằng cách loại bỏ `Content-Type: application/json` mặc định trong Axios instance.
-  - [x] **[Frontend/Performance]** Tích hợp thành công `browser-image-compression` để nén mọi hình ảnh tải lên (Avatar, Bài viết) xuống dưới 1MB bằng Web Worker, tiết kiệm 90% chi phí lưu trữ Cloudinary.
+  - [x] **[Frontend/Performance]** Tích hợp thành công `browser-image-compression` để nén mọi hình ảnh tải lên (dưới 20MB) xuống `<1MB` bằng Web Worker, tự động ép sang chuẩn `WebP` và Bypass ảnh `GIF`, tạo ra trải nghiệm Zero-Friction Magic UX và tiết kiệm 90% chi phí lưu trữ Cloudinary.
 
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |

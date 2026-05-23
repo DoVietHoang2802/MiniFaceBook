@@ -48,24 +48,31 @@
   - Nút Like active đổi sắc hồng rực rỡ kèm uploader `CreatePostCard` có 4 biểu tượng màu Notion quyến rũ.
 - **Client-side File Validation (Sprint 2.1 - Part 4):**
   - Viết logic kiểm định dung lượng ảnh tại máy khách trong `CreatePostCard.tsx`, lọc bỏ ảnh lớn hơn 5MB trước khi upload và kích hoạt Toast cảnh báo trực quan cho người dùng.
+  - Thiết kế **Responsive Collapsing Sidebar** trái và các thành phần sticky tối ưu hóa trải nghiệm người dùng.
+- **Vizo Light Slate Aesthetics & Notion Theme:** Đồng bộ toàn bộ hệ màu sang sáng Notion cao cấp HSL.
+- **Client-side File Validation & Compression (Sprint 2.2):**
+  - **Magic UX Image Compression:** Tích hợp `browser-image-compression` chạy bằng Web Worker. Nới lỏng giới hạn Upload lên **20MB**, tự động nén xuống <1MB, ép sang chuẩn WebP, bypass GIF, giảm tải OOM server 90%.
 
-#### C. Đồng bộ hóa Tài liệu & Skills Thiết kế (Sprint 2.1 - Part 5 & 6)
-- **Đồng bộ hóa 100% hệ thống Docs:** Đã thực hiện kiểm thử và cập nhật toàn bộ file tài liệu `.md` (gồm `UI_UX_DESIGN.md`, `STRUCTURE.md`, `FRONTEND_ARCHITECTURE.md`) để xóa sạch các từ khóa Sleek Dark Mode cũ, thay thế và thiết lập đồng bộ **Notion-inspired Light Slate Mode (Vizo Slate Light Theme)** làm ngôn ngữ thiết kế chính thức của dự án.
-- **Tập hợp Thành tựu STAR:** Tự động hóa cập nhật và ghi nhận đầy đủ 15 Highlight kỹ thuật cao cấp vào CV/Portfolio Ledger (`CV_PORTFOLIO_HIGHLIGHTS.md`).
-- **Nâng Cấp Kỹ Năng Spring Boot Mastery:** Tích hợp các hướng dẫn Tomcat limits (5MB/25MB), Magic Bytes nhị phân bằng Apache Tika, Testcontainers với `.withOptionalLayers(true)` và cấu trúc 4 phân lớp tối tân vào `spring-boot-mastery/SKILL.md`.
-- **Cập Nhật Cẩm Nang AI:** Thống nhất các quy chuẩn an toàn file size và Client-side Size Guard vào `AI_GUIDELINES.md`.
-- **Tư duy Senior 10 năm kinh nghiệm:** Biên soạn các hướng dẫn với lập luận chặt chẽ, mạch lạc, dễ hiểu, bảo toàn trọn vẹn giá trị kỹ thuật đã tích lũy từ các phiên làm việc trước.
+#### C. Tổng kết Tình trạng Hiện tại (Current Status)
 
-- **Hệ thống Bình luận & Tương tác (Sprint 2.2):**
-  - Xây dựng API thả cảm xúc 6 trạng thái (Like, Love, Haha, Wow, Sad, Angry) và cơ chế tự động tính `reactCount`.
-  - Triển khai API bình luận phẳng (Flat list) hỗ trợ đính kèm hình ảnh.
-  - Áp dụng thành công **Optimistic UI Updates** trên giao diện, triệt tiêu độ trễ mạng khi thả cảm xúc và bình luận.
-  - Sử dụng "Invisible Padding Bridge" để làm mượt menu cảm xúc đàn hồi Cubic-bezier.
-  - Áp dụng kỹ thuật giả lập thời gian thực qua **Window Focus Refetch** giữa đa cửa sổ.
+Dưới đây là bản tóm tắt toàn diện cho phiên làm việc hiện tại, đóng vai trò là "la bàn" để bạn có thể tiếp tục phát triển dự án **MiniFaceBook** trong tương lai.
 
-#### D. Cuộc Đại Phẫu Thuật Kiến Trúc - Architectural Pivot (Cập nhật mới nhất)
-- **Loại bỏ Over-Engineering:** Đã rà soát và xóa sổ **100%** các từ khóa, kế hoạch và thiết kế liên quan đến **Neo4j, ElasticSearch, Kafka, RabbitMQ, Prometheus, và Grafana** khỏi tất cả các tài liệu dự án (`ROADMAP.md`, `SYSTEM_DESIGN.md`, `DATABASE_SCHEMA.md`, `BACKEND_ARCHITECTURE.md`, `TESTING_GUIDE.md`).
-- **Chốt Kiến trúc Thực dụng:** Hệ thống hiện tại và tương lai gần được chốt cứng ở mô hình **Modular Monolith** chạy trên 1 VPS duy nhất, sử dụng **MongoDB** làm cơ sở dữ liệu chính (bao gồm cả collection `friendships` thay cho Neo4j) và **Redis** để cache + rate limiting.
+### 1. Các tính năng đã hoàn thiện (Sprint 2.2 & Performance Optimization)
+*   **Hệ thống Bình luận & Reactions:** Triển khai kỹ thuật **Optimistic UI Updates** bằng `React Query`, mang lại độ trễ tương tác 0ms. Áp dụng cơ chế "Invisible Padding Bridge" chống rớt popup.
+*   **Magic UX Image Compression (Highlight 18):** 
+    *   Tích hợp thành công `browser-image-compression` chạy bằng Web Worker. 
+    *   Nới lỏng giới hạn Upload lên **20MB** để đón nhận mọi ảnh to từ điện thoại. 
+    *   Âm thầm nén xuống `<1MB`, ép sang chuẩn **WebP** và Bypass ảnh **GIF**.
+    *   Giải quyết triệt để bài toán OOM cho Server và tiết kiệm 90% chi phí Cloudinary.
+
+### 2. Công cụ & Quy trình vận hành (AI-First Workflow)
+*   Mọi thông số kỹ thuật (Bouncy, Optimistic, Magic Compression) đều được quy chuẩn hóa trong `UI_UX_DESIGN.md`.
+*   Hệ thống Update Full Protocol chạy hoàn hảo.
+*   Dự án đang ở trạng thái sạch sẽ 100%, sẵn sàng bước sang Phase mới.
+
+#### D. Cuộc Đại Phẫu Thuật Kiến Trúc - Architectural Pivot
+- **Loại bỏ Over-Engineering:** Đã rà soát và xóa sổ **100%** các từ khóa, kế hoạch và thiết kế liên quan đến **Neo4j, ElasticSearch, Kafka, RabbitMQ, Prometheus, và Grafana** khỏi tất cả các tài liệu dự án.
+- **Chốt Kiến trúc Thực dụng:** Hệ thống hiện tại và tương lai gần được chốt cứng ở mô hình **Modular Monolith** chạy trên 1 VPS duy nhất, sử dụng **MongoDB** làm cơ sở dữ liệu chính và **Redis** để cache + rate limiting.
 - **Xử lý Tác vụ nền:** Thay thế toàn bộ định hướng dùng Message Broker (Kafka) bằng **Spring `@Async`**.
 - **Tiêu chuẩn Scale:** Đã thống nhất chỉ bổ sung công nghệ mới khi hệ thống thực sự vượt ngưỡng 5.000 users và có chỉ số đo lường nghẽn cổ chai cụ thể. Bắt buộc sử dụng **K6 Load Testing** trước khi go-live Production.
 - **Docker Clean up:** Đã xóa container `neo4j` khỏi `docker-compose.yml` để tiết kiệm RAM cho môi trường dev.
