@@ -65,6 +65,43 @@ Lưu trữ thông tin bài viết của người dùng trên News Feed.
 
 ---
 
+### D. Collection: `comments`
+Lưu trữ các bình luận cấp 1 của người dùng trên bài viết.
+
+*   **Indexes:**
+    *   `postId` (Hashed/Ascending) -> Tối ưu lấy danh sách bình luận theo bài viết.
+    *   `createdAt` (Ascending) -> Phân trang bình luận theo thời gian cũ nhất lên trước.
+
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `postId` | String | Liên kết tới `posts._id`. |
+| `authorId` | String | Liên kết tới `users._id`. |
+| `authorName` | String | Tên người bình luận (Denormalized để truy vấn nhanh). |
+| `authorAvatar`| String | Avatar người bình luận. |
+| `content` | String | Nội dung văn bản của bình luận. |
+| `imageUrl` | String | Link ảnh đính kèm (nếu có). |
+| `createdAt` | Instant | Thời điểm bình luận. |
+| `updatedAt` | Instant | Thời điểm sửa bình luận. |
+
+---
+
+### E. Collection: `reactions`
+Lưu trữ cảm xúc của người dùng đối với bài viết.
+
+*   **Indexes:**
+    *   `(postId, userId)` (Compound Unique Index) -> Một user chỉ được thả 1 loại cảm xúc cho 1 bài viết.
+
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `postId` | String | Liên kết tới `posts._id`. |
+| `userId` | String | Liên kết tới `users._id`. |
+| `type` | String (Enum) | Loại cảm xúc (`LIKE`, `LOVE`, `HAHA`, `WOW`, `SAD`, `ANGRY`). |
+| `createdAt` | Instant | Thời điểm thả cảm xúc. |
+
+---
+
 ## 🤝 2. MongoDB — Collection: `friendships`
 Lưu trữ quan hệ kết bạn giữa người dùng. Sử dụng Compound Index để đảm bảo không có cặp bạn bè trùng lặp và tốc độ truy vấn nhanh.
 

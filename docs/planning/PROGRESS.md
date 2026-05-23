@@ -176,7 +176,22 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 - **Phiên 19/05/2026 (Sprint 2.1 - Part 6 - Đồng bộ Toàn diện Ledger Thành tựu Kỹ thuật STAR và Cập nhật Spring Boot Mastery Skill):**
   - [x] **[Thống Nhất Ledger Thành Tựu STAR]** Bổ sung Highlight 14 (Post System Clean Architecture và Multipart Tomcat config 5MB) và Highlight 15 (Client-side Size Guard early toast alert) vào `CV_PORTFOLIO_HIGHLIGHTS.md`.
   - [x] **[Nâng Cấp Kỹ Năng Spring Boot Mastery]** Cập nhật `spring-boot-mastery/SKILL.md` với các hướng dẫn Tomcat limits, Apache Tika, Testcontainers với `.withOptionalLayers(true)` và cấu trúc 4 phân lớp tối tân.
-  - [x] **[Hoàn Thiện Bộ Hướng Dẫn AI]** Cập nhật `AI_GUIDELINES.md` tích hợp các quy chuẩn dung lượng ảnh (5MB/25MB) và Client-side Size Guard.
+- **Phiên 23/05/2026 (Sprint 2.2 - Reactions & Comments System):**
+  - [x] **[Backend]** Khởi tạo `CommentDocument`, `ReactionDocument` và thiết lập collection với Indexes tối ưu.
+  - [x] **[Backend]** Xây dựng API `/posts/{postId}/comments` (hỗ trợ phân trang GET và POST có đính kèm ảnh).
+  - [x] **[Backend]** Xây dựng API `/posts/{postId}/react` hỗ trợ Toggle Reaction (6 loại cảm xúc) và tự động đồng bộ biến đếm `reactCount` vào Post.
+  - [x] **[Frontend]** Phát triển `CommentSection.tsx` ứng dụng kỹ thuật **Optimistic UI Updates** hiển thị bình luận tức thì với độ trễ 0ms.
+  - [x] **[Frontend]** Áp dụng kỹ thuật **Window Focus Refetch** của TanStack Query để giả lập Realtime đa cửa sổ mượt mà không tốn kết nối WebSockets.
+  - [x] **[Frontend]** Nâng cấp `PostCard.tsx` với thanh Hover Emoji Bar đàn hồi (Cubic-bezier Bouncy), khắc phục dứt điểm lỗi rớt popup nhờ kỹ thuật "Invisible Padding Bridge".
+  - [x] **[Frontend]** Khắc phục lỗi `415 Unsupported Media Type` cho Multipart Request bằng cách loại bỏ `Content-Type: application/json` mặc định trong Axios instance.
+
+#### 🔧 Technical Debugging Log (Phase 2 Stabilization)
+| Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
+| :--- | :--- | :--- | :--- |
+| **415 Unsupported Media Type** | Axios tự động ép cứng `Content-Type: application/json` cho mọi request, làm vỡ định dạng gửi FormData. | Bỏ cấu hình headers mặc định trong `axios.create` để trình duyệt tự do nhận diện FormData và gán boundary. | Các request đăng bài và bình luận có ảnh hoạt động trơn tru. |
+| **old.content is not iterable** | Optimistic Update cố map dữ liệu thẳng vào cache mảng, nhưng cấu trúc trả về thực tế là `ApiResponse`. | Sửa lại logic query client truy cập `old.data.content`. | Optimistic UI hoạt động chính xác tuyệt đối. |
+
+
 
 #### 🔧 Technical Debugging Log (Phase 1 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |

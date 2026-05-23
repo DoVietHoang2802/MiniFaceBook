@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 19/05/2026
-## 🏁 Trạng thái hiện tại: Đã hoàn thành 100% SPRINT 2.1 (Post System - Giao diện 3 cột Premium, vi tương tác và Đồng bộ Tài liệu/Skill) và sẵn sàng bước vào SPRINT 2.2 (Reactions & Comments) của Phase 2
+## 🏁 Trạng thái hiện tại: Đã hoàn thành 100% SPRINT 2.2 (Reactions & Comments). Sẵn sàng bước vào PHASE 3: REALTIME CHAT.
 
 ---
 
@@ -56,6 +56,13 @@
 - **Cập Nhật Cẩm Nang AI:** Thống nhất các quy chuẩn an toàn file size và Client-side Size Guard vào `AI_GUIDELINES.md`.
 - **Tư duy Senior 10 năm kinh nghiệm:** Biên soạn các hướng dẫn với lập luận chặt chẽ, mạch lạc, dễ hiểu, bảo toàn trọn vẹn giá trị kỹ thuật đã tích lũy từ các phiên làm việc trước.
 
+- **Hệ thống Bình luận & Tương tác (Sprint 2.2):**
+  - Xây dựng API thả cảm xúc 6 trạng thái (Like, Love, Haha, Wow, Sad, Angry) và cơ chế tự động tính `reactCount`.
+  - Triển khai API bình luận phẳng (Flat list) hỗ trợ đính kèm hình ảnh.
+  - Áp dụng thành công **Optimistic UI Updates** trên giao diện, triệt tiêu độ trễ mạng khi thả cảm xúc và bình luận.
+  - Sử dụng "Invisible Padding Bridge" để làm mượt menu cảm xúc đàn hồi Cubic-bezier.
+  - Áp dụng kỹ thuật giả lập thời gian thực qua **Window Focus Refetch** giữa đa cửa sổ.
+
 #### D. Cuộc Đại Phẫu Thuật Kiến Trúc - Architectural Pivot (Cập nhật mới nhất)
 - **Loại bỏ Over-Engineering:** Đã rà soát và xóa sổ **100%** các từ khóa, kế hoạch và thiết kế liên quan đến **Neo4j, ElasticSearch, Kafka, RabbitMQ, Prometheus, và Grafana** khỏi tất cả các tài liệu dự án (`ROADMAP.md`, `SYSTEM_DESIGN.md`, `DATABASE_SCHEMA.md`, `BACKEND_ARCHITECTURE.md`, `TESTING_GUIDE.md`).
 - **Chốt Kiến trúc Thực dụng:** Hệ thống hiện tại và tương lai gần được chốt cứng ở mô hình **Modular Monolith** chạy trên 1 VPS duy nhất, sử dụng **MongoDB** làm cơ sở dữ liệu chính (bao gồm cả collection `friendships` thay cho Neo4j) và **Redis** để cache + rate limiting.
@@ -65,18 +72,15 @@
 
 ---
 
-### 🚀 Nhiệm vụ tiếp theo (Phase 2 - Content & News Feed)
+### 🚀 Nhiệm vụ tiếp theo (Phase 3 - The Heart: Realtime Chat MVP)
 
-1. **Sprint 2.2: Reactions & Comments (Tương tác bài viết):**
-   * **Backend:**
-     * Thiết kế thêm các trường `reactCount` hoặc bảng/collection `Reaction` lưu trữ trạng thái tương tác bài viết (Like, Love, Haha, Wow, Sad, Angry).
-     * Xây dựng API Like/React bài viết (`POST /api/posts/{id}/react`) và API hủy react.
-     * Thiết kế collection `Comment` lưu trữ các bình luận cấp 1 của người dùng (authorId, content, postId, createdAt, updatedAt).
-     * Xây dựng API bình luận bài đăng (`POST /api/posts/{id}/comments`) và lấy bình luận phân trang (`GET /api/posts/{id}/comments`).
-   * **Frontend:**
-     * Bổ sung nút Like/React thông minh trên `PostCard.tsx`: Hover hiển thị thanh chọn biểu tượng cảm xúc nhấp nháy, click đổi màu biểu tượng theo đúng tương tác.
-     * Thiết kế khu vực bình luận tích hợp dưới mỗi `PostCard.tsx`, hỗ trợ tải thêm bình luận mượt mờ và hiển thị Optimistic Update ngay khi nhấn Enter.
-     * **Tự động nén ảnh (Client-side Image Compression):** Tích hợp `browser-image-compression` để nén tự động ảnh trước khi gửi đi, tối ưu hóa băng thông.
+1. **Sprint 3.1: Messaging Foundation (Hạ tầng nhắn tin 1-1):**
+   * **Backend:** 
+     * Thiết lập cấu hình WebSocket và giao thức STOMP trên Spring Boot.
+     * Tạo các collection `conversations` (phòng chat) và `messages` (tin nhắn).
+   * **Frontend:** 
+     * Xây dựng giao diện Chatbox góc dưới bên phải hoặc tích hợp vào một module Messenger riêng biệt.
+     * Liên kết WebSocket Client để gửi/nhận tin nhắn không cần tải lại trang.
 
 ---
 *Ghi chú: Luôn giữ file `TESTING_GUIDE.md` cập nhật để đảm bảo tính sẵn sàng kiểm thử của hệ thống.*
