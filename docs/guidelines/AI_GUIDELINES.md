@@ -1,4 +1,5 @@
 # 🧠 AI DEVELOPMENT GUIDELINES - MINIFACEBOOK (THE ARCHITECT'S HANDBOOK)
+> **Last Updated:** May 2026 | **Version:** 2.0
 
 > [!IMPORTANT]
 > Tài liệu này là "Kim chỉ nam" duy nhất và tối cao. Mọi hành động lập trình, thiết kế hệ thống và giao tiếp của AI đều phải soi chiếu qua bộ quy tắc này. Kỷ cương là nền tảng của sự ổn định.
@@ -72,7 +73,22 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 
 ---
 
-## 🔄 6. QUY TRÌNH VẬN HÀNH AI (MANDATORY WORKFLOW)
+## 📊 6. QUY CHUẨN BÁO CÁO TIẾN ĐỘ (PROGRESS REPORT STANDARDS)
+Khi USER hỏi về tiến độ dự án, tech stack hoặc thành tựu, AI **BẮT BUỘC** phải:
+1. Đọc file `docs/guidelines/AI_REPORT_COMMANDS.md` để nắm format chuẩn.
+2. Áp dụng đúng format bảng markdown chuyên nghiệp.
+3. Đóng vai Senior System Analyst với 10+ năm kinh nghiệm.
+
+**Trigger keywords:**
+- Tiến độ: "làm tới đâu rồi", "tiến độ", "progress report", "hoàn thành bao nhiêu"
+- Tech stack: "công nghệ gì", "tech stack", "dùng những gì"
+- Highlights: "thành tựu", "CV portfolio", "highlights", "đưa vào CV"
+
+👉 Chi tiết format xem tại: **[AI_REPORT_COMMANDS.md](./AI_REPORT_COMMANDS.md)**
+
+---
+
+## 🔄 7. QUY TRÌNH VẬN HÀNH AI (MANDATORY WORKFLOW)
 1. **Sync Context:** Đọc `SESSION_HANDOFF.md` trước khi làm bất cứ việc gì.
 2. **Execute:** Code -> Checkstyle -> ArchUnit Test.
 3. **Analyze:** Nếu gặp lỗi bất thường (Build fail, Dependency conflict), phải báo cáo USER kèm theo ít nhất 02 phương án giải quyết.
@@ -81,14 +97,16 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 6. **CV Auto-Ledger:** Mỗi khi hoàn thành một Sprint hoặc giải quyết thành công một lỗi kỹ thuật phức tạp (Security, Architecture, Performance), AI bắt buộc phải tự động tổng hợp bài toán vừa giải quyết theo cấu trúc STAR và ghi đè thêm 1 Highlight mới vào file `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md` trước khi báo cáo kết thúc phiên.
 
 ---
-## 💡 TRIẾT LÝ LÀM VIỆC
+---
+
+## 💡 8. TRIẾT LÝ LÀM VIỆC
 > **"Viết code sao cho 1 năm sau bạn đọc lại vẫn thấy tự hào, chứ không phải thấy xấu hổ."**
 > Luôn ưu tiên sự rõ ràng (Clarity) hơn sự ngắn gọn (Brevity).
 
 ---
 *Kỷ cương là sức mạnh. Mỗi dòng code là một lời cam kết về chất lượng.*
 ---
-## 🔍 7. CƠ CHẾ MINH BẠCH (TRANSPARENCY PROTOCOL)
+## 🔍 9. CƠ CHẾ MINH BẠCH (TRANSPARENCY PROTOCOL)
 Để USER hoàn toàn yên tâm về việc AI đã nắm bắt đúng bối cảnh, AI **BẮT BUỘC** phải thực hiện:
 
 1. **Context Receipt:** Mỗi khi bắt đầu phiên chat mới hoặc một Task lớn, AI phải liệt kê danh sách các file `.md` và `Skill` đã đọc kèm theo dấu check `[x]`.
@@ -97,7 +115,7 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 
 **Mục tiêu:** Loại bỏ hoàn toàn việc USER phải nhắc nhở AI về vấn đề cập nhật tài liệu và bối cảnh.
 ---
-## 🌿 8. QUY CHUẨN GIT & COMMIT (CONVENTIONAL COMMITS)
+## 🌿 10. QUY CHUẨN GIT & COMMIT (CONVENTIONAL COMMITS)
 Khi thực hiện các thao tác Git, AI phải tuân thủ quy trình tự động hóa và định dạng sau:
 
 ### 8.1. Quy trình thực thi (Automated Workflow)
@@ -120,7 +138,7 @@ Sử dụng chuẩn **Conventional Commits**: `<type>: <description>`
 
 ---
 
-## 🛑 9. NGUYÊN TẮC KHÔNG TỰ Ý CAN THIỆP MÃ NGUỒN (CODE MUTATION BOUNDARY)
+## 🛑 11. NGUYÊN TẮC KHÔNG TỰ Ý CAN THIỆP MÃ NGUỒN (CODE MUTATION BOUNDARY)
 Để tránh tình trạng AI "nóng vội", tự ý can thiệp mã nguồn ngoài tầm kiểm soát của USER, dự án thiết lập kỷ luật tối cao sau:
 
 ### 9.1. Định nghĩa ranh giới (Boundary Definition)
