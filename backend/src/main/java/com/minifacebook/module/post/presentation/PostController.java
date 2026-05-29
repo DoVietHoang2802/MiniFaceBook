@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/posts")
 @RequiredArgsConstructor
-@Tag(name = "Post", description = "Endpoints for managing posts and newsfeed")
+@Tag(name = "Bài viết", description = "Các API quản lý bài viết và bảng tin")
 public class PostController {
 
     private final PostService postService;
@@ -32,7 +32,7 @@ public class PostController {
     private final CommentService commentService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Create a new post", description = "Upload images and create a text post")
+    @Operation(summary = "Đăng bài viết mới", description = "Tải ảnh lên và tạo một bài viết dạng văn bản")
     public ApiResponse<PostResponse> createPost(
             @AuthenticationPrincipal Jwt jwt,
             @ModelAttribute @Valid CreatePostRequest request) {
@@ -42,7 +42,7 @@ public class PostController {
     }
 
     @GetMapping("/newsfeed")
-    @Operation(summary = "Get news feed", description = "Get paginated posts ordered by creation time")
+    @Operation(summary = "Lấy bảng tin", description = "Lấy danh sách bài viết phân trang, sắp xếp theo thời gian đăng")
     public ApiResponse<Page<PostResponse>> getNewsFeed(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "0") int page,
@@ -54,7 +54,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/react")
-    @Operation(summary = "React to a post", description = "Toggle reaction on a post. If same reaction is sent, it will be removed.")
+    @Operation(summary = "Bày tỏ cảm xúc với bài viết", description = "Bật/tắt cảm xúc trên bài viết. Gửi lại cùng loại cảm xúc sẽ gỡ bỏ cảm xúc đó.")
     public ApiResponse<Void> reactToPost(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String postId,
@@ -65,7 +65,7 @@ public class PostController {
     }
 
     @PostMapping(value = "/{postId}/comments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Add a comment", description = "Add a text/image comment to a post")
+    @Operation(summary = "Thêm bình luận", description = "Thêm một bình luận dạng văn bản/hình ảnh vào bài viết")
     public ApiResponse<CommentResponse> addComment(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String postId,
@@ -76,7 +76,7 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/comments")
-    @Operation(summary = "Get comments", description = "Get paginated comments for a post")
+    @Operation(summary = "Lấy danh sách bình luận", description = "Lấy danh sách bình luận phân trang của một bài viết")
     public ApiResponse<Page<CommentResponse>> getComments(
             @PathVariable String postId,
             @RequestParam(defaultValue = "0") int page,

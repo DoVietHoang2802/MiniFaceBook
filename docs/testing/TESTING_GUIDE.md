@@ -140,3 +140,12 @@ mvn test -Dtest=ArchitectureTest
 - **Dọn dẹp code style:** `mvn spotless:apply`
 - **Kiểm tra lỗi tiềm ẩn:** `mvn checkstyle:check`
 
+---
+
+## � 6. Hướng dẫn kiểm thử theo từng Phase
+
+Để dễ đọc và dễ tra cứu, hướng dẫn test chi tiết của mỗi Phase được tách thành file riêng trong thư mục `docs/testing/`:
+
+| Phase | File hướng dẫn | Nội dung |
+|:-----:|----------------|----------|
+| Phase 3 | **[PHASE_3_FRIENDS_TESTING.md](./PHASE_3_FRIENDS_TESTING.md)** | Friend Request, Friend List, Search |
