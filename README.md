@@ -42,16 +42,21 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 ---
 
 ## 🗺️ Project Roadmap (Tóm tắt)
-Dự án được chia làm 6 giai đoạn phát triển chính. 
+Dự án được chia làm **7 giai đoạn** phát triển chính. 
 > 📑 Xem chi tiết tại: **[docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)**
 
-- **Phase 0:** Foundation & Infrastructure (✅ *Đã hoàn thành*).
-- **Phase 1:** Authentication & Identity (✅ *Đã hoàn thành*).
-- **Phase 2:** Content & News Feed (Trang chủ & Dòng thời gian - *Đang tiến hành*).
-- **Phase 3:** The Heart - Realtime Chat (MVP).
-- **Phase 4:** Social Graph & Friends.
-- **Phase 5:** Optimization, Deployment & AI Integration.
-- **Phase 6:** Extended Features.
+| Phase | Tên | Trạng thái |
+|:-----:|-----|:----------:|
+| 0 | Foundation & Infrastructure | ✅ Hoàn thành |
+| 1 | Authentication & Identity | ✅ Hoàn thành |
+| 2 | Content & News Feed | ✅ Hoàn thành |
+| 3 | Social Graph & Friends | ⏳ Chưa bắt đầu |
+| 4 | Realtime Chat | ⏳ Chưa bắt đầu |
+| 5 | Notification System | ⏳ Chưa bắt đầu |
+| 6 | Advanced & Deployment | ⏳ Chưa bắt đầu |
+| 7 | Extended Features | ⏳ Chưa bắt đầu |
+
+**Tiến độ: 3/7 Phases (~43%)**
 
 ---
 
@@ -61,6 +66,7 @@ Dự án được chia làm 6 giai đoạn phát triển chính.
 - **[SYSTEM_DESIGN.md](docs/architecture/SYSTEM_DESIGN.md):** Bản thiết kế DB và Kiến trúc hệ thống.
 - **[PROGRESS.md](docs/planning/PROGRESS.md):** Nhật ký tiến độ và các quyết định kỹ thuật.
 - **[AI_GUIDELINES.md](docs/guidelines/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
+- **[AI_REPORT_COMMANDS.md](docs/guidelines/AI_REPORT_COMMANDS.md):** Format báo cáo tiến độ chuẩn cho AI.
 - **[DOCUMENTATION_STANDARDS.md](docs/guidelines/DOCUMENTATION_STANDARDS.md):** Đề án chuẩn hóa thư mục tài liệu mới.
 
 ---

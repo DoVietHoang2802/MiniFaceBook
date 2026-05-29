@@ -16,11 +16,14 @@ Khi người dùng hỏi về **tiến độ dự án**, **làm tới đâu rồ
 |-------|-----|------------|------------|
 | **Phase 0** | Foundation & Infrastructure | ✅ HOÀN THÀNH | 100% |
 | **Phase 1** | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
-| **Phase 2** | Content & News Feed | 🔄 ĐANG LÀM | XX% |
-| **Phase 3** | Realtime Chat | ⏳ CHƯA BẮT ĐẦU | 0% |
-...
+| **Phase 2** | Content & News Feed | ✅ HOÀN THÀNH | 100% |
+| **Phase 3** | Social Graph & Friends | 🔄 ĐANG LÀM | XX% |
+| **Phase 4** | Realtime Chat | ⏳ CHƯA BẮT ĐẦU | 0% |
+| **Phase 5** | Notification System | ⏳ CHƯA BẮT ĐẦU | 0% |
+| **Phase 6** | Advanced & Deployment | ⏳ CHƯA BẮT ĐẦU | 0% |
+| **Phase 7** | Extended Features | ⏳ CHƯA BẮT ĐẦU | 0% |
 
-**Tổng tiến độ dự án: ~XX%**
+**Tổng tiến độ dự án: ~XX%** (X/7 Phases)
 ```
 
 ### 2. Chi Tiết Từng Phase (Bảng Technologies)
