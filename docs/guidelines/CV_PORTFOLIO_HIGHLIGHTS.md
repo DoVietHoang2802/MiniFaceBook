@@ -277,3 +277,34 @@
     *   **Trải nghiệm Zero-Lag:** Việc sử dụng Web Worker bảo toàn độ mượt của UI (60 FPS), trong khi người dùng mạng yếu (3G/4G) vẫn có thể đăng bài thả ga mà không phải đợi lâu.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Engineered a zero-lag client-side image compression engine via Web Workers, dynamically reducing user payload size by up to 90% (<1MB) before network transit, optimizing cloud storage costs and drastically improving UX on low-bandwidth connections.*
+
+---
+
+### 🤝 Highlight 19: Thiết kế Module Quan Hệ Bạn Bè với Bidirectional Lookup & State Machine (Friendship Domain & Compound Unique Index)
+*   **Situation (Bối cảnh):** Quan hệ kết bạn trong mạng xã hội là một bài toán dữ liệu phi đối xứng phức tạp: cùng một cặp người dùng (A, B) có thể tồn tại ở nhiều trạng thái (chờ duyệt, đã kết bạn, bị từ chối, bị chặn), và lời mời có tính một chiều (A gửi B khác với B gửi A). Nếu không thiết kế kỹ, hệ thống dễ phát sinh bản ghi trùng lặp (A→B và B→A cùng tồn tại) hoặc cho phép spam gửi lại lời mời vô tận.
+*   **Task (Nhiệm vụ):** Xây dựng module `friendship` đạt chuẩn Clean Architecture 4 phân lớp, đảm bảo tính toàn vẹn dữ liệu ở tầng database, xử lý đúng vòng đời trạng thái (State Machine) của một mối quan hệ và phân quyền chặt chẽ ai được phép thực hiện hành động nào.
+*   **Action (Hành động):**
+    *   Thiết kế `Friendship` Entity dạng POJO thuần (Domain) với enum `FriendshipStatus` (PENDING/ACCEPTED/REJECTED/BLOCKED), tách biệt hoàn toàn khỏi `FriendshipDocument` (Infrastructure) qua MapStruct.
+    *   Thiết lập **Compound Unique Index** `(requesterId, addresseeId)` ở tầng MongoDB làm lá chắn cuối cùng chống tạo trùng lời mời theo một chiều.
+    *   Hiện thực hóa cơ chế **Bidirectional Lookup** (`findBetweenUsers`) quét cả 2 chiều quan hệ trước mọi thao tác, kết hợp State Machine cho phép tái sử dụng (recycle) bản ghi `REJECTED` để gửi lại lời mời thay vì tạo rác dữ liệu.
+    *   Áp dụng nguyên tắc **Authorization tại tầng Application**: chỉ `addressee` được accept/reject, chỉ `requester` được cancel — ném `AppException` với mã lỗi nghiệp vụ riêng biệt (2001-2009) khi vi phạm.
+*   **Result (Kết quả):**
+    *   Đảm bảo **100%** tính toàn vẹn dữ liệu quan hệ, không thể phát sinh cặp bạn bè trùng lặp dù ở bất kỳ chiều nào.
+    *   Vượt qua toàn bộ 12 kịch bản kiểm thử (happy path + 7 edge case bảo mật/nghiệp vụ) và kiểm định kiến trúc ArchUnit 100%.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Engineered a Clean Architecture friendship module in Spring Boot with a bidirectional relationship lookup and a state-machine lifecycle (PENDING/ACCEPTED/REJECTED/BLOCKED), enforcing data integrity via MongoDB Compound Unique Indexes and strict application-layer authorization across 9 domain-specific error codes.*
+
+---
+
+### 🌐 Highlight 20: Chiến Lược Quốc Tế Hóa Phân Tầng (Layered i18n - Tách biệt Định danh Kỹ thuật & Thông điệp Người dùng)
+*   **Situation (Bối cảnh):** Hệ thống được phát triển qua nhiều Sprint khiến thông báo lỗi và tài liệu Swagger bị lẫn lộn nửa Anh nửa Việt, gây trải nghiệm thiếu chuyên nghiệp. Tuy nhiên, việc dịch ẩu sang tiếng Việt có thể phá vỡ logic code (đặc biệt các định danh enum được dùng làm key trong logic validation và mapping).
+*   **Task (Nhiệm vụ):** Chuẩn hóa ngôn ngữ hiển thị 100% tiếng Việt cho người dùng cuối (thông báo lỗi, tiêu đề Swagger) trong khi tuyệt đối bảo toàn tính tiếng Anh của lớp định danh kỹ thuật (enum names, biến, comment) để không phá vỡ codebase.
+*   **Action (Hành động):**
+    *   Áp dụng nguyên tắc **tách biệt Identifier vs Message**: giữ nguyên tên hằng enum (`CANNOT_FRIEND_SELF`) làm định danh kỹ thuật bất biến cho lập trình viên, chỉ Việt hóa trường `message` — vốn là dữ liệu Frontend đọc trực tiếp để render toast.
+    *   Bảo toàn cơ chế placeholder động `{min}` trong message khi dịch, đảm bảo `GlobalExceptionHandler.mapAttribute()` vẫn thay thế giá trị validation chính xác.
+    *   Đồng bộ Swagger `@Tag`/`@Operation` toàn bộ controller sang tiếng Việt thống nhất ("Bạn bè", "Bài viết", "Auth") để tăng khả năng nhận diện endpoint.
+*   **Result (Kết quả):**
+    *   Trải nghiệm người dùng nhất quán 100% tiếng Việt mà không cần thêm một dòng code xử lý dịch thuật nào ở Frontend (do FE đọc thẳng `response.message`).
+    *   Bảo toàn tuyệt đối tính ổn định của codebase: 0 lỗi compile, logic validation và mapping hoạt động nguyên vẹn.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented a layered internationalization strategy that decouples technical identifiers (English enum constants) from user-facing messages (localized Vietnamese), preserving validation placeholders and ensuring zero frontend translation overhead while maintaining full codebase stability.*

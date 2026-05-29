@@ -77,15 +77,15 @@
 *Mục tiêu: Xây dựng mạng lưới kết nối giữa các người dùng.*
 *Lý do đưa lên trước Chat: Cần biết ai là bạn bè để hiển thị danh sách chat.*
 
-- [ ] **Sprint 3.1: Friend Request System**
-    - [ ] Thiết kế **Friendship Entity** trong MongoDB.
+- [x] **Sprint 3.1: Friend Request System (ĐÃ HOÀN THÀNH 🎉)**
+    - [x] Thiết kế **Friendship Entity** trong MongoDB.
         - *Fields:* `requesterId`, `addresseeId`, `status` (PENDING/ACCEPTED/REJECTED/BLOCKED), `createdAt`, `updatedAt`.
         - *Indexes:* Compound index trên `(requesterId, addresseeId)` để tránh duplicate.
-    - [ ] API Gửi lời mời kết bạn (`POST /friends/request`).
+    - [x] API Gửi lời mời kết bạn (`POST /friends/request/{userId}`).
         - *Validation:* Không gửi cho chính mình, không gửi duplicate, không gửi cho người đã block.
-    - [ ] API Hủy lời mời đã gửi (`DELETE /friends/request/{id}`).
-    - [ ] API Chấp nhận lời mời (`PUT /friends/request/{id}/accept`).
-    - [ ] API Từ chối lời mời (`PUT /friends/request/{id}/reject`).
+    - [x] API Hủy lời mời đã gửi (`DELETE /friends/request/{friendshipId}`).
+    - [x] API Chấp nhận lời mời (`PUT /friends/request/{friendshipId}/accept`).
+    - [x] API Từ chối lời mời (`PUT /friends/request/{friendshipId}/reject`).
 - [ ] **Sprint 3.2: Friend List & Management**
     - [ ] API Lấy danh sách bạn bè (`GET /friends`) - Có phân trang.
     - [ ] API Lấy danh sách lời mời đang chờ (`GET /friends/requests/pending`).
@@ -246,13 +246,13 @@
 | 0 | Foundation & Infrastructure | ✅ HOÀN THÀNH | 100% |
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
-| 3 | Social Graph & Friends | ⏳ Chưa bắt đầu | 0% |
+| 3 | Social Graph & Friends | 🔄 ĐANG LÀM | 25% |
 | 4 | Realtime Chat | ⏳ Chưa bắt đầu | 0% |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~43%** (3/7 Phases hoàn thành)
+**Tổng tiến độ: ~46%** (3/7 Phases hoàn thành + Sprint 3.1)
 
 ---
 
@@ -260,5 +260,6 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.1 | May 2026 | Hoàn thành Sprint 3.1 (Friend Request System) + Việt hóa toàn bộ message lỗi & Swagger |
 | 2.0 | May 2026 | Restructure to 7 Phases: Swap Phase 3↔4, Add Phase 5 (Notifications), Enhance Chat features |
 | 1.0 | Apr 2026 | Initial 6 Phases roadmap |

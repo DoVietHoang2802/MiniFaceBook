@@ -106,17 +106,18 @@ Lưu trữ cảm xúc của người dùng đối với bài viết.
 Lưu trữ quan hệ kết bạn giữa người dùng. Sử dụng Compound Index để đảm bảo không có cặp bạn bè trùng lặp và tốc độ truy vấn nhanh.
 
 *   **Indexes:**
-    *   `(requesterId, recipientId)` — Compound Unique Index → Chặn duplicate request và tăng tốc kiểm tra trạng thái.
-    *   `status` (Ascending) → Tối ưu truy vấn lọc bạn bè theo trạng thái.
+    *   `(requesterId, addresseeId)` — Compound Unique Index (tên: `requester_addressee_idx`) → Chặn duplicate request theo một chiều và tăng tốc kiểm tra trạng thái.
 
 | Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
 | :--- | :--- | :--- |
 | `_id` | ObjectId (String) | Khóa chính tự động sinh. |
 | `requesterId` | String | `users._id` của người gửi lời mời. |
-| `recipientId` | String | `users._id` của người nhận lời mời. |
-| `status` | String (Enum) | Trạng thái: `PENDING`, `ACCEPTED`, `REJECTED`. |
-| `createdAt` | Instant (ISODate) | Thời điểm gửi lời mời. |
-| `updatedAt` | Instant (ISODate) | Thời điểm cập nhật trạng thái gần nhất. |
+| `addresseeId` | String | `users._id` của người nhận lời mời. |
+| `status` | String (Enum) | Trạng thái: `PENDING`, `ACCEPTED`, `REJECTED`, `BLOCKED`. |
+| `createdAt` | Instant (ISODate) | Thời điểm gửi lời mời (`@CreatedDate`). |
+| `updatedAt` | Instant (ISODate) | Thời điểm cập nhật trạng thái gần nhất (`@LastModifiedDate`). |
+
+> **Lưu ý nghiệp vụ (Sprint 3.1):** Việc kiểm tra quan hệ giữa 2 user dùng cơ chế **bidirectional lookup** (`findBetweenUsers`) — quét cả 2 chiều `(A→B)` và `(B→A)`. Trạng thái `REJECTED` cho phép tái sử dụng bản ghi để gửi lại lời mời.
 
 ---
 

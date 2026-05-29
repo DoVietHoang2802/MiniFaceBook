@@ -186,6 +186,18 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Frontend]** Khắc phục lỗi `415 Unsupported Media Type` cho Multipart Request bằng cách loại bỏ `Content-Type: application/json` mặc định trong Axios instance.
   - [x] **[Frontend/Performance]** Tích hợp thành công `browser-image-compression` để nén mọi hình ảnh tải lên (dưới 20MB) xuống `<1MB` bằng Web Worker, tự động ép sang chuẩn `WebP` và Bypass ảnh `GIF`, tạo ra trải nghiệm Zero-Friction Magic UX và tiết kiệm 90% chi phí lưu trữ Cloudinary.
 
+- **Phiên 29/05/2026 (Sprint 3.1 - Friend Request System & i18n Việt hóa):**
+  - [x] **[Backend]** Khởi tạo module `com.minifacebook.module.friendship` hoàn chỉnh 4 phân lớp Clean Architecture (Domain/Application/Infrastructure/Presentation).
+  - [x] **[Domain]** Thiết kế `Friendship` Entity (POJO thuần) và enum `FriendshipStatus` (PENDING/ACCEPTED/REJECTED/BLOCKED). Định nghĩa port `FriendshipRepository`.
+  - [x] **[Infrastructure]** Triển khai `FriendshipDocument` với **Compound Unique Index** `(requesterId, addresseeId)`, `FriendshipMapper` (MapStruct), `MongoFriendshipRepository` và adapter `FriendshipRepositoryImpl` với cơ chế **bidirectional lookup** (`findBetweenUsers`).
+  - [x] **[Application]** Xây dựng `FriendshipService` với 4 use case: gửi/hủy/chấp nhận/từ chối lời mời. Xử lý đầy đủ ràng buộc nghiệp vụ: chống tự kết bạn, chống duplicate, kiểm tra quyền sender/recipient, cho phép re-request sau khi REJECTED.
+  - [x] **[Presentation]** Tạo `FriendshipController` với 4 REST endpoint (`POST/DELETE/PUT` dưới `/friends`).
+  - [x] **[Shared]** Bổ sung 9 mã lỗi Friendship (2001-2009) vào `ErrorCode`.
+  - [x] **[i18n - Việt hóa]** Việt hóa toàn bộ 28 message trong `ErrorCode` (giữ enum NAME tiếng Anh làm định danh kỹ thuật, chỉ dịch phần message hiển thị cho người dùng cuối, bảo toàn placeholder `{min}`).
+  - [x] **[i18n - Swagger]** Đồng bộ Swagger `@Tag` + `@Operation` của `FriendshipController` và `PostController` sang tiếng Việt ("Bạn bè", "Bài viết") cho thống nhất với `AuthController`.
+  - [x] **[Testing]** Kiểm thử thực tế qua API toàn bộ 12 kịch bản (happy path + 7 edge case lỗi), tất cả PASS. Xác minh dữ liệu lưu đúng trong MongoDB. ArchUnit Test xanh 100%.
+  - [x] **[Docs]** Tạo file hướng dẫn test độc lập `docs/testing/PHASE_3_FRIENDS_TESTING.md` (chi tiết từng bước trên Swagger, giải thích cơ chế HttpOnly Cookie). Thêm bảng index vào `TESTING_GUIDE.md`.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |
