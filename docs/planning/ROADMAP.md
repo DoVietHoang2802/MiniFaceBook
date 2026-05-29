@@ -256,10 +256,48 @@
 
 ---
 
+## 🔧 TECH DEBT & CẢI TIẾN CẦN THEO DÕI
+
+> Các khoản nợ kỹ thuật và cải tiến được ghi nhận trong quá trình review. Trạng thái: 🔴 Chưa làm | 🟡 Đang làm | ✅ Đã xong
+
+| # | Hạng mục | Nhóm | Ưu tiên | Trạng thái | Dự kiến |
+|:-:|----------|------|:-------:|:----------:|---------|
+| 1 | MongoDB Replica Set + `MongoTransactionManager` | Hạ tầng | 🔴 Cao | 🔴 Chưa làm | Trước/trong 3.2 |
+| 2 | `findAllByIds` chống N+1 Query | Hiệu năng | 🟡 TB | 🔴 Chưa làm | Trước 3.2 |
+| 3 | Đồng bộ `AppException` cho Post module | Chuẩn hóa | 🟡 TB | 🔴 Chưa làm | Gom 1 lần |
+| 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Trong 3.2 |
+| 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Cân nhắc |
+
+### 🔴 #1: MongoDB Replica Set + TransactionManager (QUAN TRỌNG)
+- **Hiện trạng "nửa vời":** `@Transactional` ĐÃ viết trong `FriendshipService` (Sprint 3.1) nhưng CHƯA hoạt động thật do thiếu `MongoTransactionManager` Bean + MongoDB đang chạy standalone (không hỗ trợ transaction).
+- **Rủi ro:** Method ghi DB nhiều lần mà lỗi giữa chừng → KHÔNG rollback được → dữ liệu sai lệch.
+- **Giải pháp:** (1) `docker-compose` chạy mongo `--replSet rs0`; (2) `rs.initiate()`; (3) thêm `MongoTransactionManager` Bean; (4) connection string thêm `?replicaSet=rs0`.
+- **Quyết định USER:** GIỮ `@Transactional` để đảm bảo ACID và sẵn sàng scale production.
+- **Lưu ý:** Bật replica set có thể cần re-init container → mất data test (chấp nhận được).
+
+### 🟡 #2: `findAllByIds` chống N+1 Query
+- **Vấn đề:** `UserRepository` chỉ có `findById`. Lấy danh sách 50 bạn = 1 + 50 = 51 queries.
+- **Giải pháp:** Thêm `List<User> findAllByIds(List<String> ids)` (dùng `MongoRepository.findAllById`) → gom còn 1 query. Sửa `UserRepository` + `UserRepositoryImpl`.
+
+### 🟡 #3: Đồng bộ `AppException` cho Post module
+- **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
+- **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
+
+### 🟢 #4: `isSentByMe` trong FriendshipResponse
+- **Vấn đề:** UI danh sách lời mời cần biết "mình gửi hay người ta gửi" để hiển thị nút đúng (Thu hồi vs Chấp nhận/Từ chối).
+- **Giải pháp:** Thêm `boolean isSentByMe` vào `FriendshipResponse`, Service set dựa trên so sánh `requesterId` với user hiện tại. → Làm trong Sprint 3.2.
+
+### 🟢 #5: Thêm field `displayName` cho User
+- **Vấn đề:** `User` chỉ có `email/avatar/bio`, chưa có tên hiển thị → UI hiển thị email thiếu chuyên nghiệp + lộ thông tin riêng tư.
+- **Giải pháp:** Thêm `displayName` vào `User` + `UserDocument` + `RegisterRequest`. Fallback dùng phần trước `@` của email cho user cũ.
+- **⚠️ Cân nhắc:** Đụng module auth đã ổn định → test kỹ. Có thể để dành.
+
+---
+
 ## 📝 CHANGELOG
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 2.1 | May 2026 | Hoàn thành Sprint 3.1 (Friend Request System) + Việt hóa toàn bộ message lỗi & Swagger |
+| 2.1 | May 2026 | Hoàn thành Sprint 3.1 (Friend Request System) + Việt hóa toàn bộ message lỗi & Swagger. Ghi nhận 5 Tech Debt/cải tiến cần theo dõi. |
 | 2.0 | May 2026 | Restructure to 7 Phases: Swap Phase 3↔4, Add Phase 5 (Notifications), Enhance Chat features |
 | 1.0 | Apr 2026 | Initial 6 Phases roadmap |
