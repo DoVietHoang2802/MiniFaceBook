@@ -136,6 +136,22 @@ Redis được sử dụng với **3 mục đích rõ ràng**, không mở rộn
 
 ---
 
+## 🔄 3.5. Chế độ vận hành MongoDB: Replica Set (Hỗ trợ Transaction)
+
+Kể từ 30/05/2026, MongoDB được vận hành ở chế độ **Replica Set (`rs0`)** thay vì standalone, nhằm hỗ trợ **Multi-document ACID Transactions** cho các nghiệp vụ ghi phức tạp (vd: Friendship, các thao tác liên collection ở Phase sau).
+
+| Hạng mục | Cấu hình |
+| :--- | :--- |
+| **Chế độ** | Single-node Replica Set `rs0` (đủ cho dev/demo, vẫn bật được transaction) |
+| **Docker** | `mongod --replSet rs0 --bind_ip_all` + healthcheck tự `rs.initiate()` |
+| **Connection String** | `mongodb://localhost:27018/miniface_db?directConnection=true` |
+| **Spring Bean** | `MongoTransactionManager` khai báo trong `infrastructure/config/MongoConfig.java` |
+| **Kích hoạt** | Service đánh dấu `@Transactional` (vd: `FriendshipService`) sẽ rollback đúng khi có lỗi giữa chừng |
+
+> **Lý do dùng `directConnection=true`:** Replica member khai báo host nội bộ `localhost:27017` (trong container), trong khi app kết nối qua port mapping `27018`. Cờ này giúp driver kết nối thẳng tới node mà không qua topology discovery (tránh lỗi mismatch host/port) nhưng transaction vẫn hoạt động bình thường.
+
+---
+
 ## 🛠️ 4. Chiến lược di cư Schema (Mongock Migration)
 
 Để đảm bảo tính đồng bộ dữ liệu và nhất quán môi trường giữa các Developer (và môi trường Production), chúng ta sử dụng **Mongock** thay thế cho việc viết script MongoDB thủ công.

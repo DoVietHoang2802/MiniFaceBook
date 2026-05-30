@@ -13,7 +13,7 @@ spring:
   
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27018/miniface_db}
+      uri: ${MONGODB_URI:mongodb://localhost:27018/miniface_db?directConnection=true}
       auto-index-creation: true
 
   mail:

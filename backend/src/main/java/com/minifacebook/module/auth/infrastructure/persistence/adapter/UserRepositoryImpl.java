@@ -5,6 +5,7 @@ import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.auth.infrastructure.mapper.UserDocumentMapper;
 import com.minifacebook.module.auth.infrastructure.persistence.document.UserDocument;
 import com.minifacebook.module.auth.infrastructure.persistence.repository.MongoUserRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -42,5 +43,12 @@ public class UserRepositoryImpl implements UserRepository {
   @Override
   public Optional<User> findByVerificationToken(String token) {
     return mongoUserRepository.findByVerificationToken(token).map(userDocumentMapper::toDomain);
+  }
+
+  @Override
+  public List<User> findAllByIds(List<String> ids) {
+    return mongoUserRepository.findAllById(ids).stream()
+        .map(userDocumentMapper::toDomain)
+        .toList();
   }
 }

@@ -262,22 +262,21 @@
 
 | # | Hạng mục | Nhóm | Ưu tiên | Trạng thái | Dự kiến |
 |:-:|----------|------|:-------:|:----------:|---------|
-| 1 | MongoDB Replica Set + `MongoTransactionManager` | Hạ tầng | 🔴 Cao | 🔴 Chưa làm | Trước/trong 3.2 |
-| 2 | `findAllByIds` chống N+1 Query | Hiệu năng | 🟡 TB | 🔴 Chưa làm | Trước 3.2 |
+| 1 | MongoDB Replica Set + `MongoTransactionManager` | Hạ tầng | 🔴 Cao | ✅ Đã xong | Hoàn thành 30/05 |
+| 2 | `findAllByIds` chống N+1 Query | Hiệu năng | 🟡 TB | ✅ Đã xong | Hoàn thành 30/05 |
 | 3 | Đồng bộ `AppException` cho Post module | Chuẩn hóa | 🟡 TB | 🔴 Chưa làm | Gom 1 lần |
 | 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Trong 3.2 |
 | 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Cân nhắc |
 
-### 🔴 #1: MongoDB Replica Set + TransactionManager (QUAN TRỌNG)
+### ✅ #1: MongoDB Replica Set + TransactionManager (ĐÃ HOÀN THÀNH 30/05)
 - **Hiện trạng "nửa vời":** `@Transactional` ĐÃ viết trong `FriendshipService` (Sprint 3.1) nhưng CHƯA hoạt động thật do thiếu `MongoTransactionManager` Bean + MongoDB đang chạy standalone (không hỗ trợ transaction).
 - **Rủi ro:** Method ghi DB nhiều lần mà lỗi giữa chừng → KHÔNG rollback được → dữ liệu sai lệch.
-- **Giải pháp:** (1) `docker-compose` chạy mongo `--replSet rs0`; (2) `rs.initiate()`; (3) thêm `MongoTransactionManager` Bean; (4) connection string thêm `?replicaSet=rs0`.
+- **Đã làm:** (1) `docker-compose` chạy mongo `--replSet rs0` + healthcheck tự `rs.initiate()`; (2) thêm `MongoConfig` khai báo `MongoTransactionManager` Bean; (3) connection string thêm `?directConnection=true`. Đã verify replica set PRIMARY + transaction chạy thật.
 - **Quyết định USER:** GIỮ `@Transactional` để đảm bảo ACID và sẵn sàng scale production.
-- **Lưu ý:** Bật replica set có thể cần re-init container → mất data test (chấp nhận được).
 
-### 🟡 #2: `findAllByIds` chống N+1 Query
+### ✅ #2: `findAllByIds` chống N+1 Query (ĐÃ HOÀN THÀNH 30/05)
 - **Vấn đề:** `UserRepository` chỉ có `findById`. Lấy danh sách 50 bạn = 1 + 50 = 51 queries.
-- **Giải pháp:** Thêm `List<User> findAllByIds(List<String> ids)` (dùng `MongoRepository.findAllById`) → gom còn 1 query. Sửa `UserRepository` + `UserRepositoryImpl`.
+- **Đã làm:** Thêm `List<User> findAllByIds(List<String> ids)` vào `UserRepository` + impl trong `UserRepositoryImpl` (dùng `MongoRepository.findAllById`) → gom còn 1 query. Sẵn sàng cho Sprint 3.2.
 
 ### 🟡 #3: Đồng bộ `AppException` cho Post module
 - **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.

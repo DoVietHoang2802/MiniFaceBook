@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:latest
@@ -8,6 +6,22 @@ services:
       - "27018:27017"
     volumes:
       - mongodb_data:/data/db
+    # Chạy ở chế độ Replica Set (rs0) để hỗ trợ Multi-document Transactions.
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      # Tự động khởi tạo replica set 1 lần khi container sẵn sàng.
+      # Dùng host:port khớp với port nội bộ 27017 để cấu hình replica set ổn định.
+      test: >
+        mongosh --quiet --eval "
+          try { rs.status().ok }
+          catch (e) {
+            rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok
+          }
+        "
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
 
   redis:
     image: redis:latest

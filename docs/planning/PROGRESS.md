@@ -198,6 +198,12 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Testing]** Kiểm thử thực tế qua API toàn bộ 12 kịch bản (happy path + 7 edge case lỗi), tất cả PASS. Xác minh dữ liệu lưu đúng trong MongoDB. ArchUnit Test xanh 100%.
   - [x] **[Docs]** Tạo file hướng dẫn test độc lập `docs/testing/PHASE_3_FRIENDS_TESTING.md` (chi tiết từng bước trên Swagger, giải thích cơ chế HttpOnly Cookie). Thêm bảng index vào `TESTING_GUIDE.md`.
 
+- **Phiên 30/05/2026 (Tech Debt - Pre Sprint 3.2: Transaction & N+1 Optimization):**
+  - [x] **[Hạ tầng/Transaction]** Nâng cấp MongoDB từ standalone lên **Replica Set (`rs0`)** trong `docker-compose.yml` (cờ `--replSet rs0 --bind_ip_all` + healthcheck tự động `rs.initiate()`). Kích hoạt thật cơ chế `@Transactional` đã viết ở Sprint 3.1 (trước đó bị "nửa vời" do thiếu nền tảng).
+  - [x] **[Hạ tầng/Transaction]** Tạo `infrastructure/config/MongoConfig.java` khai báo Bean `MongoTransactionManager`. Cập nhật connection string `?directConnection=true` để driver kết nối thẳng node qua port mapping 27018 mà vẫn dùng được transaction.
+  - [x] **[Hiệu năng/N+1]** Bổ sung `findAllByIds(List<String> ids)` vào `UserRepository` (Domain) + `UserRepositoryImpl` (dùng `MongoRepository.findAllById`) — chống N+1 query khi load danh sách bạn bè ở Sprint 3.2 (51 queries → 1 query).
+  - [x] **[Verify]** Re-init container (xóa volume cũ không tương thích), xác nhận replica set ở trạng thái PRIMARY, backend khởi động thành công và luồng friend request hoạt động trơn tru với transaction active.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |
