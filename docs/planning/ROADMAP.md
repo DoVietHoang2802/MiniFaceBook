@@ -86,12 +86,14 @@
     - [x] API Hủy lời mời đã gửi (`DELETE /friends/request/{friendshipId}`).
     - [x] API Chấp nhận lời mời (`PUT /friends/request/{friendshipId}/accept`).
     - [x] API Từ chối lời mời (`PUT /friends/request/{friendshipId}/reject`).
-- [ ] **Sprint 3.2: Friend List & Management**
-    - [ ] API Lấy danh sách bạn bè (`GET /friends`) - Có phân trang.
-    - [ ] API Lấy danh sách lời mời đang chờ (`GET /friends/requests/pending`).
-    - [ ] API Lấy danh sách lời mời đã gửi (`GET /friends/requests/sent`).
-    - [ ] API Hủy kết bạn / Unfriend (`DELETE /friends/{friendId}`).
-    - [ ] API Block người dùng (`POST /friends/block/{userId}`).
+- [x] **Sprint 3.2: Friend List & Management (ĐÃ HOÀN THÀNH 🎉)**
+    - [x] API Lấy danh sách bạn bè (`GET /friends`).
+    - [x] API Lấy danh sách lời mời đang chờ (`GET /friends/requests/pending`).
+    - [x] API Lấy danh sách lời mời đã gửi (`GET /friends/requests/sent`).
+    - [x] API Hủy kết bạn / Unfriend (`DELETE /friends/{friendId}`).
+    - [x] API Block người dùng (`POST /friends/block/{userId}`) + Unblock (`DELETE /friends/block/{userId}`).
+        - *Cơ chế:* `requesterId` = người chặn, `addresseeId` = người bị chặn, `status = BLOCKED`. Chỉ người chặn mới gỡ được.
+    - [x] Tích hợp `isSentByMe` (sentByMe) vào response + batch-load `findAllByIds` chống N+1.
 - [ ] **Sprint 3.3: User Search & Discovery**
     - [ ] API Tìm kiếm người dùng (`GET /users/search?q=keyword`).
         - *Implementation:* MongoDB Text Index hoặc Regex search.
@@ -246,13 +248,13 @@
 | 0 | Foundation & Infrastructure | ✅ HOÀN THÀNH | 100% |
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
-| 3 | Social Graph & Friends | 🔄 ĐANG LÀM | 25% |
+| 3 | Social Graph & Friends | 🔄 ĐANG LÀM | 50% |
 | 4 | Realtime Chat | ⏳ Chưa bắt đầu | 0% |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~46%** (3/7 Phases hoàn thành + Sprint 3.1)
+**Tổng tiến độ: ~48%** (3/7 Phases hoàn thành + Sprint 3.1, 3.2)
 
 ---
 
@@ -265,7 +267,7 @@
 | 1 | MongoDB Replica Set + `MongoTransactionManager` | Hạ tầng | 🔴 Cao | ✅ Đã xong | Hoàn thành 30/05 |
 | 2 | `findAllByIds` chống N+1 Query | Hiệu năng | 🟡 TB | ✅ Đã xong | Hoàn thành 30/05 |
 | 3 | Đồng bộ `AppException` cho Post module | Chuẩn hóa | 🟡 TB | 🔴 Chưa làm | Gom 1 lần |
-| 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Trong 3.2 |
+| 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (Sprint 3.2) |
 | 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Cân nhắc |
 
 ### ✅ #1: MongoDB Replica Set + TransactionManager (ĐÃ HOÀN THÀNH 30/05)
@@ -282,9 +284,9 @@
 - **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
 - **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
 
-### 🟢 #4: `isSentByMe` trong FriendshipResponse
+### 🟢 #4: `isSentByMe` trong FriendshipResponse (ĐÃ HOÀN THÀNH 30/05 - Sprint 3.2)
 - **Vấn đề:** UI danh sách lời mời cần biết "mình gửi hay người ta gửi" để hiển thị nút đúng (Thu hồi vs Chấp nhận/Từ chối).
-- **Giải pháp:** Thêm `boolean isSentByMe` vào `FriendshipResponse`, Service set dựa trên so sánh `requesterId` với user hiện tại. → Làm trong Sprint 3.2.
+- **Đã làm:** Thêm `boolean sentByMe` vào `FriendshipResponse`, Service set dựa trên so sánh `requesterId` với user hiện tại. Đã verify qua test (sent→true, pending→false).
 
 ### 🟢 #5: Thêm field `displayName` cho User
 - **Vấn đề:** `User` chỉ có `email/avatar/bio`, chưa có tên hiển thị → UI hiển thị email thiếu chuyên nghiệp + lộ thông tin riêng tư.
@@ -297,6 +299,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.2 | May 2026 | Hoàn thành Sprint 3.2 (Friend List, Unfriend, Block/Unblock) + tích hợp `sentByMe` & batch-load chống N+1 |
 | 2.1 | May 2026 | Hoàn thành Sprint 3.1 (Friend Request System) + Việt hóa toàn bộ message lỗi & Swagger. Ghi nhận 5 Tech Debt/cải tiến cần theo dõi. |
 | 2.0 | May 2026 | Restructure to 7 Phases: Swap Phase 3↔4, Add Phase 5 (Notifications), Enhance Chat features |
 | 1.0 | Apr 2026 | Initial 6 Phases roadmap |

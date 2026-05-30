@@ -8,16 +8,22 @@ import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Use Case điều phối nghiệp vụ kết bạn (Sprint 3.1).
+ * Use Case điều phối nghiệp vụ kết bạn.
  *
- * <p>Xử lý: gửi lời mời, hủy lời mời, chấp nhận, từ chối. Đảm bảo các ràng buộc nghiệp vụ như không
- * tự kết bạn với chính mình và không tạo lời mời trùng lặp.
+ * <p><b>Sprint 3.1:</b> gửi/hủy/chấp nhận/từ chối lời mời.
+ *
+ * <p><b>Sprint 3.2:</b> lấy danh sách bạn bè, lời mời (đến/đã gửi), hủy kết bạn, chặn/bỏ chặn người
+ * dùng. Các API danh sách dùng batch-load (`findAllByIds`) để tránh N+1 query.
  */
 @Service
 @RequiredArgsConstructor
@@ -118,6 +124,98 @@ public class FriendshipService {
     friendshipRepository.save(friendship);
   }
 
+  // ===== Sprint 3.2: List & Management =====
+
+  /** Lấy danh sách bạn bè (đã ACCEPTED) của user hiện tại. Batch-load user info chống N+1. */
+  @Transactional(readOnly = true)
+  public List<FriendshipResponse> getFriends(String email) {
+    User me = getUserByEmail(email);
+    List<Friendship> friendships = friendshipRepository.findAcceptedByUserId(me.getId());
+    return mapWithOtherUser(friendships, me.getId());
+  }
+
+  /** Lấy danh sách lời mời ĐANG CHỜ user hiện tại duyệt (user là addressee). */
+  @Transactional(readOnly = true)
+  public List<FriendshipResponse> getPendingRequests(String email) {
+    User me = getUserByEmail(email);
+    List<Friendship> friendships =
+        friendshipRepository.findByAddresseeIdAndStatus(me.getId(), FriendshipStatus.PENDING);
+    return mapWithOtherUser(friendships, me.getId());
+  }
+
+  /** Lấy danh sách lời mời user hiện tại ĐÃ GỬI đi (user là requester, còn PENDING). */
+  @Transactional(readOnly = true)
+  public List<FriendshipResponse> getSentRequests(String email) {
+    User me = getUserByEmail(email);
+    List<Friendship> friendships =
+        friendshipRepository.findByRequesterIdAndStatus(me.getId(), FriendshipStatus.PENDING);
+    return mapWithOtherUser(friendships, me.getId());
+  }
+
+  /** Hủy kết bạn (Unfriend). Chỉ áp dụng cho quan hệ đã ACCEPTED, một trong hai bên đều gỡ được. */
+  @Transactional
+  public void unfriend(String email, String friendId) {
+    User me = getUserByEmail(email);
+    Friendship friendship =
+        friendshipRepository
+            .findBetweenUsers(me.getId(), friendId)
+            .orElseThrow(() -> new AppException(ErrorCode.FRIENDSHIP_NOT_FOUND));
+
+    if (friendship.getStatus() != FriendshipStatus.ACCEPTED) {
+      throw new AppException(ErrorCode.FRIENDSHIP_NOT_FOUND);
+    }
+
+    friendshipRepository.delete(friendship);
+  }
+
+  /**
+   * Chặn một người dùng. Quy ước: {@code requesterId} = người chặn, {@code addresseeId} = người bị
+   * chặn, {@code status = BLOCKED}. Nếu đã tồn tại quan hệ (bất kỳ chiều) thì ghi đè thành BLOCKED
+   * với người chặn là user hiện tại.
+   */
+  @Transactional
+  public void blockUser(String email, String targetUserId) {
+    User me = getUserByEmail(email);
+    User target =
+        userRepository
+            .findById(targetUserId)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    if (me.getId().equals(target.getId())) {
+      throw new AppException(ErrorCode.CANNOT_FRIEND_SELF);
+    }
+
+    Friendship friendship =
+        friendshipRepository
+            .findBetweenUsers(me.getId(), target.getId())
+            .orElse(Friendship.builder().build());
+
+    friendship.setRequesterId(me.getId()); // người chặn
+    friendship.setAddresseeId(target.getId()); // người bị chặn
+    friendship.setStatus(FriendshipStatus.BLOCKED);
+    friendshipRepository.save(friendship);
+  }
+
+  /** Bỏ chặn. Chỉ người đã chặn (requester của bản ghi BLOCKED) mới được phép gỡ. */
+  @Transactional
+  public void unblockUser(String email, String targetUserId) {
+    User me = getUserByEmail(email);
+    Friendship friendship =
+        friendshipRepository
+            .findBetweenUsers(me.getId(), targetUserId)
+            .orElseThrow(() -> new AppException(ErrorCode.FRIENDSHIP_NOT_FOUND));
+
+    if (friendship.getStatus() != FriendshipStatus.BLOCKED) {
+      throw new AppException(ErrorCode.FRIENDSHIP_NOT_FOUND);
+    }
+    // Chỉ người chặn (requester) mới được gỡ chặn.
+    if (!friendship.getRequesterId().equals(me.getId())) {
+      throw new AppException(ErrorCode.NOT_REQUEST_SENDER);
+    }
+
+    friendshipRepository.delete(friendship);
+  }
+
   // ===== Helpers =====
 
   private User getUserByEmail(String email) {
@@ -139,6 +237,58 @@ public class FriendshipService {
   }
 
   private FriendshipResponse toResponse(Friendship friendship, User otherUser) {
+    // currentUserId không xác định ở context này → suy ra sentByMe theo requesterId so với otherUser.
+    // Nếu otherUser là addressee thì người gửi chính là user hiện tại.
+    boolean sentByMe = friendship.getAddresseeId().equals(otherUser.getId());
+    return buildResponse(friendship, otherUser, sentByMe);
+  }
+
+  /**
+   * Map danh sách friendship sang response, batch-load thông tin "người kia" trong MỘT truy vấn
+   * (chống N+1). {@code currentUserId} dùng để xác định ai là đối phương và set cờ {@code sentByMe}.
+   */
+  private List<FriendshipResponse> mapWithOtherUser(
+      List<Friendship> friendships, String currentUserId) {
+    if (friendships.isEmpty()) {
+      return List.of();
+    }
+
+    // Thu thập id của "người kia" trong mỗi quan hệ.
+    List<String> otherUserIds =
+        friendships.stream()
+            .map(f -> otherUserId(f, currentUserId))
+            .distinct()
+            .toList();
+
+    // Batch-load 1 query duy nhất.
+    Map<String, User> userMap =
+        userRepository.findAllByIds(otherUserIds).stream()
+            .collect(Collectors.toMap(User::getId, Function.identity()));
+
+    return friendships.stream()
+        .map(
+            f -> {
+              String otherId = otherUserId(f, currentUserId);
+              User otherUser = userMap.get(otherId);
+              if (otherUser == null) {
+                return null; // user đã bị xóa - bỏ qua
+              }
+              boolean sentByMe = f.getRequesterId().equals(currentUserId);
+              return buildResponse(f, otherUser, sentByMe);
+            })
+        .filter(java.util.Objects::nonNull)
+        .toList();
+  }
+
+  /** Xác định id của đối phương trong một quan hệ so với user hiện tại. */
+  private String otherUserId(Friendship friendship, String currentUserId) {
+    return friendship.getRequesterId().equals(currentUserId)
+        ? friendship.getAddresseeId()
+        : friendship.getRequesterId();
+  }
+
+  private FriendshipResponse buildResponse(
+      Friendship friendship, User otherUser, boolean sentByMe) {
     return FriendshipResponse.builder()
         .friendshipId(friendship.getId())
         .status(friendship.getStatus())
@@ -146,6 +296,7 @@ public class FriendshipService {
         .email(otherUser.getEmail())
         .avatar(otherUser.getAvatar())
         .bio(otherUser.getBio())
+        .sentByMe(sentByMe)
         .createdAt(friendship.getCreatedAt())
         .build();
   }

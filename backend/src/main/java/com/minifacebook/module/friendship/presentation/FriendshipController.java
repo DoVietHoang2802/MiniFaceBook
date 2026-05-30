@@ -5,10 +5,12 @@ import com.minifacebook.module.friendship.application.service.FriendshipService;
 import com.minifacebook.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -54,5 +56,57 @@ public class FriendshipController {
       @AuthenticationPrincipal Jwt jwt, @PathVariable String friendshipId) {
     friendshipService.rejectRequest(jwt.getSubject(), friendshipId);
     return ApiResponse.success("Đã từ chối lời mời kết bạn thành công", null);
+  }
+
+  // ===== Sprint 3.2: List & Management =====
+
+  @GetMapping
+  @Operation(summary = "Danh sách bạn bè", description = "Lấy danh sách tất cả bạn bè đã kết nối của user hiện tại")
+  public ApiResponse<List<FriendshipResponse>> getFriends(@AuthenticationPrincipal Jwt jwt) {
+    List<FriendshipResponse> friends = friendshipService.getFriends(jwt.getSubject());
+    return ApiResponse.success("Lấy danh sách bạn bè thành công", friends);
+  }
+
+  @GetMapping("/requests/pending")
+  @Operation(
+      summary = "Lời mời đang chờ duyệt",
+      description = "Lấy danh sách lời mời kết bạn người khác gửi đến, đang chờ user duyệt")
+  public ApiResponse<List<FriendshipResponse>> getPendingRequests(
+      @AuthenticationPrincipal Jwt jwt) {
+    List<FriendshipResponse> requests = friendshipService.getPendingRequests(jwt.getSubject());
+    return ApiResponse.success("Lấy danh sách lời mời đang chờ thành công", requests);
+  }
+
+  @GetMapping("/requests/sent")
+  @Operation(
+      summary = "Lời mời đã gửi",
+      description = "Lấy danh sách lời mời kết bạn mà user đã gửi đi và đang chờ phản hồi")
+  public ApiResponse<List<FriendshipResponse>> getSentRequests(@AuthenticationPrincipal Jwt jwt) {
+    List<FriendshipResponse> requests = friendshipService.getSentRequests(jwt.getSubject());
+    return ApiResponse.success("Lấy danh sách lời mời đã gửi thành công", requests);
+  }
+
+  @DeleteMapping("/{friendId}")
+  @Operation(summary = "Hủy kết bạn", description = "Hủy mối quan hệ bạn bè với một người dùng")
+  public ApiResponse<Void> unfriend(
+      @AuthenticationPrincipal Jwt jwt, @PathVariable String friendId) {
+    friendshipService.unfriend(jwt.getSubject(), friendId);
+    return ApiResponse.success("Đã hủy kết bạn thành công", null);
+  }
+
+  @PostMapping("/block/{userId}")
+  @Operation(summary = "Chặn người dùng", description = "Chặn một người dùng. Chỉ người chặn mới có thể bỏ chặn.")
+  public ApiResponse<Void> blockUser(
+      @AuthenticationPrincipal Jwt jwt, @PathVariable String userId) {
+    friendshipService.blockUser(jwt.getSubject(), userId);
+    return ApiResponse.success("Đã chặn người dùng thành công", null);
+  }
+
+  @DeleteMapping("/block/{userId}")
+  @Operation(summary = "Bỏ chặn người dùng", description = "Bỏ chặn một người dùng đã chặn trước đó")
+  public ApiResponse<Void> unblockUser(
+      @AuthenticationPrincipal Jwt jwt, @PathVariable String userId) {
+    friendshipService.unblockUser(jwt.getSubject(), userId);
+    return ApiResponse.success("Đã bỏ chặn người dùng thành công", null);
   }
 }

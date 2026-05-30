@@ -308,3 +308,19 @@
     *   Bảo toàn tuyệt đối tính ổn định của codebase: 0 lỗi compile, logic validation và mapping hoạt động nguyên vẹn.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Implemented a layered internationalization strategy that decouples technical identifiers (English enum constants) from user-facing messages (localized Vietnamese), preserving validation placeholders and ensuring zero frontend translation overhead while maintaining full codebase stability.*
+
+---
+
+### ⚡ Highlight 21: Tối Ưu Truy Vấn Danh Sách Quan Hệ với Batch-Loading (Chống N+1 Query) & Directional Response Enrichment
+*   **Situation (Bối cảnh):** API lấy danh sách bạn bè / lời mời kết bạn cần trả về kèm thông tin chi tiết của "người kia" (avatar, email, bio). Cách làm ngây thơ là lặp qua từng quan hệ rồi gọi `findById` cho mỗi user — với 50 bạn bè sẽ tạo ra 51 truy vấn database (1 + N), gây nghẽn cổ chai hiệu năng nghiêm trọng khi scale.
+*   **Task (Nhiệm vụ):** Thiết kế cơ chế lấy danh sách quan hệ hiệu năng cao chỉ với số truy vấn tối thiểu, đồng thời làm giàu (enrich) mỗi phần tử response với cờ định hướng `sentByMe` để Frontend render đúng nút hành động mà không cần thêm logic suy luận.
+*   **Action (Hành động):**
+    *   Bổ sung phương thức batch-load `findAllByIds(List<String>)` vào `UserRepository` (tận dụng `MongoRepository.findAllById`), gom toàn bộ id "người kia" thành **một truy vấn duy nhất**.
+    *   Xây dựng helper `mapWithOtherUser` dựng `Map<String, User>` cho phép tra cứu thông tin user với độ phức tạp **O(1)** trong vòng lặp mapping.
+    *   Tính toán cờ `sentByMe` ngay tại tầng Application bằng cách so sánh `requesterId` với id người dùng hiện tại, giúp Frontend phân biệt tức thì lời mời "đã gửi" (nút Thu hồi) và "nhận được" (nút Chấp nhận/Từ chối).
+    *   Triển khai cơ chế Block bất đối xứng có kiểm soát quyền: chỉ người tạo lệnh chặn (`requesterId`) mới có thể gỡ chặn, người bị chặn không thể gửi lại lời mời.
+*   **Result (Kết quả):**
+    *   Giảm số truy vấn database từ **N+1 xuống còn 2** (1 lấy quan hệ + 1 batch-load user) bất kể số lượng bạn bè, đặt nền tảng scale vững chắc.
+    *   Đơn giản hóa tầng Frontend nhờ response tự mô tả hướng quan hệ, loại bỏ hoàn toàn round-trip phụ.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Eliminated N+1 query bottlenecks in social relationship listing endpoints by implementing batch ID loading (reducing queries from N+1 to 2 regardless of list size), and enriched responses with directional `sentByMe` flags and asymmetric block-authorization logic for a self-describing, frontend-friendly API.*

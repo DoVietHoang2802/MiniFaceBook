@@ -204,6 +204,15 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Hiệu năng/N+1]** Bổ sung `findAllByIds(List<String> ids)` vào `UserRepository` (Domain) + `UserRepositoryImpl` (dùng `MongoRepository.findAllById`) — chống N+1 query khi load danh sách bạn bè ở Sprint 3.2 (51 queries → 1 query).
   - [x] **[Verify]** Re-init container (xóa volume cũ không tương thích), xác nhận replica set ở trạng thái PRIMARY, backend khởi động thành công và luồng friend request hoạt động trơn tru với transaction active.
 
+- **Phiên 30/05/2026 (Sprint 3.2 - Friend List & Management):**
+  - [x] **[Application]** Bổ sung 6 use case vào `FriendshipService`: `getFriends`, `getPendingRequests`, `getSentRequests`, `unfriend`, `blockUser`, `unblockUser`.
+  - [x] **[Presentation]** Thêm 6 endpoint vào `FriendshipController`: `GET /friends`, `GET /friends/requests/pending`, `GET /friends/requests/sent`, `DELETE /friends/{friendId}`, `POST /friends/block/{userId}`, `DELETE /friends/block/{userId}`.
+  - [x] **[Logic/Block]** Triển khai cơ chế Block theo quy ước: `requesterId` = người chặn, `addresseeId` = người bị chặn, `status = BLOCKED`. Chỉ người chặn (requester) mới được gỡ chặn.
+  - [x] **[Tech Debt #4]** Thêm field `sentByMe` vào `FriendshipResponse` → Frontend phân biệt lời mời mình gửi (nút "Thu hồi") hay người khác gửi (nút "Chấp nhận/Từ chối").
+  - [x] **[Hiệu năng - Chống N+1]** Áp dụng `findAllByIds` (batch-load) trong helper `mapWithOtherUser`: gom toàn bộ id "người kia" → load 1 query duy nhất thay vì N query. Dùng `Map<String, User>` để tra cứu O(1).
+  - [x] **[Testing]** Test thực tế 8 kịch bản qua API (list bạn/pending/sent, unfriend, block, người bị chặn gửi request→2009, non-blocker unblock→2007, unblock thành công). Tất cả PASS. Compile + ArchUnit xanh 100%.
+  - [x] **[Docs]** Cập nhật `PHASE_3_FRIENDS_TESTING.md` thêm kịch bản test Sprint 3.2 (6 API + edge case Block).
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

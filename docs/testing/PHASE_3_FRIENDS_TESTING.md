@@ -44,7 +44,16 @@ Hệ thống này dùng **HttpOnly Cookie** để xác thực, **KHÁC** với c
 | 3 | `PUT` | `/friends/request/{friendshipId}/accept` | Chấp nhận lời mời |
 | 4 | `PUT` | `/friends/request/{friendshipId}/reject` | Từ chối lời mời |
 
-### Sprint 3.2 - Friend List & Management (CHƯA LÀM ⏳)
+### Sprint 3.2 - Friend List & Management (ĐÃ XONG ✅)
+| # | Method | Endpoint | Chức năng |
+|:-:|--------|----------|-----------|
+| 5 | `GET` | `/friends` | Danh sách bạn bè |
+| 6 | `GET` | `/friends/requests/pending` | Lời mời đang chờ mình duyệt |
+| 7 | `GET` | `/friends/requests/sent` | Lời mời mình đã gửi |
+| 8 | `DELETE` | `/friends/{friendId}` | Hủy kết bạn (Unfriend) |
+| 9 | `POST` | `/friends/block/{userId}` | Chặn người dùng |
+| 10 | `DELETE` | `/friends/block/{userId}` | Bỏ chặn người dùng |
+
 ### Sprint 3.3 - User Search & Discovery (CHƯA LÀM ⏳)
 
 ---
@@ -150,7 +159,49 @@ docker exec miniface-mongodb mongosh miniface_db --quiet --eval "db.users.update
 
 ---
 
-# 🧪 BƯỚC 4: TEST CÁC TRƯỜNG HỢP LỖI (Edge Cases)
+# 🧪 KỊCH BẢN TEST SPRINT 3.2 (Friend List & Management)
+
+> Phần này test các API quản lý: xem danh sách bạn bè, lời mời, hủy kết bạn, chặn/bỏ chặn.
+> **Chuẩn bị:** Cần ít nhất 2-3 user (Alice, Bob, Charlie) và một vài quan hệ đã thiết lập từ Sprint 3.1.
+
+## 📋 BƯỚC A: Xem danh sách bạn bè
+- Login → **`GET /friends`** → Execute.
+- ✅ **Kỳ vọng:** Trả về mảng bạn bè (status ACCEPTED), mỗi phần tử có `email`, `avatar`, `bio`, `userId`.
+
+## 📋 BƯỚC B: Xem lời mời đang chờ mình duyệt
+- Login bằng người NHẬN lời mời → **`GET /friends/requests/pending`**.
+- ✅ **Kỳ vọng:** Danh sách lời mời gửi đến, mỗi phần tử có **`sentByMe: false`** (người khác gửi cho mình).
+- 💡 **Ý nghĩa UI:** `sentByMe=false` → hiển thị nút **"Chấp nhận" / "Từ chối"**.
+
+## 📋 BƯỚC C: Xem lời mời mình đã gửi
+- Login bằng người GỬI → **`GET /friends/requests/sent`**.
+- ✅ **Kỳ vọng:** Danh sách lời mời mình gửi đi, mỗi phần tử có **`sentByMe: true`**.
+- 💡 **Ý nghĩa UI:** `sentByMe=true` → hiển thị nút **"Thu hồi"**.
+
+## 📋 BƯỚC D: Hủy kết bạn (Unfriend)
+- Với 2 người ĐÃ là bạn (ACCEPTED), một bên login → **`DELETE /friends/{friendId}`** (dán userId của người kia).
+- ✅ **Kỳ vọng:** message "Đã hủy kết bạn thành công". Gọi lại `GET /friends` thấy danh sách giảm.
+
+## 📋 BƯỚC E: Chặn người dùng (Block)
+- Login (người chặn) → **`POST /friends/block/{userId}`** (dán userId người muốn chặn).
+- ✅ **Kỳ vọng:** message "Đã chặn người dùng thành công".
+- **Cơ chế:** `requesterId` = người chặn, `addresseeId` = người bị chặn, `status = BLOCKED`.
+
+## 📋 BƯỚC F: Bỏ chặn (Unblock)
+- Người ĐÃ chặn login → **`DELETE /friends/block/{userId}`**.
+- ✅ **Kỳ vọng:** message "Đã bỏ chặn người dùng thành công".
+
+### 🧪 Edge cases của Block (quan trọng)
+
+| Tình huống | Cách làm | Mã lỗi mong đợi |
+|------------|----------|:---------------:|
+| **Người bị chặn gửi lời mời** | B bị A chặn → B gửi friend request cho A | `2009` USER_BLOCKED |
+| **Người KHÔNG chặn đòi unblock** | A chặn B → B gọi `DELETE /friends/block/{A}` | `2007` NOT_SENDER |
+| **Unfriend người chưa là bạn** | Gọi unfriend với người chỉ mới PENDING | `2005` FRIENDSHIP_NOT_FOUND |
+
+---
+
+# 🧪 BƯỚC 4: TEST CÁC TRƯỜNG HỢP LỖI (Edge Cases - Sprint 3.1)
 
 > Đây là phần kiểm chứng độ "chắc chắn" của hệ thống. Mỗi case phải trả về đúng mã lỗi.
 

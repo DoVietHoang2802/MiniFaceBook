@@ -23,5 +23,11 @@ public class FriendshipResponse {
   private String avatar;
   private String bio;
 
+  /**
+   * True nếu user đang đăng nhập là người GỬI lời mời (requester). Giúp Frontend hiển thị đúng nút:
+   * "Thu hồi" (isSentByMe=true) hoặc "Chấp nhận/Từ chối" (isSentByMe=false).
+   */
+  private boolean sentByMe;
+
   private Instant createdAt;
 }
