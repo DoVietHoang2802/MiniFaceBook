@@ -59,6 +59,11 @@ Hệ thống này dùng **HttpOnly Cookie** để xác thực, **KHÁC** với c
 |:-:|--------|----------|-----------|
 | 11 | `GET` | `/friends/search?q=&page=&size=` | Tìm kiếm người dùng theo tên (kèm trạng thái quan hệ) |
 
+### Sprint 3.4 - Friend Suggestions (ĐÃ XONG ✅)
+| # | Method | Endpoint | Chức năng |
+|:-:|--------|----------|-----------|
+| 12 | `GET` | `/friends/suggestions?limit=` | Gợi ý kết bạn theo Mutual Friends (bạn chung) |
+
 > 📌 **Lưu ý:** Đăng ký giờ BẮT BUỘC nhập `name` (họ tên, 2-50 ký tự). Search dựa trên field `name` này.
 
 ---
@@ -373,6 +378,47 @@ docker exec miniface-mongodb mongosh miniface_db --quiet --eval "db.users.update
 
 ### 💡 Mẹo lấy userId của Alice (cho case #1)
 Login Alice → response trả về `data.id` chính là userId Alice.
+
+---
+
+# 🧪 KỊCH BẢN TEST SPRINT 3.4 (Friend Suggestions - Mutual Friends)
+
+> Test API gợi ý kết bạn theo thuật toán "bạn của bạn". Người có nhiều bạn chung được ưu tiên.
+
+## 🔧 BƯỚC 3.4.1: Tạo mạng lưới quan hệ để test
+
+Tạo 5 user (A, B, C, D, E) rồi thiết lập:
+- **A ↔ B**, **A ↔ C** (B, C là bạn trực tiếp của A)
+- **B ↔ D**, **C ↔ D** (D là bạn của cả B và C → 2 bạn chung với A)
+- **B ↔ E** (E là bạn của B → 1 bạn chung với A)
+
+> Cách kết bạn: user1 login → `POST /friends/request/{user2Id}` → user2 login → `PUT /friends/request/{friendshipId}/accept`.
+
+## ✅ BƯỚC 3.4.2: A lấy gợi ý kết bạn
+
+1. Login bằng **A** → mở **Bạn bè → `GET /friends/suggestions`** → nhập `limit` = `10` → **Execute**.
+2. ✅ **Kỳ vọng:** Danh sách gợi ý sắp xếp theo `mutualFriendsCount` giảm dần:
+```json
+{
+  "data": [
+    { "name": "Sugg D", "mutualFriendsCount": 2 },
+    { "name": "Sugg E", "mutualFriendsCount": 1 }
+  ]
+}
+```
+
+## 🧪 BƯỚC 3.4.3: Quy tắc loại trừ
+
+| Quy tắc | Kỳ vọng |
+|---------|---------|
+| Không gợi ý chính mình | A không xuất hiện |
+| Không gợi ý bạn trực tiếp | B, C không xuất hiện |
+| Không gợi ý người đã có quan hệ (PENDING/BLOCKED) | Bị loại khỏi danh sách |
+| Chưa có bạn nào | Trả về mảng rỗng (không có dữ liệu để tính mutual) |
+
+## 💡 Kiểm tra trên giao diện
+- Đăng nhập → nhìn sidebar phải "People You May Know" → hiển thị gợi ý thật kèm "X bạn chung".
+- Bấm "Add Friend" → gửi lời mời thật, nút đổi thành "Requested".
 
 ---
 

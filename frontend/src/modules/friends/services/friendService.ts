@@ -2,6 +2,7 @@ import axiosClient from '../../../core/api/axiosClient';
 import type {
   ApiResponse,
   FriendshipResponse,
+  FriendSuggestionResponse,
   Page,
   UserSearchResponse,
 } from '../types/friend.types';
@@ -16,6 +17,15 @@ export const friendService = {
     const res = await axiosClient.get<ApiResponse<Page<UserSearchResponse>>>('/friends/search', {
       params: { q: keyword, page, size },
     });
+    return res.data.data;
+  },
+
+  // ===== Sprint 3.4: Friend Suggestions =====
+  getSuggestions: async (limit = 5) => {
+    const res = await axiosClient.get<ApiResponse<FriendSuggestionResponse[]>>(
+      '/friends/suggestions',
+      { params: { limit } }
+    );
     return res.data.data;
   },
 

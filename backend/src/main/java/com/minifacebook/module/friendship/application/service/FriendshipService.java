@@ -2,6 +2,7 @@ package com.minifacebook.module.friendship.application.service;
 
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
+import com.minifacebook.module.friendship.application.dto.FriendSuggestionResponse;
 import com.minifacebook.module.friendship.application.dto.FriendshipResponse;
 import com.minifacebook.module.friendship.application.dto.RelationshipStatus;
 import com.minifacebook.module.friendship.application.dto.UserSearchResponse;
@@ -10,9 +11,14 @@ import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -294,6 +300,107 @@ public class FriendshipService {
         .relationshipStatus(status)
         .friendshipId(friendshipId)
         .build();
+  }
+
+  // ===== Sprint 3.4: Friend Suggestions (Mutual Friends) =====
+
+  /**
+   * Gợi ý kết bạn dựa trên thuật toán <b>Mutual Friends</b> (bạn của bạn). Người có càng nhiều bạn
+   * chung với user hiện tại càng được ưu tiên.
+   *
+   * <p><b>Thuật toán:</b>
+   *
+   * <ol>
+   *   <li>Lấy danh sách bạn trực tiếp của tôi (myFriends).
+   *   <li>Lấy bạn của tất cả myFriends trong 1 truy vấn batch (chống N+1).
+   *   <li>Đếm số lần mỗi candidate xuất hiện = số bạn chung (mutual count).
+   *   <li>Loại trừ: chính mình, bạn trực tiếp, và những người đã có quan hệ bất kỳ (PENDING/BLOCKED).
+   *   <li>Sắp xếp theo mutual count giảm dần, giới hạn {@code limit}.
+   * </ol>
+   *
+   * <p>Phù hợp quy mô demo (~100 users) - tính toán in-memory, không cần Graph DB.
+   */
+  @Transactional(readOnly = true)
+  public List<FriendSuggestionResponse> getSuggestions(String email, int limit) {
+    User me = getUserByEmail(email);
+    String myId = me.getId();
+
+    // 1. Bạn trực tiếp của tôi
+    List<Friendship> myFriendships = friendshipRepository.findAcceptedByUserId(myId);
+    Set<String> myFriendIds =
+        myFriendships.stream().map(f -> otherUserId(f, myId)).collect(Collectors.toSet());
+
+    if (myFriendIds.isEmpty()) {
+      return List.of(); // Chưa có bạn nào → không thể gợi ý theo mutual
+    }
+
+    // 2. Bạn của tất cả bạn tôi (batch 1 query)
+    List<Friendship> friendsOfFriends =
+        friendshipRepository.findAcceptedByUserIds(new ArrayList<>(myFriendIds));
+
+    // 3. Đếm mutual count cho từng candidate
+    Map<String, Integer> mutualCount = new HashMap<>();
+    for (Friendship f : friendsOfFriends) {
+      // Với mỗi cạnh, 2 đầu đều có thể là candidate (người không phải bạn tôi).
+      countCandidate(f.getRequesterId(), myId, myFriendIds, mutualCount);
+      countCandidate(f.getAddresseeId(), myId, myFriendIds, mutualCount);
+    }
+
+    if (mutualCount.isEmpty()) {
+      return List.of();
+    }
+
+    // 4. Loại trừ những người đã có quan hệ bất kỳ với tôi (PENDING/BLOCKED/REJECTED còn tồn tại).
+    //    (Bạn ACCEPTED đã bị loại ở bước countCandidate qua myFriendIds.)
+    Set<String> excluded = new HashSet<>();
+    for (String candidateId : mutualCount.keySet()) {
+      friendshipRepository
+          .findBetweenUsers(myId, candidateId)
+          .ifPresent(rel -> excluded.add(candidateId));
+    }
+    excluded.forEach(mutualCount::remove);
+
+    if (mutualCount.isEmpty()) {
+      return List.of();
+    }
+
+    // 5. Sắp xếp theo mutual giảm dần + giới hạn
+    List<String> topIds =
+        mutualCount.entrySet().stream()
+            .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+            .limit(limit)
+            .map(Map.Entry::getKey)
+            .toList();
+
+    // Batch-load thông tin user
+    Map<String, User> userMap =
+        userRepository.findAllByIds(topIds).stream()
+            .collect(Collectors.toMap(User::getId, Function.identity()));
+
+    return topIds.stream()
+        .map(userMap::get)
+        .filter(java.util.Objects::nonNull)
+        .map(
+            u ->
+                FriendSuggestionResponse.builder()
+                    .userId(u.getId())
+                    .name(u.getName())
+                    .email(u.getEmail())
+                    .avatar(u.getAvatar())
+                    .bio(u.getBio())
+                    .mutualFriendsCount(mutualCount.getOrDefault(u.getId(), 0))
+                    .build())
+        .sorted(Comparator.comparingInt(FriendSuggestionResponse::getMutualFriendsCount).reversed())
+        .toList();
+  }
+
+  /** Tăng mutual count cho candidate nếu hợp lệ (không phải mình, không phải bạn trực tiếp). */
+  private void countCandidate(
+      String candidateId, String myId, Set<String> myFriendIds, Map<String, Integer> mutualCount) {
+    if (candidateId.equals(myId) || myFriendIds.contains(candidateId)) {
+      return; // bỏ qua chính mình và bạn trực tiếp
+    }
+    mutualCount.merge(candidateId, 1, Integer::sum);
   }
 
   // ===== Helpers =====

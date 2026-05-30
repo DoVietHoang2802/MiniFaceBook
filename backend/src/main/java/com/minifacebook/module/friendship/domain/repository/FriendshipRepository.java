@@ -27,5 +27,11 @@ public interface FriendshipRepository {
   /** Lấy tất cả friendship đã ACCEPTED mà user tham gia (cả 2 chiều). */
   List<Friendship> findAcceptedByUserId(String userId);
 
+  /**
+   * Lấy tất cả friendship ACCEPTED của NHIỀU user trong một truy vấn (batch). Phục vụ thuật toán
+   * Mutual Friends - chống N+1.
+   */
+  List<Friendship> findAcceptedByUserIds(List<String> userIds);
+
   void delete(Friendship friendship);
 }

@@ -63,6 +63,13 @@ public class FriendshipRepositoryImpl implements FriendshipRepository {
   }
 
   @Override
+  public List<Friendship> findAcceptedByUserIds(List<String> userIds) {
+    return mongoRepository.findAllByUserIdsAndStatus(userIds, FriendshipStatus.ACCEPTED).stream()
+        .map(mapper::toDomain)
+        .toList();
+  }
+
+  @Override
   public void delete(Friendship friendship) {
     if (friendship.getId() != null) {
       mongoRepository.deleteById(friendship.getId());

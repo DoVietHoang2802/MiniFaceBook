@@ -356,3 +356,19 @@
     *   Build sạch (1931 modules, 0 lỗi TypeScript), tích hợp liền mạch vào layout 3 cột hiện có theo đúng design system.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Built a self-contained multi-tab friend management UI in React featuring 300ms debounced search and state-driven action buttons that map a 5-state relationship enum to contextual actions, with optimistic updates and per-row loading guards delivering instant, double-click-safe interactions.*
+
+---
+
+### 🤝 Highlight 24: Thuật Toán Gợi Ý Kết Bạn Mutual Friends với Batch Query Tối Ưu (Không Cần Graph DB)
+*   **Situation (Bối cảnh):** Tính năng "Những người bạn có thể biết" là đặc trưng cốt lõi của mạng xã hội, đòi hỏi thuật toán duyệt đồ thị quan hệ "bạn của bạn" và xếp hạng theo số bạn chung. Giải pháp ngây thơ (Graph DB như Neo4j) sẽ là over-engineering tốn kém hạ tầng cho quy mô MVP, còn cách lặp truy vấn từng bạn dễ gây bùng nổ N+1 query.
+*   **Task (Nhiệm vụ):** Thiết kế thuật toán Mutual Friends hiệu năng cao, xếp hạng gợi ý theo số bạn chung, loại trừ chính xác các trường hợp không hợp lệ, với số truy vấn database tối thiểu - phù hợp kiến trúc Modular Monolith thực dụng.
+*   **Action (Hành động):**
+    *   Triển khai thuật toán in-memory 5 bước: lấy bạn trực tiếp → lấy toàn bộ bạn-của-bạn trong **một truy vấn batch** (`$in` query) → đếm tần suất xuất hiện = số bạn chung → loại trừ (chính mình, bạn trực tiếp, người đã có quan hệ) → xếp hạng theo mutual count giảm dần.
+    *   Bổ sung repository method `findAllByUserIdsAndStatus` dùng toán tử MongoDB `$in`, gộp việc lấy bạn của N người bạn thành 1 query duy nhất thay vì N query (chống N+1).
+    *   Dùng `HashMap` đếm và `HashSet` loại trừ để đạt độ phức tạp tuyến tính, batch-load thông tin user kết quả cuối cùng cũng trong 1 query.
+    *   Quyết định kiến trúc có chủ đích: chọn tính toán in-memory thay vì tích hợp Graph DB, tiết kiệm hoàn toàn chi phí vận hành Neo4j ở quy mô hiện tại mà vẫn cho kết quả chính xác.
+*   **Result (Kết quả):**
+    *   Thuật toán cho kết quả xếp hạng chính xác (người 2 bạn chung đứng trên người 1 bạn chung), loại trừ đúng mọi trường hợp - ver ified qua kịch bản mạng lưới 5 user.
+    *   Toàn bộ tính năng chỉ tốn 3 truy vấn DB bất kể số lượng bạn bè, đặt nền tảng scale tốt mà không cần thêm hạ tầng.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented a Mutual-Friends recommendation algorithm with in-memory frequency counting and MongoDB `$in` batch queries (constant 3 DB calls regardless of graph size), deliberately avoiding Graph DB over-engineering while delivering accurate, exclusion-aware friend suggestions for the MVP scale.*

@@ -23,4 +23,13 @@ public interface MongoFriendshipRepository extends MongoRepository<FriendshipDoc
   @Query(
       "{ $and: [ { status: ?1 }, { $or: [ { requesterId: ?0 }, { addresseeId: ?0 } ] } ] }")
   List<FriendshipDocument> findAllByUserIdAndStatus(String userId, FriendshipStatus status);
+
+  /**
+   * Tìm tất cả friendship của NHIỀU user (ở 1 trong 2 vai trò) với 1 trạng thái cụ thể - trong MỘT
+   * truy vấn. Phục vụ thuật toán Mutual Friends (Sprint 3.4) để tránh N+1.
+   */
+  @Query(
+      "{ $and: [ { status: ?1 }, { $or: [ { requesterId: { $in: ?0 } }, { addresseeId: { $in: ?0 } } ] } ] }")
+  List<FriendshipDocument> findAllByUserIdsAndStatus(
+      List<String> userIds, FriendshipStatus status);
 }

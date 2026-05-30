@@ -105,10 +105,10 @@
         - *Lưu ý endpoint:* Đặt tại `/friends/search` (không phải `/users/search`) vì logic cần `FriendshipRepository` (thuộc module friendship - đúng Clean Architecture).
     - [x] Giao diện Search Users với kết quả realtime (debounce 300ms). *(ĐÃ XONG 🎉 - module `friends`)*
     - [x] Giao diện Friend List với tabs: Bạn bè / Lời mời / Đã gửi. *(ĐÃ XONG 🎉 - `FriendsPage` 4 tab, nút động theo relationshipStatus, Optimistic UI)*
-- [ ] **Sprint 3.4: Friend Suggestions (Optional - Nice to Have)**
-    - [ ] Thuật toán gợi ý bạn bè dựa trên **Mutual Friends**.
-    - [ ] API `GET /friends/suggestions` - Trả về danh sách gợi ý.
-    - [ ] Giao diện "Những người bạn có thể biết" trên sidebar.
+- [x] **Sprint 3.4: Friend Suggestions (ĐÃ HOÀN THÀNH 🎉)**
+    - [x] Thuật toán gợi ý bạn bè dựa trên **Mutual Friends** (bạn của bạn, đếm số bạn chung, in-memory).
+    - [x] API `GET /friends/suggestions?limit=` - Trả về danh sách gợi ý sắp xếp theo mutual count. Batch query chống N+1.
+    - [x] Giao diện "People You May Know" trên sidebar dùng data thật (thay mock cũ), Optimistic Add Friend, empty state.
 
 ---
 
@@ -259,7 +259,7 @@
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~57%** (4/7 Phases - Phase 3 hoàn thành cả Backend + UI; Sprint 3.4 Friend Suggestions là optional)
+**Tổng tiến độ: ~58%** (4/7 Phases - Phase 3 HOÀN THÀNH 100% bao gồm cả Sprint 3.4 Friend Suggestions)
 
 ---
 
@@ -310,6 +310,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.5 | May 2026 | Hoàn thành Sprint 3.4 (Friend Suggestions - Mutual Friends algorithm + UI sidebar data thật). PHASE 3 trọn vẹn 100%. |
 | 2.4 | May 2026 | Hoàn thành UI Phase 3: module `friends` (FriendsPage 4 tab - Tìm kiếm/Bạn bè/Lời mời/Đã gửi), nút động theo relationshipStatus + Optimistic UI. Phase 3 XONG 100%. |
 | 2.3 | May 2026 | Sprint 3.3 backend: fix bug FE-BE `name` + API Search (`/friends/search`) với enrich relationship status, loại self, ẩn người chặn. Ghi nhận Tech Debt #6 (tối ưu phân trang search). |
 | 2.2 | May 2026 | Hoàn thành Sprint 3.2 (Friend List, Unfriend, Block/Unblock) + tích hợp `sentByMe` & batch-load chống N+1 |

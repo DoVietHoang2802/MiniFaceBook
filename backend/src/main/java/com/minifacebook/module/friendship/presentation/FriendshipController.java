@@ -1,5 +1,6 @@
 package com.minifacebook.module.friendship.presentation;
 
+import com.minifacebook.module.friendship.application.dto.FriendSuggestionResponse;
 import com.minifacebook.module.friendship.application.dto.FriendshipResponse;
 import com.minifacebook.module.friendship.application.dto.UserSearchResponse;
 import com.minifacebook.module.friendship.application.service.FriendshipService;
@@ -132,5 +133,18 @@ public class FriendshipController {
     Page<UserSearchResponse> result =
         friendshipService.searchUsers(jwt.getSubject(), keyword, pageable);
     return ApiResponse.success("Tìm kiếm người dùng thành công", result);
+  }
+
+  @GetMapping("/suggestions")
+  @Operation(
+      summary = "Gợi ý kết bạn",
+      description =
+          "Gợi ý kết bạn theo thuật toán Mutual Friends (bạn của bạn). Người có nhiều bạn chung "
+              + "được ưu tiên. Loại trừ bạn hiện tại và người đã có quan hệ.")
+  public ApiResponse<List<FriendSuggestionResponse>> getSuggestions(
+      @AuthenticationPrincipal Jwt jwt, @RequestParam(defaultValue = "10") int limit) {
+    List<FriendSuggestionResponse> result =
+        friendshipService.getSuggestions(jwt.getSubject(), limit);
+    return ApiResponse.success("Lấy gợi ý kết bạn thành công", result);
   }
 }

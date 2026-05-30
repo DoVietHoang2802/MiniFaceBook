@@ -24,6 +24,7 @@ import {
 import { authService } from './modules/auth/services/authService';
 import PostFeed from './modules/post/components/PostFeed';
 import FriendsPage from './modules/friends/components/FriendsPage';
+import { friendService } from './modules/friends/services/friendService';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
@@ -34,31 +35,54 @@ function App() {
   // Trạng thái giao diện cao cấp
   const [showProfilePopover, setShowProfilePopover] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [suggestedFriends, setSuggestedFriends] = useState([
-    { id: 1, name: 'Jason Nguyen', mutualFriends: 12, avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80', state: 'idle' },
-    { id: 2, name: 'Thao Pham', mutualFriends: 8, avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80', state: 'idle' },
-    { id: 3, name: 'Brian Le', mutualFriends: 15, avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80', state: 'idle' },
-    { id: 4, name: 'Alice Duong', mutualFriends: 6, avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80', state: 'idle' },
-    { id: 5, name: 'David Tran', mutualFriends: 10, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80', state: 'idle' }
-  ]);
+  // Gợi ý kết bạn thật từ API (Sprint 3.4 - Mutual Friends). state: idle | loading | requested
+  const [suggestedFriends, setSuggestedFriends] = useState<
+    { userId: string; name: string; mutualFriendsCount: number; avatar?: string; state: string }[]
+  >([]);
 
   // Kích hoạt Toast thông báo
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
   };
 
-  // Xử lý gửi lời mời kết bạn (Micro-interaction)
-  const handleAddFriend = (id: number, name: string) => {
+  // Tải danh sách gợi ý kết bạn thật (Mutual Friends - Sprint 3.4) khi đã đăng nhập
+  useEffect(() => {
+    if (!user) return;
+    friendService
+      .getSuggestions(5)
+      .then((list) =>
+        setSuggestedFriends(
+          list.map((s) => ({
+            userId: s.userId,
+            name: s.name,
+            mutualFriendsCount: s.mutualFriendsCount,
+            avatar: s.avatar,
+            state: 'idle',
+          }))
+        )
+      )
+      .catch(() => setSuggestedFriends([]));
+  }, [user]);
+
+  // Xử lý gửi lời mời kết bạn THẬT (Optimistic Micro-interaction)
+  const handleAddFriend = (userId: string, name: string) => {
     setSuggestedFriends((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, state: 'loading' } : f))
+      prev.map((f) => (f.userId === userId ? { ...f, state: 'loading' } : f))
     );
-    
-    setTimeout(() => {
-      setSuggestedFriends((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, state: 'requested' } : f))
-      );
-      triggerToast(`Đã gửi lời mời kết bạn đến ${name}!`);
-    }, 800);
+    friendService
+      .sendRequest(userId)
+      .then(() => {
+        setSuggestedFriends((prev) =>
+          prev.map((f) => (f.userId === userId ? { ...f, state: 'requested' } : f))
+        );
+        triggerToast(`Đã gửi lời mời kết bạn đến ${name}!`);
+      })
+      .catch(() => {
+        setSuggestedFriends((prev) =>
+          prev.map((f) => (f.userId === userId ? { ...f, state: 'idle' } : f))
+        );
+        triggerToast('Gửi lời mời thất bại, vui lòng thử lại.');
+      });
   };
 
   // Tự động ẩn Toast sau 3 giây
@@ -392,7 +416,7 @@ function App() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-800 text-sm font-outfit">People You May Know</span>
                   <button 
-                    onClick={() => triggerToast("Danh sách gợi ý kết bạn nâng cao sẽ ra mắt ở Phase 4 (Neo4j)!")}
+                    onClick={() => setActiveTab('friends')}
                     className="text-[11px] font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
                   >
                     View all
@@ -400,20 +424,29 @@ function App() {
                 </div>
 
                 <div className="space-y-4 pt-1">
+                  {suggestedFriends.length === 0 && (
+                    <p className="text-slate-400 text-[11px] text-center py-2">
+                      Chưa có gợi ý. Hãy kết bạn để nhận gợi ý theo bạn chung!
+                    </p>
+                  )}
                   {suggestedFriends.map((friend) => (
-                    <div key={friend.id} className="flex items-center justify-between group">
+                    <div key={friend.userId} className="flex items-center justify-between group">
                       <div className="flex items-center space-x-3 overflow-hidden">
-                        <div className="h-10 w-10 rounded-full border border-slate-100 overflow-hidden bg-slate-50 shrink-0">
-                          <img src={friend.avatarUrl} alt={friend.name} className="h-full w-full object-cover" />
+                        <div className="h-10 w-10 rounded-full border border-slate-100 overflow-hidden bg-slate-50 shrink-0 flex items-center justify-center text-slate-400 font-bold">
+                          {friend.avatar ? (
+                            <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
+                          ) : (
+                            friend.name?.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div className="text-left overflow-hidden">
                           <h4 className="font-bold text-slate-700 text-xs leading-snug group-hover:text-violet-600 transition truncate">{friend.name}</h4>
-                          <p className="text-slate-400 text-[10px] truncate mt-0.5">{friend.mutualFriends} mutual friends</p>
+                          <p className="text-slate-400 text-[10px] truncate mt-0.5">{friend.mutualFriendsCount} bạn chung</p>
                         </div>
                       </div>
                       
                       <button
-                        onClick={() => handleAddFriend(friend.id, friend.name)}
+                        onClick={() => handleAddFriend(friend.userId, friend.name)}
                         disabled={friend.state === 'loading' || friend.state === 'requested'}
                         className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center shrink-0 cursor-pointer ${
                           friend.state === 'requested'

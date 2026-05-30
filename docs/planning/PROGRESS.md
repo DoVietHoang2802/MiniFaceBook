@@ -238,6 +238,13 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Tích hợp]** Cập nhật `App.tsx`: đổi menu "Explore"→"Bạn bè" (icon Users), wire `activeTab='friends'`, render `FriendsPage`.
   - [x] **[Verify]** Diagnostics 0 lỗi, `npm run build` PASS (1931 modules). Theo đúng design Vizo Light (violet/slate). **PHASE 3 HOÀN THÀNH 100%** (Backend + UI).
 
+- **Phiên 30/05/2026 (Sprint 3.4 - Friend Suggestions: Mutual Friends):**
+  - [x] **[Backend - Thuật toán]** `FriendshipService.getSuggestions()` triển khai thuật toán Mutual Friends: lấy bạn trực tiếp → lấy bạn-của-bạn (batch query `findAcceptedByUserIds` chống N+1) → đếm số bạn chung cho từng candidate → loại self/bạn trực tiếp/người đã có quan hệ → sắp xếp theo mutual count giảm dần.
+  - [x] **[Backend]** Thêm `findAllByUserIdsAndStatus` (Mongo `$in` query) vào repository. DTO `FriendSuggestionResponse` (kèm `mutualFriendsCount`). API `GET /friends/suggestions?limit=`.
+  - [x] **[Frontend]** Thay danh sách "People You May Know" mock cứng ở sidebar `App.tsx` bằng data thật từ API. Nút "Add Friend" gọi API thật (Optimistic), empty state thân thiện, "View all" mở tab Bạn bè.
+  - [x] **[Testing]** Test mạng lưới A-B-C-D-E: D (2 bạn chung) xếp trên E (1 bạn chung), loại đúng self + bạn trực tiếp. PASS. Compile + ArchUnit + npm build đều xanh.
+  - [x] **[Quyết định kiến trúc]** Tính in-memory cho quy mô demo (~100 users), không cần Neo4j/Graph DB - đúng định hướng "thực dụng" đã chốt trước đó.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

@@ -35,6 +35,16 @@ export interface UserSearchResponse {
   friendshipId?: string | null;
 }
 
+/** Response cho mỗi gợi ý kết bạn (BE: FriendSuggestionResponse). */
+export interface FriendSuggestionResponse {
+  userId: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  mutualFriendsCount: number;
+}
+
 /** Cấu trúc Page phân trang chuẩn Spring Data. */
 export interface Page<T> {
   content: T[];
