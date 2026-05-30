@@ -95,11 +95,16 @@
         - *Cơ chế:* `requesterId` = người chặn, `addresseeId` = người bị chặn, `status = BLOCKED`. Chỉ người chặn mới gỡ được.
     - [x] Tích hợp `isSentByMe` (sentByMe) vào response + batch-load `findAllByIds` chống N+1.
 - [ ] **Sprint 3.3: User Search & Discovery**
-    - [ ] API Tìm kiếm người dùng (`GET /users/search?q=keyword`).
-        - *Implementation:* MongoDB Text Index hoặc Regex search.
-        - *Response:* Kèm trạng thái friendship (NONE/PENDING/FRIEND/BLOCKED).
-    - [ ] Giao diện Search Users với kết quả realtime (debounce 300ms).
-    - [ ] Giao diện Friend List với tabs: Bạn bè / Lời mời / Đã gửi.
+    - [x] **[FIX BUG nền tảng - ĐÃ XONG 🎉]** Thêm field `name` (họ tên) vào Backend.
+        - *Lý do:* Frontend `RegisterForm` ĐÃ có ô "Họ và tên" và gửi `name` lên, nhưng Backend (`RegisterRequest`, `User`, `UserDocument`) KHÔNG nhận → tên bị vứt bỏ, không lưu DB. Đây là bug FE-BE mismatch tồn tại từ Sprint 1.
+        - *Đã làm:* `RegisterRequest` thêm `name` (`@NotBlank` + `@Size` 2-50); `User` + `UserDocument` (có `@Indexed`) + `UserResponse` thêm `name`; MapStruct tự map; thêm mã lỗi `NAME_REQUIRED` (1020) + `NAME_INVALID` (1021). Test 5 case PASS (đăng ký lưu tên, login trả tên, thiếu/ngắn tên báo lỗi tiếng Việt).
+        - *Quyết định USER:* Bắt buộc nhập tên khi đăng ký (Phương án A). Dùng tên field `name` để khớp Frontend → không cần sửa FE.
+    - [ ] API Tìm kiếm người dùng (`GET /users/search?q=keyword&page=&size=`).
+        - *Implementation:* MongoDB Regex case-insensitive trên field `name` (đủ cho quy mô demo, không cần Text Index).
+        - *Response:* Kèm trạng thái friendship (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) so với user hiện tại.
+        - *[CẢI TIẾN]* Loại trừ chính mình khỏi kết quả; ẩn người đã chặn mình (privacy); có phân trang.
+    - [ ] Giao diện Search Users với kết quả realtime (debounce 300ms). *(Phần UI - làm ở giai đoạn UI Phase 3)*
+    - [ ] Giao diện Friend List với tabs: Bạn bè / Lời mời / Đã gửi. *(Phần UI - làm ở giai đoạn UI Phase 3)*
 - [ ] **Sprint 3.4: Friend Suggestions (Optional - Nice to Have)**
     - [ ] Thuật toán gợi ý bạn bè dựa trên **Mutual Friends**.
     - [ ] API `GET /friends/suggestions` - Trả về danh sách gợi ý.

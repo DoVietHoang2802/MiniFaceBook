@@ -18,8 +18,8 @@ Lưu trữ thông tin hồ sơ người dùng và trạng thái tài khoản.
 | :--- | :--- | :--- |
 | `_id` | ObjectId (String) | Khóa chính tự động sinh. |
 | `email` | String | Email duy nhất, định dạng chuẩn, bắt buộc. **(Unique Index)** |
+| `name` | String | Họ và tên hiển thị, bắt buộc (2-50 ký tự). **(Index thường - phục vụ tìm kiếm Sprint 3.3)** |
 | `password` | String | Mật khẩu băm Bcrypt, bắt buộc. |
-| `name` | String | Tên hiển thị người dùng, bắt buộc. |
 | `avatar` | String | URL ảnh đại diện (Lưu trên Cloudinary). Mặc định null. |
 | `roles` | Array (String) | Danh sách vai trò: `["USER"]`, `["ADMIN"]`. |
 | `verified` | Boolean | Trạng thái kích hoạt tài khoản qua email. Mặc định `false`. |

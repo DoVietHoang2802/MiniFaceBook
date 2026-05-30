@@ -23,6 +23,10 @@ public class UserDocument extends BaseEntity {
   @Indexed(unique = true)
   private String email;
 
+  /** Họ và tên hiển thị. Có index để tăng tốc tìm kiếm người dùng (Sprint 3.3). */
+  @Indexed
+  private String name;
+
   private String password;
 
   private String avatar;

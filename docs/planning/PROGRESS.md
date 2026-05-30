@@ -213,6 +213,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Testing]** Test thực tế 8 kịch bản qua API (list bạn/pending/sent, unfriend, block, người bị chặn gửi request→2009, non-blocker unblock→2007, unblock thành công). Tất cả PASS. Compile + ArchUnit xanh 100%.
   - [x] **[Docs]** Cập nhật `PHASE_3_FRIENDS_TESTING.md` thêm kịch bản test Sprint 3.2 (6 API + edge case Block).
 
+- **Phiên 30/05/2026 (Sprint 3.3 - Phần 1: Fix bug FE-BE & thêm field `name`):**
+  - [x] **[FIX BUG ẩn]** Phát hiện bug FE-BE mismatch tồn tại từ Sprint 1: Frontend `RegisterForm` có ô "Họ và tên" và gửi `name` lên, nhưng Backend (`RegisterRequest`, `User`, `UserDocument`) không có field này → tên người dùng bị vứt bỏ, không bao giờ lưu vào DB.
+  - [x] **[Backend]** Thêm field `name` xuyên suốt: `RegisterRequest` (`@NotBlank` + `@Size` 2-50 khớp validate FE), `User` (Domain), `UserDocument` (kèm `@Indexed` phục vụ search), `UserResponse` (trả về cho FE đã khai báo nhận sẵn).
+  - [x] **[Shared]** Thêm 2 mã lỗi `NAME_REQUIRED` (1020) và `NAME_INVALID` (1021) với message tiếng Việt.
+  - [x] **[Verify]** MapStruct tự sinh code map `name` ở cả 3 chiều (Request→User, User→Response, User↔Document) - kiểm chứng trong generated sources. Không cần sửa Frontend (dùng đúng tên field `name`).
+  - [x] **[Testing]** Test 5 kịch bản: đăng ký có tên→lưu DB OK, login trả về name, đăng ký thiếu tên→1020, tên<2 ký tự→1021. Tất cả PASS.
+  - [x] **[Quyết định]** Theo Phương án A (bắt buộc nhập tên khi đăng ký). Đây cũng là nền tảng cho API Search (Sprint 3.3 Phần 2 - search theo `name`).
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

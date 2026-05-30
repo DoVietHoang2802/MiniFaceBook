@@ -27,6 +27,8 @@ public enum ErrorCode {
   EMAIL_INVALID(1010, "Địa chỉ email không hợp lệ", HttpStatus.BAD_REQUEST),
   EMAIL_REQUIRED(1011, "Vui lòng nhập email", HttpStatus.BAD_REQUEST),
   PASSWORD_REQUIRED(1012, "Vui lòng nhập mật khẩu", HttpStatus.BAD_REQUEST),
+  NAME_REQUIRED(1020, "Vui lòng nhập họ và tên", HttpStatus.BAD_REQUEST),
+  NAME_INVALID(1021, "Họ và tên phải có ít nhất {min} ký tự", HttpStatus.BAD_REQUEST),
   USER_NOT_VERIFIED(1013, "Tài khoản chưa được xác thực email", HttpStatus.FORBIDDEN),
   INVALID_VERIFICATION_TOKEN(1014, "Mã xác thực không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
   REFRESH_TOKEN_EXPIRED(1015, "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại", HttpStatus.UNAUTHORIZED),

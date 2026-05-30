@@ -73,6 +73,17 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 
 ---
 
+## 🧪 5B. QUY CHUẨN TÀI LIỆU KIỂM THỬ THEO PHASE (PER-PHASE TESTING DOCS)
+Để đảm bảo mỗi giai đoạn đều có hướng dẫn kiểm thử rõ ràng, dễ tra cứu, AI **BẮT BUỘC** tuân thủ:
+
+1. **Mỗi Phase có MỘT file test riêng** đặt trong `docs/testing/` theo mẫu tên: `PHASE_<N>_<TÊN>_TESTING.md` (ví dụ: `PHASE_3_FRIENDS_TESTING.md`).
+2. **TUYỆT ĐỐI KHÔNG được xóa** các file test của Phase đã hoàn thành. Đây là tài sản kiểm thử vĩnh viễn của dự án, dùng để hồi quy (regression) và bàn giao.
+3. **Mỗi khi hoàn thành một Sprint**, phải cập nhật (append/bổ sung) hướng dẫn test các API mới vào đúng file test của Phase đó — chi tiết từng bước, kèm JSON mẫu copy-paste được và bảng mã lỗi mong đợi.
+4. **File `TESTING_GUIDE.md`** đóng vai trò mục lục (index) trỏ tới các file test của từng Phase. Không nhồi nhét chi tiết test của Phase vào file index này.
+5. Phong cách viết: rõ ràng cho cả người không chuyên, đánh dấu chỗ cần COPY giá trị, giải thích cơ chế auth (HttpOnly Cookie) khi cần.
+
+---
+
 ## 📊 6. QUY CHUẨN BÁO CÁO TIẾN ĐỘ (PROGRESS REPORT STANDARDS)
 Khi USER hỏi về tiến độ dự án, tech stack hoặc thành tựu, AI **BẮT BUỘC** phải:
 1. Đọc file `docs/guidelines/AI_REPORT_COMMANDS.md` để nắm format chuẩn.

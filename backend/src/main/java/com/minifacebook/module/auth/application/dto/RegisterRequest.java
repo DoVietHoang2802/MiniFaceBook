@@ -20,6 +20,10 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RegisterRequest {
 
+  @NotBlank(message = "NAME_REQUIRED")
+  @Size(min = 2, max = 50, message = "NAME_INVALID")
+  private String name;
+
   @NotBlank(message = "EMAIL_REQUIRED")
   @Email(message = "EMAIL_INVALID")
   private String email;

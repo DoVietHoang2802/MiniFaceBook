@@ -161,43 +161,126 @@ docker exec miniface-mongodb mongosh miniface_db --quiet --eval "db.users.update
 
 # 🧪 KỊCH BẢN TEST SPRINT 3.2 (Friend List & Management)
 
-> Phần này test các API quản lý: xem danh sách bạn bè, lời mời, hủy kết bạn, chặn/bỏ chặn.
-> **Chuẩn bị:** Cần ít nhất 2-3 user (Alice, Bob, Charlie) và một vài quan hệ đã thiết lập từ Sprint 3.1.
+> Phần này test 6 API quản lý: danh sách bạn bè, lời mời (đến/đã gửi), hủy kết bạn, chặn/bỏ chặn.
 
-## 📋 BƯỚC A: Xem danh sách bạn bè
-- Login → **`GET /friends`** → Execute.
-- ✅ **Kỳ vọng:** Trả về mảng bạn bè (status ACCEPTED), mỗi phần tử có `email`, `avatar`, `bio`, `userId`.
+## 🔧 BƯỚC 3.2.0: Chuẩn bị 3 user + quan hệ mẫu
 
-## 📋 BƯỚC B: Xem lời mời đang chờ mình duyệt
-- Login bằng người NHẬN lời mời → **`GET /friends/requests/pending`**.
-- ✅ **Kỳ vọng:** Danh sách lời mời gửi đến, mỗi phần tử có **`sentByMe: false`** (người khác gửi cho mình).
-- 💡 **Ý nghĩa UI:** `sentByMe=false` → hiển thị nút **"Chấp nhận" / "Từ chối"**.
+Để test đủ các luồng, ta cần 3 user và 2 loại quan hệ. Nếu đã có Alice/Bob từ Sprint 3.1, chỉ cần tạo thêm Charlie.
 
-## 📋 BƯỚC C: Xem lời mời mình đã gửi
-- Login bằng người GỬI → **`GET /friends/requests/sent`**.
-- ✅ **Kỳ vọng:** Danh sách lời mời mình gửi đi, mỗi phần tử có **`sentByMe: true`**.
-- 💡 **Ý nghĩa UI:** `sentByMe=true` → hiển thị nút **"Thu hồi"**.
+**1.** Tạo 3 user qua `POST /auth/register` (nếu chưa có):
+```json
+{ "email": "alice@test.com", "password": "123456", "bio": "Alice" }
+```
+```json
+{ "email": "bob@test.com", "password": "123456", "bio": "Bob" }
+```
+```json
+{ "email": "charlie@test.com", "password": "123456", "bio": "Charlie" }
+```
 
-## 📋 BƯỚC D: Hủy kết bạn (Unfriend)
-- Với 2 người ĐÃ là bạn (ACCEPTED), một bên login → **`DELETE /friends/{friendId}`** (dán userId của người kia).
-- ✅ **Kỳ vọng:** message "Đã hủy kết bạn thành công". Gọi lại `GET /friends` thấy danh sách giảm.
+**2.** Verify tất cả (terminal):
+```bash
+docker exec miniface-mongodb mongosh miniface_db --quiet --eval "db.users.updateMany({}, {$set:{verified:true}})"
+```
 
-## 📋 BƯỚC E: Chặn người dùng (Block)
-- Login (người chặn) → **`POST /friends/block/{userId}`** (dán userId người muốn chặn).
-- ✅ **Kỳ vọng:** message "Đã chặn người dùng thành công".
-- **Cơ chế:** `requesterId` = người chặn, `addresseeId` = người bị chặn, `status = BLOCKED`.
+**3.** Lấy & ghi ra giấy 3 userId (login từng người, copy `data.id`):
+- Login Bob → **bobId** = `____`
+- Login Charlie → **charlieId** = `____`
+- Login Alice → **aliceId** = `____`
 
-## 📋 BƯỚC F: Bỏ chặn (Unblock)
-- Người ĐÃ chặn login → **`DELETE /friends/block/{userId}`**.
-- ✅ **Kỳ vọng:** message "Đã bỏ chặn người dùng thành công".
+**4.** Thiết lập quan hệ mẫu:
+- **Alice ↔ Bob = BẠN BÈ:** Login Alice → `POST /friends/request/{bobId}` (copy friendshipId) → Login Bob → `PUT /friends/request/{friendshipId}/accept`.
+- **Alice → Charlie = ĐANG CHỜ:** Login Alice → `POST /friends/request/{charlieId}` (để nguyên, không accept).
 
-### 🧪 Edge cases của Block (quan trọng)
+> ✅ Sau bước này: Alice có 1 bạn (Bob) + 1 lời mời đã gửi (Charlie). Charlie có 1 lời mời đang chờ (từ Alice).
 
-| Tình huống | Cách làm | Mã lỗi mong đợi |
-|------------|----------|:---------------:|
-| **Người bị chặn gửi lời mời** | B bị A chặn → B gửi friend request cho A | `2009` USER_BLOCKED |
-| **Người KHÔNG chặn đòi unblock** | A chặn B → B gọi `DELETE /friends/block/{A}` | `2007` NOT_SENDER |
-| **Unfriend người chưa là bạn** | Gọi unfriend với người chỉ mới PENDING | `2005` FRIENDSHIP_NOT_FOUND |
+---
+
+## ✅ BƯỚC 3.2.1: GET /friends — Danh sách bạn bè
+
+1. Login **Alice** → mở **Bạn bè → `GET /friends`** → **Try it out** → **Execute**.
+2. ✅ **Kỳ vọng:** `data` là mảng có **1 phần tử là Bob**:
+```json
+{
+  "message": "Lấy danh sách bạn bè thành công",
+  "data": [
+    {
+      "userId": "...bobId...",
+      "email": "bob@test.com",
+      "bio": "Bob",
+      "status": "ACCEPTED",
+      "sentByMe": true
+    }
+  ]
+}
+```
+
+---
+
+## ✅ BƯỚC 3.2.2: GET /friends/requests/sent — Lời mời ĐÃ GỬI
+
+1. Vẫn là **Alice** → **`GET /friends/requests/sent`** → **Execute**.
+2. ✅ **Kỳ vọng:** Mảng có **Charlie**, đặc biệt **`sentByMe: true`**:
+```json
+{
+  "data": [
+    { "email": "charlie@test.com", "status": "PENDING", "sentByMe": true }
+  ]
+}
+```
+3. 💡 **Ý nghĩa UI:** `sentByMe=true` → Frontend hiển thị nút **"Thu hồi"**.
+
+---
+
+## ✅ BƯỚC 3.2.3: GET /friends/requests/pending — Lời mời ĐANG CHỜ DUYỆT
+
+1. **Login Charlie** (đổi sang người nhận) → **`GET /friends/requests/pending`** → **Execute**.
+2. ✅ **Kỳ vọng:** Mảng có **Alice**, đặc biệt **`sentByMe: false`**:
+```json
+{
+  "data": [
+    { "email": "alice@test.com", "status": "PENDING", "sentByMe": false }
+  ]
+}
+```
+3. 💡 **Ý nghĩa UI:** `sentByMe=false` → Frontend hiển thị nút **"Chấp nhận" / "Từ chối"**.
+
+---
+
+## ✅ BƯỚC 3.2.4: DELETE /friends/{friendId} — Hủy kết bạn (Unfriend)
+
+1. **Login Alice** → **`DELETE /friends/{friendId}`** → dán **bobId** vào ô → **Execute**.
+2. ✅ **Kỳ vọng:** `"message": "Đã hủy kết bạn thành công"`.
+3. **Kiểm chứng:** Gọi lại `GET /friends` → mảng **rỗng** (Bob đã bị gỡ).
+
+---
+
+## ✅ BƯỚC 3.2.5: POST /friends/block/{userId} — Chặn người dùng
+
+1. **Login Alice** → **`POST /friends/block/{userId}`** → dán **charlieId** → **Execute**.
+2. ✅ **Kỳ vọng:** `"message": "Đã chặn người dùng thành công"`.
+3. **Cơ chế lưu DB:** `requesterId` = Alice (người chặn), `addresseeId` = Charlie (bị chặn), `status = BLOCKED`.
+
+---
+
+## ✅ BƯỚC 3.2.6: DELETE /friends/block/{userId} — Bỏ chặn (Unblock)
+
+1. **Login Alice** (người đã chặn) → **`DELETE /friends/block/{userId}`** → dán **charlieId** → **Execute**.
+2. ✅ **Kỳ vọng:** `"message": "Đã bỏ chặn người dùng thành công"`.
+
+---
+
+## 🧪 BƯỚC 3.2.7: Edge cases Block/Unfriend (kiểm chứng bảo mật)
+
+> Thực hiện sau khi Alice đã chặn Charlie (làm lại Bước 3.2.5 nếu đã unblock).
+
+| # | Tình huống | Cách thực hiện | Mã lỗi mong đợi |
+|:-:|------------|----------------|:---------------:|
+| 1 | **Người bị chặn gửi lời mời** | Login **Charlie** → `POST /friends/request/{aliceId}` | `2009` USER_BLOCKED |
+| 2 | **Người KHÔNG chặn đòi unblock** | Login **Charlie** → `DELETE /friends/block/{aliceId}` | `2007` NOT_SENDER |
+| 3 | **Unfriend người chưa là bạn** | Login Alice → `DELETE /friends/{id-người-lạ}` | `2005` FRIENDSHIP_NOT_FOUND |
+
+**Cách đọc kết quả:** Mỗi case Swagger trả về HTTP 403/404 kèm JSON có `status` đúng mã ở trên là PASS.
 
 ---
 
