@@ -54,7 +54,12 @@ Hệ thống này dùng **HttpOnly Cookie** để xác thực, **KHÁC** với c
 | 9 | `POST` | `/friends/block/{userId}` | Chặn người dùng |
 | 10 | `DELETE` | `/friends/block/{userId}` | Bỏ chặn người dùng |
 
-### Sprint 3.3 - User Search & Discovery (CHƯA LÀM ⏳)
+### Sprint 3.3 - User Search & Discovery (ĐÃ XONG ✅)
+| # | Method | Endpoint | Chức năng |
+|:-:|--------|----------|-----------|
+| 11 | `GET` | `/friends/search?q=&page=&size=` | Tìm kiếm người dùng theo tên (kèm trạng thái quan hệ) |
+
+> 📌 **Lưu ý:** Đăng ký giờ BẮT BUỘC nhập `name` (họ tên, 2-50 ký tự). Search dựa trên field `name` này.
 
 ---
 
@@ -281,6 +286,74 @@ docker exec miniface-mongodb mongosh miniface_db --quiet --eval "db.users.update
 | 3 | **Unfriend người chưa là bạn** | Login Alice → `DELETE /friends/{id-người-lạ}` | `2005` FRIENDSHIP_NOT_FOUND |
 
 **Cách đọc kết quả:** Mỗi case Swagger trả về HTTP 403/404 kèm JSON có `status` đúng mã ở trên là PASS.
+
+---
+
+# 🧪 KỊCH BẢN TEST SPRINT 3.3 (User Search & Discovery)
+
+> Test API tìm kiếm người dùng theo tên, kèm trạng thái quan hệ. **Lưu ý:** Đăng ký giờ BẮT BUỘC nhập họ tên.
+
+## 🔧 BƯỚC 3.3.0: Lưu ý về đăng ký có TÊN
+
+Từ Sprint 3.3, body đăng ký BẮT BUỘC có `name`:
+```json
+{ "name": "Nguyễn Văn An", "email": "an@test.com", "password": "123456" }
+```
+- Thiếu `name` → lỗi `1020` "Vui lòng nhập họ và tên".
+- `name` < 2 ký tự → lỗi `1021` "Họ và tên phải có ít nhất 2 ký tự".
+
+## 🔧 BƯỚC 3.3.1: Chuẩn bị data test
+
+Tạo vài user có tên chứa từ khóa chung (vd "Nguyen") để search ra nhiều kết quả:
+```json
+{ "name": "Nguyen Van A", "email": "na@test.com", "password": "123456" }
+{ "name": "Nguyen Thi B", "email": "nb@test.com", "password": "123456" }
+{ "name": "Nguyen Van C", "email": "nc@test.com", "password": "123456" }
+```
+Verify tất cả:
+```bash
+docker exec miniface-mongodb mongosh miniface_db --quiet --eval "db.users.updateMany({}, {$set:{verified:true}})"
+```
+
+## ✅ BƯỚC 3.3.2: Tìm kiếm người dùng
+
+1. Login bằng "Nguyen Van A" → mở **Bạn bè → `GET /friends/search`** → **Try it out**.
+2. Nhập `q` = `Nguyen`, `page` = `0`, `size` = `10` → **Execute**.
+3. ✅ **Kỳ vọng:** Mảng kết quả KHÔNG chứa chính mình (Nguyen Van A), mỗi phần tử có `relationshipStatus`:
+```json
+{
+  "message": "Tìm kiếm người dùng thành công",
+  "data": {
+    "content": [
+      { "name": "Nguyen Thi B", "relationshipStatus": "NONE", "friendshipId": null },
+      { "name": "Nguyen Van C", "relationshipStatus": "NONE", "friendshipId": null }
+    ],
+    "totalElements": 3
+  }
+}
+```
+
+## ✅ BƯỚC 3.3.3: Kiểm tra relationshipStatus thay đổi theo quan hệ
+
+| Thiết lập quan hệ với người trong kết quả | `relationshipStatus` mong đợi |
+|-------------------------------------------|:-----------------------------:|
+| Chưa có gì | `NONE` |
+| Mình đã gửi lời mời (chưa được duyệt) | `PENDING_SENT` |
+| Người kia gửi lời mời cho mình | `PENDING_RECEIVED` |
+| Đã là bạn bè | `FRIEND` |
+| Mình đã chặn người kia | `BLOCKED` |
+
+**Ví dụ test FRIEND:** Gửi + accept lời mời với "Nguyen Thi B" → search lại "Nguyen" → B hiện `relationshipStatus: "FRIEND"`.
+
+## 🧪 BƯỚC 3.3.4: Edge cases Search
+
+| # | Tình huống | Kỳ vọng |
+|:-:|------------|---------|
+| 1 | Search chính tên mình | Không có mình trong kết quả (đã loại) |
+| 2 | A chặn B → B search tên A | A bị ẩn (privacy), 0 kết quả |
+| 3 | A chặn B → A search tên B | B hiện với `relationshipStatus: BLOCKED` |
+| 4 | Search từ khóa không khớp ai | Mảng `content` rỗng |
+| 5 | Search chữ hoa/thường khác nhau (`nGuYeN`) | Vẫn ra kết quả (case-insensitive) |
 
 ---
 

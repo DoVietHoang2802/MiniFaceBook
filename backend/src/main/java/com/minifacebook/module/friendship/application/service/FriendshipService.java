@@ -3,6 +3,8 @@ package com.minifacebook.module.friendship.application.service;
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.friendship.application.dto.FriendshipResponse;
+import com.minifacebook.module.friendship.application.dto.RelationshipStatus;
+import com.minifacebook.module.friendship.application.dto.UserSearchResponse;
 import com.minifacebook.module.friendship.domain.entity.Friendship;
 import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
@@ -14,6 +16,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p><b>Sprint 3.2:</b> lấy danh sách bạn bè, lời mời (đến/đã gửi), hủy kết bạn, chặn/bỏ chặn người
  * dùng. Các API danh sách dùng batch-load (`findAllByIds`) để tránh N+1 query.
+ *
+ * <p><b>Sprint 3.3:</b> tìm kiếm người dùng theo tên kèm trạng thái quan hệ (enrich), loại trừ
+ * chính mình và người đã chặn mình.
  */
 @Service
 @RequiredArgsConstructor
@@ -214,6 +221,79 @@ public class FriendshipService {
     }
 
     friendshipRepository.delete(friendship);
+  }
+
+  // ===== Sprint 3.3: User Search & Discovery =====
+
+  /**
+   * Tìm kiếm người dùng theo tên, kèm trạng thái quan hệ với user hiện tại. Loại trừ chính mình và
+   * những người đã chặn user hiện tại (privacy). Có phân trang.
+   *
+   * <p><b>Ghi chú kỹ thuật:</b> Việc loại trừ (self + người chặn mình) được thực hiện ở tầng service
+   * sau khi truy vấn theo tên, vì cần đối chiếu quan hệ friendship. Với quy mô demo (~100 users),
+   * cách này đơn giản và chính xác. {@code totalElements} phản ánh tổng kết quả khớp tên (trước lọc)
+   * — đủ dùng cho UX phân trang ở quy mô này.
+   */
+  @Transactional(readOnly = true)
+  public Page<UserSearchResponse> searchUsers(String email, String keyword, Pageable pageable) {
+    User me = getUserByEmail(email);
+    Page<User> result = userRepository.searchByName(keyword, pageable);
+
+    List<UserSearchResponse> enriched =
+        result.getContent().stream()
+            .filter(user -> !user.getId().equals(me.getId())) // loại chính mình
+            .map(
+                user -> {
+                  Friendship relation =
+                      friendshipRepository
+                          .findBetweenUsers(me.getId(), user.getId())
+                          .orElse(null);
+                  return buildSearchResponse(user, me.getId(), relation);
+                })
+            .filter(java.util.Objects::nonNull) // người chặn mình → null → ẩn đi (privacy)
+            .toList();
+
+    return new org.springframework.data.domain.PageImpl<>(
+        enriched, pageable, result.getTotalElements());
+  }
+
+  /**
+   * Xác định trạng thái quan hệ và build DTO kết quả search. Trả về {@code null} nếu cần ẩn user này
+   * khỏi kết quả (trường hợp người kia đã chặn user hiện tại - bảo vệ quyền riêng tư).
+   */
+  private UserSearchResponse buildSearchResponse(
+      User user, String currentUserId, Friendship relation) {
+    RelationshipStatus status = RelationshipStatus.NONE;
+    String friendshipId = null;
+
+    if (relation != null) {
+      friendshipId = relation.getId();
+      switch (relation.getStatus()) {
+        case ACCEPTED -> status = RelationshipStatus.FRIEND;
+        case BLOCKED -> {
+          if (relation.getRequesterId().equals(currentUserId)) {
+            status = RelationshipStatus.BLOCKED; // mình chặn người kia
+          } else {
+            return null; // người kia chặn mình → ẩn khỏi kết quả (privacy)
+          }
+        }
+        case PENDING -> status =
+            relation.getRequesterId().equals(currentUserId)
+                ? RelationshipStatus.PENDING_SENT
+                : RelationshipStatus.PENDING_RECEIVED;
+        default -> status = RelationshipStatus.NONE;
+      }
+    }
+
+    return UserSearchResponse.builder()
+        .userId(user.getId())
+        .name(user.getName())
+        .email(user.getEmail())
+        .avatar(user.getAvatar())
+        .bio(user.getBio())
+        .relationshipStatus(status)
+        .friendshipId(friendshipId)
+        .build();
   }
 
   // ===== Helpers =====

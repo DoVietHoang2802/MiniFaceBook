@@ -221,6 +221,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Testing]** Test 5 kịch bản: đăng ký có tên→lưu DB OK, login trả về name, đăng ký thiếu tên→1020, tên<2 ký tự→1021. Tất cả PASS.
   - [x] **[Quyết định]** Theo Phương án A (bắt buộc nhập tên khi đăng ký). Đây cũng là nền tảng cho API Search (Sprint 3.3 Phần 2 - search theo `name`).
 
+- **Phiên 30/05/2026 (Sprint 3.3 - Phần 2: API Search & Discovery):**
+  - [x] **[Application]** Tạo enum `RelationshipStatus` (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) và DTO `UserSearchResponse` (kèm `friendshipId`).
+  - [x] **[Backend Search]** Thêm `searchByName` vào `UserRepository` + `MongoUserRepository` (Regex case-insensitive, chỉ lấy user `verified=true`) + impl.
+  - [x] **[Application]** `FriendshipService.searchUsers()`: search theo tên → enrich `relationshipStatus` cho từng kết quả bằng `findBetweenUsers`. Loại trừ chính mình; ẩn người đã chặn user hiện tại (privacy - trả null rồi lọc); có phân trang.
+  - [x] **[Presentation]** Thêm endpoint `GET /friends/search?q=&page=&size=`. Đặt ở module friendship (không phải /users) vì cần `FriendshipRepository` - đúng Clean Architecture.
+  - [x] **[Testing]** Test 7 case: loại chính mình, FRIEND/PENDING_SENT/PENDING_RECEIVED/NONE đúng chiều, người chặn thấy BLOCKED, người bị chặn không thấy người chặn. Tất cả PASS.
+  - [x] **[Tech Debt #6]** Ghi nhận hạn chế: lọc (self + người chặn) làm sau truy vấn DB nên `totalElements` đếm theo tên (trước lọc). Không ảnh hưởng quy mô demo, cần aggregation pipeline khi scale >1000 users. Đã comment trong Javadoc.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

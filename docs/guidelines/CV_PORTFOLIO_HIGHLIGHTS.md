@@ -324,3 +324,19 @@
     *   Đơn giản hóa tầng Frontend nhờ response tự mô tả hướng quan hệ, loại bỏ hoàn toàn round-trip phụ.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Eliminated N+1 query bottlenecks in social relationship listing endpoints by implementing batch ID loading (reducing queries from N+1 to 2 regardless of list size), and enriched responses with directional `sentByMe` flags and asymmetric block-authorization logic for a self-describing, frontend-friendly API.*
+
+---
+
+### 🔎 Highlight 22: Xây Dựng Tính Năng Tìm Kiếm Người Dùng Kèm Relationship-Aware Enrichment & Privacy Filtering
+*   **Situation (Bối cảnh):** Tính năng tìm kiếm người dùng của mạng xã hội không chỉ trả về danh sách tên, mà phải cho biết quan hệ giữa người tìm và mỗi kết quả (chưa quen / đã gửi lời mời / đã là bạn / đã chặn) để hiển thị đúng nút hành động. Đồng thời phải bảo vệ quyền riêng tư: người đã chặn bạn không nên xuất hiện trong kết quả của bạn. Trong quá trình triển khai còn phát hiện một bug FE-BE mismatch nghiêm trọng: form đăng ký phía Frontend đã thu thập "Họ và tên" nhưng Backend chưa hề có field này, khiến dữ liệu tên bị âm thầm vứt bỏ.
+*   **Task (Nhiệm vụ):** Sửa dứt điểm bug mất dữ liệu tên, bổ sung field `name` xuyên suốt các tầng, sau đó xây dựng API tìm kiếm theo tên với khả năng làm giàu trạng thái quan hệ (relationship-aware) và lọc bảo mật, có phân trang.
+*   **Action (Hành động):**
+    *   Truy vết và vá bug FE-BE mismatch: thêm field `name` vào `RegisterRequest` (validation `@NotBlank` + `@Size`), Domain `User`, `UserDocument` (kèm index), và `UserResponse` — tận dụng MapStruct auto-mapping, đồng bộ chính xác với contract Frontend đang gửi mà không phải sửa FE.
+    *   Triển khai tìm kiếm bằng MongoDB Regex case-insensitive trên field `name`, chỉ trả về tài khoản đã xác thực (verified) để tránh lộ tài khoản chưa kích hoạt.
+    *   Thiết kế tầng enrichment: với mỗi kết quả, đối chiếu quan hệ hai chiều và ánh xạ sang enum `RelationshipStatus` (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) kèm `friendshipId`, giúp Frontend render nút hành động chính xác mà không cần gọi thêm API.
+    *   Áp dụng bộ lọc bảo mật: loại bỏ chính người dùng khỏi kết quả và ẩn hoàn toàn những người đã chặn họ (privacy-by-design).
+*   **Result (Kết quả):**
+    *   Khôi phục 100% dữ liệu tên người dùng vốn bị thất thoát do bug, đồng thời tạo nền tảng cho tìm kiếm.
+    *   API tìm kiếm tự mô tả quan hệ và tôn trọng quyền riêng tư, vượt qua toàn bộ 7 kịch bản kiểm thử (bao gồm cả các trường hợp chặn hai chiều).
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Built a relationship-aware user search API using MongoDB case-insensitive regex, enriching each result with a 5-state relationship enum and privacy filtering (excluding self and blockers), while diagnosing and fixing a critical FE-BE contract mismatch that was silently discarding user names on registration.*

@@ -97,12 +97,12 @@
 - [ ] **Sprint 3.3: User Search & Discovery**
     - [x] **[FIX BUG nền tảng - ĐÃ XONG 🎉]** Thêm field `name` (họ tên) vào Backend.
         - *Lý do:* Frontend `RegisterForm` ĐÃ có ô "Họ và tên" và gửi `name` lên, nhưng Backend (`RegisterRequest`, `User`, `UserDocument`) KHÔNG nhận → tên bị vứt bỏ, không lưu DB. Đây là bug FE-BE mismatch tồn tại từ Sprint 1.
-        - *Đã làm:* `RegisterRequest` thêm `name` (`@NotBlank` + `@Size` 2-50); `User` + `UserDocument` (có `@Indexed`) + `UserResponse` thêm `name`; MapStruct tự map; thêm mã lỗi `NAME_REQUIRED` (1020) + `NAME_INVALID` (1021). Test 5 case PASS (đăng ký lưu tên, login trả tên, thiếu/ngắn tên báo lỗi tiếng Việt).
-        - *Quyết định USER:* Bắt buộc nhập tên khi đăng ký (Phương án A). Dùng tên field `name` để khớp Frontend → không cần sửa FE.
-    - [ ] API Tìm kiếm người dùng (`GET /users/search?q=keyword&page=&size=`).
-        - *Implementation:* MongoDB Regex case-insensitive trên field `name` (đủ cho quy mô demo, không cần Text Index).
-        - *Response:* Kèm trạng thái friendship (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) so với user hiện tại.
-        - *[CẢI TIẾN]* Loại trừ chính mình khỏi kết quả; ẩn người đã chặn mình (privacy); có phân trang.
+        - *Đã làm:* `RegisterRequest` thêm `name` (`@NotBlank` + `@Size` 2-50); `User` + `UserDocument` (có `@Indexed`) + `UserResponse` thêm `name`; MapStruct tự map; thêm mã lỗi `NAME_REQUIRED` (1020) + `NAME_INVALID` (1021). Test 5 case PASS.
+    - [x] **[API Search - ĐÃ XONG 🎉]** Tìm kiếm người dùng (`GET /friends/search?q=keyword&page=&size=`).
+        - *Implementation:* MongoDB Regex case-insensitive trên field `name`, chỉ lấy user `verified=true`.
+        - *Response:* `UserSearchResponse` kèm `relationshipStatus` (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) + `friendshipId`.
+        - *Cải tiến đã làm:* Loại trừ chính mình; ẩn người đã chặn mình (privacy); có phân trang. Test 7 case PASS.
+        - *Lưu ý endpoint:* Đặt tại `/friends/search` (không phải `/users/search`) vì logic cần `FriendshipRepository` (thuộc module friendship - đúng Clean Architecture).
     - [ ] Giao diện Search Users với kết quả realtime (debounce 300ms). *(Phần UI - làm ở giai đoạn UI Phase 3)*
     - [ ] Giao diện Friend List với tabs: Bạn bè / Lời mời / Đã gửi. *(Phần UI - làm ở giai đoạn UI Phase 3)*
 - [ ] **Sprint 3.4: Friend Suggestions (Optional - Nice to Have)**
@@ -253,13 +253,13 @@
 | 0 | Foundation & Infrastructure | ✅ HOÀN THÀNH | 100% |
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
-| 3 | Social Graph & Friends | 🔄 ĐANG LÀM | 50% |
+| 3 | Social Graph & Friends | 🔄 ĐANG LÀM | 75% |
 | 4 | Realtime Chat | ⏳ Chưa bắt đầu | 0% |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~48%** (3/7 Phases hoàn thành + Sprint 3.1, 3.2)
+**Tổng tiến độ: ~50%** (3/7 Phases + Sprint 3.1, 3.2, 3.3 backend)
 
 ---
 
@@ -273,7 +273,8 @@
 | 2 | `findAllByIds` chống N+1 Query | Hiệu năng | 🟡 TB | ✅ Đã xong | Hoàn thành 30/05 |
 | 3 | Đồng bộ `AppException` cho Post module | Chuẩn hóa | 🟡 TB | 🔴 Chưa làm | Gom 1 lần |
 | 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (Sprint 3.2) |
-| 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Cân nhắc |
+| 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (dùng field `name`, Sprint 3.3) |
+| 6 | Tối ưu phân trang Search (aggregation pipeline) | Hiệu năng | 🟢 Thấp | 🔴 Chưa làm | Khi scale > 1000 users |
 
 ### ✅ #1: MongoDB Replica Set + TransactionManager (ĐÃ HOÀN THÀNH 30/05)
 - **Hiện trạng "nửa vời":** `@Transactional` ĐÃ viết trong `FriendshipService` (Sprint 3.1) nhưng CHƯA hoạt động thật do thiếu `MongoTransactionManager` Bean + MongoDB đang chạy standalone (không hỗ trợ transaction).
@@ -285,18 +286,23 @@
 - **Vấn đề:** `UserRepository` chỉ có `findById`. Lấy danh sách 50 bạn = 1 + 50 = 51 queries.
 - **Đã làm:** Thêm `List<User> findAllByIds(List<String> ids)` vào `UserRepository` + impl trong `UserRepositoryImpl` (dùng `MongoRepository.findAllById`) → gom còn 1 query. Sẵn sàng cho Sprint 3.2.
 
-### 🟡 #3: Đồng bộ `AppException` cho Post module
-- **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
-- **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
-
-### 🟢 #4: `isSentByMe` trong FriendshipResponse (ĐÃ HOÀN THÀNH 30/05 - Sprint 3.2)
+### � #4: `isSentByMe` trong FriendshipResponse (ĐÃ HOÀN THÀNH 30/05 - Sprint 3.2)
 - **Vấn đề:** UI danh sách lời mời cần biết "mình gửi hay người ta gửi" để hiển thị nút đúng (Thu hồi vs Chấp nhận/Từ chối).
 - **Đã làm:** Thêm `boolean sentByMe` vào `FriendshipResponse`, Service set dựa trên so sánh `requesterId` với user hiện tại. Đã verify qua test (sent→true, pending→false).
 
-### 🟢 #5: Thêm field `displayName` cho User
-- **Vấn đề:** `User` chỉ có `email/avatar/bio`, chưa có tên hiển thị → UI hiển thị email thiếu chuyên nghiệp + lộ thông tin riêng tư.
-- **Giải pháp:** Thêm `displayName` vào `User` + `UserDocument` + `RegisterRequest`. Fallback dùng phần trước `@` của email cho user cũ.
-- **⚠️ Cân nhắc:** Đụng module auth đã ổn định → test kỹ. Có thể để dành.
+### 🟢 #5: Thêm field `displayName` cho User (ĐÃ HOÀN THÀNH 30/05 - Sprint 3.3)
+- **Vấn đề:** `User` chỉ có `email/avatar/bio`, chưa có tên hiển thị → UI hiển thị email thiếu chuyên nghiệp + lộ thông tin riêng tư + không search được.
+- **Đã làm:** Thêm field `name` (dùng tên `name` thay vì `displayName` để khớp Frontend đang gửi sẵn). Bắt buộc khi đăng ký, có index phục vụ search. Đồng thời sửa bug FE-BE mismatch làm mất tên.
+
+### 🟢 #6: Tối ưu phân trang Search bằng Aggregation Pipeline
+- **Bối cảnh:** API `GET /friends/search` (Sprint 3.3) thực hiện lọc (loại chính mình + ẩn người đã chặn mình) ở **tầng service - SAU** khi truy vấn DB theo tên. Do đó `totalElements` đếm theo số kết quả khớp tên (TRƯỚC khi lọc), có thể lệch nhẹ so với số phần tử thực tế hiển thị trong trang.
+- **Ảnh hưởng:** KHÔNG đáng kể ở quy mô demo (~100 users). Chỉ cần xử lý khi scale lớn (> 1000 users) để con số phân trang chính xác tuyệt đối.
+- **Giải pháp tương lai:** Chuyển sang **MongoDB Aggregation Pipeline** ($lookup friendships + $match loại trừ ngay trong DB) để lọc và đếm chính xác ở tầng database, tránh lệch `totalElements`.
+- **Ghi chú:** Hạn chế này đã được comment rõ trong Javadoc của `FriendshipService.searchUsers()`.
+
+### 🟡 #3: Đồng bộ `AppException` cho Post module (CHƯA LÀM)
+- **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
+- **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
 
 ---
 
@@ -304,6 +310,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.3 | May 2026 | Sprint 3.3 backend: fix bug FE-BE `name` + API Search (`/friends/search`) với enrich relationship status, loại self, ẩn người chặn. Ghi nhận Tech Debt #6 (tối ưu phân trang search). |
 | 2.2 | May 2026 | Hoàn thành Sprint 3.2 (Friend List, Unfriend, Block/Unblock) + tích hợp `sentByMe` & batch-load chống N+1 |
 | 2.1 | May 2026 | Hoàn thành Sprint 3.1 (Friend Request System) + Việt hóa toàn bộ message lỗi & Swagger. Ghi nhận 5 Tech Debt/cải tiến cần theo dõi. |
 | 2.0 | May 2026 | Restructure to 7 Phases: Swap Phase 3↔4, Add Phase 5 (Notifications), Enhance Chat features |

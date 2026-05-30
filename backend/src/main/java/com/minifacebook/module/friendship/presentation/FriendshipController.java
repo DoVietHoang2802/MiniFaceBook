@@ -1,12 +1,16 @@
 package com.minifacebook.module.friendship.presentation;
 
 import com.minifacebook.module.friendship.application.dto.FriendshipResponse;
+import com.minifacebook.module.friendship.application.dto.UserSearchResponse;
 import com.minifacebook.module.friendship.application.service.FriendshipService;
 import com.minifacebook.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** REST endpoints quản lý lời mời kết bạn (Sprint 3.1). */
@@ -108,5 +113,24 @@ public class FriendshipController {
       @AuthenticationPrincipal Jwt jwt, @PathVariable String userId) {
     friendshipService.unblockUser(jwt.getSubject(), userId);
     return ApiResponse.success("Đã bỏ chặn người dùng thành công", null);
+  }
+
+  // ===== Sprint 3.3: User Search =====
+
+  @GetMapping("/search")
+  @Operation(
+      summary = "Tìm kiếm người dùng",
+      description =
+          "Tìm người dùng theo tên (không phân biệt hoa thường). Kết quả kèm trạng thái quan hệ "
+              + "(NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED), loại trừ chính mình và người đã chặn bạn.")
+  public ApiResponse<Page<UserSearchResponse>> searchUsers(
+      @AuthenticationPrincipal Jwt jwt,
+      @RequestParam("q") String keyword,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<UserSearchResponse> result =
+        friendshipService.searchUsers(jwt.getSubject(), keyword, pageable);
+    return ApiResponse.success("Tìm kiếm người dùng thành công", result);
   }
 }

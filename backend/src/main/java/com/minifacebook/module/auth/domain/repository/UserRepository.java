@@ -25,4 +25,11 @@ public interface UserRepository {
    * vấn đề N+1 query khi cần load thông tin nhiều user cùng lúc (vd: danh sách bạn bè).
    */
   List<User> findAllByIds(List<String> ids);
+
+  /**
+   * Tìm kiếm người dùng theo tên (không phân biệt hoa thường, khớp một phần). Có phân trang. Phục
+   * vụ tính năng Search & Discovery (Sprint 3.3).
+   */
+  org.springframework.data.domain.Page<User> searchByName(
+      String keyword, org.springframework.data.domain.Pageable pageable);
 }

@@ -8,6 +8,8 @@ import com.minifacebook.module.auth.infrastructure.persistence.repository.MongoU
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 /** Adapter triển khai UserRepository sử dụng Spring Data MongoDB. */
@@ -50,5 +52,10 @@ public class UserRepositoryImpl implements UserRepository {
     return mongoUserRepository.findAllById(ids).stream()
         .map(userDocumentMapper::toDomain)
         .toList();
+  }
+
+  @Override
+  public Page<User> searchByName(String keyword, Pageable pageable) {
+    return mongoUserRepository.searchByName(keyword, pageable).map(userDocumentMapper::toDomain);
   }
 }
