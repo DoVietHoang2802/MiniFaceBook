@@ -1,5 +1,5 @@
 import axiosClient from '../../../core/api/axiosClient';
-import type { PostResponse, Page, ReactionRequest, CommentResponse } from '../types/post.types';
+import type { PostResponse, Page, ReactionRequest, CommentResponse, ReactionUserResponse } from '../types/post.types';
 
 export const postService = {
   createPost: async (content: string, files: File[]) => {
@@ -41,5 +41,11 @@ export const postService = {
       params: { page, size },
     });
     return response.data;
+  },
+
+  // Lấy danh sách người đã thả cảm xúc (ai thả gì) - phục vụ modal giống Facebook
+  getReactions: async (postId: string) => {
+    const response = await axiosClient.get<{ data: ReactionUserResponse[] }>(`/posts/${postId}/reactions`);
+    return response.data.data;
   }
 };

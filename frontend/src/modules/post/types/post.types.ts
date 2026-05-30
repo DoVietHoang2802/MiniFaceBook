@@ -9,6 +9,7 @@ export interface PostResponse {
   imageUrls: string[];
   reactCount: number;
   commentCount: number;
+  shareCount?: number;
   reactionsCount: Record<string, number>;
   myReactionType: ReactionType | null;
   createdAt: string;
@@ -26,6 +27,13 @@ export interface CommentResponse {
 }
 
 export interface ReactionRequest {
+  type: ReactionType;
+}
+
+export interface ReactionUserResponse {
+  userId: string;
+  name: string;
+  avatar: string | null;
   type: ReactionType;
 }
 

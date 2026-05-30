@@ -245,6 +245,12 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Testing]** Test mạng lưới A-B-C-D-E: D (2 bạn chung) xếp trên E (1 bạn chung), loại đúng self + bạn trực tiếp. PASS. Compile + ArchUnit + npm build đều xanh.
   - [x] **[Quyết định kiến trúc]** Tính in-memory cho quy mô demo (~100 users), không cần Neo4j/Graph DB - đúng định hướng "thực dụng" đã chốt trước đó.
 
+- **Phiên 30/05/2026 (UI Polish - Redesign Hizo Layout & Reactions Modal giống Facebook):**
+  - [x] **[UI/Layout]** Tinh chỉnh bố cục `App.tsx` theo mockup `Giaodiennangcap.png`: đổi menu sidebar (Discover/Network/Communities/Chats/Notifications/Collections/Profile/Settings), bỏ nút Create Post, mở rộng container (`max-w-[1600px]`) giảm khoảng trắng, Trending Topics thêm % tăng màu xanh, bỏ banner Vizo Pro, đổi footer sang "Hizo".
+  - [x] **[UI/Feature - Reactions Modal]** Thêm dòng thống kê riêng trên `PostCard` (cụm emoji chồng + tổng số bên trái, "X bình luận · Y chia sẻ" bên phải), tách số ra khỏi nút Like/Comment/Share. Bấm cụm emoji mở `ReactionsModal` hiển thị "ai thả gì" với tab lọc theo từng loại cảm xúc + emoji badge trên avatar (giống Facebook).
+  - [x] **[Backend]** Thêm API `GET /posts/{postId}/reactions` + `ReactionRepository.findByPostId` + DTO `ReactionUserResponse`. Service batch-load user info chống N+1.
+  - [x] **[Guideline]** Bổ sung quy tắc **9.2.B** vào `AI_GUIDELINES.md`: phân biệt cải tiến THUẦN GIAO DIỆN (làm ngay) vs ĐỤNG CHỨC NĂNG (phải dừng, báo USER 4 bước + chờ quyết định). Theo yêu cầu USER để giữ quyền kiểm soát scope.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

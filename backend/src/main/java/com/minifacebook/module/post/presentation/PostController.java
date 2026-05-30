@@ -64,6 +64,13 @@ public class PostController {
         return ApiResponse.success("Reaction updated successfully", null);
     }
 
+    @GetMapping("/{postId}/reactions")
+    @Operation(summary = "Danh sách người đã thả cảm xúc", description = "Lấy danh sách người dùng đã thả cảm xúc vào bài viết, kèm loại cảm xúc - phục vụ hiển thị modal giống Facebook.")
+    public ApiResponse<java.util.List<com.minifacebook.module.post.application.dto.ReactionUserResponse>> getPostReactions(
+            @PathVariable String postId) {
+        return ApiResponse.success("Reactions fetched successfully", reactionService.getPostReactions(postId));
+    }
+
     @PostMapping(value = "/{postId}/comments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Thêm bình luận", description = "Thêm một bình luận dạng văn bản/hình ảnh vào bài viết")
     public ApiResponse<CommentResponse> addComment(

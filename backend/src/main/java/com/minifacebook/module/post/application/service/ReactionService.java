@@ -3,6 +3,7 @@ package com.minifacebook.module.post.application.service;
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.post.application.dto.ReactionRequest;
+import com.minifacebook.module.post.application.dto.ReactionUserResponse;
 import com.minifacebook.module.post.domain.entity.Post;
 import com.minifacebook.module.post.domain.entity.Reaction;
 import com.minifacebook.module.post.domain.entity.ReactionType;
@@ -11,8 +12,11 @@ import com.minifacebook.module.post.domain.repository.ReactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -73,5 +77,37 @@ public class ReactionService {
         } else {
             map.remove(type);
         }
+    }
+
+    /**
+     * Lấy danh sách những người đã thả cảm xúc vào bài viết (kèm loại cảm xúc và thông tin user).
+     * Batch-load user info trong 1 truy vấn để tránh N+1 query.
+     */
+    public List<ReactionUserResponse> getPostReactions(String postId) {
+        List<Reaction> reactions = reactionRepository.findByPostId(postId);
+        if (reactions.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> userIds = reactions.stream().map(Reaction::getUserId).distinct().toList();
+        Map<String, User> userMap =
+                userRepository.findAllByIds(userIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return reactions.stream()
+                .map(r -> {
+                    User u = userMap.get(r.getUserId());
+                    if (u == null) {
+                        return null; // user đã bị xóa
+                    }
+                    return ReactionUserResponse.builder()
+                            .userId(u.getId())
+                            .name(u.getName())
+                            .avatar(u.getAvatar())
+                            .type(r.getType().name())
+                            .build();
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 }

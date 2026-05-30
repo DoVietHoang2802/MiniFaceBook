@@ -3,15 +3,11 @@ import LoginForm from './modules/auth/components/LoginForm';
 import RegisterForm from './modules/auth/components/RegisterForm';
 import ProfilePage from './modules/profile/components/ProfilePage';
 import { 
-  Home, 
   Search, 
   Bell, 
-  Mail, 
   Bookmark, 
-  FileText, 
   User, 
   Settings, 
-  PenSquare, 
   Flame, 
   Loader2, 
   LogOut, 
@@ -19,7 +15,12 @@ import {
   MessageSquare,
   Share2,
   Shield,
-  Users
+  Users,
+  Compass,
+  Globe,
+  MessageCircle,
+  TrendingUp,
+  UserPlus
 } from 'lucide-react';
 import { authService } from './modules/auth/services/authService';
 import PostFeed from './modules/post/components/PostFeed';
@@ -166,14 +167,14 @@ function App() {
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 blur-[120px] pointer-events-none"></div>
 
       {user ? (
-        /* TRANG CHÍNH 3 CỘT (MATCHING GiaoDienChinh.png & TrangChu4.png - VIZO LIGHT MODE) */
-        <div className="flex-grow w-[96%] md:w-[92%] lg:w-[85%] max-w-[1400px] mx-auto flex justify-center lg:justify-between gap-4 lg:gap-8 min-h-screen relative">
+        /* TRANG CHÍNH 3 CỘT (Hizo - khớp Giaodiennangcap.png) */
+        <div className="flex-grow w-full px-4 lg:px-6 xl:px-8 max-w-[1600px] mx-auto flex justify-center lg:justify-between gap-5 xl:gap-7 min-h-screen relative">
           
-          {/* CỘT TRÁI: SIDEBAR ĐIỀU HƯỚNG (~20%) */}
-          <aside className="hidden md:flex flex-col w-[80px] lg:w-[22%] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 lg:pr-2 transition-all duration-300">
+          {/* CỘT TRÁI: SIDEBAR ĐIỀU HƯỚNG */}
+          <aside className="hidden md:flex flex-col w-[80px] lg:w-[240px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 lg:pr-2 transition-all duration-300">
             <div className="space-y-2">
-              {/* Logo Hizo (Khớp 100% TrangChu4.png) */}
-              <div className="flex items-center space-x-3 px-3">
+              {/* Logo Hizo */}
+              <div className="flex items-center space-x-3 px-3 mb-2">
                 <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-500/20 shrink-0">
                   <span className="text-white font-black text-xl font-outfit">H</span>
                 </div>
@@ -182,15 +183,15 @@ function App() {
                 </span>
               </div>
  
-              {/* Menu Items (Vizo Color Palette) */}
+              {/* Menu Items (Hizo - khớp Giaodiennangcap.png) */}
               <nav className="space-y-1">
                 {[
-                  { id: 'feed', label: 'Home', icon: Home, badge: null },
-                  { id: 'friends', label: 'Bạn bè', icon: Users, badge: null },
+                  { id: 'feed', label: 'Discover', icon: Compass, badge: null },
+                  { id: 'friends', label: 'Network', icon: Users, badge: null },
+                  { id: 'communities', label: 'Communities', icon: Globe, badge: null },
+                  { id: 'chats', label: 'Chats', icon: MessageCircle, badge: null },
                   { id: 'notifications', label: 'Notifications', icon: Bell, badge: '3' },
-                  { id: 'messages', label: 'Messages', icon: Mail, badge: null },
-                  { id: 'bookmarks', label: 'Bookmarks', icon: Bookmark, badge: null },
-                  { id: 'lists', label: 'Lists', icon: FileText, badge: null },
+                  { id: 'collections', label: 'Collections', icon: Bookmark, badge: null },
                   { id: 'profile', label: 'Profile', icon: User, badge: null },
                   { id: 'settings', label: 'Settings', icon: Settings, badge: null }
                 ].map((item) => {
@@ -232,19 +233,6 @@ function App() {
                   );
                 })}
               </nav>
- 
-              {/* Nút Create Post (Vizo Gradient) */}
-              <button 
-                onClick={() => {
-                  if (activeTab !== 'feed') setActiveTab('feed');
-                  triggerToast("Hãy viết suy nghĩ của bạn vào khung đăng bài ở giữa nhé!");
-                }}
-                title="Create Post"
-                className="w-full py-2.5 mt-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[13px] font-bold shadow-md shadow-indigo-500/10 transition-all flex items-center justify-center space-x-2 cursor-pointer hover-lift animate-fade-in"
-              >
-                <PenSquare className="h-5 w-5 shrink-0" />
-                <span className="animate-fade-in hidden lg:block">Create Post</span>
-              </button>
             </div>
  
             {/* Thẻ User Profile */}
@@ -298,16 +286,16 @@ function App() {
             </div>
           </aside>
 
-            {/* CỘT GIỮA: BẢNG TIN HOẶC PROFILE (~56%) */}
-            <main className="flex-1 w-full min-w-0 lg:w-[56%] max-w-[760px] mx-auto py-6 min-h-screen transition-all duration-300">
-            {/* Top Bar toàn năng (Khớp 100% TrangChu4.png) */}
-            <div className="flex items-center justify-between gap-4 mb-6">
+            {/* CỘT GIỮA: BẢNG TIN HOẶC PROFILE */}
+            <main className="flex-1 w-full min-w-0 lg:max-w-[680px] mx-auto py-3 min-h-screen transition-all duration-300">
+            {/* Top Bar toàn năng */}
+            <div className="flex items-center justify-between gap-4 mb-5">
               <div className="relative flex-grow">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Search for people, posts, games..." 
-                  className="w-full pl-10 pr-16 py-2 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-xs text-slate-700 transition-all font-medium shadow-sm"
+                  placeholder="Search for people, posts, communities..." 
+                  className="w-full pl-10 pr-16 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-xs text-slate-700 transition-all font-medium shadow-sm"
                   onClick={() => triggerToast("Tính năng Tìm kiếm nâng cao sẽ ra mắt ở Phase 4!")}
                 />
                 <div className="absolute right-3.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-400 text-[9px] font-bold">
@@ -374,14 +362,14 @@ function App() {
             </div>
           </main>
 
-          {/* CỘT PHẢI: SUGGESTED FRIENDS & TRENDING NOW (~22%) */}
-          <aside className="hidden lg:flex flex-col w-[22%] max-w-[320px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 pl-2 transition-all duration-300">
+          {/* CỘT PHẢI: TRENDING & PEOPLE YOU MAY KNOW */}
+          <aside className="hidden lg:flex flex-col w-[300px] xl:w-[340px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 pl-1 transition-all duration-300">
             <div className="space-y-4 overflow-y-auto pr-1">
               
-              {/* Widget 1: Trending Now (Khớp 100% TrangChu4.png) */}
+              {/* Widget 1: Trending Topics (khớp Giaodiennangcap.png - có % tăng) */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800 text-sm font-outfit">Trending Now</span>
+                  <span className="font-bold text-slate-800 text-sm font-outfit">Trending Topics</span>
                   <button 
                     onClick={() => triggerToast("Xem danh mục xu hướng chi tiết...")}
                     className="text-[11px] font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
@@ -389,22 +377,27 @@ function App() {
                     View all
                   </button>
                 </div>
-                <div className="space-y-3.5 pt-1">
+                <div className="space-y-3 pt-1">
                   {[
-                    { tag: '#MiniGame', posts: '2.5K posts', color: 'text-amber-500 bg-amber-50 border-amber-100' },
-                    { tag: '#Frontend', posts: '1.2K posts', color: 'text-violet-500 bg-violet-50 border-violet-100' },
-                    { tag: '#JavaScript', posts: '986 posts', color: 'text-yellow-500 bg-yellow-50/50 border-yellow-100/50' },
-                    { tag: '#UI/UX', posts: '756 posts', color: 'text-orange-500 bg-orange-50 border-orange-100' }
+                    { tag: '#JavaScript', posts: '12.5K posts', growth: '+24%' },
+                    { tag: '#Frontend', posts: '8.7K posts', growth: '+18%' },
+                    { tag: '#WebDev', posts: '6.3K posts', growth: '+15%' },
+                    { tag: '#UIUX', posts: '4.2K posts', growth: '+8%' },
+                    { tag: '#AI', posts: '3.1K posts', growth: '+6%' }
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between cursor-pointer group">
                       <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg border ${item.color} shrink-0`}>
+                        <div className="p-2 rounded-lg border text-orange-500 bg-orange-50 border-orange-100 shrink-0">
                           <Flame className="h-3.5 w-3.5" />
                         </div>
                         <div className="text-left">
                           <h4 className="font-bold text-slate-700 text-xs group-hover:text-violet-600 transition">{item.tag}</h4>
                           <p className="text-slate-400 text-[10px]">{item.posts}</p>
                         </div>
+                      </div>
+                      <div className="flex items-center space-x-1 text-emerald-500 font-bold text-[11px]">
+                        <TrendingUp className="h-3 w-3" />
+                        <span>{item.growth}</span>
                       </div>
                     </div>
                   ))}
@@ -448,14 +441,21 @@ function App() {
                       <button
                         onClick={() => handleAddFriend(friend.userId, friend.name)}
                         disabled={friend.state === 'loading' || friend.state === 'requested'}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center shrink-0 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center shrink-0 cursor-pointer gap-1 ${
                           friend.state === 'requested'
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 cursor-default'
                             : 'bg-white text-violet-600 border border-violet-200 hover:bg-violet-50 hover:border-violet-300 shadow-sm hover-lift'
                         }`}
                       >
-                        {friend.state === 'loading' && <Loader2 className="h-3 w-3 animate-spin mr-1 text-violet-600" />}
-                        {friend.state === 'requested' ? 'Requested' : 'Add Friend'}
+                        {friend.state === 'loading' ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-violet-600" />
+                        ) : friend.state === 'requested' ? (
+                          <>Đã gửi</>
+                        ) : (
+                          <>
+                            <UserPlus className="h-3.5 w-3.5" /> Follow
+                          </>
+                        )}
                       </button>
                     </div>
                   ))}
@@ -463,44 +463,12 @@ function App() {
 
                 {/* Nút Show More */}
                 <button 
-                  onClick={() => triggerToast("Đang tải thêm danh sách gợi ý kết bạn...")}
+                  onClick={() => setActiveTab('friends')}
                   className="w-full flex items-center justify-center space-x-1 py-2 text-slate-400 hover:text-slate-700 text-xs font-bold transition-colors cursor-pointer border-t border-slate-100 pt-3 mt-2"
                 >
                   <span>Show more</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
-              </div>
-
-              {/* Widget 3: Unlock Vizo Pro Banner (Khớp 100% TrangChu4.png) */}
-              <div className="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-5 text-white relative overflow-hidden shadow-md shadow-indigo-500/10">
-                <div className="absolute top-[-20%] right-[-10%] w-[120px] h-[120px] rounded-full bg-white/10 blur-[30px] pointer-events-none"></div>
-                <div className="space-y-4 relative z-10">
-                  <div className="flex justify-between items-start">
-                    <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md text-amber-300 shrink-0">
-                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                    <button 
-                      onClick={() => triggerToast("Đã đóng biểu ngữ quảng cáo!")}
-                      className="text-white/60 hover:text-white transition cursor-pointer"
-                    >
-                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="text-left space-y-1.5">
-                    <h4 className="font-extrabold text-sm tracking-tight font-outfit">Unlock More with Vizo Pro</h4>
-                    <p className="text-white/80 text-[10px] leading-relaxed">Get exclusive features and boost your experience today.</p>
-                  </div>
-                  <button 
-                    onClick={() => triggerToast("Cổng thanh toán Vizo Pro sẽ sớm được tích hợp ở Phase 3!")}
-                    className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-50 text-indigo-600 text-xs font-bold transition-all shadow-sm cursor-pointer"
-                  >
-                    Upgrade Now
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -512,10 +480,9 @@ function App() {
                 <a href="#terms" className="hover:underline">Terms</a>·
                 <a href="#privacy" className="hover:underline">Privacy</a>·
                 <a href="#cookies" className="hover:underline">Cookies</a>·
-                <a href="#ads" className="hover:underline">Ads</a>·
                 <a href="#more" className="hover:underline">More</a>
               </div>
-              <p className="mt-2 text-slate-400">© 2026 Vizo (MiniFaceBook)</p>
+              <p className="mt-2 text-slate-400">© 2026 Hizo. All rights reserved.</p>
             </div>
           </aside>
 

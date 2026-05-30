@@ -14,6 +14,7 @@ const REACTION_ICONS: Record<string, { emoji: string; color: string; label: stri
 };
 
 import CommentSection from './CommentSection';
+import ReactionsModal from './ReactionsModal';
 
 interface PostCardProps {
   post: PostResponse;
@@ -68,6 +69,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
     reactionMutation.mutate(type);
     setIsHoveringReaction(false);
   };
+
+  const [showReactionsModal, setShowReactionsModal] = useState(false);
+
+  // Tính danh sách các loại emoji đang có (để hiển thị chồng lên nhau ở dòng thống kê)
+  const topReactionTypes = Object.entries(localPost.reactionsCount || {})
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type]) => type)
+    .slice(0, 3);
 
 
 
@@ -139,9 +149,50 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
           </div>
         )}
 
+        {/* Stats Bar: cụm emoji + số reactions (trái) | comments · shares (phải) - giống Facebook */}
+        {(localPost.reactCount > 0 || localPost.commentCount > 0) && (
+          <div className="flex items-center justify-between py-2 text-xs text-slate-500 font-medium">
+            {/* Cụm emoji chồng + tổng số - bấm mở modal */}
+            {localPost.reactCount > 0 ? (
+              <button
+                onClick={() => setShowReactionsModal(true)}
+                className="flex items-center gap-1.5 hover:underline cursor-pointer"
+              >
+                <div className="flex items-center">
+                  {topReactionTypes.map((type, idx) => (
+                    <span
+                      key={type}
+                      className="h-5 w-5 rounded-full bg-white border border-white flex items-center justify-center text-[13px] leading-none shadow-sm"
+                      style={{ marginLeft: idx === 0 ? 0 : '-6px', zIndex: 10 - idx }}
+                    >
+                      {REACTION_ICONS[type]?.emoji || '👍'}
+                    </span>
+                  ))}
+                </div>
+                <span className="ml-1">{localPost.reactCount}</span>
+              </button>
+            ) : (
+              <span />
+            )}
+
+            {/* Comments · Shares */}
+            <div className="flex items-center gap-3">
+              {localPost.commentCount > 0 && (
+                <button
+                  onClick={() => setShowComments(!showComments)}
+                  className="hover:underline cursor-pointer"
+                >
+                  {localPost.commentCount} bình luận
+                </button>
+              )}
+              <span className="text-slate-400">{localPost.shareCount ?? 0} chia sẻ</span>
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div
-          className="flex items-center justify-between border-t border-slate-100 pt-3 mt-4 gap-1 relative"
+          className="flex items-center justify-between border-t border-slate-100 pt-1.5 mt-1 gap-1 relative"
           onMouseEnter={() => setIsHoveringReaction(true)}
           onMouseLeave={() => setIsHoveringReaction(false)}
         >
@@ -177,7 +228,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
             </div>
           )}
 
-          {/* Like button */}
+          {/* Like button - chỉ icon + chữ, KHÔNG có số */}
           <div className="flex-1 flex justify-center">
             <button 
               onClick={() => handleReact(localPost.myReactionType || 'LIKE')}
@@ -188,8 +239,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
                 : <ThumbsUp className="h-4 w-4" />
               }
               <span className="text-xs font-bold">
-                {localPost.reactCount > 0
-                  ? `${localPost.reactCount} ${localPost.myReactionType && REACTION_ICONS[localPost.myReactionType] ? REACTION_ICONS[localPost.myReactionType].label : 'Thích'}`
+                {localPost.myReactionType && REACTION_ICONS[localPost.myReactionType]
+                  ? REACTION_ICONS[localPost.myReactionType].label
                   : 'Thích'}
               </span>
             </button>
@@ -200,14 +251,19 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
             className="flex items-center space-x-2 p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center"
           >
             <MessageCircle className="h-4.5 w-4.5" />
-            <span className="text-xs font-bold">{localPost.commentCount > 0 ? `${localPost.commentCount} Comment` : 'Comment'}</span>
+            <span className="text-xs font-bold">Bình luận</span>
           </button>
           
           <button className="flex items-center space-x-2 p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center">
             <Share2 className="h-4.5 w-4.5" />
-            <span className="text-xs font-bold">Share</span>
+            <span className="text-xs font-bold">Chia sẻ</span>
           </button>
         </div>
+
+        {/* Modal hiển thị ai đã thả cảm xúc */}
+        {showReactionsModal && (
+          <ReactionsModal postId={localPost.id} onClose={() => setShowReactionsModal(false)} />
+        )}
 
         {/* Comment Section Placeholder */}
         {showComments && (

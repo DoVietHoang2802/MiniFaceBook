@@ -4,9 +4,11 @@ import com.minifacebook.module.post.infrastructure.persistence.document.Reaction
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MongoReactionRepository extends MongoRepository<ReactionDocument, String> {
     Optional<ReactionDocument> findByPostIdAndUserId(String postId, String userId);
+    List<ReactionDocument> findByPostId(String postId);
 }

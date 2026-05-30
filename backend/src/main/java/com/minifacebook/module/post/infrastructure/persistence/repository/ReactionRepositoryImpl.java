@@ -30,6 +30,13 @@ public class ReactionRepositoryImpl implements ReactionRepository {
     }
 
     @Override
+    public java.util.List<Reaction> findByPostId(String postId) {
+        return mongoReactionRepository.findByPostId(postId).stream()
+                .map(reactionMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public void delete(Reaction reaction) {
         if (reaction.getId() != null) {
             mongoReactionRepository.deleteById(reaction.getId());

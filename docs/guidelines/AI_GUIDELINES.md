@@ -160,6 +160,19 @@ Sử dụng chuẩn **Conventional Commits**: `<type>: <description>`
 - Không có ngoại lệ cho sự năng nổ. Sự kỷ luật trong phối hợp và tôn trọng quyền kiểm soát của USER là ưu tiên hàng đầu, cao hơn việc tự ý "sửa lỗi nhanh".
 - Mọi trường hợp tự ý code khi chưa được ra lệnh đều bị coi là **Vi phạm Hiến Pháp nghiêm trọng**.
 
+### 9.2.B. Phân biệt Cải tiến Giao diện vs Chức năng (UI vs Feature Boundary) ⭐
+Khi USER nhờ "cải tiến / chỉnh / thêm" một thứ gì đó, AI **BẮT BUỘC** phân loại trước khi làm:
+
+- **Cải tiến THUẦN GIAO DIỆN** (màu sắc, bố cục, khoảng cách, animation, đổi text, sắp xếp lại layout, responsive...): → Được phép làm ngay, không cần hỏi.
+
+- **Cải tiến ĐỤNG TỚI CHỨC NĂNG** (cần API mới, logic nghiệp vụ mới, field DB mới, entity mới, hoặc dữ liệu chưa tồn tại trong hệ thống): → **TUYỆT ĐỐI KHÔNG tự ý làm luôn.** Phải DỪNG lại và báo USER theo đúng 4 bước:
+  1. **Báo rõ:** "Phần [X] này hiện hệ thống CHƯA có về mặt chức năng."
+  2. **Giải thích VÌ SAO chưa có:** do chưa tới phase đó / chưa nằm trong sprint hiện tại / ngoài scope đã thống nhất / chưa được thiết kế...
+  3. **Đưa lựa chọn để USER quyết:** (a) Gắn/làm luôn vào đây; (b) Làm theo cách khác (vd: hiển thị placeholder/giá trị tạm); (c) Để dành làm sau ở phase phù hợp.
+  4. **CHỜ USER chọn** rồi mới thực hiện. Không được "vừa giao vừa làm" mà không giải thích.
+
+- **Mục đích:** Tránh tình trạng AI tự mở rộng scope, tự thêm chức năng ngoài ý muốn khiến USER mất kiểm soát lộ trình. USER luôn là người quyết định một chức năng được làm hay hoãn.
+
 ### 9.3. Kỷ luật cập nhật tài liệu & Lộ trình (Documentation & Roadmap Discipline)
 - **Kiểm tra kỹ lưỡng trước khi cập nhật:** Trước khi chỉnh sửa bất kỳ tệp tài liệu nào (đặc biệt là `ROADMAP.md` và `PROGRESS.md`), AI phải rà soát và kiểm tra kỹ lưỡng trạng thái và lộ trình thực tế hiện có của dự án để tránh ghi đè, làm mất hoặc xáo trộn các phần việc/sprint đã được thống nhất hoặc thiết lập sẵn.
 - **Báo cáo và xin phê duyệt trước khi thay đổi:** Nếu có bất kỳ lý do kỹ thuật hoặc bối cảnh thực tiễn nào cần phải tái cấu trúc hoặc thay đổi lộ trình phát triển của dự án, AI **TUYỆT ĐỐI KHÔNG** được tự ý thay đổi hay cập nhật. Phải báo cáo ngay lập tức cho chủ sở hữu (USER), giải thích rõ nguyên nhân, phương án đề xuất và chỉ được tiến hành cập nhật sau khi nhận được sự phê duyệt đồng ý rõ ràng từ USER.
