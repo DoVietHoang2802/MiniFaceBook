@@ -229,6 +229,15 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Testing]** Test 7 case: loại chính mình, FRIEND/PENDING_SENT/PENDING_RECEIVED/NONE đúng chiều, người chặn thấy BLOCKED, người bị chặn không thấy người chặn. Tất cả PASS.
   - [x] **[Tech Debt #6]** Ghi nhận hạn chế: lọc (self + người chặn) làm sau truy vấn DB nên `totalElements` đếm theo tên (trước lọc). Không ảnh hưởng quy mô demo, cần aggregation pipeline khi scale >1000 users. Đã comment trong Javadoc.
 
+- **Phiên 30/05/2026 (UI Phase 3 - Module Friends Frontend):**
+  - [x] **[Frontend]** Tạo module `friends` khép kín chuẩn Modular FE: `types/friend.types.ts` (khớp BE), `services/friendService.ts` (gọi 11 API friendship), `components/FriendsPage.tsx`.
+  - [x] **[UI]** `FriendsPage` với 4 tab: Tìm kiếm / Bạn bè / Lời mời / Đã gửi. Badge đếm số lượng trên tab.
+  - [x] **[UX - Search]** Tìm kiếm realtime với **debounce 300ms**, hiển thị spinner khi đang search, empty state thân thiện.
+  - [x] **[UX - Nút động]** Nút hành động trong tab Tìm kiếm đổi theo `relationshipStatus`: NONE→"Kết bạn", PENDING_SENT→"Thu hồi", PENDING_RECEIVED→"Phản hồi", FRIEND→"Bạn bè"✓, BLOCKED→"Bỏ chặn".
+  - [x] **[UX - Optimistic UI]** Mọi thao tác (kết bạn/thu hồi/accept/reject/unfriend) cập nhật giao diện tức thì, có per-row loading chống double-click.
+  - [x] **[Tích hợp]** Cập nhật `App.tsx`: đổi menu "Explore"→"Bạn bè" (icon Users), wire `activeTab='friends'`, render `FriendsPage`.
+  - [x] **[Verify]** Diagnostics 0 lỗi, `npm run build` PASS (1931 modules). Theo đúng design Vizo Light (violet/slate). **PHASE 3 HOÀN THÀNH 100%** (Backend + UI).
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

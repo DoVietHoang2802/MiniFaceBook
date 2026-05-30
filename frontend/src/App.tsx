@@ -18,16 +18,18 @@ import {
   ChevronDown,
   MessageSquare,
   Share2,
-  Shield
+  Shield,
+  Users
 } from 'lucide-react';
 import { authService } from './modules/auth/services/authService';
 import PostFeed from './modules/post/components/PostFeed';
+import FriendsPage from './modules/friends/components/FriendsPage';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [activeTab, setActiveTab] = useState<'feed' | 'profile'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'profile' | 'friends'>('feed');
 
   // Trạng thái giao diện cao cấp
   const [showProfilePopover, setShowProfilePopover] = useState(false);
@@ -160,7 +162,7 @@ function App() {
               <nav className="space-y-1">
                 {[
                   { id: 'feed', label: 'Home', icon: Home, badge: null },
-                  { id: 'explore', label: 'Explore', icon: Search, badge: null },
+                  { id: 'friends', label: 'Bạn bè', icon: Users, badge: null },
                   { id: 'notifications', label: 'Notifications', icon: Bell, badge: '3' },
                   { id: 'messages', label: 'Messages', icon: Mail, badge: null },
                   { id: 'bookmarks', label: 'Bookmarks', icon: Bookmark, badge: null },
@@ -169,7 +171,10 @@ function App() {
                   { id: 'settings', label: 'Settings', icon: Settings, badge: null }
                 ].map((item) => {
                   const Icon = item.icon;
-                  const isActive = (item.id === 'feed' && activeTab === 'feed') || (item.id === 'profile' && activeTab === 'profile');
+                  const isActive =
+                    (item.id === 'feed' && activeTab === 'feed') ||
+                    (item.id === 'profile' && activeTab === 'profile') ||
+                    (item.id === 'friends' && activeTab === 'friends');
                   
                   return (
                     <button
@@ -177,6 +182,7 @@ function App() {
                       onClick={() => {
                         if (item.id === 'feed') setActiveTab('feed');
                         else if (item.id === 'profile') setActiveTab('profile');
+                        else if (item.id === 'friends') setActiveTab('friends');
                         else triggerToast(`Tính năng "${item.label}" sẽ ra mắt ở Phase tiếp theo!`);
                       }}
                       title={item.label}
@@ -336,6 +342,8 @@ function App() {
             <div className="w-full">
               {activeTab === 'feed' ? (
                 <PostFeed currentUser={user} />
+              ) : activeTab === 'friends' ? (
+                <FriendsPage triggerToast={triggerToast} />
               ) : (
                 <ProfilePage initialUser={user} onLogout={() => setUser(null)} />
               )}

@@ -73,7 +73,7 @@
 
 ---
 
-## 👥 PHASE 3: SOCIAL GRAPH & FRIENDS ⏳
+## 👥 PHASE 3: SOCIAL GRAPH & FRIENDS ✅
 *Mục tiêu: Xây dựng mạng lưới kết nối giữa các người dùng.*
 *Lý do đưa lên trước Chat: Cần biết ai là bạn bè để hiển thị danh sách chat.*
 
@@ -94,7 +94,7 @@
     - [x] API Block người dùng (`POST /friends/block/{userId}`) + Unblock (`DELETE /friends/block/{userId}`).
         - *Cơ chế:* `requesterId` = người chặn, `addresseeId` = người bị chặn, `status = BLOCKED`. Chỉ người chặn mới gỡ được.
     - [x] Tích hợp `isSentByMe` (sentByMe) vào response + batch-load `findAllByIds` chống N+1.
-- [ ] **Sprint 3.3: User Search & Discovery**
+- [x] **Sprint 3.3: User Search & Discovery (ĐÃ HOÀN THÀNH 🎉)**
     - [x] **[FIX BUG nền tảng - ĐÃ XONG 🎉]** Thêm field `name` (họ tên) vào Backend.
         - *Lý do:* Frontend `RegisterForm` ĐÃ có ô "Họ và tên" và gửi `name` lên, nhưng Backend (`RegisterRequest`, `User`, `UserDocument`) KHÔNG nhận → tên bị vứt bỏ, không lưu DB. Đây là bug FE-BE mismatch tồn tại từ Sprint 1.
         - *Đã làm:* `RegisterRequest` thêm `name` (`@NotBlank` + `@Size` 2-50); `User` + `UserDocument` (có `@Indexed`) + `UserResponse` thêm `name`; MapStruct tự map; thêm mã lỗi `NAME_REQUIRED` (1020) + `NAME_INVALID` (1021). Test 5 case PASS.
@@ -103,8 +103,8 @@
         - *Response:* `UserSearchResponse` kèm `relationshipStatus` (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) + `friendshipId`.
         - *Cải tiến đã làm:* Loại trừ chính mình; ẩn người đã chặn mình (privacy); có phân trang. Test 7 case PASS.
         - *Lưu ý endpoint:* Đặt tại `/friends/search` (không phải `/users/search`) vì logic cần `FriendshipRepository` (thuộc module friendship - đúng Clean Architecture).
-    - [ ] Giao diện Search Users với kết quả realtime (debounce 300ms). *(Phần UI - làm ở giai đoạn UI Phase 3)*
-    - [ ] Giao diện Friend List với tabs: Bạn bè / Lời mời / Đã gửi. *(Phần UI - làm ở giai đoạn UI Phase 3)*
+    - [x] Giao diện Search Users với kết quả realtime (debounce 300ms). *(ĐÃ XONG 🎉 - module `friends`)*
+    - [x] Giao diện Friend List với tabs: Bạn bè / Lời mời / Đã gửi. *(ĐÃ XONG 🎉 - `FriendsPage` 4 tab, nút động theo relationshipStatus, Optimistic UI)*
 - [ ] **Sprint 3.4: Friend Suggestions (Optional - Nice to Have)**
     - [ ] Thuật toán gợi ý bạn bè dựa trên **Mutual Friends**.
     - [ ] API `GET /friends/suggestions` - Trả về danh sách gợi ý.
@@ -253,13 +253,13 @@
 | 0 | Foundation & Infrastructure | ✅ HOÀN THÀNH | 100% |
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
-| 3 | Social Graph & Friends | 🔄 ĐANG LÀM | 75% |
+| 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ⏳ Chưa bắt đầu | 0% |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~50%** (3/7 Phases + Sprint 3.1, 3.2, 3.3 backend)
+**Tổng tiến độ: ~57%** (4/7 Phases - Phase 3 hoàn thành cả Backend + UI; Sprint 3.4 Friend Suggestions là optional)
 
 ---
 
@@ -310,6 +310,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.4 | May 2026 | Hoàn thành UI Phase 3: module `friends` (FriendsPage 4 tab - Tìm kiếm/Bạn bè/Lời mời/Đã gửi), nút động theo relationshipStatus + Optimistic UI. Phase 3 XONG 100%. |
 | 2.3 | May 2026 | Sprint 3.3 backend: fix bug FE-BE `name` + API Search (`/friends/search`) với enrich relationship status, loại self, ẩn người chặn. Ghi nhận Tech Debt #6 (tối ưu phân trang search). |
 | 2.2 | May 2026 | Hoàn thành Sprint 3.2 (Friend List, Unfriend, Block/Unblock) + tích hợp `sentByMe` & batch-load chống N+1 |
 | 2.1 | May 2026 | Hoàn thành Sprint 3.1 (Friend Request System) + Việt hóa toàn bộ message lỗi & Swagger. Ghi nhận 5 Tech Debt/cải tiến cần theo dõi. |

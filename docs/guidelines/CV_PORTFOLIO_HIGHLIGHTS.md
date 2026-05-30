@@ -340,3 +340,19 @@
     *   API tìm kiếm tự mô tả quan hệ và tôn trọng quyền riêng tư, vượt qua toàn bộ 7 kịch bản kiểm thử (bao gồm cả các trường hợp chặn hai chiều).
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Built a relationship-aware user search API using MongoDB case-insensitive regex, enriching each result with a 5-state relationship enum and privacy filtering (excluding self and blockers), while diagnosing and fixing a critical FE-BE contract mismatch that was silently discarding user names on registration.*
+
+---
+
+### 🎨 Highlight 23: Xây Dựng Giao Diện Quản Lý Bạn Bè Đa Tab với Debounced Search & State-Driven Action Buttons
+*   **Situation (Bối cảnh):** Sau khi hoàn tất backend Social Graph (kết bạn, danh sách, chặn, tìm kiếm), cần một giao diện thống nhất cho phép người dùng vừa tìm kiếm bạn mới, vừa quản lý các mối quan hệ hiện có. Thách thức là mỗi người trong kết quả tìm kiếm có một trạng thái quan hệ khác nhau, đòi hỏi nút hành động phải hiển thị đúng ngữ cảnh, và các thao tác phải phản hồi tức thì để tạo cảm giác mượt mà.
+*   **Task (Nhiệm vụ):** Thiết kế module Frontend `friends` khép kín theo chuẩn Modular Architecture, gồm trang quản lý đa tab (Tìm kiếm / Bạn bè / Lời mời đến / Lời mời đã gửi), với tìm kiếm realtime và nút hành động thông minh theo trạng thái quan hệ.
+*   **Action (Hành động):**
+    *   Tổ chức module khép kín: `types` (đồng bộ contract với Backend), `services` (gom 11 endpoint friendship), `components/FriendsPage` (UI), tuân thủ nguyên tắc tách lớp của dự án.
+    *   Triển khai **debounced search (300ms)** bằng `useRef` + `setTimeout` để giảm tải request khi người dùng gõ liên tục, kèm spinner và empty state thân thiện.
+    *   Xây dựng **state-driven action button**: ánh xạ trực tiếp `relationshipStatus` (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED) sang nút tương ứng (Kết bạn/Thu hồi/Phản hồi/Bạn bè/Bỏ chặn), loại bỏ mọi điều kiện rối rắm ở tầng view.
+    *   Áp dụng **Optimistic UI** cho toàn bộ thao tác: cập nhật cục bộ state ngay khi bấm (patch dòng kết quả hoặc loại khỏi danh sách), kèm cơ chế per-row loading (Set busyIds) chống double-click.
+*   **Result (Kết quả):**
+    *   Giao diện quản lý bạn bè hoàn chỉnh, trực quan, phản hồi tức thì (0ms cảm nhận) và tự thích ứng theo ngữ cảnh quan hệ.
+    *   Build sạch (1931 modules, 0 lỗi TypeScript), tích hợp liền mạch vào layout 3 cột hiện có theo đúng design system.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Built a self-contained multi-tab friend management UI in React featuring 300ms debounced search and state-driven action buttons that map a 5-state relationship enum to contextual actions, with optimistic updates and per-row loading guards delivering instant, double-click-safe interactions.*
