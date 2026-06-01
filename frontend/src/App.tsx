@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import LoginForm from './modules/auth/components/LoginForm';
 import RegisterForm from './modules/auth/components/RegisterForm';
 import ProfilePage from './modules/profile/components/ProfilePage';
+import { NetworkStatusBanner } from './components/NetworkStatusBanner';
 import { 
   Search, 
   Bell, 
@@ -162,6 +163,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] text-slate-800 flex flex-col relative select-none">
+      {/* Banner mất kết nối Internet (chuẩn Facebook/Discord) */}
+      <NetworkStatusBanner />
       {/* Hiệu ứng hào quang nền nhẹ nhàng (Minimalist Light Radial Glow) */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 blur-[120px] pointer-events-none"></div>
@@ -584,9 +587,9 @@ function App() {
               {/* Cột phải: Form Đăng nhập / Đăng ký */}
               <div className="lg:col-span-5 flex justify-center w-full">
                 {isLogin ? (
-                  <LoginForm onToggleForm={() => setIsLogin(false)} onLoginSuccess={(u) => setUser(u)} />
+                  <LoginForm key="login" onToggleForm={() => setIsLogin(false)} onLoginSuccess={(u) => setUser(u)} />
                 ) : (
-                  <RegisterForm onToggleForm={() => setIsLogin(true)} />
+                  <RegisterForm key="register" onToggleForm={() => setIsLogin(true)} />
                 )}
               </div>
 

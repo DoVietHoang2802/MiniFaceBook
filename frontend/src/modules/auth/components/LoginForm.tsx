@@ -42,8 +42,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
       const loggedInUser = apiData.data?.user || apiData.user || apiData;
       onLoginSuccess(loggedInUser);
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Email hoặc mật khẩu không chính xác hoặc tài khoản chưa xác minh.';
-      setAuthError(errorMsg);
+      // Phân biệt Network Error vs API Error (chuẩn Facebook/Discord)
+      if (!err.response) {
+        // Network error: server tắt, mất mạng, timeout
+        setAuthError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.');
+      } else {
+        // API error: server trả response lỗi (401, 400...)
+        const errorMsg = err.response?.data?.message || 'Email hoặc mật khẩu không chính xác hoặc tài khoản chưa xác minh.';
+        setAuthError(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -91,11 +91,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
 
     try {
       await authService.register({ name, email, password });
-      alert('Đăng ký thành công! Hãy kiểm tra hòm thư Mailpit (http://localhost:8025) để kích hoạt tài khoản.');
+      // Reset form sạch sẽ trước khi chuyển tab (chuẩn Facebook/Discord)
+      setName('');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setAuthError(null);
+      setErrors({});
       onToggleForm(); // Quay lại trang đăng nhập
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Đăng ký thất bại. Email có thể đã được sử dụng.';
-      setAuthError(errorMsg);
+      // Phân biệt Network Error vs API Error
+      if (!err.response) {
+        setAuthError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.');
+      } else {
+        const errorMsg = err.response?.data?.message || 'Đăng ký thất bại. Email có thể đã được sử dụng.';
+        setAuthError(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
