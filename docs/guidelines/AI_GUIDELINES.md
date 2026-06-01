@@ -21,7 +21,12 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 - **Architecture:** Modular Monolith trên 1 VPS (Modular Clean Architecture — đảm bảo tính độc lập giữa các Module).
 - **Persistence:** 
     - **MongoDB:** Lưu trữ dữ liệu chính (Post, Profile, Comment, Friendship). Port: 27018.
-    - **Redis:** Cache (`user:profile`, `feed:user`), JWT Blacklist (logout), Rate Limiting. **Không** sử dụng Pub/Sub.
+    - **Redis:** 3 use case đã chốt (nguyên tắc: không dùng dao mổ trâu giết gà):
+        1. **Presence Online/Offline** (Phase 4.1) — TTL-based, tự động expire khi mất kết nối.
+        2. **JWT Blacklist / Access Token** (Phase 4.1) — Nâng cấp từ MongoDB `revoked` flag → Redis TTL. Logic nghiệp vụ giữ nguyên, chỉ đổi nơi lưu.
+        3. **Cache** (Phase 6.1) — Cache `user:profile`, `friend:list`, `feed:user` để giảm tải MongoDB.
+    - **Rate Limiting:** Giữ **Bucket4j in-memory** (`ConcurrentHashMap`). Không nâng cấp lên Redis vì 1 server là đủ.
+    - **Redis Pub/Sub:** ⏳ **Chưa làm — để dành khi scale lên 2+ server.** Chỉ cần khi deploy multi-instance. Hiện tại 1 server, WebSocket đã đủ xử lý mọi số lượng người dùng mà không cần Pub/Sub.
 - **Security:** OAuth2 Resource Server (JWT) + Refresh Token Rotation + RBAC + Bcrypt.
 - **Communication:** Spring WebSocket (STOMP) cho Realtime Chat.
 - **Async Tasks:** Spring `@Async` + `@EnableAsync` cho tác vụ nền (gửi mail, xử lý ảnh).

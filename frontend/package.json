@@ -10,13 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.3.0",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/react-query": "^5.100.11",
+    "@types/sockjs-client": "^1.5.4",
     "axios": "^1.16.1",
     "browser-image-compression": "^2.0.2",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.3.0",
     "zod": "^4.4.3"
   },

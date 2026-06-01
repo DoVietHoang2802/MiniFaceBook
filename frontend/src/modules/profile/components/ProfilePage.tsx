@@ -195,6 +195,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     }
   };
 
+  // Guard: Nếu chưa có dữ liệu user (vd: phiên hết hạn, API trả 401), tránh crash khi
+  // truy cập user.email.split(...). Hiển thị trạng thái loading và đăng xuất an toàn.
+  if (!user || !user.email) {
+    return (
+      <div className="w-full max-w-4xl mx-auto px-4 py-20 flex flex-col items-center justify-center text-center animate-fade-in-up">
+        <Loader2 className="h-10 w-10 text-violet-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-medium">Đang tải thông tin tài khoản...</p>
+        <button
+          onClick={handleLogoutClick}
+          className="mt-6 px-4 py-2.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Đăng nhập lại</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8 animate-fade-in-up">
       {/* Khối Thông báo Hệ thống (Toasts) */}

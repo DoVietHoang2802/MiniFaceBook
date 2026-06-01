@@ -15,6 +15,9 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27018/miniface_db?directConnection=true}
       auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   mail:
     host: ${SMTP_HOST:localhost}

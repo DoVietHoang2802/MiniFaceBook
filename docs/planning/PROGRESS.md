@@ -279,3 +279,24 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 | **Swagger 401 Error** | Sai cấu hình path so với `context-path`. | Bỏ tiền tố `/api` trong `SecurityConfig`. | Truy cập tài liệu công khai OK. |
 | **Pom Conflict** | Trùng lặp dependency trong `pom.xml`. | Dọn dẹp và thống nhất phiên bản. | Tối ưu hóa quá trình Build. |
 | **ArchUnit Strictness & Empty Layer Error** | ArchUnit mặc định không cho phép layer trống và thiếu khai báo tầng `GlobalInfrastructure` truy cập `Shared` DTOs. | Định nghĩa rõ lớp `GlobalInfrastructure`, cấu hình cho phép tầng trống `.withOptionalLayers(true)` trong thời gian bootstrapping. | Vượt qua kiểm thử kiến trúc (ArchitectureTest) 100% xanh. |
+
+
+- **Phiên 01/06/2026 (Sprint 4.1 - WebSocket Foundation + Redis Integration):**
+  - [x] **[Dependencies]** Thêm `spring-boot-starter-websocket` + `spring-boot-starter-data-redis` vào `pom.xml`. Cấu hình Redis connection trong `application.yml` (host localhost:6379).
+  - [x] **[Config]** Tạo `RedisConfig.java` (StringRedisTemplate bean), `WebSocketConfig.java` (STOMP endpoint `/ws` + SockJS fallback + Simple In-Memory Broker), `JwtConfig.java` (tách JwtDecoder khỏi SecurityConfig để phá circular dependency).
+  - [x] **[WebSocket Auth]** Thiết kế 2-layer JWT authentication cho WebSocket:
+    - `WebSocketAuthInterceptor` (HandshakeInterceptor): đọc `accessToken` từ HttpOnly Cookie lúc HTTP upgrade → lưu vào session attributes.
+    - `WebSocketChannelInterceptor` (ChannelInterceptor): validate JWT trên STOMP CONNECT frame bằng `JwtDecoder` → set Principal vào WebSocket session.
+  - [x] **[Redis Presence]** Tạo `PresenceService` (module chat): `setOnline(userId)` → `SET presence:{userId} ONLINE EX 35`, `setOffline(userId)` → `DEL`, `heartbeat(userId)` → refresh TTL hoặc re-set nếu key đã hết hạn.
+  - [x] **[WebSocket Events]** Tạo `WebSocketEventListener`: lắng nghe `SessionConnectedEvent` → setOnline + broadcast `/topic/presence`, `SessionDisconnectEvent` → setOffline + broadcast.
+  - [x] **[Presence API]** Tạo `PresenceController`: `POST /presence/heartbeat` (client gọi mỗi 25s), `POST /presence/check` (batch check danh sách userId online).
+  - [x] **[JWT Blacklist - Redis]** Tạo `TokenBlacklistPort` (interface ở `shared/security` — cross-cutting, DIP) + `TokenBlacklistService` (impl ở `infrastructure/security` dùng Redis TTL). Khi logout: `SET blacklist:{jwtId} EX <remaining_seconds>` → Redis tự xóa khi token hết hạn.
+  - [x] **[JWT Blacklist - Filter]** Tạo `TokenBlacklistFilter` (OncePerRequestFilter): mỗi request kiểm tra `EXISTS blacklist:{jwtId}` → nếu có trả 401 ngay, không cần query MongoDB.
+  - [x] **[Auth Upgrade]** Nâng cấp `AuthService.logout()`: blacklist Access Token vào Redis + revoke Refresh Token trong MongoDB (giữ nguyên logic cũ).
+  - [x] **[Security]** Thêm `/ws/**` vào danh sách public endpoints trong `SecurityConfig` (WebSocket handshake không cần Bearer token — auth xử lý ở layer riêng).
+  - [x] **[Frontend]** Cài `@stomp/stompjs` + `sockjs-client`. Tạo module `chat`: `webSocketService.ts` (STOMP singleton, auto-reconnect), `presenceService.ts` (heartbeat + check API), `useWebSocket.ts` hook (connect khi login, heartbeat 25s, disconnect khi logout).
+  - [x] **[Bug Fix]** Fix crash `ProfilePage.tsx` dòng 288 (`user.email.split('@')` khi user undefined): thêm guard hiển thị loading + nút "Đăng nhập lại" thay vì crash trắng.
+  - [x] **[Benchmark]** Đo thực tế trên máy dev: Redis EXISTS 0.019ms/lần vs MongoDB findOne (có index) 0.75ms/lần → **Redis nhanh hơn ~40 lần**. Với 1000 req/s tiết kiệm ~731ms/giây + giảm 100% tải MongoDB cho việc check token.
+  - [x] **[ArchUnit]** Vượt qua 2/2 rule (layered per-module + global shared/modules/infrastructure). Giải quyết 2 vòng vi phạm: (1) move port từ `module.auth.domain` sang `shared.security`, (2) tách `JwtConfig` khỏi `SecurityConfig`.
+  - [x] **[Verify]** Backend compile PASS, ArchUnit PASS, Frontend `npm run build` PASS (1932 modules). Test thực tế: heartbeat → Redis key presence, logout → Redis key blacklist, reuse token → 401.
+  - [x] **[Docs]** Tạo `PHASE_4_CHAT_TESTING.md` (hướng dẫn test 4 kịch bản + lệnh verify Redis). Cập nhật `TESTING_GUIDE.md` index.

@@ -2,11 +2,10 @@ package com.minifacebook.infrastructure.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minifacebook.infrastructure.filter.RateLimitingFilter;
+import com.minifacebook.infrastructure.filter.TokenBlacklistFilter;
 import com.minifacebook.shared.dto.ApiResponse;
 import com.minifacebook.shared.exception.ErrorCode;
-import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,9 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -33,6 +30,8 @@ import java.util.List;
 public class SecurityConfig {
 
   private final RateLimitingFilter rateLimitingFilter;
+  private final TokenBlacklistFilter tokenBlacklistFilter;
+  private final JwtDecoder jwtDecoder;
 
   private final String[] PUBLIC_POST_ENDPOINTS = {
     "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect"
@@ -46,8 +45,9 @@ public class SecurityConfig {
     "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/docs/**", "/api-docs/**"
   };
 
-  @Value("${app.jwt.secret}")
-  private String SIGNER_KEY;
+  private final String[] WEBSOCKET_ENDPOINTS = {
+    "/ws/**", "/ws"
+  };
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -62,13 +62,15 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(SWAGGER_ENDPOINTS)
                 .permitAll()
+                .requestMatchers(WEBSOCKET_ENDPOINTS)
+                .permitAll()
                 .anyRequest()
                 .authenticated());
 
     httpSecurity.oauth2ResourceServer(
         oauth2 ->
             oauth2
-                .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()))
+                .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder))
                 .bearerTokenResolver(
                     request -> {
                       String path = request.getRequestURI();
@@ -112,13 +114,10 @@ public class SecurityConfig {
     // Thêm Rate Limiting Filter vào đầu chuỗi
     httpSecurity.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return httpSecurity.build();
-  }
+    // Thêm Blacklist Filter sau Rate Limiting, trước JWT validation
+    httpSecurity.addFilterAfter(tokenBlacklistFilter, RateLimitingFilter.class);
 
-  @Bean
-  JwtDecoder jwtDecoder() {
-    SecretKeySpec secretKeySpec = new SecretKeySpec(SIGNER_KEY.getBytes(), "HS256");
-    return NimbusJwtDecoder.withSecretKey(secretKeySpec).macAlgorithm(MacAlgorithm.HS256).build();
+    return httpSecurity.build();
   }
 
   @Bean

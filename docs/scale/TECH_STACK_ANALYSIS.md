@@ -102,8 +102,7 @@
 | Công nghệ | Nhóm | Mục đích |
 |:---|:---|:---|
 | **Spring WebSocket (STOMP Protocol)** | Backend — Realtime | Chat realtime hai chiều giữa người dùng |
-| **Redis Pub/Sub** | Messaging | Đồng bộ WebSocket session khi chạy nhiều server Backend |
-| **Neo4j Cypher Queries + Spring Data Neo4j** | Database | Truy vấn đồ thị bạn bè, gợi ý kết bạn thông minh |
+| **Redis Pub/Sub** | Messaging | ⏳ **Chưa làm** — Chỉ cần khi scale lên 2+ server. 1 server WebSocket đủ xử lý mọi số lượng người dùng. |
 
 ### 📅 Dài hạn — Phase 5 & 6
 

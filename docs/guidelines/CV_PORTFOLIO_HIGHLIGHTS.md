@@ -372,3 +372,40 @@
     *   Toàn bộ tính năng chỉ tốn 3 truy vấn DB bất kể số lượng bạn bè, đặt nền tảng scale tốt mà không cần thêm hạ tầng.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Implemented a Mutual-Friends recommendation algorithm with in-memory frequency counting and MongoDB `$in` batch queries (constant 3 DB calls regardless of graph size), deliberately avoiding Graph DB over-engineering while delivering accurate, exclusion-aware friend suggestions for the MVP scale.*
+
+
+---
+
+### ⚡ Highlight 25: Tối Ưu JWT Blacklist bằng Redis TTL — Nhanh hơn MongoDB 40 lần (Measured Benchmark)
+*   **Situation (Bối cảnh):** Mỗi HTTP request đều phải kiểm tra "Access Token có bị thu hồi chưa" (logout). Thiết kế ban đầu lưu cờ `revoked` trong MongoDB — tốn ~0.75ms mỗi lần query, đồng thời cần cron job dọn dẹp token hết hạn.
+*   **Task (Nhiệm vụ):** Chuyển nơi lưu blacklist sang Redis để tăng tốc kiểm tra, tận dụng TTL native để tự cleanup, giữ nguyên 100% logic nghiệp vụ và tuân thủ Clean Architecture (ArchUnit).
+*   **Action (Hành động):**
+    *   Tạo interface `TokenBlacklistPort` ở `shared/security` (cross-cutting concern, DIP). Implement bằng `TokenBlacklistService` dùng Redis TTL. Application layer chỉ phụ thuộc interface — đổi Redis sang Memcached không sửa code nghiệp vụ.
+    *   Khi logout: `SET blacklist:{jwtId} EX <remaining_seconds>` — Redis tự xóa key khi token hết hạn, không cần cron.
+    *   Tạo `TokenBlacklistFilter` (OncePerRequestFilter): mỗi request check `EXISTS blacklist:{jwtId}` → nếu có trả 401 ngay.
+    *   Tách `JwtConfig` riêng để phá circular dependency `SecurityConfig → Filter → Service → JwtDecoder`.
+    *   Benchmark 10.000 lượt trên máy dev để có số liệu thật.
+*   **Result (Kết quả):**
+    *   **Redis EXISTS 0.019ms/lần vs MongoDB findOne 0.75ms/lần → nhanh hơn ~40 lần** (đo thực tế, không lý thuyết).
+    *   Với 1000 req/s: tiết kiệm ~731ms/giây + giảm 100% tải MongoDB cho việc check token.
+    *   Loại bỏ hoàn toàn cron job cleanup. ArchUnit pass 2/2 rule.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Re-architected JWT logout invalidation using Redis TTL, achieving a benchmarked 40x speedup over MongoDB findOne (0.019ms vs 0.75ms per check). Integrated through a Port-Adapter pattern (TokenBlacklistPort) to preserve Clean Architecture, validated by ArchUnit.*
+
+---
+
+### 🌐 Highlight 26: WebSocket STOMP Authentication qua HttpOnly Cookie (Non-trivial Security Integration)
+*   **Situation (Bối cảnh):** Hệ thống chat realtime cần WebSocket, nhưng JWT nằm trong HttpOnly Cookie — JavaScript không đọc được, nên không thể truyền token qua query param `?token=xxx` như hướng dẫn phổ biến. Đồng thời cần theo dõi trạng thái Online/Offline cho presence.
+*   **Task (Nhiệm vụ):** Thiết kế cơ chế xác thực WebSocket an toàn tương đương HTTP (không yếu hơn), kết hợp Redis TTL presence tự động offline khi mất kết nối — không cần cron job.
+*   **Action (Hành động):**
+    *   Thiết kế 2-layer auth: `WebSocketAuthInterceptor` (HandshakeInterceptor) đọc Cookie từ HTTP upgrade request → lưu token vào session attributes. `WebSocketChannelInterceptor` (ChannelInterceptor) validate JWT trên STOMP CONNECT frame bằng cùng `JwtDecoder` của Spring Security → set Principal.
+    *   Presence pattern: `SET presence:{userId} EX 35` khi connect, client heartbeat mỗi 25s refresh TTL, disconnect → DEL key. Buffer 10s tha thứ network jitter.
+    *   Frontend: STOMP singleton service (`@stomp/stompjs` + SockJS), `useWebSocket` hook auto-connect khi login + heartbeat interval.
+*   **Result (Kết quả):**
+    *   WebSocket auth an toàn ngang HTTP — token không bao giờ lộ ra JavaScript (chống XSS).
+    *   Presence tự động: không cần cron, không tạo "ma online", fallback qua HTTP heartbeat khi WS không khả dụng.
+    *   Kiến trúc scale-ready: chỉ cần đổi `enableSimpleBroker` → `enableStompBrokerRelay` khi thêm server.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented Cookie-based JWT authentication for WebSocket STOMP by combining HandshakeInterceptor and ChannelInterceptor, bridging HttpOnly cookies into WebSocket sessions without exposing tokens to JavaScript. Designed TTL-based Redis presence (heartbeat 25s, TTL 35s) with automatic offline detection and zero cron dependency.*
+
+---

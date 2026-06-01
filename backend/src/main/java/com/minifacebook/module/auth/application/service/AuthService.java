@@ -16,6 +16,7 @@ import com.minifacebook.module.auth.domain.service.TokenService;
 import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
+import com.minifacebook.shared.security.TokenBlacklistPort;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -38,6 +39,7 @@ public class AuthService {
   private final EmailService emailService;
   private final RefreshTokenRepository refreshTokenRepository;
   private final MediaService mediaService;
+  private final TokenBlacklistPort tokenBlacklistService;
 
   /** Đăng ký người dùng mới và gửi email kích hoạt qua Resend. */
   public UserResponse register(RegisterRequest request) {
@@ -166,8 +168,14 @@ public class AuthService {
         .build();
   }
 
-  /** Đăng xuất: Vô hiệu hóa Refresh Token trong Database. */
+  /** Đăng xuất: Vô hiệu hóa Refresh Token trong Database + blacklist Access Token trong Redis. */
   public void logout(String accessToken, String refreshTokenStr) {
+    // 1. Blacklist Access Token trong Redis (tức thì, TTL tự hết hạn)
+    if (accessToken != null && !accessToken.isBlank()) {
+      tokenBlacklistService.blacklist(accessToken);
+    }
+
+    // 2. Revoke Refresh Token trong MongoDB (giữ nguyên logic cũ)
     if (refreshTokenStr != null && !refreshTokenStr.isBlank()) {
       refreshTokenRepository.findByToken(refreshTokenStr).ifPresent(tokenEntity -> {
         tokenEntity.setRevoked(true);

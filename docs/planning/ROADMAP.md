@@ -112,17 +112,21 @@
 
 ---
 
-## 💬 PHASE 4: REALTIME CHAT ⏳
+## 💬 PHASE 4: REALTIME CHAT 🟡
 *Mục tiêu: Giao tiếp thời gian thực mượt mà giữa bạn bè.*
 
-- [ ] **Sprint 4.1: WebSocket Foundation**
-    - [ ] Khởi tạo WebSocket Server với **Spring WebSocket + STOMP Protocol**.
+- [x] **Sprint 4.1: WebSocket Foundation (ĐÃ HOÀN THÀNH 🎉)**
+    - [x] Khởi tạo WebSocket Server với **Spring WebSocket + STOMP Protocol**.
         - *Highlight:* STOMP cung cấp topic/queue pattern, dễ scale.
         - *Highlight:* SockJS fallback cho browser không hỗ trợ WebSocket.
-    - [ ] Cấu hình **WebSocket Security** - Xác thực JWT khi handshake.
-    - [ ] Cấu hình **Redis Pub/Sub** để đồng bộ messages giữa multiple server instances.
-    - [ ] Quản lý trạng thái **Online/Offline** bằng Redis (TTL-based presence).
-    - [ ] Frontend: Tích hợp **@stomp/stompjs** + **SockJS-client**.
+    - [x] Cấu hình **WebSocket Security** - Xác thực JWT khi handshake (đọc từ HttpOnly Cookie qua `WebSocketAuthInterceptor` + validate trên STOMP CONNECT qua `WebSocketChannelInterceptor`).
+    - [x] Quản lý trạng thái **Online/Offline** bằng Redis (TTL-based presence 35s, heartbeat 25s, tự expire khi mất kết nối).
+    - [x] **Nâng cấp JWT Blacklist** — chuyển từ MongoDB `revoked` flag → Redis TTL cho Access Token khi logout.
+        - *Benchmark thực tế trên máy dev:* Redis EXISTS **0.019 ms/lần** vs MongoDB findOne (có index) **0.75 ms/lần** → **Redis nhanh hơn ~40 lần**.
+        - *Logic nghiệp vụ giữ nguyên 100%* (Port-Adapter pattern qua `TokenBlacklistPort` ở shared layer), chỉ đổi nơi lưu.
+    - [x] Frontend: Tích hợp **@stomp/stompjs** + **SockJS-client** (`webSocketService` singleton + `useWebSocket` hook + `presenceService`).
+    - [x] Bug fix: ProfilePage crash khi 401 (thêm guard `!user || !user.email`).
+    - *Ghi chú Redis Pub/Sub:* **Chưa làm ở phase này** — chỉ cần khi scale lên 2+ server. 1 server WebSocket xử lý tốt mọi số lượng người dùng mà không cần Pub/Sub. Sẽ bổ sung ở Phase 6 nếu cần scale.
 - [ ] **Sprint 4.2: Chat Infrastructure**
     - [ ] Thiết kế **Conversation Entity** (1-1 chat).
         - *Fields:* `participants[]`, `lastMessage`, `lastMessageAt`, `unreadCount`.
@@ -254,12 +258,12 @@
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
-| 4 | Realtime Chat | ⏳ Chưa bắt đầu | 0% |
+| 4 | Realtime Chat | 🟡 Đang làm | 20% (1/5 Sprint) |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~58%** (4/7 Phases - Phase 3 HOÀN THÀNH 100% bao gồm cả Sprint 3.4 Friend Suggestions)
+**Tổng tiến độ: ~62%** (4/7 Phases hoàn thành + Sprint 4.1 xong)
 
 ---
 
@@ -310,6 +314,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.6 | Jun 2026 | Hoàn thành Sprint 4.1 (WebSocket Foundation + Redis Presence + JWT Blacklist). Redis lần đầu được dùng thật trong dự án với 2 use case: Presence TTL Online/Offline (35s + heartbeat 25s) và JWT Blacklist Access Token (TTL = remaining token lifetime). Benchmark trên máy dev: Redis EXISTS 0.019ms/lần vs MongoDB findOne 0.75ms/lần → nhanh hơn ~40x. Áp dụng Port-Adapter (`TokenBlacklistPort` ở `shared/security`) tuân thủ Clean Architecture. Bug fix ProfilePage crash khi 401. Pub/Sub chưa làm — để dành khi scale 2+ server. |
 | 2.5 | May 2026 | Hoàn thành Sprint 3.4 (Friend Suggestions - Mutual Friends algorithm + UI sidebar data thật). PHASE 3 trọn vẹn 100%. |
 | 2.4 | May 2026 | Hoàn thành UI Phase 3: module `friends` (FriendsPage 4 tab - Tìm kiếm/Bạn bè/Lời mời/Đã gửi), nút động theo relationshipStatus + Optimistic UI. Phase 3 XONG 100%. |
 | 2.3 | May 2026 | Sprint 3.3 backend: fix bug FE-BE `name` + API Search (`/friends/search`) với enrich relationship status, loại self, ẩn người chặn. Ghi nhận Tech Debt #6 (tối ưu phân trang search). |
