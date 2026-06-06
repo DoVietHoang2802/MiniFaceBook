@@ -294,6 +294,17 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Quyết định kiến trúc - VÌ SAO]** Reuse 100% hạ tầng có sẵn (CloudinaryService + Tika + sendMessage) thay vì viết mới → ít code, atomic, nhất quán. Preview blob gốc thay vì chờ server → UX tức thì + tránh đúng vấn đề "ảnh khác" do nén/sandbox.
   - [x] **[Verify]** Backend compile PASS, FE 0 lỗi. Test với cloud `demo` (sandbox fallback → picsum) chạy đúng flow, thay key thật sẽ hiện đúng ảnh không cần sửa code.
 
+- **Phiên 06/06/2026 (Sprint 4.5 đợt 1 - Delete + Edit Message):**
+  - [x] **[Backend - Domain]** Message thêm `editedAt` (Instant), `deleted` (boolean - thu hồi cho mọi người), `deletedFor` (Set<String> userId - xóa cho riêng tôi).
+  - [x] **[Backend - Service]** `editMessage()`: chỉ sender, chỉ TEXT, trong 15 phút, sanitize HTML, set editedAt → publish UPDATE. `deleteMessage(scope)`: "everyone" (sender + 15 phút → set deleted, xóa content/mediaUrl, publish UPDATE) hoặc "me" (thêm userId vào deletedFor, KHÔNG publish - local only).
+  - [x] **[Backend - Query]** `getMessages` lọc tin có deletedFor chứa currentUserId; tin deleted trả content/mediaUrl=null + flag deleted=true.
+  - [x] **[Backend - API/Event]** `PUT /messages/{id}` (edit), `DELETE /messages/{id}?scope=`; `MessageUpdateEvent` + `ChatRedisPublisher.publishUpdate` type "UPDATE" → subscriber → `/user/queue/updates`; 4 error code 3007-3010.
+  - [x] **[Frontend]** Subscribe `/user/queue/updates`; handlers `startEditing`/`handleSaveEdit`/`handleDelete` Optimistic UI; hover Pencil (sửa, own TEXT <15min) + Trash (menu "Xóa cho riêng tôi"/"Thu hồi với mọi người", mở lên trên z-30); banner "Đang chỉnh sửa"; placeholder "Tin nhắn đã được thu hồi"; nhãn "(đã chỉnh sửa)".
+  - [x] **[Bug fix UI]** Menu xóa ban đầu mở xuống (`top-full`) che timestamp/tin dưới → đổi mở lên trên (`bottom-full`).
+  - [x] **[Perf fix - Lag khi gõ]** `webSocketService` đang `console.log` mọi frame STOMP → khi mở DevTools, console spam gây lag lúc gõ chat. Tắt verbose debug logging (giữ nguyên STOMP, chỉ bỏ log). Hết lag.
+  - [x] **[Quyết định kiến trúc - VÌ SAO]** "Xóa cho riêng tôi" dùng `deletedFor` Set thay vì xóa hẳn DB → tin vẫn hiện với người kia (đúng hành vi Messenger), reversible. "Thu hồi" dùng soft-delete `deleted` flag thay vì xóa cứng → giữ lịch sử + có thể audit. Cả 2 reuse Pub/Sub "UPDATE" có sẵn.
+  - [x] **[Verify]** Backend compile PASS, FE 0 lỗi.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

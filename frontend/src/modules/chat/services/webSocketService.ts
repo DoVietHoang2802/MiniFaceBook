@@ -37,10 +37,8 @@ class WebSocketService {
         reconnectDelay: 5000,
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
-        debug: (msg) => {
-          if (import.meta.env.DEV) {
-            console.log('[STOMP]', msg);
-          }
+        debug: () => {
+          // Tắt verbose STOMP logging để tránh lag khi mở DevTools (Sprint 4.5 perf fix)
         },
         onConnect: () => {
           console.log('[WebSocket] Connected');

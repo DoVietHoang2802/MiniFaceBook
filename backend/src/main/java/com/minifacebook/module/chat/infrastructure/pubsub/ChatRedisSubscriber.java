@@ -6,6 +6,7 @@ import com.minifacebook.module.chat.application.dto.ChatPubSubEvent;
 import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
+import com.minifacebook.module.chat.application.dto.MessageUpdateEvent;
 import com.minifacebook.module.chat.application.dto.TypingEvent;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -78,6 +79,17 @@ public class ChatRedisSubscriber implements MessageListener {
                 user.getEmail(),
                 "/queue/reactions",
                 reactionEvent
+            );
+          });
+        }
+      } else if ("UPDATE".equals(event.getType())) {
+        MessageUpdateEvent updateEvent = objectMapper.readValue(event.getPayloadJson(), MessageUpdateEvent.class);
+        for (String participantId : event.getParticipantIds()) {
+          userRepository.findById(participantId).ifPresent(user -> {
+            messagingTemplate.convertAndSendToUser(
+                user.getEmail(),
+                "/queue/updates",
+                updateEvent
             );
           });
         }

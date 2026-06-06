@@ -514,3 +514,21 @@
     *   *Implemented chat image sending by reusing the existing Cloudinary/Tika upload pipeline and message-send flow, delivering a Messenger-style multi-image preview tray with optimistic blob previews and smart client-side compression. Resolved a REST-vs-WebSocket race condition causing duplicate messages via id-first deduplication and type-based optimistic matching, ensuring idempotency regardless of event ordering.*
 
 ---
+
+### ✏️ Highlight 33: Edit & Delete Message — Soft Delete 2 Chế Độ + Cửa Sổ Thời Gian + Perf Fix Realtime
+*   **Situation (Bối cảnh):** Quản lý tin nhắn (sửa/xóa) trong chat realtime đòi hỏi xử lý nhiều khía cạnh tinh tế: phân biệt "xóa cho riêng tôi" (chỉ ẩn phía mình) vs "thu hồi cho mọi người" (như Messenger), giới hạn thời gian chống lạm dụng, đồng bộ realtime, và bảo toàn dữ liệu lịch sử. Đồng thời phát hiện vấn đề lag khi gõ do logging quá mức.
+*   **Task (Nhiệm vụ):** Triển khai sửa/xóa tin nhắn với 2 chế độ xóa đúng chuẩn Messenger, cửa sổ 15 phút, đồng bộ realtime hai chiều, và khắc phục lag input.
+*   **Action (Hành động):**
+    *   **Soft delete 2 chế độ:** "Xóa cho riêng tôi" thêm userId vào `deletedFor` (Set) — tin vẫn hiện với người kia, KHÔNG broadcast (chỉ ảnh hưởng người xóa); "Thu hồi cho mọi người" dùng `deleted` flag + xóa content/mediaUrl, chỉ sender trong 15 phút, broadcast realtime. Cả hai dùng soft-delete (không xóa cứng DB) → reversible + giữ lịch sử audit.
+    *   **Edit có ràng buộc:** Chỉ sender, chỉ tin TEXT, trong cửa sổ 15 phút (validate bằng `Duration.between`), sanitize HTML, gắn `editedAt` → hiển thị nhãn "(đã chỉnh sửa)".
+    *   **Realtime:** Tái dùng Redis Pub/Sub với event type "UPDATE" (`MessageUpdateEvent`) → đẩy tới `/user/queue/updates` → cả hai phía cập nhật tức thì; query `getMessages` lọc tin đã "xóa riêng" và ẩn nội dung tin đã thu hồi.
+    *   **Optimistic UI:** Sửa/xóa cập nhật giao diện ngay; hover menu Edit (Pencil) + Delete (Trash với submenu), placeholder "Tin nhắn đã được thu hồi".
+    *   **Perf fix:** Phát hiện input chat lag do STOMP client `console.log` mọi frame WebSocket — khi DevTools mở, console.log trở thành bottleneck. Tắt verbose debug logging (giữ nguyên giao thức), loại bỏ lag hoàn toàn.
+*   **Result (Kết quả):**
+    *   Sửa/xóa tin nhắn realtime đúng chuẩn Messenger, 2 chế độ xóa rõ ràng, ràng buộc thời gian + quyền chặt chẽ.
+    *   Soft-delete bảo toàn dữ liệu, reversible, sẵn sàng audit.
+    *   Loại bỏ lag input bằng một thay đổi logging nhỏ nhưng tác động lớn.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented message edit and dual-mode soft delete (delete-for-me via a per-user set vs recall-for-everyone via a flag) with 15-minute time-window and ownership validation, synchronized in realtime through a reused Redis Pub/Sub "UPDATE" channel. Diagnosed and fixed input lag caused by per-frame STOMP debug logging that bottlenecked the console under DevTools.*
+
+---

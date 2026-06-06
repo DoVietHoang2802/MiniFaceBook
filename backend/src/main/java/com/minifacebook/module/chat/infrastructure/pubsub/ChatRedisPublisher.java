@@ -5,6 +5,7 @@ import com.minifacebook.module.chat.application.dto.ChatPubSubEvent;
 import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
+import com.minifacebook.module.chat.application.dto.MessageUpdateEvent;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +85,23 @@ public class ChatRedisPublisher {
       publish(conversationId, event);
     } catch (Exception e) {
       log.error("Lỗi khi serialize MessageReactionEvent", e);
+    }
+  }
+
+  /**
+   * Publish sự kiện cập nhật tin nhắn (sửa / thu hồi) (Sprint 4.5).
+   */
+  public void publishUpdate(String conversationId, List<String> participantIds, MessageUpdateEvent updateEvent) {
+    try {
+      String payload = objectMapper.writeValueAsString(updateEvent);
+      ChatPubSubEvent event = ChatPubSubEvent.builder()
+          .type("UPDATE")
+          .participantIds(participantIds)
+          .payloadJson(payload)
+          .build();
+      publish(conversationId, event);
+    } catch (Exception e) {
+      log.error("Lỗi khi serialize MessageUpdateEvent", e);
     }
   }
 }

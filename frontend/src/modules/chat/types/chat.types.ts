@@ -41,8 +41,19 @@ export interface MessageResponse {
   reactions?: Record<string, string>;
   // Snapshot tin nhắn được trả lời (Sprint 4.4 - Reply)
   replyTo?: ReplyPreview;
+  // Sprint 4.5: edit/delete
+  editedAt?: string;
+  deleted?: boolean;
   // Trạng thái local cho Optimistic UI
   status?: 'PENDING' | 'SENT' | 'DELIVERED' | 'SEEN' | 'FAILED';
+}
+
+export interface MessageUpdateEvent {
+  conversationId: string;
+  messageId: string;
+  content?: string;
+  editedAt?: string;
+  deleted: boolean;
 }
 
 export interface MessageReactionEvent {

@@ -32,4 +32,10 @@ public class MessageResponse {
 
   /** Snapshot tin nhắn được trả lời (Sprint 4.4 - Reply). */
   private ReplyPreview replyTo;
+
+  /** Thời điểm chỉnh sửa (null nếu chưa sửa) - Sprint 4.5. */
+  private Instant editedAt;
+
+  /** true = đã thu hồi (xóa cho mọi người) - Sprint 4.5. */
+  private boolean deleted;
 }

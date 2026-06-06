@@ -35,4 +35,13 @@ public class Message {
 
   /** Snapshot tin nhắn được trả lời (null nếu không phải reply) - Sprint 4.4. */
   private ReplyPreview replyTo;
+
+  /** Thời điểm chỉnh sửa (null nếu chưa sửa) - Sprint 4.5. */
+  private Instant editedAt;
+
+  /** true = đã thu hồi (xóa cho mọi người) - Sprint 4.5. */
+  private boolean deleted;
+
+  /** Danh sách userId đã "xóa cho riêng tôi" (tin vẫn hiện với người khác) - Sprint 4.5. */
+  private java.util.Set<String> deletedFor;
 }

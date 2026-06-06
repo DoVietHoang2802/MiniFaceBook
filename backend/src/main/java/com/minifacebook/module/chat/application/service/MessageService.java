@@ -6,6 +6,7 @@ import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageSendRequest;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
+import com.minifacebook.module.chat.application.dto.MessageUpdateEvent;
 import com.minifacebook.module.chat.application.dto.ParticipantResponse;
 import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.entity.LastMessageSummary;
@@ -18,8 +19,10 @@ import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
 import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -171,6 +174,8 @@ public class MessageService {
         .createdAt(message.getCreatedAt())
         .reactions(message.getReactions())
         .replyTo(message.getReplyTo())
+        .editedAt(message.getEditedAt())
+        .deleted(message.isDeleted())
         .build();
 
     // Phát sự kiện lên Redis Pub/Sub để đồng bộ giữa các instance server
@@ -228,18 +233,23 @@ public class MessageService {
         .collect(Collectors.toMap(ParticipantResponse::getId, Function.identity()));
 
     List<MessageResponse> responses = messages.getContent().stream()
+        // Ẩn tin đã "xóa cho riêng tôi" (Sprint 4.5)
+        .filter(msg -> msg.getDeletedFor() == null || !msg.getDeletedFor().contains(currentUserId))
         .map(msg -> MessageResponse.builder()
             .id(msg.getId())
             .conversationId(msg.getConversationId())
             .sender(participantMap.get(msg.getSenderId()))
-            .content(msg.getContent())
+            // Nếu đã thu hồi → không trả nội dung/ảnh thật
+            .content(msg.isDeleted() ? null : msg.getContent())
             .type(msg.getType())
-            .mediaUrl(msg.getMediaUrl())
+            .mediaUrl(msg.isDeleted() ? null : msg.getMediaUrl())
             .deliveredAt(msg.getDeliveredAt())
             .seenAt(msg.getSeenAt())
             .createdAt(msg.getCreatedAt())
             .reactions(msg.getReactions())
             .replyTo(msg.getReplyTo())
+            .editedAt(msg.getEditedAt())
+            .deleted(msg.isDeleted())
             .build())
         .toList();
 
@@ -349,6 +359,103 @@ public class MessageService {
         conv.getParticipantIds(),
         reactionEvent
     );
+  }
+
+  private static final Duration EDIT_DELETE_WINDOW = Duration.ofMinutes(15);
+
+  /**
+   * Chỉnh sửa nội dung tin nhắn (Sprint 4.5). Chỉ người gửi, chỉ TEXT, trong 15 phút.
+   */
+  @Transactional
+  public void editMessage(String email, String messageId, String newContent) {
+    User user = getUserByEmail(email);
+    Message message = messageRepository.findById(messageId)
+        .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+
+    if (!message.getSenderId().equals(user.getId())) {
+      throw new AppException(ErrorCode.NOT_MESSAGE_OWNER);
+    }
+    if (message.getType() != MessageType.TEXT) {
+      throw new AppException(ErrorCode.CANNOT_EDIT_NON_TEXT);
+    }
+    if (message.isDeleted()) {
+      throw new AppException(ErrorCode.MESSAGE_NOT_FOUND);
+    }
+    if (Duration.between(message.getCreatedAt(), Instant.now()).compareTo(EDIT_DELETE_WINDOW) > 0) {
+      throw new AppException(ErrorCode.EDIT_TIME_EXPIRED);
+    }
+
+    String sanitized = newContent != null ? newContent.replaceAll("<[^>]*>", "") : "";
+    Instant now = Instant.now();
+    message.setContent(sanitized);
+    message.setEditedAt(now);
+    messageRepository.save(message);
+
+    Conversation conv = conversationRepository.findById(message.getConversationId())
+        .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+    MessageUpdateEvent event = MessageUpdateEvent.builder()
+        .conversationId(message.getConversationId())
+        .messageId(message.getId())
+        .content(sanitized)
+        .editedAt(now)
+        .deleted(false)
+        .build();
+    chatRedisPublisher.publishUpdate(message.getConversationId(), conv.getParticipantIds(), event);
+  }
+
+  /**
+   * Xóa tin nhắn (Sprint 4.5).
+   *
+   * @param scope "everyone" = thu hồi cho mọi người (chỉ sender, trong 15 phút);
+   *              "me" = xóa cho riêng mình (chỉ ẩn phía mình, không báo người khác).
+   */
+  @Transactional
+  public void deleteMessage(String email, String messageId, String scope) {
+    User user = getUserByEmail(email);
+    String userId = user.getId();
+
+    Message message = messageRepository.findById(messageId)
+        .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+
+    Conversation conv = conversationRepository.findById(message.getConversationId())
+        .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+    if (!conv.getParticipantIds().contains(userId)) {
+      throw new AppException(ErrorCode.NOT_A_PARTICIPANT);
+    }
+
+    if ("everyone".equalsIgnoreCase(scope)) {
+      // Thu hồi cho mọi người: chỉ người gửi, trong 15 phút
+      if (!message.getSenderId().equals(userId)) {
+        throw new AppException(ErrorCode.NOT_MESSAGE_OWNER);
+      }
+      if (Duration.between(message.getCreatedAt(), Instant.now()).compareTo(EDIT_DELETE_WINDOW) > 0) {
+        throw new AppException(ErrorCode.DELETE_TIME_EXPIRED);
+      }
+      message.setDeleted(true);
+      message.setContent(null);
+      message.setMediaUrl(null);
+      messageRepository.save(message);
+
+      MessageUpdateEvent event = MessageUpdateEvent.builder()
+          .conversationId(message.getConversationId())
+          .messageId(message.getId())
+          .content(null)
+          .editedAt(null)
+          .deleted(true)
+          .build();
+      chatRedisPublisher.publishUpdate(message.getConversationId(), conv.getParticipantIds(), event);
+    } else {
+      // Xóa cho riêng tôi: thêm userId vào deletedFor, KHÔNG báo người khác
+      Set<String> deletedFor = message.getDeletedFor();
+      if (deletedFor == null) {
+        deletedFor = new HashSet<>();
+      }
+      deletedFor.add(userId);
+      message.setDeletedFor(deletedFor);
+      messageRepository.save(message);
+    }
   }
 
   /**

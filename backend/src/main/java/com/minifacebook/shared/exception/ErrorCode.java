@@ -55,6 +55,10 @@ public enum ErrorCode {
   NOT_FRIENDS(3004, "Hai người phải là bạn bè mới có thể nhắn tin", HttpStatus.BAD_REQUEST),
   MESSAGE_NOT_FOUND(3005, "Không tìm thấy tin nhắn", HttpStatus.NOT_FOUND),
   INVALID_REACTION(3006, "Cảm xúc không hợp lệ", HttpStatus.BAD_REQUEST),
+  NOT_MESSAGE_OWNER(3007, "Bạn không phải người gửi tin nhắn này", HttpStatus.FORBIDDEN),
+  EDIT_TIME_EXPIRED(3008, "Đã quá thời gian cho phép chỉnh sửa (15 phút)", HttpStatus.BAD_REQUEST),
+  DELETE_TIME_EXPIRED(3009, "Đã quá thời gian cho phép thu hồi (15 phút)", HttpStatus.BAD_REQUEST),
+  CANNOT_EDIT_NON_TEXT(3010, "Chỉ có thể chỉnh sửa tin nhắn văn bản", HttpStatus.BAD_REQUEST),
   ;
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {

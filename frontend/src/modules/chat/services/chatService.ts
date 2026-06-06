@@ -42,6 +42,20 @@ export const chatService = {
     return res.data;
   },
 
+  // Sửa nội dung tin nhắn (Sprint 4.5)
+  editMessage: async (messageId: string, content: string) => {
+    const res = await axiosClient.put<ApiResponse<void>>(`/messages/${messageId}`, { content });
+    return res.data;
+  },
+
+  // Xóa tin nhắn: scope='me' (xóa riêng) hoặc 'everyone' (thu hồi) - Sprint 4.5
+  deleteMessage: async (messageId: string, scope: 'me' | 'everyone') => {
+    const res = await axiosClient.delete<ApiResponse<void>>(`/messages/${messageId}`, {
+      params: { scope },
+    });
+    return res.data;
+  },
+
   // Gửi tin nhắn ảnh (Sprint 4.4 - Media in Chat). Hỗ trợ progress callback + reply.
   sendImage: async (
     conversationId: string,

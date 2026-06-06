@@ -56,4 +56,13 @@ public class MessageDocument {
 
   /** Snapshot tin nhắn được trả lời (Sprint 4.4 - Reply). */
   private ReplyPreview replyTo;
+
+  /** Thời điểm chỉnh sửa (Sprint 4.5). */
+  private Instant editedAt;
+
+  /** Đã thu hồi cho mọi người (Sprint 4.5). */
+  private boolean deleted;
+
+  /** userId đã xóa cho riêng mình (Sprint 4.5). */
+  private java.util.Set<String> deletedFor;
 }

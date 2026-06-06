@@ -25,7 +25,9 @@ import {
   FileText,
   Star,
   Reply,
-  CornerDownRight
+  CornerDownRight,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -36,7 +38,8 @@ import type {
   MessageResponse, 
   MessageStatusEvent,
   TypingEvent,
-  MessageReactionEvent
+  MessageReactionEvent,
+  MessageUpdateEvent
 } from '../types/chat.types';
 
 interface ChatPageProps {
@@ -69,6 +72,10 @@ export default function ChatPage({
 
   // Reply to Message: tin nhắn đang được chuẩn bị trả lời (Sprint 4.4)
   const [replyingTo, setReplyingTo] = useState<MessageResponse | null>(null);
+
+  // Sprint 4.5: tin nhắn đang sửa + menu xóa đang mở
+  const [editingMessage, setEditingMessage] = useState<MessageResponse | null>(null);
+  const [deleteMenuFor, setDeleteMenuFor] = useState<string | null>(null);
   
   // Loading states
   const [isLoadingConvs, setIsLoadingConvs] = useState(false);
@@ -357,11 +364,30 @@ export default function ChatPage({
       }
     );
 
+    // Đăng ký nhận cập nhật tin nhắn (sửa / thu hồi - Sprint 4.5)
+    const unsubscribeUpdates = webSocketService.subscribe<MessageUpdateEvent>(
+      '/user/queue/updates',
+      (evt) => {
+        if (activeConversationRef.current?.id === evt.conversationId) {
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.id !== evt.messageId) return m;
+              if (evt.deleted) {
+                return { ...m, deleted: true, content: '', mediaUrl: undefined, reactions: {} };
+              }
+              return { ...m, content: evt.content ?? m.content, editedAt: evt.editedAt };
+            })
+          );
+        }
+      }
+    );
+
     return () => {
       unsubscribeMessages();
       unsubscribeStatus();
       unsubscribeTyping();
       unsubscribeReactions();
+      unsubscribeUpdates();
     };
   }, [currentUser, triggerToast]);
 
@@ -596,10 +622,67 @@ export default function ChatPage({
     }
   };
 
+  // Sprint 4.5: kiểm tra còn trong cửa sổ 15 phút không
+  const within15Min = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 15 * 60 * 1000;
+
+  // Bắt đầu sửa tin nhắn → đưa nội dung vào ô input
+  const startEditing = (m: MessageResponse) => {
+    setEditingMessage(m);
+    setReplyingTo(null);
+    setMessageInput(m.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setMessageInput('');
+  };
+
+  // Lưu chỉnh sửa (Optimistic UI)
+  const handleSaveEdit = async () => {
+    if (!editingMessage) return;
+    const newContent = messageInput.trim();
+    if (!newContent) return;
+    const msgId = editingMessage.id;
+    const nowIso = new Date().toISOString();
+
+    setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, content: newContent, editedAt: nowIso } : m)));
+    setEditingMessage(null);
+    setMessageInput('');
+
+    try {
+      await chatService.editMessage(msgId, newContent);
+    } catch {
+      triggerToast('Không sửa được tin nhắn (quá 15 phút hoặc lỗi).');
+    }
+  };
+
+  // Xóa tin nhắn (me = xóa riêng, everyone = thu hồi)
+  const handleDelete = async (m: MessageResponse, scope: 'me' | 'everyone') => {
+    setDeleteMenuFor(null);
+    if (scope === 'everyone') {
+      // Optimistic: đánh dấu thu hồi
+      setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, deleted: true, content: '', mediaUrl: undefined, reactions: {} } : x)));
+    } else {
+      // Xóa riêng: gỡ khỏi danh sách phía mình
+      setMessages((prev) => prev.filter((x) => x.id !== m.id));
+    }
+    try {
+      await chatService.deleteMessage(m.id, scope);
+    } catch {
+      triggerToast('Không xóa được tin nhắn.');
+    }
+  };
+
   // 6. Gửi tin nhắn mới (Optimistic UI)
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!activeConversation) return;
+
+    // Nếu đang sửa tin nhắn → lưu chỉnh sửa thay vì gửi mới (Sprint 4.5)
+    if (editingMessage) {
+      await handleSaveEdit();
+      return;
+    }
 
     // Dừng phát typing ngay khi gửi tin
     emitStopTyping();
@@ -1065,11 +1148,11 @@ export default function ChatPage({
               ref={chatScrollContainerRef}
               className="flex-1 overflow-y-auto px-5 py-4 space-y-4 flex flex-col bg-slate-50/30"
             >
-              {/* Overlay đóng reaction picker khi bấm ra ngoài */}
-              {reactionPickerFor && (
+              {/* Overlay đóng reaction picker / delete menu khi bấm ra ngoài */}
+              {(reactionPickerFor || deleteMenuFor) && (
                 <div
                   className="fixed inset-0 z-10"
-                  onClick={() => setReactionPickerFor(null)}
+                  onClick={() => { setReactionPickerFor(null); setDeleteMenuFor(null); }}
                 />
               )}
               {isLoadingMessages ? (
@@ -1134,13 +1217,17 @@ export default function ChatPage({
                             )}
                             <div className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                               <div 
-                                className={`relative z-10 ${m.type === 'IMAGE' ? 'p-1' : 'px-4 py-2.5'} rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
-                                  isMe 
-                                    ? 'bg-violet-600 text-white rounded-br-md' 
-                                    : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
+                                className={`relative z-10 ${m.deleted ? 'px-4 py-2.5 italic opacity-80' : m.type === 'IMAGE' ? 'p-1' : 'px-4 py-2.5'} rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
+                                  m.deleted
+                                    ? (isMe ? 'bg-violet-300 text-white rounded-br-md' : 'bg-slate-100 text-slate-400 rounded-bl-md border border-slate-200/60')
+                                    : isMe 
+                                      ? 'bg-violet-600 text-white rounded-br-md' 
+                                      : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
                                 }`}
                               >
-                                {m.type === 'IMAGE' ? (
+                                {m.deleted ? (
+                                  <span className="text-xs">Tin nhắn đã được thu hồi</span>
+                                ) : m.type === 'IMAGE' ? (
                                   <div className="relative">
                                     <img
                                       src={m.mediaUrl}
@@ -1160,7 +1247,7 @@ export default function ChatPage({
                                   m.content
                                 )}
                                 {/* Hiển thị reactions (badge nổi ở góc dưới bong bóng) */}
-                                {m.reactions && Object.keys(m.reactions).length > 0 && (
+                                {!m.deleted && m.reactions && Object.keys(m.reactions).length > 0 && (
                                   <div className={`absolute -bottom-2.5 ${isMe ? 'left-1' : 'right-1'} flex items-center bg-white border border-slate-200 rounded-full px-1.5 py-0.5 shadow-sm`}>
                                     {Array.from(new Set(Object.values(m.reactions))).slice(0, 3).map((emo) => (
                                       <span key={emo} className="text-[11px] leading-none">{emo}</span>
@@ -1194,6 +1281,52 @@ export default function ChatPage({
                                   <Smile className="h-3.5 w-3.5" />
                                 </button>
 
+                                {/* Sửa - chỉ tin TEXT của mình, trong 15 phút (Sprint 4.5) */}
+                                {!m.deleted && isMe && m.type === 'TEXT' && within15Min(m.createdAt) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditing(m)}
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                    title="Chỉnh sửa"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+
+                                {/* Xóa - menu me/everyone (Sprint 4.5) */}
+                                {!m.deleted && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteMenuFor(deleteMenuFor === m.id ? null : m.id)}
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                    title="Xóa"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+
+                                {/* Menu xóa */}
+                                {deleteMenuFor === m.id && (
+                                  <div className={`absolute z-30 bottom-full mb-1 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[170px] animate-fade-in ${isMe ? 'right-0' : 'left-0'}`}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(m, 'me')}
+                                      className="w-full text-left px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    >
+                                      Xóa cho riêng tôi
+                                    </button>
+                                    {isMe && within15Min(m.createdAt) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDelete(m, 'everyone')}
+                                        className="w-full text-left px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-50 cursor-pointer border-t border-slate-100"
+                                      >
+                                        Thu hồi với mọi người
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+
                                 {/* Picker popup */}
                                 {reactionPickerFor === m.id && (
                                   <div className={`absolute z-20 bottom-full mb-1 flex items-center gap-0.5 bg-white border border-slate-200 rounded-full px-1.5 py-1 shadow-lg animate-fade-in ${isMe ? 'right-0' : 'left-0'}`}>
@@ -1220,6 +1353,11 @@ export default function ChatPage({
                               <span className="text-[10px] text-slate-400 font-medium">
                                 {formatTime(m.createdAt)}
                               </span>
+
+                              {/* Nhãn đã chỉnh sửa (Sprint 4.5) */}
+                              {m.editedAt && !m.deleted && (
+                                <span className="text-[10px] text-slate-400 italic">(đã chỉnh sửa)</span>
+                              )}
 
                               {/* Icon trạng thái tin nhắn (Optimistic UI & Realtime Status) */}
                               {showStatus && (
@@ -1283,6 +1421,25 @@ export default function ChatPage({
               {/* Element neo scroll */}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Banner "Đang chỉnh sửa" trên Input bar (Sprint 4.5) */}
+            {editingMessage && (
+              <div className="px-4 py-2 border-t border-slate-200 bg-amber-50/50 flex items-start gap-2">
+                <Pencil className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <div className="flex-grow min-w-0">
+                  <p className="text-[11px] font-bold text-amber-600">Đang chỉnh sửa tin nhắn</p>
+                  <p className="text-xs text-slate-500 truncate">{editingMessage.content}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="p-1 rounded-full hover:bg-slate-200 text-slate-500 transition cursor-pointer shrink-0"
+                  title="Hủy chỉnh sửa"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Tray preview ảnh đã chọn (tối đa 4, có nút X) - Sprint 4.4 */}
             {pendingImages.length > 0 && (

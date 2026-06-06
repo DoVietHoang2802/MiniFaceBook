@@ -225,12 +225,14 @@
         - [x] 🆕 **Click quote → nhảy tới tin gốc** (giống Facebook) + highlight viền tím 1.6s.
         - [x] **Bug fix:** race REST vs WebSocket echo gây trùng ảnh → dedup theo id trước + match optimistic ảnh theo type.
         - [x] **Verify:** Backend compile PASS, FE 0 lỗi. Sandbox fallback (cloud `demo`→picsum) test không cần key thật.
-- [ ] **Sprint 4.5: Message Management**
-    - [ ] **Delete Message**: Soft delete với option "Xóa cho tôi" / "Xóa cho mọi người".
-        - *Time limit:* "Xóa cho mọi người" chỉ trong 15 phút.
-    - [ ] **Edit Message**: Cho phép sửa tin nhắn trong 15 phút.
-        - *UI:* Hiển thị "(đã chỉnh sửa)" bên cạnh tin nhắn.
-    - [ ] Giao diện Chat hoàn chỉnh với **Infinite Scroll** (TanStack Query + Virtualization).
+- [ ] **Sprint 4.5: Message Management** 🟡 *(Delete + Edit xong, Infinite Scroll còn lại)*
+    - [x] **Delete Message** ✅ — Soft delete 2 chế độ: "Xóa cho riêng tôi" (field `deletedFor` Set, ẩn phía mình, không báo người khác) và "Thu hồi với mọi người" (`deleted` flag, chỉ sender, trong 15 phút, realtime).
+    - [x] **Edit Message** ✅ — Sửa tin TEXT, chỉ sender, trong 15 phút; nhãn "(đã chỉnh sửa)"; realtime qua event UPDATE.
+        - [x] Backend: `editMessage`/`deleteMessage` service + `PUT /messages/{id}` + `DELETE /messages/{id}?scope=` + 4 error code (3007-3010) + `MessageUpdateEvent` Pub/Sub type "UPDATE" → `/user/queue/updates`.
+        - [x] Frontend: Optimistic UI, hover Pencil (sửa) + Trash (menu me/everyone, mở lên trên), banner "Đang chỉnh sửa", placeholder "Tin nhắn đã được thu hồi".
+        - [x] **Perf fix:** tắt verbose STOMP debug logging (`console.log` mọi frame) → hết lag khi mở DevTools.
+        - [x] **Verify:** Backend compile PASS, FE 0 lỗi.
+    - [ ] Giao diện Chat hoàn chỉnh với **Infinite Scroll** (load tin cũ khi cuộn lên, giữ scroll position). *(Đợt 2 - cần test kỹ scroll)*
 
 ---
 
@@ -403,6 +405,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.4 | Jun 2026 | **Sprint 4.5 đợt 1: Delete + Edit Message HOÀN THÀNH 🎉**: Xóa tin 2 chế độ (xóa riêng qua `deletedFor` Set không báo người khác / thu hồi cho mọi người qua `deleted` flag, sender + 15 phút, realtime). Sửa tin TEXT trong 15 phút + nhãn "(đã chỉnh sửa)". Backend: `editMessage`/`deleteMessage`, `PUT/DELETE /messages/{id}`, `MessageUpdateEvent` Pub/Sub "UPDATE" → `/user/queue/updates`, 4 error code. FE: Optimistic UI, hover Pencil/Trash, menu xóa mở lên trên, banner sửa, placeholder thu hồi. **Perf fix:** tắt verbose STOMP debug logging (gây lag khi mở DevTools). Còn lại: Infinite Scroll (đợt 2). |
 | 3.3 | Jun 2026 | **Sprint 4.4 ④ Media in Chat HOÀN THÀNH 🎉 → SPRINT 4.4 TRỌN VẸN**: Gửi ảnh qua REST `/conversations/{id}/messages/image` (multipart), reuse `MediaService` (Cloudinary+Tika) + `sendMessage` type=IMAGE. FE: preview tray giống Messenger (tối đa 4 ảnh, nút X/+, không auto-gửi), Optimistic blob preview (tránh "ảnh khác"), upload progress bar, nén thông minh (skip GIF/<1MB, preserveExif, WebP). Thêm click quote → nhảy tới tin gốc + highlight (giống Facebook). Fix race REST vs WS echo gây trùng ảnh (dedup theo id + match type). Sandbox fallback cho test không cần key. Phase 4 đạt 100%. |
 | 3.2 | Jun 2026 | **Sprint 4.4 ③ Reply to Message HOÀN THÀNH 🎉**: Trả lời tin nhắn cụ thể. Backend: value object `ReplyPreview` (denormalized snapshot: messageId+senderName+contentPreview) + `replyTo` vào Message/Document/Response, `replyToMessageId` vào SendRequest, validate cùng conversation, helper `buildShortPreview`. Frontend: state `replyingTo`, banner "Đang trả lời" trên input, nút Reply hover, **quote tách phía trên bong bóng màu trung tính** (giống Messenger/Zalo, dễ đọc mọi nền). **Quyết định:** lưu snapshot thay ID → quote hiển thị không query thêm (tránh N+1), giữ nội dung tại thời điểm reply. Fix: optimistic giữ replyTo khi server không trả về. Verify: backend compile PASS, FE 0 lỗi. |
 | 3.1 | Jun 2026 | **Sprint 4.4 ② Message Reactions HOÀN THÀNH 🎉**: React emoji (❤️👍😂😮😢😡) cho từng tin nhắn qua STOMP `/app/chat.react` + Redis Pub/Sub type "REACTION" → `/user/queue/reactions`. Backend: thêm `reactions` (embedded Map userId→emoji) vào Message/Document/Response, `ReactionRequest`/`MessageReactionEvent` DTO, `MessageService.reactToMessage()` (toggle + validate 6 emoji), ErrorCode `INVALID_REACTION` (3006). Frontend: Optimistic UI, nút hover 😊, picker popup, badge góc bong bóng, overlay click-outside. **Quyết định:** embedded Map thay collection riêng (chat 1-1 tối đa 2 react → không cần pagination như Post). Verify: backend compile PASS, FE 0 lỗi. |
