@@ -167,6 +167,11 @@ Lưu trữ toàn bộ tin nhắn trong conversations.
 | `deliveredAt` | Instant (ISODate) | Thời điểm recipient nhận được tin nhắn (online + WebSocket ack). Nullable. |
 | `seenAt` | Instant (ISODate) | Thời điểm recipient đọc tin nhắn (mở conversation). Nullable. |
 | `createdAt` | Instant (ISODate) | Thời điểm gửi tin nhắn (SENT status). |
+| `reactions` | Map<String,String> | **(Sprint 4.4)** Embedded map `userId → emoji` (❤️👍😂😮😢😡). Chat 1-1 tối đa 2 reaction → embed thay vì collection riêng. Nullable. |
+| `replyTo` | Embedded Object | **(Sprint 4.4)** Snapshot tin được trả lời: `messageId`, `senderId`, `senderName`, `contentPreview` (≤80 ký tự). Denormalized để hiển thị quote không cần query thêm. Nullable. |
+| `editedAt` | Instant (ISODate) | **(Sprint 4.5)** Thời điểm chỉnh sửa (chỉ TEXT, trong 15 phút). Hiển thị "(đã chỉnh sửa)". Nullable. |
+| `deleted` | Boolean | **(Sprint 4.5)** `true` = đã thu hồi cho mọi người (soft delete, chỉ sender trong 15 phút). |
+| `deletedFor` | Set<String> | **(Sprint 4.5)** Danh sách `userId` đã "xóa cho riêng tôi" — tin vẫn hiện với người khác, chỉ ẩn phía những user trong set này. |
 
 > **Message Status Logic (giống Facebook Messenger):**
 > - **SENT** ✓: Message có `createdAt` (đã lưu DB thành công).
@@ -175,17 +180,25 @@ Lưu trữ toàn bộ tin nhắn trong conversations.
 > 
 > **Mark as Seen Trigger:** Frontend gọi `PUT /conversations/{id}/seen` khi user mở conversation → Backend batch update `seenAt` cho all messages chưa xem → Emit WebSocket event đến sender để update UI.
 
+> **Message Management (Sprint 4.4 & 4.5):**
+> - **Reactions:** STOMP `/app/chat.react` → toggle emoji → Pub/Sub event "REACTION" → `/user/queue/reactions`.
+> - **Reply:** `replyToMessageId` trong request → backend dựng snapshot `replyTo` (validate cùng conversation).
+> - **Edit:** `PUT /messages/{id}` → set `editedAt` → Pub/Sub event "UPDATE" → `/user/queue/updates`.
+> - **Delete:** `DELETE /messages/{id}?scope=me|everyone`. `me` → thêm vào `deletedFor` (không báo). `everyone` → set `deleted=true`, clear content/mediaUrl, Pub/Sub "UPDATE".
+> - **Infinite Scroll:** `GET /conversations/{id}/messages?page=&size=15` sort `createdAt DESC` (page 0 = mới nhất), frontend reverse + prepend khi cuộn lên.
+
 ---
 
 ## ⚡ 4. Redis — Chiến lược sử dụng (Cache, Security & Realtime)
 
 Redis được sử dụng với **5 mục đích rõ ràng**, đã được triển khai và kiểm chứng:
 
-### Phạm vi sử dụng Redis (Cập nhật Phase 4.2)
+### Phạm vi sử dụng Redis (Cập nhật Phase 4.5)
 | Mục đích | Key Pattern | Kiểu dữ liệu | TTL | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | **Presence Online/Offline** | `presence:<userId>` | String (`"ONLINE"`) | 35s | Heartbeat mechanism, tự động expire khi mất kết nối |
-| **Pub/Sub Chat** | `chat.room.<roomId>` | Pub/Sub Channel | N/A | Đồng bộ WebSocket đa server (scale-ready) |
+| **Typing Indicator** | `typing:<convId>:<userId>` | String (`"1"`) | 4s | **(Sprint 4.4)** Self-healing: đóng tab/mất mạng thì key tự hết hạn, không kẹt "đang nhập". Đồng bộ pattern Presence |
+| **Pub/Sub Chat** | `chat.room.<roomId>` | Pub/Sub Channel | N/A | Đồng bộ WebSocket đa server. Event types: `NEW_MESSAGE`, `DELIVERED`, `SEEN`, `TYPING`, `REACTION`, `UPDATE` |
 | **JWT Blacklist** (Logout) | `blacklist:<jwtId>` | String (`"revoked"`) | Bằng thời gian hết hạn còn lại của Access Token | Sử dụng `jwtId` (UUID) thay vì toàn bộ token để tiết kiệm RAM |
 | **Cache Unread Count** | `unread:<conversationId>:<userId>` | String (Counter) | 7 ngày (7 days) | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
 | **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) | Phase 6 (chưa triển khai) |

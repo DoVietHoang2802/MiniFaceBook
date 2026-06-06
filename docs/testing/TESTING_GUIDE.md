@@ -149,4 +149,4 @@ mvn test -Dtest=ArchitectureTest
 | Phase | File hướng dẫn | Nội dung |
 |:-----:|----------------|----------|
 | Phase 3 | **[PHASE_3_FRIENDS_TESTING.md](./PHASE_3_FRIENDS_TESTING.md)** | Friend Request, Friend List, Search |
-| Phase 4 | **[PHASE_4_CHAT_TESTING.md](./PHASE_4_CHAT_TESTING.md)** | WebSocket, Redis Presence, JWT Blacklist |
+| Phase 4 | **[PHASE_4_CHAT_TESTING.md](./PHASE_4_CHAT_TESTING.md)** | WebSocket, Presence, Chat CRUD, Status (SENT/DELIVERED/SEEN), Typing, Reactions, Reply, Media, Edit/Delete, Infinite Scroll (4.1→4.5) |

@@ -24,9 +24,11 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
     - **Redis:** 3 use case đã chốt (nguyên tắc: không dùng dao mổ trâu giết gà):
         1. **Presence Online/Offline** (Phase 4.1) — TTL-based, tự động expire khi mất kết nối.
         2. **JWT Blacklist / Access Token** (Phase 4.1) — Nâng cấp từ MongoDB `revoked` flag → Redis TTL. Logic nghiệp vụ giữ nguyên, chỉ đổi nơi lưu.
-        3. **Cache** (Phase 6.1) — Cache `user:profile`, `friend:list`, `feed:user` để giảm tải MongoDB.
+        3. **Unread Count** (Phase 4.3) — Đếm tin chưa đọc `unread:<convId>:<userId>`, TTL 7 ngày, reset khi seen.
+        4. **Typing Indicator** (Phase 4.4) — `typing:<convId>:<userId>` TTL 4s, self-healing khi đóng tab.
+        5. **Cache** (Phase 6.1) — Cache `user:profile`, `friend:list`, `feed:user` để giảm tải MongoDB.
     - **Rate Limiting:** Giữ **Bucket4j in-memory** (`ConcurrentHashMap`). Không nâng cấp lên Redis vì 1 server là đủ.
-    - **Redis Pub/Sub:** ⏳ **Chưa làm — để dành khi scale lên 2+ server.** Chỉ cần khi deploy multi-instance. Hiện tại 1 server, WebSocket đã đủ xử lý mọi số lượng người dùng mà không cần Pub/Sub.
+    - **Redis Pub/Sub:** ✅ **Đã triển khai (Phase 4.1/4.3)** — channel `chat.room.<convId>` đồng bộ event chat đa server (NEW_MESSAGE, DELIVERED, SEEN, TYPING, REACTION, UPDATE). Scale-ready cho multi-instance; với 1 server overhead không đáng kể (~0.5ms/message).
 - **Security:** OAuth2 Resource Server (JWT) + Refresh Token Rotation + RBAC + Bcrypt.
 - **Communication:** Spring WebSocket (STOMP) cho Realtime Chat.
 - **Async Tasks:** Spring `@Async` + `@EnableAsync` cho tác vụ nền (gửi mail, xử lý ảnh).

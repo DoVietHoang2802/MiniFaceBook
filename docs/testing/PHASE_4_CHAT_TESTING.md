@@ -1,6 +1,6 @@
 # 🧪 PHASE 4: REALTIME CHAT - HƯỚNG DẪN KIỂM THỬ
 
-> **Last Updated:** June 2026 | **Sprint hiện tại:** 4.2 (Chat Infrastructure)
+> **Last Updated:** June 2026 | **Trạng thái:** ✅ PHASE 4 HOÀN THÀNH 100% (Sprint 4.1 → 4.5)
 
 ---
 
@@ -369,3 +369,97 @@ docker exec miniface-redis redis-cli GET "unread:<conversationId>:<userId_A>"
 | 6 | PUT `/conversations/{id}/seen` | ✅ Reset unread count trên Redis & phát WS event |
 | 7 | PUT `/messages/{id}/delivered` | ✅ Cập nhật `deliveredAt` & phát WS event |
 | 8 | Mongock Migration | ✅ Tự động khởi tạo đầy đủ các index MongoDB |
+
+---
+
+## Sprint 4.3: Messaging Logic & Realtime Delivery
+
+> Cần 2 trình duyệt (hoặc 1 thường + 1 ẩn danh), đăng nhập 2 tài khoản là bạn bè, mở cùng cuộc trò chuyện.
+
+### Test 1: Gửi tin nhắn realtime + Optimistic UI
+1. User A gõ tin nhắn, bấm gửi.
+2. **Kỳ vọng A:** Tin hiện ngay lập tức với icon ✓ nhạt (PENDING) → chuyển ✓ (SENT) sau khi server xác nhận.
+3. **Kỳ vọng B:** Tin xuất hiện realtime trong < 1s (qua WebSocket `/user/queue/messages`).
+
+### Test 2: Vòng đời trạng thái SENT → DELIVERED → SEEN
+1. A gửi tin khi B đang **online** (mở app) nhưng **chưa mở** conversation đó.
+2. **Kỳ vọng:** A thấy ✓✓ (DELIVERED).
+3. B mở conversation → **Kỳ vọng:** A thấy 👁️ (SEEN) realtime.
+4. *Kịch bản B offline:* A gửi → chỉ ✓ (SENT). B login lại, mở conversation → nhảy thẳng SENT → SEEN.
+
+---
+
+## Sprint 4.4: Chat UX Enhancements
+
+### Test 1: Typing Indicator
+1. A bắt đầu gõ (chưa gửi).
+2. **Kỳ vọng B:** Thấy "Đang nhập..." ở header + bubble 3 chấm nhảy + preview "Đang nhập..." trong danh sách chat.
+3. A ngừng gõ ≥3s **hoặc** gửi tin → indicator biến mất.
+4. **Test self-healing:** A đang gõ rồi **đóng tab đột ngột** → sau ~4s indicator của B tự biến mất (Redis key `typing:` hết hạn).
+5. Verify Redis: `docker exec miniface-redis redis-cli KEYS "typing:*"` (xuất hiện khi đang gõ, tự xóa sau 4s).
+
+### Test 2: Message Reactions
+1. Hover lên 1 tin nhắn → bấm icon 😊 → chọn emoji (❤️👍😂😮😢😡).
+2. **Kỳ vọng:** Badge emoji hiện ở góc bong bóng, đồng bộ realtime cả 2 phía.
+3. Bấm lại đúng emoji đang chọn → gỡ bỏ (toggle off). Chọn emoji khác → thay thế.
+
+### Test 3: Reply to Message
+1. Hover tin → bấm nút ↩ (Reply) → banner "Đang trả lời X" hiện trên input.
+2. Gõ + gửi → tin mới có **quote** tin gốc phía trên (màu trung tính).
+3. Bấm vào quote → **nhảy tới tin gốc** + highlight viền tím 1.6s (Sprint 4.5).
+
+### Test 4: Media in Chat (gửi ảnh)
+1. Bấm icon 🖼️ → chọn 1-4 ảnh → **tray preview** hiện thumbnail (chưa gửi).
+2. Bấm X xóa ảnh / bấm + thêm ảnh.
+3. Bấm gửi → mỗi ảnh hiện với **progress bar %** → upload xong hiển thị ảnh.
+4. **Kỳ vọng:** Preview luôn đúng ảnh đã chọn (blob gốc). Với cloud `demo` (sandbox) sẽ ra ảnh picsum placeholder — đúng flow.
+
+---
+
+## Sprint 4.5: Message Management
+
+### Test 1: Edit Message
+1. Hover tin **của mình** (TEXT, vừa gửi) → bấm ✏️ → banner "Đang chỉnh sửa".
+2. Sửa nội dung + gửi → tin đổi + nhãn "(đã chỉnh sửa)" realtime 2 phía.
+3. Thử sửa tin cũ **>15 phút** → lỗi `3008 - EDIT_TIME_EXPIRED`.
+
+### Test 2: Delete Message (2 chế độ)
+1. Hover tin → bấm 🗑️ → menu hiện 2 lựa chọn.
+2. **"Xóa cho riêng tôi"** → tin biến mất phía mình, **người kia vẫn thấy**.
+3. **"Thu hồi với mọi người"** (chỉ tin của mình, <15 phút) → cả 2 phía thấy "Tin nhắn đã được thu hồi".
+4. Thử thu hồi tin >15 phút → lỗi `3009 - DELETE_TIME_EXPIRED`.
+
+### Test 3: Infinite Scroll
+1. Vào conversation có **>15 tin nhắn**.
+2. **Kỳ vọng:** Ban đầu chỉ load 15 tin mới nhất, cuộn ở đáy.
+3. Cuộn lên đầu → spinner hiện → tin cũ load thêm, **màn hình KHÔNG nhảy** (giữ nguyên vị trí đang đọc).
+4. Cuộn tiếp đến hết → không load nữa.
+
+---
+
+## 📊 BẢNG MÃ LỖI CHAT (cập nhật Sprint 4.5)
+
+| Mã | HTTP | Message | Khi nào |
+|:--:|:----:|:--------|:--------|
+| 3001 | 404 | Không tìm thấy cuộc hội thoại | Sai conversationId |
+| 3002 | 403 | Không phải thành viên hội thoại | Truy cập conversation của người khác |
+| 3003 | 400 | Không thể tự trò chuyện | recipientId = chính mình |
+| 3004 | 400 | Chưa kết bạn | Hai người chưa là bạn bè |
+| 3005 | 404 | Không tìm thấy tin nhắn | Sai messageId |
+| 3006 | 400 | Cảm xúc không hợp lệ | Emoji ngoài 6 loại cho phép |
+| 3007 | 403 | Không phải người gửi tin nhắn | Sửa/thu hồi tin của người khác |
+| 3008 | 400 | Quá thời gian chỉnh sửa (15 phút) | Edit tin cũ |
+| 3009 | 400 | Quá thời gian thu hồi (15 phút) | Delete-everyone tin cũ |
+| 3010 | 400 | Chỉ chỉnh sửa được tin văn bản | Edit tin IMAGE/FILE |
+
+---
+
+## ✅ CHECKLIST PHASE 4 (TỔNG)
+
+| Sprint | Tính năng | Trạng thái |
+|:------:|:----------|:----------:|
+| 4.1 | WebSocket + Redis Presence + JWT Blacklist | ✅ |
+| 4.2 | Conversation/Message CRUD + Unread cache | ✅ |
+| 4.3 | Realtime delivery + status SENT/DELIVERED/SEEN | ✅ |
+| 4.4 | Typing Indicator + Reactions + Reply + Media | ✅ |
+| 4.5 | Edit + Delete (2 chế độ) + Infinite Scroll | ✅ |

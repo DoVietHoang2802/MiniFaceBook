@@ -33,10 +33,10 @@
 ### Known Issues:
 - **Duplicate conversation** (extremely rare): Race condition khi 2 user tạo conversation đồng thời. Code-level prevention đã có (DuplicateKeyException catch + retry). Khuyến nghị production: thêm field `participantKey` (sorted concat of IDs) với unique index.
 
-### Bước tiếp theo (Sprint 4.4 - Chat UX Enhancements):
-- Typing Indicator (WebSocket broadcast "user is typing...")
-- Read Receipts UI (hiển thị avatar nhỏ dưới tin nhắn đã seen)
-- Media Messages (gửi ảnh/file trong chat qua Cloudinary)
+### Bước tiếp theo (Phase 5 - Notification System):
+- Notification Entity + Service (LIKE, COMMENT, FRIEND_REQUEST, FRIEND_ACCEPTED, NEW_MESSAGE)
+- In-app notifications (bell + badge + dropdown)
+- Realtime push qua WebSocket (tái dùng hạ tầng STOMP + Redis Pub/Sub đã có ở Phase 4)
 
 ---
 
@@ -49,7 +49,7 @@
 
 ---
 
-### ✅ Công việc đã hoàn thành (Sprint 1.1 -> Sprint 4.3)
+### ✅ Công việc đã hoàn thành (Sprint 1.1 -> Sprint 4.5)
 
 #### A. Backend (Spring Boot 3.x)
 - **Domain Modeling & Persistence:** Thiết kế domain model `User` độc lập framework, triển khai `UserRepositoryImpl` mapping qua `UserDocument` lưu trong MongoDB.
@@ -60,13 +60,13 @@
 - **ArchUnit & Security Auditing:** Sắp xếp phân lớp Clean Architecture đạt chuẩn 100% test case ArchUnit. Vá thành công lỗ hổng bảo mật vô hiệu hóa token trong database (`revoked: true`) khi người dùng logout.
 - **Media Upload Bảo mật (Sprint 1.4):** Tích hợp Cloudinary kết hợp bộ quét nhị phân **Apache Tika (Magic Bytes)** ngăn chặn hoàn toàn việc tải lên file độc hại giả dạng đuôi ảnh. Thiết lập xử lý ngoại lệ `MaxUploadSizeExceededException` mượt mà cho file >5MB.
 - **Tái cấu trúc Sạch - Shared Core (Sprint 1.4):** Tránh phụ thuộc chéo khi bước sang Phase 2 bằng cách đưa `MediaService` (Domain Interface) và `CloudinaryService` (Adapter) ra phân vùng `shared` dùng chung. Được xác thực hoàn toàn qua ArchUnit với 0 lỗi vi phạm.
-- **Chat System (Phase 4):** WebSocket STOMP + SockJS, Redis Presence/Pub/Sub, Conversation & Message CRUD, real-time delivery với status transitions (SENT→DELIVERED→SEEN), DuplicateKeyException catch chống race condition.
+- **Chat System (Phase 4 - HOÀN THÀNH 100%):** WebSocket STOMP + SockJS, Redis Presence/Pub/Sub, Conversation & Message CRUD, status SENT→DELIVERED→SEEN. **Sprint 4.4:** Typing Indicator (Redis TTL self-healing), Message Reactions (embedded Map 6 emoji), Reply (denormalized snapshot + jump-to-message), Media (upload Cloudinary/Tika, preview tray, nén). **Sprint 4.5:** Edit/Delete (2 chế độ, 15 phút), Infinite Scroll (DESC pagination + giữ scroll position).
 
 #### B. Frontend (React 19 + Vite + TypeScript)
 - **Kiến trúc Modular Phân Lớp:** Tổ chức dự án theo chuẩn với core, components, và modules nghiệp vụ khép kín.
 - **Form & Zod Validations:** Thiết kế `LoginForm`, `RegisterForm` và `authSchema` đảm bảo lọc và chuẩn hóa dữ liệu sạch từ Client-side.
 - **Silent Refresh & Axios Mutex Lock:** Triển khai Axios Client có Interceptor tự động xoay vòng Access Token ngầm.
-- **Chat UI (Phase 4):** 2-column layout Facebook Messenger style, Stories carousel, Filter tabs, real-time messaging với Optimistic UI, STOMP WebSocket integration.
+- **Chat UI (Phase 4 - HOÀN THÀNH):** Layout 3 cột (conversations + chat + profile panel), Stories carousel, Filter tabs, real-time messaging Optimistic UI, STOMP WebSocket. Typing indicator, reactions picker, reply quote (+jump), media preview tray + progress, edit/delete menu, infinite scroll.
 
 #### C. Kiến trúc & Hạ tầng
 - **Modular Monolith** chạy trên 1 VPS duy nhất, MongoDB (chính) + Redis (Presence, JWT Blacklist, Unread Count, Pub/Sub).
@@ -75,12 +75,12 @@
 
 ---
 
-### 🚀 Nhiệm vụ tiếp theo (Sprint 4.4 - Chat UX Enhancements)
+### 🚀 Nhiệm vụ tiếp theo (Phase 5 - Notification System)
 
-- **Typing Indicator:** Broadcast event "user is typing" qua WebSocket, hiển thị animation "..." trong chat.
-- **Read Receipts UI:** Avatar nhỏ dưới tin nhắn đã seen (giống Messenger).
-- **Media Messages:** Gửi ảnh/file trong chat, upload qua Cloudinary, preview inline.
-- Sprint 4.5: Message Management (edit/delete, infinite scroll).
+- **Notification Infrastructure:** Notification Entity (`recipientId`, `type`, `content`, `data`, `isRead`), NotificationService, Repository.
+- **In-App Notifications:** API list/mark-read/unread-count, Bell + badge count, dropdown danh sách.
+- **Realtime Push:** Tái dùng WebSocket STOMP + Redis Pub/Sub (Phase 4) → emit `/user/{userId}/notifications`, toast realtime.
+- **Triggers:** Like/Comment (Phase 2), Friend Request/Accepted (Phase 3), New Message (Phase 4).
 
 ---
 *Ghi chú: Luôn giữ file `TESTING_GUIDE.md`, `PHASE_3_FRIENDS_TESTING.md` và `PHASE_4_CHAT_TESTING.md` cập nhật để đảm bảo tính sẵn sàng kiểm thử của hệ thống.*

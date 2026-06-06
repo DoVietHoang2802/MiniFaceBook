@@ -18,8 +18,8 @@
   - `expiryDate` (Instant, index)
   - `revoked` (Boolean, default: false)
   - `createdAt` (Instant)
-- **Messages:** `chatId` (index), `senderId`, `content`, `type`, `status` (sent/delivered/seen), `timestamp` (index).
-- **Chats:** `members` (array of ID), `lastMessage` (Denormalized object), `updatedAt`.
+- **Messages:** `conversationId` (index), `senderId`, `content`, `type` (TEXT/IMAGE/FILE), `mediaUrl`, `deliveredAt`/`seenAt` (status SENT/DELIVERED/SEEN), `reactions` (Map), `replyTo` (snapshot), `editedAt`, `deleted`, `deletedFor` (Set), `createdAt` (compound index `conversationId+createdAt`).
+- **Conversations:** `participantIds` (array 2 ID), `lastMessageSummary` (denormalized), `lastMessageAt`, `createdAt`.
 - **Friends:** `requesterId`, `recipientId`, `status`, `unique_pair` (Compound Index).
 
 
@@ -113,7 +113,7 @@ Dự án sử dụng Docker Compose để quản lý các Service phụ trợ. C
 ## 📀 Quyết định Kiến trúc Hiện tại
 - **Modular Monolith trên 1 VPS:** Toàn bộ Backend chạy trên một instance duy nhất. Đơn giản, dễ vận hành, phù hợp giai đoạn hiện tại.
 - **MongoDB là database duy nhất:** Quản lý toàn bộ dữ liệu (User, Post, Chat, Friendship). Không sử dụng Graph Database.
-- **Redis phạm vi giới hạn:** Chỉ dùng cho Cache, JWT Blacklist và Rate Limiting. Không sử dụng Pub/Sub.
+- **Redis đa mục đích (Phase 4):** Presence Online/Offline (TTL), JWT Blacklist, Typing Indicator (TTL), Unread Count, và **Redis Pub/Sub** (channel `chat.room.*`) đồng bộ chat realtime đa server. Rate Limiting vẫn dùng Bucket4j in-memory.
 - **Tạc vụ nền bằng Spring `@Async`:** Giải quyết các tác vụ bất đồng bộ (gửi mail, xử lý ảnh) mà không cần Message Broker.
 - **K6 Load Testing:** Bắt buộc chạy kiểm tra sức chịu tải trước mỗi lần deploy lên Production.
 
@@ -139,4 +139,4 @@ Dự án cung cấp một file `docker-compose.yml` để chạy toàn bộ hạ
 - **Vercel:** Hosting Frontend React.
 - **MongoDB Atlas:** Database Cloud.
 - **Redis:** Caching và JWT Blacklist (Token bị thu hồi sau khi logout).
-- **Sentry:** Theo dõi và báo cáo lỗi Realtime trên Production cho cả Backend và Frontend.
+- **Sentry:** Theo dõi và báo cáo lỗi Realtime trên Production cho cả Backend và Frontend.
