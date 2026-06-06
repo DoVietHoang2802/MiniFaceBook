@@ -11,6 +11,7 @@ import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.entity.LastMessageSummary;
 import com.minifacebook.module.chat.domain.entity.Message;
 import com.minifacebook.module.chat.domain.entity.MessageType;
+import com.minifacebook.module.chat.domain.entity.ReplyPreview;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
 import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
@@ -71,6 +72,26 @@ public class MessageService {
       throw new AppException(ErrorCode.NOT_A_PARTICIPANT);
     }
 
+    // Dựng snapshot tin nhắn được trả lời (Sprint 4.4 - Reply)
+    ReplyPreview replyPreview = null;
+    if (request.getReplyToMessageId() != null && !request.getReplyToMessageId().isBlank()) {
+      Message replied = messageRepository.findById(request.getReplyToMessageId())
+          .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+      // Tin được trả lời phải thuộc cùng conversation (chống trả lời chéo)
+      if (!replied.getConversationId().equals(conversationId)) {
+        throw new AppException(ErrorCode.MESSAGE_NOT_FOUND);
+      }
+      String repliedSenderName = userRepository.findById(replied.getSenderId())
+          .map(User::getName)
+          .orElse("Người dùng");
+      replyPreview = ReplyPreview.builder()
+          .messageId(replied.getId())
+          .senderId(replied.getSenderId())
+          .senderName(repliedSenderName)
+          .contentPreview(buildShortPreview(replied))
+          .build();
+    }
+
     // Tạo & lưu Message entity
     Message message = Message.builder()
         .conversationId(conversationId)
@@ -79,6 +100,7 @@ public class MessageService {
         .type(request.getType())
         .mediaUrl(request.getMediaUrl())
         .createdAt(Instant.now())
+        .replyTo(replyPreview)
         .build();
 
     message = messageRepository.save(message);
@@ -145,6 +167,7 @@ public class MessageService {
         .seenAt(message.getSeenAt())
         .createdAt(message.getCreatedAt())
         .reactions(message.getReactions())
+        .replyTo(message.getReplyTo())
         .build();
 
     // Phát sự kiện lên Redis Pub/Sub để đồng bộ giữa các instance server
@@ -196,6 +219,7 @@ public class MessageService {
             .seenAt(msg.getSeenAt())
             .createdAt(msg.getCreatedAt())
             .reactions(msg.getReactions())
+            .replyTo(msg.getReplyTo())
             .build())
         .toList();
 
@@ -305,5 +329,20 @@ public class MessageService {
         conv.getParticipantIds(),
         reactionEvent
     );
+  }
+
+  /**
+   * Build content preview ngắn (≤80 ký tự) cho ReplyPreview snapshot (Sprint 4.4).
+   * Sanitize HTML tags và truncate; thay placeholder cho ảnh/file.
+   */
+  private String buildShortPreview(Message msg) {
+    if (msg.getType() == MessageType.IMAGE) return "📷 Ảnh";
+    if (msg.getType() == MessageType.FILE) return "📎 Tệp đính kèm";
+    String raw = msg.getContent() != null ? msg.getContent() : "";
+    String sanitized = raw.replaceAll("<[^>]*>", "");
+    if (sanitized.length() > 80) {
+      return sanitized.substring(0, 77) + "...";
+    }
+    return sanitized;
   }
 }

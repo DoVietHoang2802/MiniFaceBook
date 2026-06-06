@@ -273,6 +273,17 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Quyết định kiến trúc - VÌ SAO]** Dùng **embedded Map<userId,emoji>** trong Message thay vì collection riêng như Post module. Lý do: chat 1-1 tối đa 2 người react/tin → embed tối ưu (load cùng message, atomic 1 lần ghi, không cần phân trang). Post có thể hàng trăm reaction nên mới cần collection riêng + pagination. Event gửi nguyên map đầy đủ → client chỉ replace, không tính delta (đơn giản, idempotent).
   - [x] **[Verify]** Backend `mvn compile` PASS (exit 0), Frontend diagnostics 0 lỗi.
 
+- **Phiên 06/06/2026 (Sprint 4.4 ③ Reply to Message):**
+  - [x] **[Backend - Domain]** Tạo value object `ReplyPreview` (messageId, senderId, senderName, contentPreview) — denormalized snapshot, không lưu chỉ ID.
+  - [x] **[Backend - Persistence/DTO]** Thêm `replyTo` (`ReplyPreview`) vào `Message`/`MessageDocument`/`MessageResponse`; `replyToMessageId` (nullable) vào `MessageSendRequest`.
+  - [x] **[Backend - Service]** `MessageService.sendMessage()`: dựng snapshot từ tin gốc trước khi save, validate cùng conversation (chống reply chéo bằng id từ conv khác), helper `buildShortPreview` (≤80 ký tự, placeholder ảnh/file).
+  - [x] **[Frontend - Logic]** State `replyingTo`, WS payload thêm `replyToMessageId`, Optimistic UI dựng `replyTo` ngay tại client; clear `replyingTo` sau khi gửi.
+  - [x] **[Frontend - UX bền vững]** Khi tin server replace optimistic, **giữ replyTo của optimistic nếu server không trả về** — phòng trường hợp backend chưa restart.
+  - [x] **[Frontend - UI]** Banner "Đang trả lời X" trên input bar (có nút X hủy), nút Reply hover cạnh nút Smile, **quote tách phía trên bong bóng**, nền `slate-100` chữ `slate-500` trung tính, có nhãn "Bạn/Alice đã trả lời..." với icon ↳ — giống Zalo/Messenger.
+  - [x] **[Quyết định kiến trúc - VÌ SAO]** Lưu **snapshot** tin gốc thay vì chỉ ID. Lý do (giống `LastMessageSummary`): (1) hiển thị quote ngay khi load danh sách mà **không cần query thêm** (tránh N+1); (2) nếu tin gốc bị sửa/xóa sau, quote vẫn giữ nội dung tại thời điểm reply — đúng hành vi Messenger thật. Trade-off: tốn ~80 bytes/tin có reply, đổi lấy tốc độ + tính nhất quán lịch sử.
+  - [x] **[UI cải tiến từ feedback USER]** Quote ban đầu nhúng trong bong bóng tím → khó đọc. Tách ra ngoài + đặt phía trên bong bóng + đè bằng `mb-[-6px]+z-10` cho cảm giác liền mạch. Màu trung tính dễ đọc trên mọi nền (bong bóng tím hay trắng).
+  - [x] **[Verify]** Backend compile PASS, Frontend diagnostics 0 lỗi.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

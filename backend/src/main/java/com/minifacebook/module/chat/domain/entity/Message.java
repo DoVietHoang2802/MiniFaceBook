@@ -32,4 +32,7 @@ public class Message {
    * Dùng Map embedded vì chat 1-1 tối đa 2 người react → tối ưu, load cùng message.
    */
   private Map<String, String> reactions;
+
+  /** Snapshot tin nhắn được trả lời (null nếu không phải reply) - Sprint 4.4. */
+  private ReplyPreview replyTo;
 }

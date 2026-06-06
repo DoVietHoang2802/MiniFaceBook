@@ -1,6 +1,7 @@
 package com.minifacebook.module.chat.infrastructure.persistence.document;
 
 import com.minifacebook.module.chat.domain.entity.MessageType;
+import com.minifacebook.module.chat.domain.entity.ReplyPreview;
 import java.time.Instant;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -52,4 +53,7 @@ public class MessageDocument {
 
   /** Reactions embedded: key = userId, value = emoji (Sprint 4.4). */
   private Map<String, String> reactions;
+
+  /** Snapshot tin nhắn được trả lời (Sprint 4.4 - Reply). */
+  private ReplyPreview replyTo;
 }

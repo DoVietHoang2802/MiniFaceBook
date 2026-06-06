@@ -480,3 +480,19 @@
     *   *Designed a realtime message reaction system using an embedded `Map<userId, emoji>` document strategy — a deliberate departure from the separate-collection approach used for post reactions — optimizing for the 1-1 chat access pattern to eliminate extra queries and pagination. Implemented a toggle state machine with optimistic UI and full-map Redis Pub/Sub events for idempotent multi-device synchronization.*
 
 ---
+
+### 💬 Highlight 31: Reply to Message với Denormalized Snapshot Strategy (Chống N+1 & Bảo Toàn Lịch Sử)
+*   **Situation (Bối cảnh):** Tính năng trả lời tin nhắn cần hiển thị quote nội dung tin gốc phía trên bong bóng. Cách làm ngây thơ (chỉ lưu `replyToMessageId` rồi query tin gốc khi load) sẽ gây thêm query cho mỗi tin nhắn có reply trong danh sách — N tin reply = N query phụ. Ngoài ra, nếu tin gốc bị sửa/xóa sau, quote hiển thị sẽ bị thay đổi ý nghĩa hoặc vỡ hoàn toàn.
+*   **Task (Nhiệm vụ):** Thiết kế lưu trữ và hiển thị reply sao cho: (1) hiển thị quote không cần query thêm (0 extra query), (2) bảo toàn nội dung quote tại thời điểm reply bất kể tin gốc bị sửa/xóa sau, (3) UI trực quan dễ đọc trên cả bong bóng tím (mình) lẫn trắng (đối phương).
+*   **Action (Hành động):**
+    *   Thiết kế value object `ReplyPreview` (messageId + senderId + senderName + contentPreview ≤80 ký tự) lưu **nhúng thẳng** vào Message document — denormalized snapshot giống nguyên tắc `LastMessageSummary` đã dùng ở Sprint 4.2. Backend dựng snapshot từ tin gốc **tại thời điểm gửi reply**, không bao giờ đọc lại tin gốc khi load.
+    *   Validation: tin gốc phải thuộc **cùng conversationId** (chống reply chéo conversation → kẻ tấn công không thể quote tin từ hội thoại khác); helper `buildShortPreview` sanitize HTML + truncate + placeholder ảnh/file.
+    *   Frontend: tách quote **ra ngoài** bong bóng, đặt phía trên bằng khối `slate-100` trung tính + nhãn "Bạn/Alice đã trả lời..." — dễ đọc trên mọi nền. Bong bóng chính đè nhẹ lên quote (`z-10 + negative margin`) tạo cảm giác liền mạch giống Zalo. Optimistic UI giữ `replyTo` khi server chưa trả về (bền vững).
+*   **Result (Kết quả):**
+    *   Reply hiển thị với **0 extra database query** khi load danh sách tin nhắn, scale-ready bất kể số lượng reply.
+    *   Quote bất biến theo thời gian (immutable snapshot), giữ nguyên ngữ cảnh hội thoại chính xác.
+    *   UX trực quan, màu trung tính dễ đọc, nhận feedback tích cực ngay lần đầu test.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented a reply-to-message feature using denormalized snapshot embedding (ReplyPreview value object) to achieve zero-extra-query quote display and immutable conversation context preservation. Applied cross-conversation validation and neutral-color quote UI positioned above message bubbles for maximum readability.*
+
+---

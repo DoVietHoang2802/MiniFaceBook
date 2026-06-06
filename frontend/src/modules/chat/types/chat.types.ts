@@ -20,6 +20,13 @@ export interface ConversationResponse {
   createdAt: string;
 }
 
+export interface ReplyPreview {
+  messageId: string;
+  senderId: string;
+  senderName: string;
+  contentPreview: string;
+}
+
 export interface MessageResponse {
   id: string;
   conversationId: string;
@@ -32,6 +39,8 @@ export interface MessageResponse {
   createdAt: string;
   // Reactions: key = userId, value = emoji (Sprint 4.4)
   reactions?: Record<string, string>;
+  // Snapshot tin nhắn được trả lời (Sprint 4.4 - Reply)
+  replyTo?: ReplyPreview;
   // Trạng thái local cho Optimistic UI
   status?: 'PENDING' | 'SENT' | 'DELIVERED' | 'SEEN' | 'FAILED';
 }

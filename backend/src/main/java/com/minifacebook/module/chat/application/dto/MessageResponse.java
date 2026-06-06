@@ -1,6 +1,7 @@
 package com.minifacebook.module.chat.application.dto;
 
 import com.minifacebook.module.chat.domain.entity.MessageType;
+import com.minifacebook.module.chat.domain.entity.ReplyPreview;
 import java.time.Instant;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -28,4 +29,7 @@ public class MessageResponse {
 
   /** Reactions của tin nhắn: key = userId, value = emoji (Sprint 4.4). */
   private Map<String, String> reactions;
+
+  /** Snapshot tin nhắn được trả lời (Sprint 4.4 - Reply). */
+  private ReplyPreview replyTo;
 }

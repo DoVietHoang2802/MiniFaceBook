@@ -22,7 +22,9 @@ import {
   BellOff,
   MoreHorizontal,
   FileText,
-  Star
+  Star,
+  Reply,
+  CornerDownRight
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -63,6 +65,9 @@ export default function ChatPage({
 
   // Message Reactions: messageId đang mở picker cảm xúc (Sprint 4.4)
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
+
+  // Reply to Message: tin nhắn đang được chuẩn bị trả lời (Sprint 4.4)
+  const [replyingTo, setReplyingTo] = useState<MessageResponse | null>(null);
   
   // Loading states
   const [isLoadingConvs, setIsLoadingConvs] = useState(false);
@@ -234,7 +239,8 @@ export default function ChatPage({
                 const pendingIdx = prev.findIndex(m => m.status === 'PENDING' && m.content === newMsg.content);
                 if (pendingIdx > -1) {
                   const next = [...prev];
-                  next[pendingIdx] = { ...newMsg, status: 'SENT' };
+                  // Giữ replyTo của optimistic nếu server không trả về (bền vững khi backend cũ)
+                  next[pendingIdx] = { ...newMsg, status: 'SENT', replyTo: newMsg.replyTo ?? prev[pendingIdx].replyTo };
                   return next;
                 }
               }
@@ -472,7 +478,13 @@ export default function ChatPage({
       content: contentToSend,
       type: 'TEXT',
       createdAt: new Date().toISOString(),
-      status: 'PENDING' // hiển thị trạng thái đang gửi (✓ nhạt)
+      status: 'PENDING', // hiển thị trạng thái đang gửi (✓ nhạt)
+      replyTo: replyingTo ? {
+        messageId: replyingTo.id,
+        senderId: replyingTo.sender.id,
+        senderName: replyingTo.sender.name,
+        contentPreview: replyingTo.type === 'IMAGE' ? '📷 Ảnh' : replyingTo.type === 'FILE' ? '📎 Tệp đính kèm' : (replyingTo.content?.slice(0, 80) ?? '')
+      } : undefined
     };
 
     // Render tin nhắn ngay lập tức vào khung chat (Optimistic UI)
@@ -504,8 +516,11 @@ export default function ChatPage({
       webSocketService.send('/app/chat.send', {
         conversationId: activeConversation.id,
         content: contentToSend,
-        type: 'TEXT'
+        type: 'TEXT',
+        replyToMessageId: replyingTo?.id ?? null
       });
+      // Clear reply state sau khi gửi thành công
+      setReplyingTo(null);
     } catch {
       // Đổi trạng thái sang FAILED nếu mất mạng / lỗi gửi
       setMessages(prev => 
@@ -948,9 +963,21 @@ export default function ChatPage({
 
                           {/* Bong bóng tin nhắn */}
                           <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                            {/* Quote tin được trả lời - đặt PHÍA TRÊN bong bóng, màu trung tính (Sprint 4.4 - Reply) */}
+                            {m.replyTo && (
+                              <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-[-6px] z-0 max-w-full`}>
+                                <span className="text-[10px] text-slate-400 font-medium px-2 mb-0.5 flex items-center gap-1">
+                                  <CornerDownRight className="h-2.5 w-2.5" />
+                                  {isMe ? 'Bạn' : (activePartner?.name?.split(' ').pop() || '')} đã trả lời {m.replyTo.senderId === currentUser.id ? 'chính mình' : m.replyTo.senderName}
+                                </span>
+                                <div className={`px-3 pt-1.5 pb-3 rounded-2xl bg-slate-100 text-slate-500 text-xs max-w-[240px] ${isMe ? 'rounded-br-md' : 'rounded-bl-md'}`}>
+                                  <p className="truncate">{m.replyTo.contentPreview || '(tin nhắn trống)'}</p>
+                                </div>
+                              </div>
+                            )}
                             <div className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                               <div 
-                                className={`relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
+                                className={`relative z-10 px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
                                   isMe 
                                     ? 'bg-violet-600 text-white rounded-br-md' 
                                     : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
@@ -971,7 +998,18 @@ export default function ChatPage({
                               </div>
 
                               {/* Nút thả cảm xúc (hiện khi hover) */}
-                              <div className="relative shrink-0">
+                              <div className="relative shrink-0 flex items-center gap-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReplyingTo(m);
+                                    setReactionPickerFor(null);
+                                  }}
+                                  className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                  title="Trả lời"
+                                >
+                                  <Reply className="h-3.5 w-3.5" />
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => setReactionPickerFor(reactionPickerFor === m.id ? null : m.id)}
@@ -1070,6 +1108,29 @@ export default function ChatPage({
               {/* Element neo scroll */}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Banner "Replying to" trên Input bar (Sprint 4.4 - Reply) */}
+            {replyingTo && (
+              <div className="px-4 py-2 border-t border-slate-200 bg-violet-50/40 flex items-start gap-2">
+                <CornerDownRight className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
+                <div className="flex-grow min-w-0">
+                  <p className="text-[11px] font-bold text-violet-600">
+                    Đang trả lời {replyingTo.sender.id === currentUser.id ? 'chính bạn' : replyingTo.sender.name}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {replyingTo.type === 'IMAGE' ? '📷 Ảnh' : replyingTo.type === 'FILE' ? '📎 Tệp đính kèm' : replyingTo.content}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className="p-1 rounded-full hover:bg-slate-200 text-slate-500 transition cursor-pointer shrink-0"
+                  title="Hủy trả lời"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* Input bar */}
             <form 

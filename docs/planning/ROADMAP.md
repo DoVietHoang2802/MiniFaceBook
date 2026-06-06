@@ -207,10 +207,13 @@
         - [x] Frontend: Optimistic UI (cập nhật local ngay), nút 😊 hover, picker 6 emoji, badge ở góc bong bóng, overlay click-outside.
         - [x] **Verify:** Backend compile PASS, Frontend diagnostics 0 lỗi.
 
-    - [ ] **③ Reply to Message** — *(Ưu tiên 3)*
-        - [ ] Thêm field `replyToMessageId` (nullable) vào Message entity.
-        - [ ] UI: hover menu (desktop) / swipe right (mobile) để reply; hiển thị quote tin gốc phía trên bong bóng.
-        - [ ] 💡 *Cân nhắc (tùy thời gian):* Có thể hoãn sang Sprint 4.5 gộp chung nhóm "Message Management" (Edit/Delete) cho gọn.
+    - [x] **③ Reply to Message** — *(Ưu tiên 3)* ✅ **HOÀN THÀNH**
+        - [x] Thêm value object `ReplyPreview` (denormalized snapshot) + field `replyTo` vào Message/Document/Response; `replyToMessageId` vào SendRequest.
+        - [x] 🆕 **Quyết định thiết kế:** Lưu **snapshot** tin gốc (messageId + senderName + contentPreview) thay vì chỉ ID.
+            - *Lý do:* Hiển thị quote ngay khi load danh sách mà không query thêm (tránh N+1, cùng nguyên tắc `LastMessageSummary`). Nếu tin gốc bị sửa/xóa sau, quote giữ nội dung tại thời điểm reply (đúng hành vi Messenger).
+        - [x] Backend validate tin gốc cùng conversation (chống reply chéo), helper `buildShortPreview` (≤80 ký tự, placeholder ảnh/file).
+        - [x] Frontend: state `replyingTo`, Optimistic UI (giữ replyTo khi server không trả về), banner "Đang trả lời" trên input, nút Reply hover, **quote tách phía trên bong bóng màu trung tính** (dễ đọc trên mọi nền, giống Messenger/Zalo).
+        - [x] **Verify:** Backend compile PASS, FE 0 lỗi, test 2 trình duyệt OK.
 
     - [ ] **④ Media in Chat (ẢNH) — LÀM CUỐI CÙNG** ⛔
         - [ ] Gửi ảnh trong tin nhắn — `MessageType.IMAGE` + `mediaUrl` đã có sẵn trong entity.
@@ -324,7 +327,7 @@
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
-| 4 | Realtime Chat | 🟡 Đang làm | ~80% (4.1-4.3 + Typing + Reactions) |
+| 4 | Realtime Chat | 🟡 Đang làm | ~88% (4.1-4.3 + Typing + Reactions + Reply) |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
@@ -397,6 +400,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.2 | Jun 2026 | **Sprint 4.4 ③ Reply to Message HOÀN THÀNH 🎉**: Trả lời tin nhắn cụ thể. Backend: value object `ReplyPreview` (denormalized snapshot: messageId+senderName+contentPreview) + `replyTo` vào Message/Document/Response, `replyToMessageId` vào SendRequest, validate cùng conversation, helper `buildShortPreview`. Frontend: state `replyingTo`, banner "Đang trả lời" trên input, nút Reply hover, **quote tách phía trên bong bóng màu trung tính** (giống Messenger/Zalo, dễ đọc mọi nền). **Quyết định:** lưu snapshot thay ID → quote hiển thị không query thêm (tránh N+1), giữ nội dung tại thời điểm reply. Fix: optimistic giữ replyTo khi server không trả về. Verify: backend compile PASS, FE 0 lỗi. |
 | 3.1 | Jun 2026 | **Sprint 4.4 ② Message Reactions HOÀN THÀNH 🎉**: React emoji (❤️👍😂😮😢😡) cho từng tin nhắn qua STOMP `/app/chat.react` + Redis Pub/Sub type "REACTION" → `/user/queue/reactions`. Backend: thêm `reactions` (embedded Map userId→emoji) vào Message/Document/Response, `ReactionRequest`/`MessageReactionEvent` DTO, `MessageService.reactToMessage()` (toggle + validate 6 emoji), ErrorCode `INVALID_REACTION` (3006). Frontend: Optimistic UI, nút hover 😊, picker popup, badge góc bong bóng, overlay click-outside. **Quyết định:** embedded Map thay collection riêng (chat 1-1 tối đa 2 react → không cần pagination như Post). Verify: backend compile PASS, FE 0 lỗi. |
 | 3.0 | Jun 2026 | **Sprint 4.4 ① Typing Indicator HOÀN THÀNH 🎉**: Realtime "đang nhập" qua STOMP `/app/chat.typing` + Redis Pub/Sub `chat.room.*`. Backend: `TypingRequest`, `TypingEvent`, `TypingService` (Redis TTL self-healing), mapping controller, subscriber handle type "TYPING". Frontend: subscribe `/user/queue/typing`, throttle gửi 2s, hiển thị 3 nơi (header/bubble/list). **Cascade 4 mốc:** throttle 2s < stop 3s < Redis TTL 4s < auto-clear 5s (mỗi lớp dự phòng lớp trước). Điểm hay: Redis TTL đảm bảo indicator tự hết kẹt khi đóng tab (đồng bộ pattern Presence Sprint 4.1). Verify: backend compile PASS, FE 0 lỗi, test 2 trình duyệt OK. |
 | 2.9 | Jun 2026 | **Sprint 4.4 Planning Refinement (USER duyệt)**: Sắp xếp lại thứ tự triển khai 4.4 theo độ phức tạp tăng dần — ① Typing Indicator → ② Message Reactions → ③ Reply → ④ Media (LÀM CUỐI). Bổ sung các cải tiến đã duyệt: (1) Typing Indicator dùng **Redis TTL key** (auto-clear khi đóng tab, đồng bộ pattern Presence Sprint 4.1); (2) Media — tái dùng **Apache Tika magic-bytes scan** (security), **Optimistic UI blob preview**, **upload progress bar**; (3) Lưu ý atomic cho `ConversationService` (đã bỏ `@Transactional`). Quy tắc: mỗi tính năng phải chạy & test thành công trước khi sang tính năng kế. Đã xóa spec tạm `chat-three-column-layout` (feature 3-cột đã hoàn thành & commit). |

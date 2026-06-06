@@ -26,4 +26,7 @@ public class MessageSendRequest {
   private MessageType type;
 
   private String mediaUrl;
+
+  /** ID tin nhắn được trả lời (null nếu không phải reply) - Sprint 4.4. */
+  private String replyToMessageId;
 }
