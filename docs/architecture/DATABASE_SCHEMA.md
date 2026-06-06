@@ -127,9 +127,8 @@ Lưu trữ quan hệ kết bạn giữa người dùng. Sử dụng Compound Ind
 Lưu trữ các cuộc hội thoại 1-1 giữa 2 người dùng. Mỗi cặp user chỉ có 1 conversation duy nhất.
 
 *   **Indexes:**
-    *   `participantIds` (Multikey Index) → Tìm conversations của 1 user.
+    *   `participants_idx` — `participantIds` (Multikey Index, **non-unique**) → Tìm conversations của 1 user. Unique enforcement handled at application level via `findByParticipantIds` + `DuplicateKeyException` catch.
     *   `lastMessageAt` (Descending) → Sort theo tin nhắn mới nhất (conversation list).
-    *   `participantIds` (Compound Unique - sorted array) → Chặn duplicate conversation giữa 2 user.
 
 | Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
 | :--- | :--- | :--- |

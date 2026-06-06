@@ -1,9 +1,42 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 06/06/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 4.3 HOÀN THÀNH (Messaging Logic & Realtime Delivery). Tổng tiến độ **~75%**. Đã thiết lập hoàn chỉnh cơ chế truyền tải tin nhắn thời gian thực qua WebSockets (STOMP), đồng bộ hóa đa máy chủ qua Redis Pub/Sub, sửa lỗi định tuyến socket (user ID to email mismatch), tích hợp Optimistic UI và đồng bộ trạng thái động (SENT -> DELIVERED -> SEEN). Sẵn sàng vào Sprint 4.4 (Chat UX Enhancements).
+## 🏁 Trạng thái hiện tại: ✅ SPRINT 4.3 HOÀN THÀNH + Chat UI Refactor & Bug Fixes. Tổng tiến độ **~78%**. Chat hoạt động ổn định, giao diện ChatPage đã được refactor sang layout 2 cột mới (Facebook Messenger style), sửa 4 bug critical (MongoDB index, WriteConflict, infinite loop, crash filteredFriends). Sẵn sàng vào Sprint 4.4 (Typing Indicator, Read Receipts UI, Media Messages).
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (06/06/2026)
+
+### Công việc đã thực hiện (6 thay đổi):
+
+1. **Chat UI Refactor** (`ChatPage.tsx`): Tái cấu trúc layout sang 2 cột mới với Stories carousel, Filter tabs (All/Unread/Groups/Requests), Search bar tròn, Input bar với icons (Emoji/Image/Mic), Chat header với icons (Search/Phone/Video/More).
+
+2. **MongoDB Fix**: Xóa index sai `participants_unique_idx` (unique trên multikey array field `participantIds` → chặn user có >1 conversation). Đổi sang `participants_idx` (non-unique). Files: `ConversationDocument.java`, `Migration_20260605_AddChatIndexes.java`.
+
+3. **Backend Fix**: Bỏ `@Transactional` khỏi 3 methods trong `ConversationService` (`getOrCreateConversation`, `getConversations`, `markAllAsSeen`) để fix WriteConflict trên single-node replica set khi có concurrent requests.
+
+4. **Frontend Fix**: Di chuyển `onClearInitialRecipient()` vào `finally` block để ngăn infinite loop khi API call fails.
+
+5. **Frontend Fix**: Thêm optional chaining `f.name?.toLowerCase()` trong `filteredFriends` để tránh crash khi friend object thiếu field name.
+
+6. **Global CSS**: Thêm `html { font-size: 14px }` vào `index.css` để compact toàn bộ UI ~12%.
+
+### Files đã sửa:
+- `frontend/src/modules/chat/components/ChatPage.tsx`
+- `backend/src/main/java/com/minifacebook/module/chat/application/service/ConversationService.java`
+- `backend/src/main/java/com/minifacebook/module/chat/infrastructure/persistence/document/ConversationDocument.java`
+- `backend/src/main/java/com/minifacebook/infrastructure/persistence/migration/Migration_20260605_AddChatIndexes.java`
+- `frontend/src/index.css`
+
+### Known Issues:
+- **Duplicate conversation** (extremely rare): Race condition khi 2 user tạo conversation đồng thời. Code-level prevention đã có (DuplicateKeyException catch + retry). Khuyến nghị production: thêm field `participantKey` (sorted concat of IDs) với unique index.
+
+### Bước tiếp theo (Sprint 4.4 - Chat UX Enhancements):
+- Typing Indicator (WebSocket broadcast "user is typing...")
+- Read Receipts UI (hiển thị avatar nhỏ dưới tin nhắn đã seen)
+- Media Messages (gửi ảnh/file trong chat qua Cloudinary)
 
 ---
 
@@ -16,7 +49,7 @@
 
 ---
 
-### ✅ Công việc đã hoàn thành (Sprint 1.1 -> Sprint 2.1)
+### ✅ Công việc đã hoàn thành (Sprint 1.1 -> Sprint 4.3)
 
 #### A. Backend (Spring Boot 3.x)
 - **Domain Modeling & Persistence:** Thiết kế domain model `User` độc lập framework, triển khai `UserRepositoryImpl` mapping qua `UserDocument` lưu trong MongoDB.
@@ -27,92 +60,26 @@
 - **ArchUnit & Security Auditing:** Sắp xếp phân lớp Clean Architecture đạt chuẩn 100% test case ArchUnit. Vá thành công lỗ hổng bảo mật vô hiệu hóa token trong database (`revoked: true`) khi người dùng logout.
 - **Media Upload Bảo mật (Sprint 1.4):** Tích hợp Cloudinary kết hợp bộ quét nhị phân **Apache Tika (Magic Bytes)** ngăn chặn hoàn toàn việc tải lên file độc hại giả dạng đuôi ảnh. Thiết lập xử lý ngoại lệ `MaxUploadSizeExceededException` mượt mà cho file >5MB.
 - **Tái cấu trúc Sạch - Shared Core (Sprint 1.4):** Tránh phụ thuộc chéo khi bước sang Phase 2 bằng cách đưa `MediaService` (Domain Interface) và `CloudinaryService` (Adapter) ra phân vùng `shared` dùng chung. Được xác thực hoàn toàn qua ArchUnit với 0 lỗi vi phạm.
-- **Hạ tầng bài viết & API (Sprint 2.1):** Tạo module `post` hoàn chỉnh chuẩn Clean Architecture. Hỗ trợ tạo bài viết (`POST /api/posts`) có nhiều ảnh qua Cloudinary và API lấy bảng tin phân trang (`GET /api/posts/newsfeed`).
-- **Nâng cấp Cấu hình File Upload (Sprint 2.1 - Part 4):** Thiết lập `spring.servlet.multipart` trong `application.yml` cho phép file lên tới 5MB và request tối đa 25MB, ngăn ngừa triệt để lỗi Tomcat `ERR_CONNECTION_RESET`.
+- **Chat System (Phase 4):** WebSocket STOMP + SockJS, Redis Presence/Pub/Sub, Conversation & Message CRUD, real-time delivery với status transitions (SENT→DELIVERED→SEEN), DuplicateKeyException catch chống race condition.
 
 #### B. Frontend (React 19 + Vite + TypeScript)
-- **Kiến trúc Modular Phân Lớp:** Tổ chức dự án theo chuẩn [docs/architecture/FRONTEND_ARCHITECTURE.md](file:///d:/Project_MiniFace/docs/architecture/FRONTEND_ARCHITECTURE.md) với core, components, và modules nghiệp vụ khép kín.
+- **Kiến trúc Modular Phân Lớp:** Tổ chức dự án theo chuẩn với core, components, và modules nghiệp vụ khép kín.
 - **Form & Zod Validations:** Thiết kế `LoginForm`, `RegisterForm` và `authSchema` đảm bảo lọc và chuẩn hóa dữ liệu sạch từ Client-side.
-- **Silent Refresh & Axios Mutex Lock:** Triển khai Axios Client có Interceptor tự động xoay vòng Access Token ngầm sử dụng cơ chế hàng chờ Promise Queue (`failedQueue`) và cờ hiệu `isRefreshing` để triệt tiêu lỗi Token Refresh Storm.
-- **TS verbatimModuleSyntax Optimization:** Giải quyết triệt để lỗi biên dịch ES module runtime bằng cách phân tách độc lập import type.
-- **Premium UI/UX Integration (Sprint 1.3 & 1.4):**
-  - Khắc phục lỗi responsive tràn Viewport trên mọi dòng máy di động.
-  - Trang cá nhân [ProfilePage.tsx](file:///d:/Project_MiniFace/frontend/src/modules/profile/components/ProfilePage.tsx) với các hiệu ứng Glassmorphic Glow, Avatar Ripple Pulse và uploader kéo thả trực quan.
-- **Giao diện 3 Cột Premium & Vi Chuyển Động (Sprint 2.1 - Đã Tối Ưu Tối Thượng):**
-  - Tái cấu trúc trang chủ `App.tsx` thành hệ lưới 3 cột hoàn chỉnh khớp 100% bản thiết kế `GiaoDienChinh.png` và `TrangChu4.png`.
-  - Thiết kế **Responsive Collapsing Sidebar** trái: Tự động co dãn cực mịn sang **Icon-Only Mode (`w-[80px]`)** trên tablet/laptop và bung rộng đầy đủ nhãn chữ (`275px`) trên màn hình lớn với chuyển động 300ms.
-  - Cố định hoàn hảo tầm mắt hai cột biên nhờ thuộc tính `sticky top-6 h-[calc(100vh-48px)]` giúp tăng tối đa khả năng tập trung thị giác vào feed chính.
-  - Suggested Friends cột phải chứa 5 gương mặt từ mockup cùng vi chuyển động `Add Friend` giả lập loading và chuyển `Requested` viền lục bảo.
-  - Tích hợp cơ chế **Placeholder Toast Alerts**: Bất kỳ nút bấm hoặc chức năng nào chưa liên kết API đều kích hoạt Floating Glassmorphic Toast lơ lửng thông báo lộ trình tinh tế, triệt tiêu mọi điểm chết UI.
-- **Vizo Light Slate Aesthetics & Notion Theme (Sprint 2.1 - Part 3):**
-  - Đồng bộ toàn bộ hệ màu sang sáng Notion cao cấp HSL (`bg-slate-50`, `bg-white`, `border-slate-200/80`).
-  - Lược bỏ cấu trúc Story rườm rà tập trung 100% vào Feed tối giản.
-  - Nút Like active đổi sắc hồng rực rỡ kèm uploader `CreatePostCard` có 4 biểu tượng màu Notion quyến rũ.
-- **Client-side File Validation (Sprint 2.1 - Part 4):**
-  - Viết logic kiểm định dung lượng ảnh tại máy khách trong `CreatePostCard.tsx`, lọc bỏ ảnh lớn hơn 5MB trước khi upload và kích hoạt Toast cảnh báo trực quan cho người dùng.
-  - Thiết kế **Responsive Collapsing Sidebar** trái và các thành phần sticky tối ưu hóa trải nghiệm người dùng.
-- **Vizo Light Slate Aesthetics & Notion Theme:** Đồng bộ toàn bộ hệ màu sang sáng Notion cao cấp HSL.
-- **Client-side File Validation & Compression (Sprint 2.2):**
-  - **Magic UX Image Compression:** Tích hợp `browser-image-compression` chạy bằng Web Worker. Nới lỏng giới hạn Upload lên **20MB**, tự động nén xuống <1MB, ép sang chuẩn WebP, bypass GIF, giảm tải OOM server 90%.
+- **Silent Refresh & Axios Mutex Lock:** Triển khai Axios Client có Interceptor tự động xoay vòng Access Token ngầm.
+- **Chat UI (Phase 4):** 2-column layout Facebook Messenger style, Stories carousel, Filter tabs, real-time messaging với Optimistic UI, STOMP WebSocket integration.
 
-#### C. Tổng kết Tình trạng Hiện tại (Current Status)
-
-Dưới đây là bản tóm tắt toàn diện cho phiên làm việc hiện tại, đóng vai trò là "la bàn" để bạn có thể tiếp tục phát triển dự án **MiniFaceBook** trong tương lai.
-
-### 1. Các tính năng đã hoàn thiện (Sprint 2.2 & Performance Optimization)
-*   **Hệ thống Bình luận & Reactions:** Triển khai kỹ thuật **Optimistic UI Updates** bằng `React Query`, mang lại độ trễ tương tác 0ms. Áp dụng cơ chế "Invisible Padding Bridge" chống rớt popup.
-*   **Magic UX Image Compression (Highlight 18):** 
-    *   Tích hợp thành công `browser-image-compression` chạy bằng Web Worker. 
-    *   Nới lỏng giới hạn Upload lên **20MB** để đón nhận mọi ảnh to từ điện thoại. 
-    *   Âm thầm nén xuống `<1MB`, ép sang chuẩn **WebP** và Bypass ảnh **GIF**.
-    *   Giải quyết triệt để bài toán OOM cho Server và tiết kiệm 90% chi phí Cloudinary.
-
-### 2. Công cụ & Quy trình vận hành (AI-First Workflow)
-*   Mọi thông số kỹ thuật (Bouncy, Optimistic, Magic Compression) đều được quy chuẩn hóa trong `UI_UX_DESIGN.md`.
-*   Hệ thống Update Full Protocol chạy hoàn hảo.
-*   Dự án đang ở trạng thái sạch sẽ 100%, sẵn sàng bước sang Phase mới.
-
-#### D. Cuộc Đại Phẫu Thuật Kiến Trúc - Architectural Pivot
-- **Loại bỏ Over-Engineering:** Đã rà soát và xóa sổ **100%** các từ khóa, kế hoạch và thiết kế liên quan đến **Neo4j, ElasticSearch, Kafka, RabbitMQ, Prometheus, và Grafana** khỏi tất cả các tài liệu dự án.
-- **Chốt Kiến trúc Thực dụng:** Hệ thống hiện tại và tương lai gần được chốt cứng ở mô hình **Modular Monolith** chạy trên 1 VPS duy nhất, sử dụng **MongoDB** làm cơ sở dữ liệu chính và **Redis** cho 3 use case: Presence Online/Offline (Phase 4.1), JWT Blacklist (Phase 4.1), Cache profile/feed (Phase 6.1). Rate Limiting giữ Bucket4j in-memory. Redis Pub/Sub chưa làm — chỉ cần khi scale lên 2+ server.
-- **Xử lý Tác vụ nền:** Thay thế toàn bộ định hướng dùng Message Broker (Kafka) bằng **Spring `@Async`**.
-- **Tiêu chuẩn Scale:** Đã thống nhất chỉ bổ sung công nghệ mới khi hệ thống thực sự vượt ngưỡng 5.000 users và có chỉ số đo lường nghẽn cổ chai cụ thể. Bắt buộc sử dụng **K6 Load Testing** trước khi go-live Production.
-- **Docker Clean up:** Đã xóa container `neo4j` khỏi `docker-compose.yml` để tiết kiệm RAM cho môi trường dev.
+#### C. Kiến trúc & Hạ tầng
+- **Modular Monolith** chạy trên 1 VPS duy nhất, MongoDB (chính) + Redis (Presence, JWT Blacklist, Unread Count, Pub/Sub).
+- **MongoDB Replica Set (`rs0`)** hỗ trợ transactions.
+- **Docker Compose** orchestration hoàn chỉnh.
 
 ---
 
-### 🚀 Nhiệm vụ tiếp theo (Sprint 3.3 - User Search & Discovery)
+### 🚀 Nhiệm vụ tiếp theo (Sprint 4.4 - Chat UX Enhancements)
 
-**Đã hoàn thành Sprint 3.1 (Friend Request System):**
-- Module `friendship` hoàn chỉnh 4 phân lớp Clean Architecture.
-- 4 API: gửi/hủy/chấp nhận/từ chối lời mời kết bạn.
-- Việt hóa toàn bộ message lỗi + Swagger.
-
-**Đã hoàn thành Sprint 3.2 (Friend List & Management):**
-- 6 API: danh sách bạn bè, lời mời (pending/sent), unfriend, block, unblock.
-- Cơ chế Block: requesterId=người chặn, addresseeId=người bị chặn. Chỉ người chặn gỡ được.
-- Tích hợp `sentByMe` + batch-load `findAllByIds` chống N+1.
-
-**Đã hoàn thành Sprint 3.3 (User Search & Discovery - Backend):**
-- Fix bug FE-BE mismatch: thêm field `name` (họ tên) xuyên suốt Backend.
-- API `GET /friends/search?q=&page=&size=`: search theo tên, enrich relationshipStatus (NONE/PENDING_SENT/PENDING_RECEIVED/FRIEND/BLOCKED), loại self, ẩn người chặn mình.
-
-**Đã hoàn thành UI Phase 3 (Frontend):**
-- Module `friends`: `FriendsPage` 4 tab (Tìm kiếm / Bạn bè / Lời mời / Đã gửi).
-- Search debounce 300ms, nút động theo relationshipStatus, Optimistic UI.
-- Tích hợp vào App.tsx (menu "Bạn bè").
-
-**Đã hoàn thành Sprint 3.4 (Friend Suggestions):**
-- Thuật toán Mutual Friends (bạn của bạn), API `GET /friends/suggestions`.
-- Sidebar "People You May Know" dùng data thật, Add Friend Optimistic.
-
-**Đã hoàn thành Tech Debt #1, #2, #4, #5** (xem ROADMAP). Còn lại: #3 (AppException Post), #6 (tối ưu phân trang search - khi scale).
-
-**Tiếp theo - PHASE 4: REALTIME CHAT** 💬 (trái tim dự án):
-- ✅ Sprint 4.1 (WebSocket Foundation): **HOÀN THÀNH** (Spring WebSocket + STOMP, SockJS fallback, Redis Presence TTL Online/Offline, JWT Blacklist Redis, JWT Cookie handshake auth, Frontend STOMP integration, ArchUnit pass, benchmark Redis nhanh ~40x MongoDB).
-- Sprint 4.2: Chat Infrastructure (Conversation + Message entity, denormalize lastMessage). **← HOÀN THÀNH**
-- Sprint 4.3: Messaging Logic (Sent/Delivered/Seen, WebSocket integration). **← HOÀN THÀNH**
-- Sprint 4.4: Chat UX (Typing indicator, reactions, reply, media). **← SẮP LÀM**
+- **Typing Indicator:** Broadcast event "user is typing" qua WebSocket, hiển thị animation "..." trong chat.
+- **Read Receipts UI:** Avatar nhỏ dưới tin nhắn đã seen (giống Messenger).
+- **Media Messages:** Gửi ảnh/file trong chat, upload qua Cloudinary, preview inline.
 - Sprint 4.5: Message Management (edit/delete, infinite scroll).
 
 ---

@@ -317,6 +317,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 | :--- | :--- | :--- | :--- |
 | **NoClassDefFoundError: ConversationRepository** | Lớp đã tồn tại nhưng surefire test runner không nạp được do xung đột cache của trình biên dịch maven. | Thực hiện dọn dẹp build target cũ (`mvn clean test-compile`) và biên dịch lại từ đầu. | Biên dịch thành công, toàn bộ unit tests hoạt động trơn tru. |
 
+- **Phiên 06/06/2026 (Chat UI Refactor + Critical Bug Fixes):**
+  - [x] **[Frontend/UI Refactor]** Tái cấu trúc `ChatPage.tsx` sang layout 2 cột mới (Facebook Messenger style): Stories carousel phía trên, Filter tabs (All/Unread/Groups/Requests), Search bar tròn, Input bar với icons (Emoji/Image/Mic), Chat header với icons (Search/Phone/Video/More).
+  - [x] **[MongoDB Fix]** Xóa index sai `participants_unique_idx` (unique trên multikey array field `participantIds` → chặn user có >1 conversation). Đổi sang `participants_idx` (non-unique). Unique enforcement handled at application level via `findByParticipantIds` + `DuplicateKeyException` catch. Files: `ConversationDocument.java`, `Migration_20260605_AddChatIndexes.java`.
+  - [x] **[Backend Fix - WriteConflict]** Bỏ `@Transactional` khỏi 3 methods trong `ConversationService` (`getOrCreateConversation`, `getConversations`, `markAllAsSeen`) để fix WriteConflict trên single-node replica set khi có concurrent requests. Các methods này chỉ thao tác single-document operations nên không cần transaction.
+  - [x] **[Frontend Fix - Infinite Loop]** Di chuyển `onClearInitialRecipient()` vào `finally` block để ngăn infinite loop khi API call fails (trước đó chỉ clear khi success → state không reset → component re-render liên tục gọi API).
+  - [x] **[Frontend Fix - Crash]** Thêm optional chaining `f.name?.toLowerCase()` trong `filteredFriends` để tránh crash khi friend object thiếu field name.
+  - [x] **[Global CSS]** Thêm `html { font-size: 14px }` vào `index.css` để compact toàn bộ UI ~12%, phù hợp với mật độ thông tin cao của giao diện chat.
+
 - **Phiên 06/06/2026 (Sprint 4.3 - Real-Time Messaging & Status Transitions):**
   - [x] **[Real-time Messaging]** Tích hợp WebSocket (STOMP/SockJS) để truyền tải và đồng bộ tin nhắn thời gian thực.
   - [x] **[Đồng bộ hóa đa máy chủ]** Triển khai Redis Pub/Sub (`ChatRedisPublisher`, `ChatRedisSubscriber`) để đồng bộ tin nhắn (`NEW_MESSAGE`) và trạng thái (`DELIVERED`, `SEEN`) giữa các WebSocket session chạy trên nhiều cụm server.
