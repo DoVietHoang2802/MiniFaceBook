@@ -2,6 +2,7 @@ package com.minifacebook.module.chat.infrastructure.persistence.document;
 
 import com.minifacebook.module.chat.domain.entity.MessageType;
 import java.time.Instant;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -48,4 +49,7 @@ public class MessageDocument {
 
   @CreatedDate
   private Instant createdAt;
+
+  /** Reactions embedded: key = userId, value = emoji (Sprint 4.4). */
+  private Map<String, String> reactions;
 }

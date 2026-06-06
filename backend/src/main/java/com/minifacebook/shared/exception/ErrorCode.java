@@ -54,6 +54,7 @@ public enum ErrorCode {
   CANNOT_CHAT_SELF(3003, "Bạn không thể tự trò chuyện với chính mình", HttpStatus.BAD_REQUEST),
   NOT_FRIENDS(3004, "Hai người phải là bạn bè mới có thể nhắn tin", HttpStatus.BAD_REQUEST),
   MESSAGE_NOT_FOUND(3005, "Không tìm thấy tin nhắn", HttpStatus.NOT_FOUND),
+  INVALID_REACTION(3006, "Cảm xúc không hợp lệ", HttpStatus.BAD_REQUEST),
   ;
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {

@@ -2,6 +2,7 @@ package com.minifacebook.module.chat.application.service;
 
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
+import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageSendRequest;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
@@ -16,8 +17,10 @@ import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,6 +44,9 @@ public class MessageService {
   private final UserRepository userRepository;
   private final StringRedisTemplate redisTemplate;
   private final ChatRedisPublisher chatRedisPublisher;
+
+  /** Bộ cảm xúc hợp lệ cho tin nhắn (Sprint 4.4 - Message Reactions). */
+  private static final Set<String> ALLOWED_EMOJIS = Set.of("❤️", "👍", "😂", "😮", "😢", "😡");
 
   private User getUserByEmail(String email) {
     return userRepository
@@ -138,6 +144,7 @@ public class MessageService {
         .deliveredAt(message.getDeliveredAt())
         .seenAt(message.getSeenAt())
         .createdAt(message.getCreatedAt())
+        .reactions(message.getReactions())
         .build();
 
     // Phát sự kiện lên Redis Pub/Sub để đồng bộ giữa các instance server
@@ -188,6 +195,7 @@ public class MessageService {
             .deliveredAt(msg.getDeliveredAt())
             .seenAt(msg.getSeenAt())
             .createdAt(msg.getCreatedAt())
+            .reactions(msg.getReactions())
             .build())
         .toList();
 
@@ -236,5 +244,66 @@ public class MessageService {
           statusEvent
       );
     }
+  }
+
+  /**
+   * Thả / gỡ cảm xúc cho một tin nhắn (Sprint 4.4 - Message Reactions).
+   *
+   * <p>Toggle logic:
+   *
+   * <ul>
+   *   <li>Chưa react → thêm emoji
+   *   <li>React lại đúng emoji đang có → gỡ bỏ (toggle off)
+   *   <li>React emoji khác → thay thế
+   * </ul>
+   *
+   * <p>Phát event tới tất cả participant (kèm bản đồ reactions đầy đủ) để đồng bộ realtime.
+   */
+  @Transactional
+  public void reactToMessage(String email, String messageId, String emoji) {
+    if (!ALLOWED_EMOJIS.contains(emoji)) {
+      throw new AppException(ErrorCode.INVALID_REACTION);
+    }
+
+    User user = getUserByEmail(email);
+    String userId = user.getId();
+
+    Message message = messageRepository.findById(messageId)
+        .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+
+    Conversation conv = conversationRepository.findById(message.getConversationId())
+        .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+    if (!conv.getParticipantIds().contains(userId)) {
+      throw new AppException(ErrorCode.NOT_A_PARTICIPANT);
+    }
+
+    Map<String, String> reactions = message.getReactions();
+    if (reactions == null) {
+      reactions = new HashMap<>();
+    }
+
+    // Toggle: react lại cùng emoji thì gỡ, ngược lại thêm/thay
+    if (emoji.equals(reactions.get(userId))) {
+      reactions.remove(userId);
+    } else {
+      reactions.put(userId, emoji);
+    }
+
+    message.setReactions(reactions);
+    messageRepository.save(message);
+
+    // Phát event tới tất cả participant (cả người react để đồng bộ đa thiết bị)
+    MessageReactionEvent reactionEvent = MessageReactionEvent.builder()
+        .conversationId(message.getConversationId())
+        .messageId(message.getId())
+        .reactions(reactions)
+        .build();
+
+    chatRedisPublisher.publishReaction(
+        message.getConversationId(),
+        conv.getParticipantIds(),
+        reactionEvent
+    );
   }
 }

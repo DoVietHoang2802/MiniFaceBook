@@ -263,6 +263,16 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
     - *Reuse Redis Pub/Sub `chat.room.*` có sẵn:* không tạo channel mới, chỉ thêm `type="TYPING"` vào event — multi-server scale-ready miễn phí.
   - [x] **[Verify]** Backend `mvn compile` PASS (exit 0), Frontend diagnostics 0 lỗi. Test thực tế 2 trình duyệt: typing hiện/ẩn đúng, đóng tab tự hết kẹt. Đã xóa spec tạm `chat-three-column-layout`.
 
+- **Phiên 06/06/2026 (Sprint 4.4 ② Message Reactions):**
+  - [x] **[Backend - Domain/Persistence]** Thêm field `reactions` (`Map<String,String>` userId→emoji, embedded) vào `Message`, `MessageDocument`, `MessageResponse`. MapStruct auto-map nên persist tự động khi save.
+  - [x] **[Backend - DTO]** Tạo `ReactionRequest` (messageId + emoji, nhận qua STOMP) và `MessageReactionEvent` (gửi nguyên map reactions đầy đủ tới client).
+  - [x] **[Backend - Service]** `MessageService.reactToMessage()`: validate emoji thuộc `ALLOWED_EMOJIS` (6 loại), validate participant, **toggle logic** (thả lại cùng emoji = gỡ, khác = thay, chưa có = thêm), save + publish Pub/Sub tới cả 2 participant.
+  - [x] **[Backend - Pub/Sub]** `ChatRedisPublisher.publishReaction()` (type "REACTION") + `ChatRedisSubscriber` đẩy tới `/user/queue/reactions`. STOMP mapping `/app/chat.react` trong `WebSocketChatController`.
+  - [x] **[Backend - ErrorCode]** Thêm `INVALID_REACTION` (3006).
+  - [x] **[Frontend]** Subscribe `/user/queue/reactions`; `handleReact()` Optimistic UI (toggle local ngay); UI nút 😊 hover, picker popup 6 emoji, badge reactions ở góc bong bóng, overlay click-outside đóng picker.
+  - [x] **[Quyết định kiến trúc - VÌ SAO]** Dùng **embedded Map<userId,emoji>** trong Message thay vì collection riêng như Post module. Lý do: chat 1-1 tối đa 2 người react/tin → embed tối ưu (load cùng message, atomic 1 lần ghi, không cần phân trang). Post có thể hàng trăm reaction nên mới cần collection riêng + pagination. Event gửi nguyên map đầy đủ → client chỉ replace, không tính delta (đơn giản, idempotent).
+  - [x] **[Verify]** Backend `mvn compile` PASS (exit 0), Frontend diagnostics 0 lỗi.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

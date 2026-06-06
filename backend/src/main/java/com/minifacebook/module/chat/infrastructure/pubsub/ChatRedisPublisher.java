@@ -2,6 +2,7 @@ package com.minifacebook.module.chat.infrastructure.pubsub;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minifacebook.module.chat.application.dto.ChatPubSubEvent;
+import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
 import java.util.List;
@@ -66,6 +67,23 @@ public class ChatRedisPublisher {
       publish(conversationId, event);
     } catch (Exception e) {
       log.error("Lỗi khi serialize MessageStatusEvent", e);
+    }
+  }
+
+  /**
+   * Publish sự kiện cập nhật reaction của tin nhắn (Sprint 4.4).
+   */
+  public void publishReaction(String conversationId, List<String> participantIds, MessageReactionEvent reactionEvent) {
+    try {
+      String payload = objectMapper.writeValueAsString(reactionEvent);
+      ChatPubSubEvent event = ChatPubSubEvent.builder()
+          .type("REACTION")
+          .participantIds(participantIds)
+          .payloadJson(payload)
+          .build();
+      publish(conversationId, event);
+    } catch (Exception e) {
+      log.error("Lỗi khi serialize MessageReactionEvent", e);
     }
   }
 }

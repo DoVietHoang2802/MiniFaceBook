@@ -2,6 +2,7 @@ package com.minifacebook.module.chat.application.dto;
 
 import com.minifacebook.module.chat.domain.entity.MessageType;
 import java.time.Instant;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,4 +25,7 @@ public class MessageResponse {
   private Instant deliveredAt;
   private Instant seenAt;
   private Instant createdAt;
+
+  /** Reactions của tin nhắn: key = userId, value = emoji (Sprint 4.4). */
+  private Map<String, String> reactions;
 }

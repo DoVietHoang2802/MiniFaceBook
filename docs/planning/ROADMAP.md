@@ -198,10 +198,14 @@
         - [x] Cleanup timers khi unmount + auto-scroll khi đối phương bắt đầu gõ.
         - [x] **Verify:** Backend compile PASS, Frontend diagnostics 0 lỗi. Test thực tế 2 trình duyệt: typing hiện/ẩn đúng, đóng tab tự hết kẹt.
 
-    - [ ] **② Message Reactions** — *(Ưu tiên 2: reuse logic Phase 2)*
-        - [ ] React emoji cho từng tin nhắn (❤️ 👍 😂 😮 😢 😡).
-        - [ ] Tái sử dụng logic Reaction từ **Post module (Phase 2)** — embedded/sub-collection trong Message entity.
-        - [ ] Emit realtime qua WebSocket để 2 bên thấy reaction ngay.
+    - [x] **② Message Reactions** — *(Ưu tiên 2: reuse logic Phase 2)* ✅ **HOÀN THÀNH**
+        - [x] React emoji cho từng tin nhắn (❤️ 👍 😂 😮 😢 😡) qua STOMP `/app/chat.react`.
+        - [x] 🆕 **Quyết định thiết kế:** Dùng **embedded Map<userId, emoji>** trong Message (KHÁC Post dùng collection riêng).
+            - *Lý do:* Chat 1-1 tối đa 2 người react/tin → embed tối ưu (load cùng message, atomic, không cần phân trang). Post có hàng trăm reaction nên mới cần collection riêng + pagination.
+        - [x] Toggle logic: thả lại đúng emoji đang có → gỡ; emoji khác → thay; chưa có → thêm.
+        - [x] Emit realtime qua Redis Pub/Sub (type "REACTION") → `/user/queue/reactions` cho cả 2 participant (đồng bộ đa thiết bị). Gửi nguyên map đầy đủ → client chỉ replace, không tính delta.
+        - [x] Frontend: Optimistic UI (cập nhật local ngay), nút 😊 hover, picker 6 emoji, badge ở góc bong bóng, overlay click-outside.
+        - [x] **Verify:** Backend compile PASS, Frontend diagnostics 0 lỗi.
 
     - [ ] **③ Reply to Message** — *(Ưu tiên 3)*
         - [ ] Thêm field `replyToMessageId` (nullable) vào Message entity.
@@ -320,7 +324,7 @@
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
-| 4 | Realtime Chat | 🟡 Đang làm | ~70% (4.1-4.3 xong + Typing Indicator) |
+| 4 | Realtime Chat | 🟡 Đang làm | ~80% (4.1-4.3 + Typing + Reactions) |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
@@ -393,6 +397,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.1 | Jun 2026 | **Sprint 4.4 ② Message Reactions HOÀN THÀNH 🎉**: React emoji (❤️👍😂😮😢😡) cho từng tin nhắn qua STOMP `/app/chat.react` + Redis Pub/Sub type "REACTION" → `/user/queue/reactions`. Backend: thêm `reactions` (embedded Map userId→emoji) vào Message/Document/Response, `ReactionRequest`/`MessageReactionEvent` DTO, `MessageService.reactToMessage()` (toggle + validate 6 emoji), ErrorCode `INVALID_REACTION` (3006). Frontend: Optimistic UI, nút hover 😊, picker popup, badge góc bong bóng, overlay click-outside. **Quyết định:** embedded Map thay collection riêng (chat 1-1 tối đa 2 react → không cần pagination như Post). Verify: backend compile PASS, FE 0 lỗi. |
 | 3.0 | Jun 2026 | **Sprint 4.4 ① Typing Indicator HOÀN THÀNH 🎉**: Realtime "đang nhập" qua STOMP `/app/chat.typing` + Redis Pub/Sub `chat.room.*`. Backend: `TypingRequest`, `TypingEvent`, `TypingService` (Redis TTL self-healing), mapping controller, subscriber handle type "TYPING". Frontend: subscribe `/user/queue/typing`, throttle gửi 2s, hiển thị 3 nơi (header/bubble/list). **Cascade 4 mốc:** throttle 2s < stop 3s < Redis TTL 4s < auto-clear 5s (mỗi lớp dự phòng lớp trước). Điểm hay: Redis TTL đảm bảo indicator tự hết kẹt khi đóng tab (đồng bộ pattern Presence Sprint 4.1). Verify: backend compile PASS, FE 0 lỗi, test 2 trình duyệt OK. |
 | 2.9 | Jun 2026 | **Sprint 4.4 Planning Refinement (USER duyệt)**: Sắp xếp lại thứ tự triển khai 4.4 theo độ phức tạp tăng dần — ① Typing Indicator → ② Message Reactions → ③ Reply → ④ Media (LÀM CUỐI). Bổ sung các cải tiến đã duyệt: (1) Typing Indicator dùng **Redis TTL key** (auto-clear khi đóng tab, đồng bộ pattern Presence Sprint 4.1); (2) Media — tái dùng **Apache Tika magic-bytes scan** (security), **Optimistic UI blob preview**, **upload progress bar**; (3) Lưu ý atomic cho `ConversationService` (đã bỏ `@Transactional`). Quy tắc: mỗi tính năng phải chạy & test thành công trước khi sang tính năng kế. Đã xóa spec tạm `chat-three-column-layout` (feature 3-cột đã hoàn thành & commit). |
 | 2.8 | Jun 2026 | **Chat UI Refactor + Bug Fixes**: (1) Refactor ChatPage layout sang 2 cột mới với Stories carousel, Filter tabs (All/Unread/Groups/Requests), Search bar tròn, Input bar icons (Emoji/Image/Mic), Chat header icons (Search/Phone/Video/More). (2) Fix critical bug: MongoDB `participants_unique_idx` sai (unique trên multikey array → chặn user có >1 conversation) — đổi sang non-unique index. (3) Fix ConversationService WriteConflict: bỏ `@Transactional` trên 3 methods (concurrent requests conflict trên single-node replica set). (4) Fix frontend infinite loop: `onClearInitialRecipient` → `finally` block để không retry khi API fail. (5) Fix `filteredFriends` crash: thêm optional chaining `f.name?.toLowerCase()`. (6) Global UI compact: `html { font-size: 14px }` giảm toàn app ~12%. |

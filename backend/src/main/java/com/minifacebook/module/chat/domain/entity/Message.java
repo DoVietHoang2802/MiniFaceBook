@@ -1,6 +1,7 @@
 package com.minifacebook.module.chat.domain.entity;
 
 import java.time.Instant;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,4 +26,10 @@ public class Message {
   private Instant deliveredAt; // null nếu chưa nhận được
   private Instant seenAt;      // null nếu chưa đọc
   private Instant createdAt;
+
+  /**
+   * Reactions của tin nhắn: key = userId, value = emoji (Sprint 4.4 - Message Reactions).
+   * Dùng Map embedded vì chat 1-1 tối đa 2 người react → tối ưu, load cùng message.
+   */
+  private Map<String, String> reactions;
 }

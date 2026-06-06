@@ -32,7 +32,8 @@ import type {
   ConversationResponse, 
   MessageResponse, 
   MessageStatusEvent,
-  TypingEvent
+  TypingEvent,
+  MessageReactionEvent
 } from '../types/chat.types';
 
 interface ChatPageProps {
@@ -41,6 +42,9 @@ interface ChatPageProps {
   initialRecipientId?: string | null;
   onClearInitialRecipient?: () => void;
 }
+
+// Bộ cảm xúc cho tin nhắn (Sprint 4.4 - Message Reactions). Phải khớp ALLOWED_EMOJIS ở backend.
+const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡'];
 
 export default function ChatPage({ 
   currentUser, 
@@ -56,6 +60,9 @@ export default function ChatPage({
 
   // Typing indicator: map conversationId -> tên người đang gõ (Sprint 4.4)
   const [typingByConv, setTypingByConv] = useState<Record<string, string>>({});
+
+  // Message Reactions: messageId đang mở picker cảm xúc (Sprint 4.4)
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   
   // Loading states
   const [isLoadingConvs, setIsLoadingConvs] = useState(false);
@@ -311,10 +318,23 @@ export default function ChatPage({
       }
     );
 
+    // Đăng ký nhận cập nhật reaction tin nhắn (Message Reactions - Sprint 4.4)
+    const unsubscribeReactions = webSocketService.subscribe<MessageReactionEvent>(
+      '/user/queue/reactions',
+      (evt) => {
+        if (activeConversationRef.current?.id === evt.conversationId) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === evt.messageId ? { ...m, reactions: evt.reactions } : m))
+          );
+        }
+      }
+    );
+
     return () => {
       unsubscribeMessages();
       unsubscribeStatus();
       unsubscribeTyping();
+      unsubscribeReactions();
     };
   }, [currentUser, triggerToast]);
 
@@ -406,6 +426,27 @@ export default function ChatPage({
     }
     webSocketService.send('/app/chat.typing', { conversationId: conv.id, typing: false });
   }, []);
+
+  // Thả / gỡ cảm xúc cho tin nhắn (Sprint 4.4 - Message Reactions, Optimistic UI)
+  const handleReact = useCallback((messageId: string, emoji: string) => {
+    setReactionPickerFor(null);
+
+    // Optimistic: cập nhật ngay tại local trước khi server phản hồi
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m;
+        const reactions = { ...(m.reactions || {}) };
+        if (reactions[currentUser.id] === emoji) {
+          delete reactions[currentUser.id]; // toggle off
+        } else {
+          reactions[currentUser.id] = emoji;
+        }
+        return { ...m, reactions };
+      })
+    );
+
+    webSocketService.send('/app/chat.react', { messageId, emoji });
+  }, [currentUser.id]);
 
   // 6. Gửi tin nhắn mới (Optimistic UI)
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -857,6 +898,13 @@ export default function ChatPage({
               ref={chatScrollContainerRef}
               className="flex-1 overflow-y-auto px-5 py-4 space-y-4 flex flex-col bg-slate-50/30"
             >
+              {/* Overlay đóng reaction picker khi bấm ra ngoài */}
+              {reactionPickerFor && (
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setReactionPickerFor(null)}
+                />
+              )}
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center py-24 flex-grow">
                   <Loader2 className="h-6 w-6 text-violet-500 animate-spin" />
@@ -900,18 +948,62 @@ export default function ChatPage({
 
                           {/* Bong bóng tin nhắn */}
                           <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                            <div 
-                              className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
-                                isMe 
-                                  ? 'bg-violet-600 text-white rounded-br-md' 
-                                  : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
-                              }`}
-                            >
-                              {m.content}
+                            <div className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                              <div 
+                                className={`relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
+                                  isMe 
+                                    ? 'bg-violet-600 text-white rounded-br-md' 
+                                    : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
+                                }`}
+                              >
+                                {m.content}
+                                {/* Hiển thị reactions (badge nổi ở góc dưới bong bóng) */}
+                                {m.reactions && Object.keys(m.reactions).length > 0 && (
+                                  <div className={`absolute -bottom-2.5 ${isMe ? 'left-1' : 'right-1'} flex items-center bg-white border border-slate-200 rounded-full px-1.5 py-0.5 shadow-sm`}>
+                                    {Array.from(new Set(Object.values(m.reactions))).slice(0, 3).map((emo) => (
+                                      <span key={emo} className="text-[11px] leading-none">{emo}</span>
+                                    ))}
+                                    {Object.keys(m.reactions).length > 1 && (
+                                      <span className="text-[9px] text-slate-500 font-bold ml-0.5">{Object.keys(m.reactions).length}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Nút thả cảm xúc (hiện khi hover) */}
+                              <div className="relative shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => setReactionPickerFor(reactionPickerFor === m.id ? null : m.id)}
+                                  className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                  title="Thả cảm xúc"
+                                >
+                                  <Smile className="h-3.5 w-3.5" />
+                                </button>
+
+                                {/* Picker popup */}
+                                {reactionPickerFor === m.id && (
+                                  <div className={`absolute z-20 bottom-full mb-1 flex items-center gap-0.5 bg-white border border-slate-200 rounded-full px-1.5 py-1 shadow-lg animate-fade-in ${isMe ? 'right-0' : 'left-0'}`}>
+                                    {REACTION_EMOJIS.map((emo) => {
+                                      const active = m.reactions?.[currentUser.id] === emo;
+                                      return (
+                                        <button
+                                          key={emo}
+                                          type="button"
+                                          onClick={() => handleReact(m.id, emo)}
+                                          className={`h-7 w-7 rounded-full flex items-center justify-center text-base hover:scale-125 transition cursor-pointer ${active ? 'bg-violet-100' : 'hover:bg-slate-100'}`}
+                                        >
+                                          {emo}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             
                             {/* Metadata bên dưới bong bóng */}
-                            <div className="flex items-center gap-1.5 mt-1 px-1">
+                            <div className={`flex items-center gap-1.5 mt-1.5 px-1 ${m.reactions && Object.keys(m.reactions).length > 0 ? 'mt-3' : ''}`}>
                               <span className="text-[10px] text-slate-400 font-medium">
                                 {formatTime(m.createdAt)}
                               </span>

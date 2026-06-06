@@ -30,8 +30,16 @@ export interface MessageResponse {
   deliveredAt?: string;
   seenAt?: string;
   createdAt: string;
+  // Reactions: key = userId, value = emoji (Sprint 4.4)
+  reactions?: Record<string, string>;
   // Trạng thái local cho Optimistic UI
   status?: 'PENDING' | 'SENT' | 'DELIVERED' | 'SEEN' | 'FAILED';
+}
+
+export interface MessageReactionEvent {
+  conversationId: string;
+  messageId: string;
+  reactions: Record<string, string>;
 }
 
 export interface MessageStatusEvent {

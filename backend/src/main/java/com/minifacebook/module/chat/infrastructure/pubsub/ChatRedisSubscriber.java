@@ -3,6 +3,7 @@ package com.minifacebook.module.chat.infrastructure.pubsub;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.chat.application.dto.ChatPubSubEvent;
+import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
 import com.minifacebook.module.chat.application.dto.TypingEvent;
@@ -66,6 +67,17 @@ public class ChatRedisSubscriber implements MessageListener {
                 user.getEmail(),
                 "/queue/typing",
                 typingEvent
+            );
+          });
+        }
+      } else if ("REACTION".equals(event.getType())) {
+        MessageReactionEvent reactionEvent = objectMapper.readValue(event.getPayloadJson(), MessageReactionEvent.class);
+        for (String participantId : event.getParticipantIds()) {
+          userRepository.findById(participantId).ifPresent(user -> {
+            messagingTemplate.convertAndSendToUser(
+                user.getEmail(),
+                "/queue/reactions",
+                reactionEvent
             );
           });
         }

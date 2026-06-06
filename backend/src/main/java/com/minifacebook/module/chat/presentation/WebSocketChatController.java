@@ -1,6 +1,7 @@
 package com.minifacebook.module.chat.presentation;
 
 import com.minifacebook.module.chat.application.dto.MessageSendRequest;
+import com.minifacebook.module.chat.application.dto.ReactionRequest;
 import com.minifacebook.module.chat.application.dto.TypingRequest;
 import com.minifacebook.module.chat.application.service.MessageService;
 import com.minifacebook.module.chat.application.service.TypingService;
@@ -43,5 +44,16 @@ public class WebSocketChatController {
       return;
     }
     typingService.handleTyping(principal.getName(), request.getConversationId(), request.isTyping());
+  }
+
+  /**
+   * Nhận sự kiện thả/gỡ cảm xúc cho tin nhắn qua WebSocket (Sprint 4.4 - Message Reactions).
+   */
+  @MessageMapping("/chat.react")
+  public void react(@Payload @Valid ReactionRequest request, Principal principal) {
+    if (principal == null) {
+      return;
+    }
+    messageService.reactToMessage(principal.getName(), request.getMessageId(), request.getEmoji());
   }
 }

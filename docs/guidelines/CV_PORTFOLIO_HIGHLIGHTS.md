@@ -464,3 +464,19 @@
     *   *Engineered a self-healing real-time typing indicator using Redis TTL keys to auto-expire stale states on abrupt client disconnects (zero cron jobs), reusing the existing presence pattern for architectural consistency. Designed a 4-tier cascade (throttle 2s < stop 3s < TTL 4s < auto-clear 5s) where each layer backstops the previous, deliberately keeping the stop-timer above the throttle interval to eliminate indicator flicker during continuous typing.*
 
 ---
+
+### 😍 Highlight 30: Message Reactions Realtime với Embedded Document Strategy (Đối nghịch có chủ đích với Post Reactions)
+*   **Situation (Bối cảnh):** Tính năng thả cảm xúc cho tin nhắn chat đòi hỏi phản hồi realtime hai chiều và đồng bộ đa thiết bị. Một quyết định kiến trúc quan trọng phát sinh: nên lưu reactions theo cách nào? Trước đó module Post đã dùng một **collection `reactions` riêng** (vì một bài viết có thể có hàng trăm lượt thả cảm xúc, cần phân trang). Áp dụng máy móc cùng cách cho chat sẽ là một sai lầm thiết kế.
+*   **Task (Nhiệm vụ):** Thiết kế lưu trữ và đồng bộ realtime cho message reactions tối ưu đúng với đặc thù chat 1-1, hỗ trợ toggle (thả/gỡ/đổi cảm xúc), đồng bộ tức thì giữa hai người và nhiều thiết bị của cùng một người.
+*   **Action (Hành động):**
+    *   **Embedded Document có chủ đích:** Lưu reactions dưới dạng `Map<userId, emoji>` **nhúng thẳng** vào Message document, thay vì tạo collection riêng. Lý do: chat 1-1 chỉ có tối đa 2 người react/tin nhắn → embedding cho phép đọc reactions cùng lúc với tin nhắn (0 query phụ), ghi atomic, và loại bỏ hoàn toàn nhu cầu phân trang. Đây là minh chứng cho nguyên tắc "chọn schema theo access pattern, không rập khuôn".
+    *   **Toggle State Machine:** Logic 3 nhánh tại tầng Application — thả lại đúng emoji đang có thì gỡ bỏ, thả emoji khác thì thay thế, chưa có thì thêm — với validation emoji nằm trong tập 6 loại hợp lệ ở backend.
+    *   **Realtime đa thiết bị:** Phát event qua Redis Pub/Sub (type "REACTION") tới **cả hai** participant (bao gồm cả người vừa thả) để đồng bộ trên mọi thiết bị đang mở. Event mang **nguyên bản đồ reactions đầy đủ** thay vì delta → client chỉ việc thay thế (idempotent, không sợ lệch trạng thái).
+    *   **Optimistic UI:** Frontend cập nhật reactions ngay tại local trước khi server phản hồi, kèm picker popup hover và badge gọn ở góc bong bóng, overlay click-outside.
+*   **Result (Kết quả):**
+    *   Reactions hiển thị tức thì (0ms cảm nhận) và đồng bộ realtime giữa hai phía + đa thiết bị.
+    *   Tối ưu truy vấn: reactions luôn đi kèm tin nhắn, không phát sinh query phụ — đối lập có chủ đích với Post reactions, thể hiện tư duy chọn giải pháp theo ngữ cảnh.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Designed a realtime message reaction system using an embedded `Map<userId, emoji>` document strategy — a deliberate departure from the separate-collection approach used for post reactions — optimizing for the 1-1 chat access pattern to eliminate extra queries and pagination. Implemented a toggle state machine with optimistic UI and full-map Redis Pub/Sub events for idempotent multi-device synchronization.*
+
+---
