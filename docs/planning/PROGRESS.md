@@ -300,3 +300,19 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[ArchUnit]** Vượt qua 2/2 rule (layered per-module + global shared/modules/infrastructure). Giải quyết 2 vòng vi phạm: (1) move port từ `module.auth.domain` sang `shared.security`, (2) tách `JwtConfig` khỏi `SecurityConfig`.
   - [x] **[Verify]** Backend compile PASS, ArchUnit PASS, Frontend `npm run build` PASS (1932 modules). Test thực tế: heartbeat → Redis key presence, logout → Redis key blacklist, reuse token → 401.
   - [x] **[Docs]** Tạo `PHASE_4_CHAT_TESTING.md` (hướng dẫn test 4 kịch bản + lệnh verify Redis). Cập nhật `TESTING_GUIDE.md` index.
+
+- **Phiên 05/06/2026 (Sprint 4.2 - Chat Infrastructure):**
+  - [x] **[Domain]** Định nghĩa `MessageType`, `LastMessageSummary`, `Conversation`, `Message`, `ConversationRepository`, `MessageRepository` sạch hoàn toàn (POJO, không import framework annotations).
+  - [x] **[Infrastructure]** Tạo MongoDB document mapping (`ConversationDocument`, `MessageDocument`) và sử dụng MapStruct `ChatMapper` cho chuyển đổi dữ liệu.
+  - [x] **[Repository Adapters]** Thực thi `ConversationRepositoryImpl` và `MessageRepositoryImpl` bằng `MongoTemplate` bulk operations để tối ưu hiệu năng ghi.
+  - [x] **[Mongock Migrations]** Triển khai `Migration_20260605_AddChatIndexes` thiết lập compound & unique indexes tối ưu cấu trúc và hiệu năng query.
+  - [x] **[Application Service]** Triển khai `ConversationService` (chống race condition khi tạo đồng thời bằng `DuplicateKeyException` catch, kiểm tra quan hệ bạn bè từ module Friendship, tối ưu N+1 query) và `MessageService` (phân trang tin nhắn và cập nhật trạng thái đã nhận).
+  - [x] **[Presentation Controllers]** Triển khai `ConversationController` và `MessageController` cung cấp 5 RESTful API endpoints.
+  - [x] **[Unit Tests]** Viết đầy đủ bộ test nghiệp vụ cho `ConversationServiceTest` và `MessageServiceTest`.
+  - [x] **[Stabilization & Compilation]** Khắc phục lỗi `NoClassDefFoundError: ConversationRepository` thông qua quy trình dọn dẹp cache biên dịch triệt để (`mvn clean test-compile` + `mvn test`), giúp build pass 100% (8/8 tests passed).
+  - [x] **[Docs]** Cập nhật lộ trình phát triển [ROADMAP.md](file:///d:/Project_MiniFace/docs/planning/ROADMAP.md) và tài liệu kiểm thử [PHASE_4_CHAT_TESTING.md](file:///d:/Project_MiniFace/docs/testing/PHASE_4_CHAT_TESTING.md).
+
+#### 🔧 Technical Debugging Log (Phase 4.2 Stabilization)
+| Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
+| :--- | :--- | :--- | :--- |
+| **NoClassDefFoundError: ConversationRepository** | Lớp đã tồn tại nhưng surefire test runner không nạp được do xung đột cache của trình biên dịch maven. | Thực hiện dọn dẹp build target cũ (`mvn clean test-compile`) và biên dịch lại từ đầu. | Biên dịch thành công, toàn bộ unit tests hoạt động trơn tru. |

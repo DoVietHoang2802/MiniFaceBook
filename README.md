@@ -50,13 +50,13 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 0 | Foundation & Infrastructure | ✅ Hoàn thành |
 | 1 | Authentication & Identity | ✅ Hoàn thành |
 | 2 | Content & News Feed | ✅ Hoàn thành |
-| 3 | Social Graph & Friends | ⏳ Chưa bắt đầu |
-| 4 | Realtime Chat | ⏳ Chưa bắt đầu |
+| 3 | Social Graph & Friends | ✅ Hoàn thành |
+| 4 | Realtime Chat | 🔄 Đang triển khai (Sprint 4.1 hoàn thành) |
 | 5 | Notification System | ⏳ Chưa bắt đầu |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu |
 | 7 | Extended Features | ⏳ Chưa bắt đầu |
 
-**Tiến độ: 3/7 Phases (~43%)**
+**Tiến độ: 3.5/7 Phases (~50%) - Phase 4 Sprint 4.1 đã hoàn thành (Presence + Pub/Sub)**
 
 ---
 

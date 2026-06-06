@@ -121,22 +121,84 @@ Lưu trữ quan hệ kết bạn giữa người dùng. Sử dụng Compound Ind
 
 ---
 
-## ⚡ 3. Redis — Chiến lược sử dụng (Cache & Security)
+## 💬 3. MongoDB — Collections: Chat System (Phase 4)
 
-Redis được sử dụng với **3 mục đích rõ ràng**, không mở rộng thêm ngoài phạm vi này:
+### F. Collection: `conversations`
+Lưu trữ các cuộc hội thoại 1-1 giữa 2 người dùng. Mỗi cặp user chỉ có 1 conversation duy nhất.
 
-### Phạm vi sử dụng Redis
-| Mục đích | Key Pattern | Kiểu dữ liệu | TTL |
-| :--- | :--- | :--- | :--- |
-| **JWT Blacklist** (Logout) | `auth:revoked-token:<token>` | String | Bằng thời gian hết hạn còn lại của JWT |
-| **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) |
-| **Cache Newsfeed** | `feed:user:<userId>` | List | 1800s (30 phút) |
+*   **Indexes:**
+    *   `participantIds` (Multikey Index) → Tìm conversations của 1 user.
+    *   `lastMessageAt` (Descending) → Sort theo tin nhắn mới nhất (conversation list).
+    *   `participantIds` (Compound Unique - sorted array) → Chặn duplicate conversation giữa 2 user.
 
-> **Lưu ý:** Redis trong dự án này **không** sử dụng Pub/Sub. Phạm vi sử dụng giới hạn ở Cache và JWT Blacklist.
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `participantIds` | Array (String) | Mảng 2 phần tử chứa `users._id` (exactly 2 for 1-1 chat). |
+| `lastMessageSummary` | Embedded Object | Summary của tin nhắn cuối (không embed full message để tiết kiệm). |
+| `lastMessageSummary.senderId` | String | User gửi tin nhắn cuối. |
+| `lastMessageSummary.contentPreview` | String | 100 ký tự đầu của content. |
+| `lastMessageSummary.type` | String (Enum) | `TEXT`, `IMAGE`, `FILE`. |
+| `lastMessageSummary.sentAt` | Instant | Thời điểm gửi. |
+| `lastMessageAt` | Instant (ISODate) | Thời điểm tin nhắn cuối cùng (dùng để sort, denormalized). |
+| `createdAt` | Instant (ISODate) | Thời điểm tạo conversation. |
+
+> **Lưu ý thiết kế:**
+> - `unreadCount` **KHÔNG lưu** trong collection — tính on-the-fly từ `messages` hoặc cache Redis để tránh desync.
+> - `lastMessageSummary` denormalized để query conversation list nhanh (không cần join messages).
+> - Validate: `participantIds` phải là bạn bè (Friendship status = ACCEPTED).
 
 ---
 
-## 🔄 3.5. Chế độ vận hành MongoDB: Replica Set (Hỗ trợ Transaction)
+### G. Collection: `messages`
+Lưu trữ toàn bộ tin nhắn trong conversations.
+
+*   **Indexes:**
+    *   `(conversationId, createdAt DESC)` — Compound Index → Query messages của conversation + sort theo thời gian.
+    *   `senderId` (Optional) → Dùng cho analytics hoặc search messages của 1 user.
+
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `conversationId` | String | Liên kết tới `conversations._id`. |
+| `senderId` | String | Liên kết tới `users._id` (người gửi). |
+| `content` | String | Nội dung tin nhắn (text, hoặc caption cho image/file). |
+| `type` | String (Enum) | `TEXT`, `IMAGE`, `FILE`. |
+| `mediaUrl` | String | URL ảnh/file (Cloudinary) nếu `type != TEXT`. Nullable. |
+| `deliveredAt` | Instant (ISODate) | Thời điểm recipient nhận được tin nhắn (online + WebSocket ack). Nullable. |
+| `seenAt` | Instant (ISODate) | Thời điểm recipient đọc tin nhắn (mở conversation). Nullable. |
+| `createdAt` | Instant (ISODate) | Thời điểm gửi tin nhắn (SENT status). |
+
+> **Message Status Logic (giống Facebook Messenger):**
+> - **SENT** ✓: Message có `createdAt` (đã lưu DB thành công).
+> - **DELIVERED** ✓✓: `deliveredAt != null` (recipient online và WebSocket ACK).
+> - **SEEN** 👁️: `seenAt != null` (recipient mở conversation).
+> 
+> **Mark as Seen Trigger:** Frontend gọi `PUT /conversations/{id}/seen` khi user mở conversation → Backend batch update `seenAt` cho all messages chưa xem → Emit WebSocket event đến sender để update UI.
+
+---
+
+## ⚡ 4. Redis — Chiến lược sử dụng (Cache, Security & Realtime)
+
+Redis được sử dụng với **5 mục đích rõ ràng**, đã được triển khai và kiểm chứng:
+
+### Phạm vi sử dụng Redis (Cập nhật Phase 4.2)
+| Mục đích | Key Pattern | Kiểu dữ liệu | TTL | Ghi chú |
+| :--- | :--- | :--- | :--- | :--- |
+| **Presence Online/Offline** | `presence:<userId>` | String (`"ONLINE"`) | 35s | Heartbeat mechanism, tự động expire khi mất kết nối |
+| **Pub/Sub Chat** | `chat.room.<roomId>` | Pub/Sub Channel | N/A | Đồng bộ WebSocket đa server (scale-ready) |
+| **JWT Blacklist** (Logout) | `blacklist:<jwtId>` | String (`"revoked"`) | Bằng thời gian hết hạn còn lại của Access Token | Sử dụng `jwtId` (UUID) thay vì toàn bộ token để tiết kiệm RAM |
+| **Cache Unread Count** | `unread:<conversationId>:<userId>` | String (Counter) | N/A | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
+| **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) | Phase 6 (chưa triển khai) |
+| **Cache Newsfeed** | `feed:user:<userId>` | List | 1800s (30 phút) | Phase 6 (chưa triển khai) |
+
+> **Lưu ý quan trọng:**
+> - Redis Pub/Sub được sử dụng **chính thức từ Phase 4.1** để đồng bộ tin nhắn realtime giữa các WebSocket sessions. Thiết kế này cho phép scale ngang (nhiều server) trong tương lai mà không cần refactor.
+> - JWT Blacklist sử dụng `jwtId` (claim `jti` trong token) thay vì toàn bộ chuỗi token để tối ưu RAM (1 UUID = 36 bytes vs 1 JWT = ~200+ bytes).
+
+---
+
+## 🔄 5. Chế độ vận hành MongoDB: Replica Set (Hỗ trợ Transaction)
 
 Kể từ 30/05/2026, MongoDB được vận hành ở chế độ **Replica Set (`rs0`)** thay vì standalone, nhằm hỗ trợ **Multi-document ACID Transactions** cho các nghiệp vụ ghi phức tạp (vd: Friendship, các thao tác liên collection ở Phase sau).
 
@@ -152,7 +214,7 @@ Kể từ 30/05/2026, MongoDB được vận hành ở chế độ **Replica Set
 
 ---
 
-## 🛠️ 4. Chiến lược di cư Schema (Mongock Migration)
+## 🛠️ 6. Chiến lược di cư Schema (Mongock Migration)
 
 Để đảm bảo tính đồng bộ dữ liệu và nhất quán môi trường giữa các Developer (và môi trường Production), chúng ta sử dụng **Mongock** thay thế cho việc viết script MongoDB thủ công.
 

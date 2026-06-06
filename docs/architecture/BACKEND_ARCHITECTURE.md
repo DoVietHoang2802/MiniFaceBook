@@ -30,7 +30,13 @@ backend/src/main/java/com/minifacebook/
 │   │   ├── application/           # Service Interfaces & Implementations (Use Cases)
 │   │   ├── domain/                # Pure Entity (User), Repository Interfaces, Domain Service
 │   │   └── infrastructure/        # MongoDB Adapters, JWT Security Config, Resend Email Adapter
-│   └── user/                      # Module Quản lý Hồ sơ & Người dùng
+│   ├── user/                      # Module Quản lý Hồ sơ & Người dùng
+│   │   ├── presentation/
+│   │   ├── application/
+│   │   ├── domain/
+│   │   └── infrastructure/
+│   ├── friendship/                # Module Quản lý Mối quan hệ Bạn bè
+│   └── chat/                      # Module Trò chuyện Thời gian thực
 │       ├── presentation/
 │       ├── application/
 │       ├── domain/

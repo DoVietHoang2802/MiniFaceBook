@@ -121,29 +121,66 @@
         - *Highlight:* SockJS fallback cho browser không hỗ trợ WebSocket.
     - [x] Cấu hình **WebSocket Security** - Xác thực JWT khi handshake (đọc từ HttpOnly Cookie qua `WebSocketAuthInterceptor` + validate trên STOMP CONNECT qua `WebSocketChannelInterceptor`).
     - [x] Quản lý trạng thái **Online/Offline** bằng Redis (TTL-based presence 35s, heartbeat 25s, tự expire khi mất kết nối).
+    - [x] **Redis Pub/Sub** — Triển khai đồng bộ tin nhắn realtime giữa các WebSocket sessions (scale-ready cho đa server).
+        - *Lý do triển khai ngay:* Thiết kế sẵn cho scale ngang, không cần refactor sau. MessageListener pattern + RedisMessageListenerContainer.
+        - *Cơ chế:* User A gửi tin → Backend publish lên Redis channel `chat.room.<roomId>` → Tất cả server đang subscribe sẽ nhận và broadcast qua WebSocket.
+        - *Với 1 server:* Vẫn hoạt động bình thường, overhead không đáng kể (~0.5ms/message).
     - [x] **Nâng cấp JWT Blacklist** — chuyển từ MongoDB `revoked` flag → Redis TTL cho Access Token khi logout.
         - *Benchmark thực tế trên máy dev:* Redis EXISTS **0.019 ms/lần** vs MongoDB findOne (có index) **0.75 ms/lần** → **Redis nhanh hơn ~40 lần**.
         - *Logic nghiệp vụ giữ nguyên 100%* (Port-Adapter pattern qua `TokenBlacklistPort` ở shared layer), chỉ đổi nơi lưu.
     - [x] Frontend: Tích hợp **@stomp/stompjs** + **SockJS-client** (`webSocketService` singleton + `useWebSocket` hook + `presenceService`).
     - [x] Bug fix: ProfilePage crash khi 401 (thêm guard `!user || !user.email`).
-    - *Ghi chú Redis Pub/Sub:* **Chưa làm ở phase này** — chỉ cần khi scale lên 2+ server. 1 server WebSocket xử lý tốt mọi số lượng người dùng mà không cần Pub/Sub. Sẽ bổ sung ở Phase 6 nếu cần scale.
-- [ ] **Sprint 4.2: Chat Infrastructure**
-    - [ ] Thiết kế **Conversation Entity** (1-1 chat).
-        - *Fields:* `participants[]`, `lastMessage`, `lastMessageAt`, `unreadCount`.
-        - *Denormalization:* Embed `lastMessage` để tối ưu query danh sách chat.
-    - [ ] Thiết kế **Message Entity**.
-        - *Fields:* `conversationId`, `senderId`, `content`, `type` (TEXT/IMAGE/FILE), `status` (SENT/DELIVERED/SEEN), `createdAt`.
-    - [ ] API Lấy danh sách conversations (`GET /conversations`).
-    - [ ] API Lấy messages của conversation (`GET /conversations/{id}/messages`) - Có phân trang.
-    - [ ] API Tạo conversation mới (`POST /conversations`).
-- [ ] **Sprint 4.3: Messaging Logic**
-    - [ ] Luồng gửi tin nhắn: Client → WebSocket → Service → Save DB → Emit to recipient.
-    - [ ] Xử lý trạng thái tin nhắn:
-        - **Sent** ✓: Tin nhắn đã lưu vào DB.
-        - **Delivered** ✓✓: Recipient online và nhận được.
-        - **Seen** 👁️: Recipient đã mở conversation.
-    - [ ] API Mark messages as seen (`PUT /conversations/{id}/seen`).
-    - [ ] **Optimistic UI**: Hiển thị tin nhắn ngay khi gửi, sync status sau.
+    - [x] Bug fix: authService response parsing - thống nhất `ApiResponse<T>` structure cho login/getMe endpoints.
+- [x] **Sprint 4.2: Chat Infrastructure**
+    - [x] **Bổ sung Domain & Infrastructure Layer cho Chat Module** (tuân thủ Clean Architecture 4 lớp).
+        - *Package structure:* `domain/entity`, `domain/repository`, `infrastructure/persistence`, `infrastructure/mapper`.
+    - [x] Thiết kế **Conversation Entity** (1-1 chat - Domain POJO).
+        - *Fields:* `id`, `participantIds[]` (exactly 2), `lastMessageSummary`, `lastMessageAt`, `createdAt`.
+        - *LastMessageSummary (Value Object):* `senderId`, `contentPreview` (100 chars), `type`, `sentAt` — không embed full message để tiết kiệm payload.
+        - *Validation:* Participants phải là bạn bè (ACCEPTED status), không duplicate conversation.
+        - *UnreadCount:* Tính on-the-fly từ DB query hoặc cache Redis (không lưu field để tránh desync).
+    - [x] Thiết kế **Message Entity** (Domain POJO).
+        - *Fields:* `id`, `conversationId`, `senderId`, `content`, `type` (TEXT/IMAGE/FILE), `createdAt`.
+        - *Status tracking:* `deliveredAt`, `seenAt` (nullable Instant) — giống Facebook Messenger.
+        - *Cơ chế:*
+            - **SENT** ✓: Tin nhắn đã lưu DB (có `createdAt`).
+            - **DELIVERED** ✓✓: Recipient online và nhận qua WebSocket → backend set `deliveredAt`.
+            - **SEEN** 👁️: Recipient mở conversation → frontend gọi API `markAsSeen` → backend set `seenAt`.
+    - [x] **MongoDB Indexes** (thêm vào DATABASE_SCHEMA.md):
+        - `conversations`: multikey index `participantIds`, descending index `lastMessageAt`, compound unique index `participantIds` (sorted array).
+        - `messages`: compound index `(conversationId, createdAt DESC)`, optional index `senderId`.
+    - [x] API Lấy danh sách conversations (`GET /conversations`) - Sort theo `lastMessageAt` DESC.
+        - *Response:* Include `lastMessageSummary`, `unreadCount` (tính realtime).
+    - [x] API Lấy messages của conversation (`GET /conversations/{id}/messages?page=&size=`) - Phân trang infinite scroll.
+        - *Validation:* User phải là participant của conversation.
+    - [x] API Tạo/Lấy conversation (`POST /conversations`) - Idempotent (return existing nếu đã có).
+        - *Validation:* Recipient phải là friend (ACCEPTED), không tạo với chính mình.
+    - [x] API Mark messages as seen (`PUT /conversations/{id}/seen`) - Cập nhật `seenAt` cho tất cả messages chưa xem của conversation.
+        - *Trigger:* Frontend gọi khi user mở conversation hoặc focus vào chat window.
+        - *Realtime sync:* Emit WebSocket event đến sender để update UI (✓✓ → 👁️).
+- [ ] **Sprint 4.3: Messaging Logic & Realtime Delivery**
+    - [ ] **WebSocket Message Controller** - Nhận tin nhắn qua STOMP `/app/chat.send`.
+        - *Flow:* Client send → Backend validate → Save DB → Update Conversation lastMessage → Emit to recipient qua Redis Pub/Sub.
+    - [ ] **Message Status Transition (giống Facebook Messenger):**
+        - **SENT** ✓: Message có `createdAt` (đã lưu DB).
+        - **DELIVERED** ✓✓: Recipient online → Backend emit qua WebSocket → Recipient client nhận được → gọi callback set `deliveredAt`.
+            - *Implementation:* WebSocket `/user/{recipientId}/queue/messages` → Client auto-ack → REST `PUT /messages/{id}/delivered`.
+        - **SEEN** 👁️: User mở conversation → Frontend gọi `PUT /conversations/{id}/seen` → Backend set `seenAt` cho all messages → Emit WebSocket đến sender.
+    - [ ] **Optimistic UI (Frontend):**
+        - Tin nhắn hiển thị ngay với status PENDING (⏱️) → Server response → update status SENT (✓).
+        - Nếu fail → hiển thị ❌ + nút retry.
+    - [ ] **Redis Pub/Sub Integration:**
+        - Channel pattern: `chat.room.<conversationId>`.
+        - Message format: `{type: "NEW_MESSAGE", data: MessageResponse}`.
+        - All servers subscribe → broadcast đến WebSocket sessions của participants.
+    - [ ] **Redis Unread Count với TTL** (từ AI review - tránh memory leak):
+        - Khi gửi tin nhắn mới → increment unread count cho recipient.
+        - Set TTL 7 ngày: `redisTemplate.expire(key, 7, TimeUnit.DAYS)`.
+        - Key pattern: `unread:<conversationId>:<recipientId>`.
+    - [ ] **ContentPreview Helper** (từ AI review - XSS prevention + truncate):
+        - Sanitize HTML tags: `content.replaceAll("<[^>]*>", "")`.
+        - Truncate về 100 chars (97 + "...").
+        - Handle IMAGE/FILE type với placeholder: "📷 Đã gửi một ảnh", "📎 Đã gửi một file".
 - [ ] **Sprint 4.4: Chat UX Enhancements**
     - [ ] **Typing Indicator**: Hiển thị "Đang nhập..." khi người kia đang gõ.
         - *Implementation:* Emit typing event qua WebSocket, debounce 1s.
@@ -279,6 +316,7 @@
 | 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (Sprint 3.2) |
 | 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (dùng field `name`, Sprint 3.3) |
 | 6 | Tối ưu phân trang Search (aggregation pipeline) | Hiệu năng | 🟢 Thấp | 🔴 Chưa làm | Khi scale > 1000 users |
+| 7 | StompBrokerRelay (RabbitMQ) cho scale lớn | Hạ tầng | 🟢 Thấp | 🔴 Chưa làm | Phase 7 (> 10 servers) |
 
 ### ✅ #1: MongoDB Replica Set + TransactionManager (ĐÃ HOÀN THÀNH 30/05)
 - **Hiện trạng "nửa vời":** `@Transactional` ĐÃ viết trong `FriendshipService` (Sprint 3.1) nhưng CHƯA hoạt động thật do thiếu `MongoTransactionManager` Bean + MongoDB đang chạy standalone (không hỗ trợ transaction).
@@ -304,6 +342,22 @@
 - **Giải pháp tương lai:** Chuyển sang **MongoDB Aggregation Pipeline** ($lookup friendships + $match loại trừ ngay trong DB) để lọc và đếm chính xác ở tầng database, tránh lệch `totalElements`.
 - **Ghi chú:** Hạn chế này đã được comment rõ trong Javadoc của `FriendshipService.searchUsers()`.
 
+### 🟢 #7: StompBrokerRelay (RabbitMQ) cho scale lớn (MỚI THÊM - từ AI Review)
+- **Bối cảnh:** Hiện tại dùng SimpleBroker + Redis Pub/Sub (đã implement Phase 4.1). Giải pháp này đủ cho 2-10 backend servers.
+- **Khi nào cần RabbitMQ:**
+  - Khi có > 10 backend instances (high scale)
+  - Cần message persistence (tin nhắn không mất khi server crash)
+  - Group chat với routing logic phức tạp
+- **Lợi ích:**
+  - Better message routing at massive scale
+  - Built-in message durability
+  - Advanced routing patterns (topic exchange, fanout)
+- **Trade-offs:**
+  - Thêm infrastructure complexity (1-2 RabbitMQ nodes)
+  - Chi phí hosting (~$20-50/tháng)
+  - Cần config thêm STOMP relay endpoint
+- **Kết luận:** Ưu tiên THẤP - chỉ làm Phase 7 khi thực sự cần. Redis Pub/Sub hiện tại đủ tốt cho dự án demo/portfolio.
+
 ### 🟡 #3: Đồng bộ `AppException` cho Post module (CHƯA LÀM)
 - **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
 - **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
@@ -314,6 +368,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.7 | Jun 2026 | Hoàn tất review Sprint 4.2 và chuẩn bị Sprint 4.3. Bổ sung 2 improvement vào Sprint 4.3: (1) Redis TTL cho unread count (tránh memory leak khi user offline lâu), (2) ContentPreview helper method (sanitize HTML + truncate 100 chars). Thêm Tech Debt #7: StompBrokerRelay (RabbitMQ) - ưu tiên thấp, chỉ cần khi > 10 servers. Nguồn: AI review + Senior Architect validation. |
 | 2.6 | Jun 2026 | Hoàn thành Sprint 4.1 (WebSocket Foundation + Redis Presence + JWT Blacklist). Redis lần đầu được dùng thật trong dự án với 2 use case: Presence TTL Online/Offline (35s + heartbeat 25s) và JWT Blacklist Access Token (TTL = remaining token lifetime). Benchmark trên máy dev: Redis EXISTS 0.019ms/lần vs MongoDB findOne 0.75ms/lần → nhanh hơn ~40x. Áp dụng Port-Adapter (`TokenBlacklistPort` ở `shared/security`) tuân thủ Clean Architecture. Bug fix ProfilePage crash khi 401. Pub/Sub chưa làm — để dành khi scale 2+ server. |
 | 2.5 | May 2026 | Hoàn thành Sprint 3.4 (Friend Suggestions - Mutual Friends algorithm + UI sidebar data thật). PHASE 3 trọn vẹn 100%. |
 | 2.4 | May 2026 | Hoàn thành UI Phase 3: module `friends` (FriendsPage 4 tab - Tìm kiếm/Bạn bè/Lời mời/Đã gửi), nút động theo relationshipStatus + Optimistic UI. Phase 3 XONG 100%. |

@@ -52,6 +52,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync state khi initialUser thay đổi (fix lỗi logout → login lại)
+  useEffect(() => {
+    setUser(initialUser);
+    setBio(initialUser.bio || '');
+  }, [initialUser]);
+
   // Tự động tắt thông báo sau 4 giây
   useEffect(() => {
     if (successMessage || errorMessage) {

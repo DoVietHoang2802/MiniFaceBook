@@ -55,8 +55,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     response.setStatus(errorCode.getStatusCode().value());
     response.setContentType("application/json");
 
-    ApiResponse<?> apiResponse =
-        ApiResponse.builder().status(errorCode.getCode()).message(errorCode.getMessage()).build();
+    ApiResponse<?> apiResponse = ApiResponse.builder().status(errorCode.getCode()).message(errorCode.getMessage())
+        .build();
 
     ObjectMapper objectMapper = new ObjectMapper();
     response.getWriter().write(objectMapper.writeValueAsString(apiResponse));

@@ -38,8 +38,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
 
     try {
       const response = await authService.login({ email, password });
-      const apiData = response as any;
-      const loggedInUser = apiData.data?.user || apiData.user || apiData;
+      // Response structure: { status, message, data: UserResponse }
+      const loggedInUser = response.data;
       onLoginSuccess(loggedInUser);
     } catch (err: any) {
       // Phân biệt Network Error vs API Error (chuẩn Facebook/Discord)

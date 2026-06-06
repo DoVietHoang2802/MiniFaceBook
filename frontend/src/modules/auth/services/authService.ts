@@ -11,10 +11,16 @@ export interface UserResponse {
   bio?: string;
 }
 
+export interface ApiResponse<T> {
+  status: number;
+  message: string;
+  data: T;
+}
+
 export const authService = {
   // Đăng nhập tài khoản
-  login: async (data: LoginInput): Promise<UserResponse> => {
-    const response = await axiosClient.post<UserResponse>('/auth/login', data);
+  login: async (data: LoginInput): Promise<ApiResponse<UserResponse>> => {
+    const response = await axiosClient.post<ApiResponse<UserResponse>>('/auth/login', data);
     return response.data;
   },
 
@@ -31,8 +37,8 @@ export const authService = {
   },
 
   // Lấy thông tin user hiện tại (kiểm tra trạng thái đăng nhập)
-  getMe: async (): Promise<UserResponse> => {
-    const response = await axiosClient.get<UserResponse>('/auth/me');
+  getMe: async (): Promise<ApiResponse<UserResponse>> => {
+    const response = await axiosClient.get<ApiResponse<UserResponse>>('/auth/me');
     return response.data;
   },
 };

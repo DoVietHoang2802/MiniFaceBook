@@ -104,9 +104,9 @@ function App() {
     }
 
     authService.getMe()
-      .then((response: any) => {
-        const apiData = response as any;
-        const loggedInUser = apiData.data || apiData;
+      .then((response) => {
+        // Response structure: { status, message, data: UserResponse }
+        const loggedInUser = response.data;
         if (loggedInUser && loggedInUser.email) {
           setUser(loggedInUser);
         }

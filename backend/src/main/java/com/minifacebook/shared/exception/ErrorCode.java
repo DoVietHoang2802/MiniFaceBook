@@ -37,7 +37,7 @@ public enum ErrorCode {
   UPLOAD_FAILED(1018, "Tải tệp lên thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
   FILE_REQUIRED(1019, "Vui lòng chọn tệp để tải lên", HttpStatus.BAD_REQUEST),
 
-  // ===== FRIENDSHIP (Phase 3) =====
+    // ===== FRIENDSHIP (Phase 3) =====
   CANNOT_FRIEND_SELF(2001, "Bạn không thể tự gửi lời mời kết bạn cho chính mình", HttpStatus.BAD_REQUEST),
   FRIEND_REQUEST_EXISTED(2002, "Đã tồn tại một lời mời kết bạn giữa hai người", HttpStatus.BAD_REQUEST),
   ALREADY_FRIENDS(2003, "Hai bạn đã là bạn bè của nhau", HttpStatus.BAD_REQUEST),
@@ -47,6 +47,13 @@ public enum ErrorCode {
   NOT_REQUEST_SENDER(2007, "Bạn không phải là người gửi lời mời này", HttpStatus.FORBIDDEN),
   INVALID_REQUEST_STATUS(2008, "Lời mời kết bạn này không còn ở trạng thái chờ", HttpStatus.BAD_REQUEST),
   USER_BLOCKED(2009, "Không thể thực hiện do có chặn giữa hai người dùng", HttpStatus.FORBIDDEN),
+
+  // ===== CHAT (Phase 4 - Sprint 4.2) =====
+  CONVERSATION_NOT_FOUND(3001, "Không tìm thấy cuộc hội thoại", HttpStatus.NOT_FOUND),
+  NOT_A_PARTICIPANT(3002, "Bạn không phải là thành viên của cuộc hội thoại này", HttpStatus.FORBIDDEN),
+  CANNOT_CHAT_SELF(3003, "Bạn không thể tự trò chuyện với chính mình", HttpStatus.BAD_REQUEST),
+  NOT_FRIENDS(3004, "Hai người phải là bạn bè mới có thể nhắn tin", HttpStatus.BAD_REQUEST),
+  MESSAGE_NOT_FOUND(3005, "Không tìm thấy tin nhắn", HttpStatus.NOT_FOUND),
   ;
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {
