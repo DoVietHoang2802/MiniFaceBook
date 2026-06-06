@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
 import { 
   Search, 
@@ -114,6 +114,15 @@ export default function ChatPage({
   const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null);
   // Map messageId -> DOM element để scroll tới khi bấm quote
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Infinite scroll (Sprint 4.5 đợt 2): phân trang tải tin cũ
+  const PAGE_SIZE = 15;
+  const messagesPageRef = useRef(0);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const isLoadingMoreRef = useRef(false);
+  // Lưu scrollHeight trước khi prepend để giữ nguyên vị trí cuộn
+  const prependPrevHeightRef = useRef<number | null>(null);
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -401,16 +410,18 @@ export default function ChatPage({
 
     const loadMessages = async () => {
       setIsLoadingMessages(true);
+      messagesPageRef.current = 0;
       try {
-        const data = await chatService.getMessages(activeConversation.id, 0, 50);
-        // Map status tin nhắn từ backend
-        const mapped = data.content.map(msg => {
+        const data = await chatService.getMessages(activeConversation.id, 0, PAGE_SIZE);
+        // Backend trả mới nhất trước (DESC) → đảo lại để hiển thị cũ → mới
+        const mapped = [...data.content].reverse().map(msg => {
           let status: 'SENT' | 'DELIVERED' | 'SEEN' = 'SENT';
           if (msg.seenAt) status = 'SEEN';
           else if (msg.deliveredAt) status = 'DELIVERED';
           return { ...msg, status };
         });
         setMessages(mapped);
+        setHasMoreMessages(data.content.length === PAGE_SIZE);
         
         // Đánh dấu đã xem toàn bộ tin nhắn chưa đọc
         if (activeConversation.unreadCount > 0) {
@@ -438,6 +449,63 @@ export default function ChatPage({
 
     loadMessages();
   }, [activeConversation, currentUser.id, triggerToast]);
+
+  // Tải tin nhắn cũ hơn khi cuộn lên đầu (Sprint 4.5 đợt 2 - Infinite Scroll)
+  const loadOlderMessages = useCallback(async () => {
+    const conv = activeConversationRef.current;
+    const container = chatScrollContainerRef.current;
+    if (!conv || !container || isLoadingMoreRef.current) return;
+
+    isLoadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    // Ghi nhớ chiều cao trước khi prepend để giữ vị trí cuộn
+    prependPrevHeightRef.current = container.scrollHeight;
+
+    const nextPage = messagesPageRef.current + 1;
+    try {
+      const data = await chatService.getMessages(conv.id, nextPage, PAGE_SIZE);
+      if (data.content.length > 0) {
+        const older = [...data.content].reverse().map(msg => {
+          let status: 'SENT' | 'DELIVERED' | 'SEEN' = 'SENT';
+          if (msg.seenAt) status = 'SEEN';
+          else if (msg.deliveredAt) status = 'DELIVERED';
+          return { ...msg, status };
+        });
+        messagesPageRef.current = nextPage;
+        // Prepend tin cũ, lọc trùng id (an toàn)
+        setMessages(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const unique = older.filter(m => !existingIds.has(m.id));
+          return [...unique, ...prev];
+        });
+      }
+      setHasMoreMessages(data.content.length === PAGE_SIZE);
+    } catch {
+      prependPrevHeightRef.current = null;
+    } finally {
+      isLoadingMoreRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  // Giữ nguyên vị trí cuộn sau khi prepend tin cũ (chạy trước paint để không nháy)
+  useLayoutEffect(() => {
+    const container = chatScrollContainerRef.current;
+    if (container && prependPrevHeightRef.current !== null) {
+      const diff = container.scrollHeight - prependPrevHeightRef.current;
+      container.scrollTop = diff;
+      prependPrevHeightRef.current = null;
+    }
+  }, [messages]);
+
+  // Handler cuộn: chạm gần đầu khung → tải thêm tin cũ
+  const handleMessagesScroll = useCallback(() => {
+    const container = chatScrollContainerRef.current;
+    if (!container) return;
+    if (container.scrollTop < 80 && hasMoreMessages && !isLoadingMoreRef.current) {
+      loadOlderMessages();
+    }
+  }, [hasMoreMessages, loadOlderMessages]);
 
   // Emit sự kiện "đang gõ" qua WebSocket với throttle (Sprint 4.4)
   const emitTyping = useCallback(() => {
@@ -1146,8 +1214,15 @@ export default function ChatPage({
             {/* Khung chứa các tin nhắn */}
             <div 
               ref={chatScrollContainerRef}
+              onScroll={handleMessagesScroll}
               className="flex-1 overflow-y-auto px-5 py-4 space-y-4 flex flex-col bg-slate-50/30"
             >
+              {/* Spinner tải tin cũ (Infinite Scroll - Sprint 4.5) */}
+              {isLoadingMore && (
+                <div className="flex items-center justify-center py-2 shrink-0">
+                  <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
+                </div>
+              )}
               {/* Overlay đóng reaction picker / delete menu khi bấm ra ngoài */}
               {(reactionPickerFor || deleteMenuFor) && (
                 <div

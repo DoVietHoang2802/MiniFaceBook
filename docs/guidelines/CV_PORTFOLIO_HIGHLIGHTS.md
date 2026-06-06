@@ -532,3 +532,20 @@
     *   *Implemented message edit and dual-mode soft delete (delete-for-me via a per-user set vs recall-for-everyone via a flag) with 15-minute time-window and ownership validation, synchronized in realtime through a reused Redis Pub/Sub "UPDATE" channel. Diagnosed and fixed input lag caused by per-frame STOMP debug logging that bottlenecked the console under DevTools.*
 
 ---
+
+### 📜 Highlight 34: Infinite Scroll Chat với Scroll-Position Preservation (useLayoutEffect, không nhảy màn hình)
+*   **Situation (Bối cảnh):** Cuộc trò chuyện lâu năm có thể chứa hàng nghìn tin nhắn. Tải tất cả cùng lúc gây chậm và lag render. Cần phân trang tải dần khi cuộn lên — nhưng thách thức kinh điển là khi chèn tin cũ vào đầu danh sách, màn hình bị "nhảy" lên làm mất vị trí người dùng đang đọc.
+*   **Task (Nhiệm vụ):** Triển khai infinite scroll cho khung chat: tải tin mới nhất trước, cuộn lên tải tin cũ dần, và giữ nguyên vị trí cuộn khi prepend (không giật/nhảy) — đúng trải nghiệm Messenger.
+*   **Action (Hành động):**
+    *   **Pagination DESC + reverse:** Backend đổi sort sang giảm dần (`createdAt DESC`) để page 0 = tin mới nhất (sửa luôn bug cũ: sort ASC khiến conv lớn hiển thị nhầm tin cũ nhất). Frontend reverse mỗi trang để hiển thị cũ→mới, prepend trang cũ lên đầu.
+    *   **Scroll-position preservation:** Trước khi prepend, ghi lại `scrollHeight` của container (`prependPrevHeightRef`); sau khi DOM cập nhật, dùng `useLayoutEffect` (chạy *trước* paint, tránh nháy) set `scrollTop = newScrollHeight - prevHeight` → người dùng giữ nguyên vị trí đang đọc bất kể chiều cao tin cũ thêm vào.
+    *   **Trigger thông minh:** Lắng nghe `onScroll`, khi `scrollTop < 80px` và còn tin và không đang tải → tải trang kế; cờ `hasMoreMessages` dừng khi hết; lọc trùng id khi prepend.
+    *   **Quyết định kiến trúc:** Chọn scroll-height-diff thủ công thay vì thư viện virtualization — đủ cho quy mô demo, đơn giản, không thêm dependency, vẫn mượt.
+*   **Result (Kết quả):**
+    *   Khung chat tải nhanh (chỉ 15 tin mới nhất ban đầu), cuộn lên tải dần mượt mà.
+    *   Giữ nguyên vị trí cuộn khi prepend — không giật/nhảy màn hình, trải nghiệm ngang Messenger.
+    *   Hoàn tất Phase 4 Realtime Chat 100% (WebSocket, status, typing, reactions, reply, media, edit/delete, infinite scroll).
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Built chat infinite scroll with DESC pagination and client-side reverse, preserving scroll position on prepend via useLayoutEffect scroll-height-diff (no jump/flicker) — choosing a lightweight manual approach over virtualization for the demo scale while matching Messenger-grade UX.*
+
+---

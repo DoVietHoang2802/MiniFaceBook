@@ -60,13 +60,13 @@ public class ConversationController {
   }
 
   @GetMapping("/{id}/messages")
-  @Operation(summary = "Lấy danh sách tin nhắn", description = "Lấy danh sách tin nhắn của một cuộc hội thoại có phân trang (tin nhắn cũ -> mới)")
+  @Operation(summary = "Lấy danh sách tin nhắn", description = "Lấy tin nhắn phân trang, mới nhất trước (page 0 = mới nhất) phục vụ infinite scroll")
   public ApiResponse<Page<MessageResponse>> getMessages(
       @AuthenticationPrincipal Jwt jwt,
       @PathVariable("id") String conversationId,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "50") int size) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
+      @RequestParam(defaultValue = "15") int size) {
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
     Page<MessageResponse> response = messageService.getMessages(conversationId, jwt.getSubject(), pageable);
     return ApiResponse.success("Lấy danh sách tin nhắn thành công", response);
   }

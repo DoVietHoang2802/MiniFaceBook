@@ -305,6 +305,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Quyết định kiến trúc - VÌ SAO]** "Xóa cho riêng tôi" dùng `deletedFor` Set thay vì xóa hẳn DB → tin vẫn hiện với người kia (đúng hành vi Messenger), reversible. "Thu hồi" dùng soft-delete `deleted` flag thay vì xóa cứng → giữ lịch sử + có thể audit. Cả 2 reuse Pub/Sub "UPDATE" có sẵn.
   - [x] **[Verify]** Backend compile PASS, FE 0 lỗi.
 
+- **Phiên 06/06/2026 (Sprint 4.5 đợt 2 - Infinite Scroll → PHASE 4 HOÀN THÀNH 100%):**
+  - [x] **[Backend]** `getMessages` đổi sort sang DESC (page 0 = tin mới nhất), page size 15 → đúng chuẩn chat infinite scroll (trước đó ASC page 0 = tin cũ nhất, sai cho conv lớn).
+  - [x] **[Frontend]** Load đầu: page 0 DESC → reverse hiển thị cũ→mới → scroll bottom. Cuộn lên gần đầu (`scrollTop < 80`) → tải page kế → prepend tin cũ (lọc trùng id). `hasMoreMessages` dừng khi hết.
+  - [x] **[Frontend - Giữ scroll position]** Dùng `useLayoutEffect` (chạy trước paint, không nháy): đo `scrollHeight` trước prepend (`prependPrevHeightRef`), sau khi DOM cập nhật set `scrollTop = scrollHeight - prevHeight` → màn hình giữ nguyên chỗ đang đọc, không nhảy. Spinner ở đầu khung khi đang tải.
+  - [x] **[Quyết định kiến trúc - VÌ SAO]** Dùng scroll-height-diff thủ công thay vì virtualization (react-window). Lý do: quy mô demo (vài trăm tin/conv) không cần virtualization phức tạp; scroll-height-diff đơn giản, không thêm thư viện, vẫn mượt. Sort DESC + reverse phía client là pattern chuẩn (load mới nhất trước, prepend tin cũ).
+  - [x] **[Verify]** Backend compile PASS, FE 0 lỗi, test thực tế (page size 15) cuộn lên load thêm mượt, không nhảy màn hình. **PHASE 4 REALTIME CHAT HOÀN THÀNH 100%** (Sprint 4.1→4.5).
+  - [x] **[Lưu ý]** Trong lúc test gặp lỗi 401 hàng loạt (`/auth/refresh` 401) — không phải bug code, do phiên đăng nhập hết hạn sau phiên dev dài. Fix: đăng nhập lại.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |
