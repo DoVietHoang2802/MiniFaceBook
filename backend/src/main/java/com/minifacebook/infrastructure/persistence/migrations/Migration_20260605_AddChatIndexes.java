@@ -19,11 +19,10 @@ public class Migration_20260605_AddChatIndexes {
     // 1. Index cho conversations collection
     IndexOperations convIndexes = mongoTemplate.indexOps("conversations");
     
-    // Unique index trên participantIds (Sorted array) để đảm bảo tính idempotent
+    // Index trên participantIds để tìm conversations nhanh (KHÔNG unique vì array multikey)
     convIndexes.ensureIndex(new Index()
         .on("participantIds", Sort.Direction.ASC)
-        .unique()
-        .named("participants_unique_idx")
+        .named("participants_idx")
     );
 
     // Index trên lastMessageAt giảm dần để tối ưu hóa truy vấn danh sách hội thoại
@@ -51,7 +50,7 @@ public class Migration_20260605_AddChatIndexes {
 
   @RollbackExecution
   public void rollback(MongoTemplate mongoTemplate) {
-    mongoTemplate.indexOps("conversations").dropIndex("participants_unique_idx");
+    mongoTemplate.indexOps("conversations").dropIndex("participants_idx");
     mongoTemplate.indexOps("conversations").dropIndex("last_message_at_idx");
     mongoTemplate.indexOps("messages").dropIndex("conv_created_idx");
     mongoTemplate.indexOps("messages").dropIndex("sender_idx");

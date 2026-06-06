@@ -19,7 +19,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Document(collection = "conversations")
 @CompoundIndexes({
-  @CompoundIndex(name = "participants_unique_idx", def = "{'participantIds': 1}", unique = true),
+  @CompoundIndex(name = "participants_idx", def = "{'participantIds': 1}"),
   @CompoundIndex(name = "last_message_at_idx", def = "{'lastMessageAt': -1}")
 })
 @Getter

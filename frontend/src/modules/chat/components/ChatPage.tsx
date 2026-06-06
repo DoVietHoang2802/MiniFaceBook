@@ -8,7 +8,16 @@ import {
   Check, 
   CheckCheck, 
   Plus, 
-  X
+  X,
+  ArrowLeft,
+  SlidersHorizontal,
+  Phone,
+  Video,
+  MoreVertical,
+  Smile,
+  Image as ImageIcon,
+  Mic,
+  UserPlus
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -47,6 +56,9 @@ export default function ChatPage({
   // Input states
   const [searchText, setSearchText] = useState('');
   const [messageInput, setMessageInput] = useState('');
+  
+  // Filter cho danh sách hội thoại (All / Unread / Groups / Requests)
+  const [conversationFilter, setConversationFilter] = useState<'all' | 'unread' | 'groups' | 'requests'>('all');
   
   // New chat modal
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -125,9 +137,11 @@ export default function ChatPage({
         try {
           const newConv = await chatService.createConversation(initialRecipientId);
           await loadConversations(newConv.id);
-          if (onClearInitialRecipient) onClearInitialRecipient();
         } catch {
           triggerToast('Không thể mở cuộc trò chuyện với người bạn này.');
+        } finally {
+          // Luôn clear để không gọi lại liên tục khi fail
+          if (onClearInitialRecipient) onClearInitialRecipient();
         }
       };
       startChatWithFriend();
@@ -406,14 +420,23 @@ export default function ChatPage({
     return groups;
   };
 
-  // Filter conversations based on search text
+  // Filter conversations based on search text + tab filter
   const filteredConversations = conversations.filter(c => {
     const partner = c.participants.find(p => p.id !== currentUser.id);
-    return partner?.name.toLowerCase().includes(searchText.toLowerCase());
+    const matchSearch = partner?.name.toLowerCase().includes(searchText.toLowerCase());
+    if (!matchSearch) return false;
+    
+    if (conversationFilter === 'unread') return c.unreadCount > 0;
+    if (conversationFilter === 'groups') return false; // Chưa có group chat
+    if (conversationFilter === 'requests') return false; // Chưa có message request
+    return true; // 'all'
   });
 
+  // Đếm số conversation chưa đọc cho badge
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount > 0 ? 1 : 0), 0);
+
   const filteredFriends = friendsList.filter(f => 
-    f.name.toLowerCase().includes(friendSearchText.toLowerCase())
+    f.name?.toLowerCase().includes(friendSearchText.toLowerCase())
   );
 
   // Lấy thông tin partner của cuộc trò chuyện hiện tại
@@ -421,39 +444,137 @@ export default function ChatPage({
   const isActivePartnerOnline = activePartner ? onlineUserIds.has(activePartner.id) : false;
 
   return (
-    <div className="flex bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-140px)] animate-fade-in-up">
-      {/* CỘT TRÁI: DANH SÁCH CUỘC TRÒ CHUYỆN */}
-      <div className="w-80 md:w-96 border-r border-slate-200 flex flex-col h-full bg-slate-50/50 shrink-0">
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-3 bg-white">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input 
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Tìm tin nhắn, bạn bè..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-xs text-slate-700 transition-all font-medium"
-            />
+    <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-120px)] animate-fade-in-up">
+
+      {/* ========================================================== */}
+      {/* CỘT 1: DANH SÁCH CUỘC TRÒ CHUYỆN                           */}
+      {/* ========================================================== */}
+      <div className={`w-[240px] min-w-[240px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0 ${activeConversation ? 'hidden md:flex' : ''}`}>
+        {/* Header Stories */}
+        <div className="px-2.5 pt-2.5 pb-1">
+          <h3 className="text-[10px] font-black text-slate-800 mb-1.5">Stories</h3>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            {/* Your story */}
+            <div className="flex flex-col items-center gap-0.5 shrink-0 cursor-pointer group">
+              <div className="relative h-8 w-8 rounded-full border-[1.5px] border-dashed border-violet-300 flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition">
+                <Plus className="h-3 w-3 text-violet-500" />
+              </div>
+              <span className="text-[8px] text-slate-500 font-medium">Bạn</span>
+            </div>
+            
+            {/* Stories từ partners */}
+            {conversations.slice(0, 6).map(conv => {
+              const partner = conv.participants.find(p => p.id !== currentUser.id);
+              if (!partner) return null;
+              const isOnline = onlineUserIds.has(partner.id);
+              return (
+                <div key={conv.id} className="flex flex-col items-center gap-0.5 shrink-0 cursor-pointer group">
+                  <div className="relative">
+                    <div className="h-8 w-8 rounded-full p-[1.5px] bg-gradient-to-tr from-violet-500 to-pink-400">
+                      <div className="h-full w-full rounded-full border-[1.5px] border-white overflow-hidden bg-slate-100">
+                        {partner.avatar ? (
+                          <img src={partner.avatar} alt={partner.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-[8px]">
+                            {partner.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {isOnline && (
+                      <span className="absolute bottom-0 right-0 h-[6px] w-[6px] border border-white rounded-full bg-emerald-500"></span>
+                    )}
+                  </div>
+                  <span className="text-[8px] text-slate-600 font-medium truncate max-w-[36px]">{partner.name.split(' ').pop()}</span>
+                </div>
+              );
+            })}
           </div>
-          <button 
-            onClick={openNewChatModal}
-            className="p-2 bg-violet-600 text-white rounded-xl hover:bg-violet-500 transition shadow-sm hover-lift cursor-pointer flex items-center justify-center shrink-0"
-            title="Cuộc trò chuyện mới"
+        </div>
+
+        {/* Search bar */}
+        <div className="px-2.5 pb-1.5">
+          <div className="relative flex items-center gap-1">
+            <div className="relative flex-grow">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+              <input 
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Tìm bạn bè hoặc tin nhắn"
+                className="w-full pl-7 pr-2 py-1 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[10px] text-slate-700 transition-all font-medium"
+              />
+            </div>
+            <button 
+              className="p-1 rounded-full bg-slate-100/70 hover:bg-slate-200 text-slate-500 transition cursor-pointer"
+              title="Bộ lọc"
+            >
+              <SlidersHorizontal className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Filter tabs */}
+        <div className="px-2.5 pb-1.5 flex gap-1 overflow-x-auto">
+          <button
+            onClick={() => setConversationFilter('all')}
+            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer ${
+              conversationFilter === 'all' 
+                ? 'bg-violet-600 text-white' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
           >
-            <Plus className="h-4.5 w-4.5" />
+            Tất cả
+          </button>
+          <button
+            onClick={() => setConversationFilter('unread')}
+            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-0.5 ${
+              conversationFilter === 'unread' 
+                ? 'bg-violet-600 text-white' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Chưa đọc
+            {totalUnread > 0 && (
+              <span className={`text-[7px] font-black px-1 rounded-full ${
+                conversationFilter === 'unread' ? 'bg-white text-violet-600' : 'bg-violet-600 text-white'
+              }`}>
+                {totalUnread}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setConversationFilter('groups')}
+            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer ${
+              conversationFilter === 'groups' 
+                ? 'bg-violet-600 text-white' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Nhóm
+          </button>
+          <button
+            onClick={() => setConversationFilter('requests')}
+            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer ${
+              conversationFilter === 'requests' 
+                ? 'bg-violet-600 text-white' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Yêu cầu
           </button>
         </div>
 
         {/* List cuộc trò chuyện */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100/60 p-2 space-y-1">
+        <div className="flex-1 overflow-y-auto px-1.5 py-1 space-y-0">
           {isLoadingConvs && conversations.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 text-violet-500 animate-spin" />
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
-              <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-30" />
-              <p className="text-xs font-semibold">Chưa có cuộc trò chuyện nào</p>
+            <div className="text-center py-6 text-slate-400">
+              <MessageSquare className="h-5 w-5 mx-auto mb-1.5 opacity-30" />
+              <p className="text-[9px] font-semibold">Chưa có cuộc trò chuyện nào</p>
             </div>
           ) : (
             filteredConversations.map((conv) => {
@@ -469,26 +590,25 @@ export default function ChatPage({
                 <div
                   key={conv.id}
                   onClick={() => setActiveConversation(conv)}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all hover:bg-white border ${
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all hover:bg-slate-50 ${
                     isSelected 
-                      ? 'bg-white border-violet-100 shadow-sm text-violet-900' 
-                      : 'border-transparent hover:border-slate-200/60'
+                      ? 'bg-violet-50/50 border-l-2 border-violet-500' 
+                      : ''
                   }`}
                 >
                   {/* Avatar */}
                   <div className="relative shrink-0">
-                    <div className="h-11 w-11 rounded-full border border-slate-200/80 overflow-hidden bg-slate-100 shadow-sm">
+                    <div className="h-7 w-7 rounded-full border border-slate-200/80 overflow-hidden bg-slate-100">
                       {partner.avatar ? (
                         <img src={partner.avatar} alt={partner.name} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold bg-slate-50">
+                        <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-[9px] bg-slate-50">
                           {partner.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    {/* Trạng thái Online */}
                     {isPartnerOnline && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 border-2 border-white rounded-full bg-emerald-500"></span>
+                      <span className="absolute bottom-0 right-0 h-[6px] w-[6px] border border-white rounded-full bg-emerald-500"></span>
                     )}
                   </div>
 
@@ -522,7 +642,7 @@ export default function ChatPage({
                       
                       {/* Unread count badge */}
                       {hasUnread && (
-                        <span className="h-4.5 min-w-4.5 px-1.5 flex items-center justify-center text-[9px] font-black bg-violet-600 text-white rounded-full shrink-0">
+                        <span className="h-4 min-w-4 px-1 flex items-center justify-center text-[8px] font-black bg-violet-600 text-white rounded-full shrink-0">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -533,42 +653,73 @@ export default function ChatPage({
             })
           )}
         </div>
+
+        {/* Nút tìm bạn mới */}
+        <div className="px-2 py-1.5 border-t border-slate-100">
+          <button 
+            onClick={openNewChatModal}
+            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full border border-violet-200 text-violet-600 font-bold text-[9px] hover:bg-violet-50 transition cursor-pointer"
+          >
+            <UserPlus className="h-3 w-3" />
+            Tìm bạn mới
+          </button>
+        </div>
       </div>
 
-      {/* CỘT PHẢI: CHI TIẾT KHUNG CHAT */}
-      <div className="flex-grow flex flex-col h-full bg-slate-50/20 relative">
+      {/* ========================================================== */}
+      {/* CỘT 2: CHI TIẾT KHUNG CHAT                                 */}
+      {/* ========================================================== */}
+      <div className={`flex-1 flex flex-col h-full bg-white relative min-w-0 ${!activeConversation ? 'hidden md:flex' : ''}`}>
         {activeConversation ? (
           <>
             {/* Header chat */}
-            <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between shadow-sm z-10">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="h-10 w-10 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shadow-sm">
+            <div className="px-3 py-1.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
+              <div className="flex items-center gap-2 flex-grow min-w-0">
+                <button 
+                  onClick={() => setActiveConversation(null)}
+                  className="md:hidden p-1 hover:bg-slate-100 rounded transition cursor-pointer shrink-0"
+                  aria-label="Quay lại danh sách"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 text-slate-600" />
+                </button>
+                <div className="relative shrink-0">
+                  <div className="h-7 w-7 rounded-full border border-slate-200 overflow-hidden bg-slate-100">
                     {activePartner?.avatar ? (
                       <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold bg-slate-50">
+                      <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-[9px] bg-slate-50">
                         {activePartner?.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   {isActivePartnerOnline && (
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-2 border-white rounded-full bg-emerald-500"></span>
+                    <span className="absolute bottom-0 right-0 h-[5px] w-[5px] border border-white rounded-full bg-emerald-500"></span>
                   )}
                 </div>
-                <div className="text-left">
-                  <h4 className="text-xs font-bold text-slate-800">{activePartner?.name}</h4>
-                  <span className="text-[10px] font-semibold text-slate-400">
+                <div className="text-left min-w-0">
+                  <h4 className="text-[10px] font-bold text-slate-800 truncate">{activePartner?.name}</h4>
+                  <span className="text-[8px] font-medium text-slate-400">
                     {isActivePartnerOnline ? (
-                      <span className="text-emerald-600 font-bold flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-ping"></span>
-                        Đang hoạt động
-                      </span>
+                      <span className="text-emerald-600 font-bold">Đang hoạt động</span>
                     ) : (
                       'Ngoại tuyến'
                     )}
                   </span>
                 </div>
+              </div>
+              <div className="flex items-center gap-0 shrink-0">
+                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tìm kiếm">
+                  <Search className="h-3 w-3" />
+                </button>
+                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi thoại">
+                  <Phone className="h-3 w-3" />
+                </button>
+                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi video">
+                  <Video className="h-3 w-3" />
+                </button>
+                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tùy chọn">
+                  <MoreVertical className="h-3 w-3" />
+                </button>
               </div>
             </div>
 
@@ -681,24 +832,38 @@ export default function ChatPage({
             {/* Input bar */}
             <form 
               onSubmit={handleSendMessage}
-              className="p-4 border-t border-slate-200 bg-white flex items-center gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.02)] z-10"
+              className="px-2.5 py-1.5 border-t border-slate-200 bg-white flex items-center gap-1 z-10"
             >
+              <div className="flex items-center shrink-0">
+                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer" title="Thêm">
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Emoji">
+                  <Smile className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Ảnh">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Mic">
+                  <Mic className="h-3.5 w-3.5" />
+                </button>
+              </div>
               <input 
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Nhập tin nhắn..."
-                className="flex-grow px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-xs text-slate-700 transition-all font-medium"
+                placeholder={`Nhắn tin cho ${activePartner?.name || ''}...`}
+                className="flex-grow px-2.5 py-1 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[10px] text-slate-700 transition-all font-medium"
               />
               <button 
                 type="submit"
                 disabled={!messageInput.trim() || isSending}
-                className="p-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-500 disabled:opacity-50 transition shadow-md hover-lift shrink-0 cursor-pointer flex items-center justify-center"
+                className="h-6 w-6 bg-violet-600 text-white rounded-full hover:bg-violet-500 disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center justify-center"
               >
                 {isSending ? (
-                  <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <Send className="h-4.5 w-4.5" />
+                  <Send className="h-3 w-3" />
                 )}
               </button>
             </form>

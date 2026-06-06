@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Service xử lý nghiệp vụ quản lý cuộc hội thoại (Sprint 4.2 & 4.3).
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ConversationService {
@@ -54,11 +56,16 @@ public class ConversationService {
   /**
    * Tạo mới hoặc trả về cuộc trò chuyện 1-1 đã có giữa 2 user.
    */
-  @Transactional
+  /**
+   * Tạo mới hoặc trả về cuộc trò chuyện 1-1 đã có giữa 2 user.
+   * Không dùng @Transactional để tránh WriteConflict khi concurrent requests.
+   */
   public ConversationResponse getOrCreateConversation(String email, ConversationCreateRequest request) {
     User currentUser = getUserByEmail(email);
     String currentUserId = currentUser.getId();
     String recipientId = request.getRecipientId();
+
+    log.info("Creating conversation: currentUser={} ({}), recipientId={}", email, currentUserId, recipientId);
 
     if (currentUserId.equals(recipientId)) {
       throw new AppException(ErrorCode.CANNOT_CHAT_SELF);
@@ -69,7 +76,10 @@ public class ConversationService {
 
     // Xác thực mối quan hệ bạn bè (chỉ cho phép khi status = ACCEPTED)
     Friendship friendship = friendshipRepository.findBetweenUsers(currentUserId, recipientId)
-        .orElseThrow(() -> new AppException(ErrorCode.NOT_FRIENDS));
+        .orElseThrow(() -> {
+          log.error("Friendship NOT FOUND between {} and {}", currentUserId, recipientId);
+          return new AppException(ErrorCode.NOT_FRIENDS);
+        });
 
     if (friendship.getStatus() == FriendshipStatus.BLOCKED) {
       throw new AppException(ErrorCode.USER_BLOCKED);
@@ -81,23 +91,26 @@ public class ConversationService {
     // Sắp xếp participantIds tăng dần để đảm bảo unique/idempotent
     List<String> sortedIds = Stream.of(currentUserId, recipientId).sorted().toList();
 
+    // Luôn tìm existing trước khi tạo mới
     Optional<Conversation> existing = conversationRepository.findByParticipantIds(sortedIds);
-    Conversation conversation;
     if (existing.isPresent()) {
-      conversation = existing.get();
-    } else {
-      conversation = Conversation.builder()
-          .participantIds(sortedIds)
-          .createdAt(Instant.now())
-          .lastMessageAt(Instant.now())
-          .build();
-      try {
-        conversation = conversationRepository.save(conversation);
-      } catch (org.springframework.dao.DuplicateKeyException e) {
-        // Xử lý race condition khi 2 luồng cùng ghi đồng thời
-        conversation = conversationRepository.findByParticipantIds(sortedIds)
-            .orElseThrow(() -> e);
-      }
+      log.info("Existing conversation found: {}", existing.get().getId());
+      return mapToResponse(existing.get(), currentUser, recipient);
+    }
+
+    // Tạo mới với xử lý race condition
+    Conversation conversation = Conversation.builder()
+        .participantIds(sortedIds)
+        .createdAt(Instant.now())
+        .lastMessageAt(Instant.now())
+        .build();
+    try {
+      conversation = conversationRepository.save(conversation);
+      log.info("New conversation created: {}", conversation.getId());
+    } catch (org.springframework.dao.DuplicateKeyException e) {
+      conversation = conversationRepository.findByParticipantIds(sortedIds)
+          .orElseThrow(() -> e);
+      log.info("Race condition handled, using existing: {}", conversation.getId());
     }
 
     return mapToResponse(conversation, currentUser, recipient);
@@ -107,7 +120,6 @@ public class ConversationService {
    * Lấy danh sách các cuộc trò chuyện của người dùng hiện tại (phân trang).
    * Tối ưu hóa N+1 bằng cách batch-load thông tin user.
    */
-  @Transactional(readOnly = true)
   public Page<ConversationResponse> getConversations(String email, Pageable pageable) {
     User currentUser = getUserByEmail(email);
     String currentUserId = currentUser.getId();
@@ -165,7 +177,6 @@ public class ConversationService {
   /**
    * Đánh dấu toàn bộ tin nhắn chưa đọc trong cuộc hội thoại là đã xem.
    */
-  @Transactional
   public void markAllAsSeen(String conversationId, String email) {
     User currentUser = getUserByEmail(email);
     String currentUserId = currentUser.getId();
