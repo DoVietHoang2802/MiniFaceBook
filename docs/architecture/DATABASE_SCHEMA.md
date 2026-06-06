@@ -188,7 +188,7 @@ Redis được sử dụng với **5 mục đích rõ ràng**, đã được tri
 | **Presence Online/Offline** | `presence:<userId>` | String (`"ONLINE"`) | 35s | Heartbeat mechanism, tự động expire khi mất kết nối |
 | **Pub/Sub Chat** | `chat.room.<roomId>` | Pub/Sub Channel | N/A | Đồng bộ WebSocket đa server (scale-ready) |
 | **JWT Blacklist** (Logout) | `blacklist:<jwtId>` | String (`"revoked"`) | Bằng thời gian hết hạn còn lại của Access Token | Sử dụng `jwtId` (UUID) thay vì toàn bộ token để tiết kiệm RAM |
-| **Cache Unread Count** | `unread:<conversationId>:<userId>` | String (Counter) | N/A | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
+| **Cache Unread Count** | `unread:<conversationId>:<userId>` | String (Counter) | 7 ngày (7 days) | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
 | **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) | Phase 6 (chưa triển khai) |
 | **Cache Newsfeed** | `feed:user:<userId>` | List | 1800s (30 phút) | Phase 6 (chưa triển khai) |
 

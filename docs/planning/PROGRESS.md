@@ -316,3 +316,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |
 | **NoClassDefFoundError: ConversationRepository** | Lớp đã tồn tại nhưng surefire test runner không nạp được do xung đột cache của trình biên dịch maven. | Thực hiện dọn dẹp build target cũ (`mvn clean test-compile`) và biên dịch lại từ đầu. | Biên dịch thành công, toàn bộ unit tests hoạt động trơn tru. |
+
+- **Phiên 06/06/2026 (Sprint 4.3 - Real-Time Messaging & Status Transitions):**
+  - [x] **[Real-time Messaging]** Tích hợp WebSocket (STOMP/SockJS) để truyền tải và đồng bộ tin nhắn thời gian thực.
+  - [x] **[Đồng bộ hóa đa máy chủ]** Triển khai Redis Pub/Sub (`ChatRedisPublisher`, `ChatRedisSubscriber`) để đồng bộ tin nhắn (`NEW_MESSAGE`) và trạng thái (`DELIVERED`, `SEEN`) giữa các WebSocket session chạy trên nhiều cụm server.
+  - [x] **[Sửa lỗi định vị socket]** Khắc phục lỗi bất đồng bộ định danh (username routing mismatch) bằng cách tra cứu email từ participantId (MongoDB ID) thông qua UserRepository trước khi gọi convertAndSendToUser, giải quyết triệt để lỗi không nhận được tin nhắn.
+  - [x] **[Optimistic UI]** Thiết lập tin nhắn hiển thị tức thì dưới trạng thái `PENDING` ở Client, tự cập nhật sang `SENT` hoặc báo `FAILED` (kèm tính năng click gửi lại) dựa trên phản hồi của máy chủ.
+  - [x] **[Đồng bộ trạng thái]** Hoàn thiện luồng đồng bộ trạng thái tin nhắn động: `SENT` (Đã gửi) -> `DELIVERED` (Đã nhận, có biểu tượng double checkmark) -> `SEEN` (Đã xem, có biểu tượng mắt).
+  - [x] **[Cấu hình Vite]** Thêm định nghĩa `global: 'window'` vào `vite.config.ts` nhằm khắc phục lỗi runtime `global is not defined` của thư viện `sockjs-client` trên môi trường trình duyệt.
+  - [x] **[Accessibility & Polish]** Bổ sung các nhãn `title` hỗ trợ Accessibility cho các nút điều hướng và đóng modal ở `App.tsx`, `ChatPage.tsx`, `FriendsPage.tsx`. Loại bỏ hoàn toàn các import thừa ở cả Frontend và Backend, biên dịch 0 cảnh báo.
+  - [x] **[Testing & Verification]** Chạy Maven test thành công 100% (7/7 tests passed).
+

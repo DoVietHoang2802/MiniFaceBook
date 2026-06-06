@@ -27,10 +27,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
 
 /**
- * Unit Test cho ConversationService (Sprint 4.2).
+ * Unit Test cho ConversationService (Sprint 4.2 & 4.3).
  */
 @ExtendWith(MockitoExtension.class)
 public class ConversationServiceTest {
@@ -41,7 +41,7 @@ public class ConversationServiceTest {
   @Mock private FriendshipRepository friendshipRepository;
   @Mock private StringRedisTemplate redisTemplate;
   @Mock private ValueOperations<String, String> valueOperations;
-  @Mock private SimpMessagingTemplate messagingTemplate;
+  @Mock private ChatRedisPublisher chatRedisPublisher;
 
   @InjectMocks private ConversationService conversationService;
 

@@ -11,6 +11,7 @@ type TabKey = 'search' | 'friends' | 'pending' | 'sent';
 
 interface FriendsPageProps {
   triggerToast: (msg: string) => void;
+  onStartChat?: (userId: string) => void;
 }
 
 /**
@@ -20,7 +21,7 @@ interface FriendsPageProps {
  * - Lời mời: lời mời đến chờ duyệt (accept/reject).
  * - Đã gửi: lời mời mình đã gửi (thu hồi).
  */
-export default function FriendsPage({ triggerToast }: FriendsPageProps) {
+export default function FriendsPage({ triggerToast, onStartChat }: FriendsPageProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('search');
 
   // Search state
@@ -233,7 +234,7 @@ export default function FriendsPage({ triggerToast }: FriendsPageProps) {
 
     if (busy) {
       return (
-        <button disabled className={`${base} bg-slate-100 text-slate-400`}>
+        <button disabled title="Đang tải" className={`${base} bg-slate-100 text-slate-400`}>
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         </button>
       );
@@ -392,9 +393,14 @@ export default function FriendsPage({ triggerToast }: FriendsPageProps) {
                       {busy ? (
                         <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
                       ) : activeTab === 'friends' ? (
-                        <button onClick={() => handleUnfriend(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-rose-600 border border-rose-100 hover:bg-rose-50 transition cursor-pointer flex items-center">
-                          <UserX className="h-3.5 w-3.5 mr-1" /> Hủy kết bạn
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => onStartChat?.(item.userId)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-violet-600 text-white hover:bg-violet-500 transition cursor-pointer flex items-center shadow-sm">
+                            Nhắn tin
+                          </button>
+                          <button onClick={() => handleUnfriend(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-rose-600 border border-rose-100 hover:bg-rose-50 transition cursor-pointer flex items-center">
+                            <UserX className="h-3.5 w-3.5 mr-1" /> Hủy kết bạn
+                          </button>
+                        </div>
                       ) : activeTab === 'pending' ? (
                         <>
                           <button onClick={() => handleAcceptInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer flex items-center shadow-sm">

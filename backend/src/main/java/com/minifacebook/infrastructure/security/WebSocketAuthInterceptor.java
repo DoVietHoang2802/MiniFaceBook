@@ -1,6 +1,5 @@
 package com.minifacebook.infrastructure.security;
 
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

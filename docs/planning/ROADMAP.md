@@ -158,26 +158,26 @@
     - [x] API Mark messages as seen (`PUT /conversations/{id}/seen`) - Cập nhật `seenAt` cho tất cả messages chưa xem của conversation.
         - *Trigger:* Frontend gọi khi user mở conversation hoặc focus vào chat window.
         - *Realtime sync:* Emit WebSocket event đến sender để update UI (✓✓ → 👁️).
-- [ ] **Sprint 4.3: Messaging Logic & Realtime Delivery**
-    - [ ] **WebSocket Message Controller** - Nhận tin nhắn qua STOMP `/app/chat.send`.
+- [x] **Sprint 4.3: Messaging Logic & Realtime Delivery**
+    - [x] **WebSocket Message Controller** - Nhận tin nhắn qua STOMP `/app/chat.send`.
         - *Flow:* Client send → Backend validate → Save DB → Update Conversation lastMessage → Emit to recipient qua Redis Pub/Sub.
-    - [ ] **Message Status Transition (giống Facebook Messenger):**
+    - [x] **Message Status Transition (giống Facebook Messenger):**
         - **SENT** ✓: Message có `createdAt` (đã lưu DB).
         - **DELIVERED** ✓✓: Recipient online → Backend emit qua WebSocket → Recipient client nhận được → gọi callback set `deliveredAt`.
             - *Implementation:* WebSocket `/user/{recipientId}/queue/messages` → Client auto-ack → REST `PUT /messages/{id}/delivered`.
         - **SEEN** 👁️: User mở conversation → Frontend gọi `PUT /conversations/{id}/seen` → Backend set `seenAt` cho all messages → Emit WebSocket đến sender.
-    - [ ] **Optimistic UI (Frontend):**
-        - Tin nhắn hiển thị ngay với status PENDING (⏱️) → Server response → update status SENT (✓).
+    - [x] **Optimistic UI (Frontend):**
+        - Tin nhắn hiển thị ngay with status PENDING (⏱️) → Server response → update status SENT (✓).
         - Nếu fail → hiển thị ❌ + nút retry.
-    - [ ] **Redis Pub/Sub Integration:**
+    - [x] **Redis Pub/Sub Integration:**
         - Channel pattern: `chat.room.<conversationId>`.
         - Message format: `{type: "NEW_MESSAGE", data: MessageResponse}`.
         - All servers subscribe → broadcast đến WebSocket sessions của participants.
-    - [ ] **Redis Unread Count với TTL** (từ AI review - tránh memory leak):
+    - [x] **Redis Unread Count với TTL** (từ AI review - tránh memory leak):
         - Khi gửi tin nhắn mới → increment unread count cho recipient.
         - Set TTL 7 ngày: `redisTemplate.expire(key, 7, TimeUnit.DAYS)`.
         - Key pattern: `unread:<conversationId>:<recipientId>`.
-    - [ ] **ContentPreview Helper** (từ AI review - XSS prevention + truncate):
+    - [x] **ContentPreview Helper** (từ AI review - XSS prevention + truncate):
         - Sanitize HTML tags: `content.replaceAll("<[^>]*>", "")`.
         - Truncate về 100 chars (97 + "...").
         - Handle IMAGE/FILE type với placeholder: "📷 Đã gửi một ảnh", "📎 Đã gửi một file".

@@ -27,12 +27,18 @@ import { authService } from './modules/auth/services/authService';
 import PostFeed from './modules/post/components/PostFeed';
 import FriendsPage from './modules/friends/components/FriendsPage';
 import { friendService } from './modules/friends/services/friendService';
+import ChatPage from './modules/chat/components/ChatPage';
+import { useWebSocket } from './modules/chat/hooks/useWebSocket';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [activeTab, setActiveTab] = useState<'feed' | 'profile' | 'friends'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'profile' | 'friends' | 'chats'>('feed');
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
+
+  // Kích hoạt kết nối WebSocket & heartbeat cho presence
+  useWebSocket(!!user);
 
   // Trạng thái giao diện cao cấp
   const [showProfilePopover, setShowProfilePopover] = useState(false);
@@ -199,10 +205,7 @@ function App() {
                   { id: 'settings', label: 'Settings', icon: Settings, badge: null }
                 ].map((item) => {
                   const Icon = item.icon;
-                  const isActive =
-                    (item.id === 'feed' && activeTab === 'feed') ||
-                    (item.id === 'profile' && activeTab === 'profile') ||
-                    (item.id === 'friends' && activeTab === 'friends');
+                  const isActive = activeTab === item.id;
                   
                   return (
                     <button
@@ -211,6 +214,7 @@ function App() {
                         if (item.id === 'feed') setActiveTab('feed');
                         else if (item.id === 'profile') setActiveTab('profile');
                         else if (item.id === 'friends') setActiveTab('friends');
+                        else if (item.id === 'chats') setActiveTab('chats');
                         else triggerToast(`Tính năng "${item.label}" sẽ ra mắt ở Phase tiếp theo!`);
                       }}
                       title={item.label}
@@ -318,6 +322,7 @@ function App() {
                 </button>
                 <button 
                   onClick={() => triggerToast("Bạn có 3 thông báo mới!")} 
+                  title="Thông báo"
                   className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 relative transition-all cursor-pointer shadow-sm"
                 >
                   <Bell className="h-4.5 w-4.5" />
@@ -358,7 +363,20 @@ function App() {
               {activeTab === 'feed' ? (
                 <PostFeed currentUser={user} />
               ) : activeTab === 'friends' ? (
-                <FriendsPage triggerToast={triggerToast} />
+                <FriendsPage 
+                  triggerToast={triggerToast} 
+                  onStartChat={(recipientId) => {
+                    setSelectedRecipientId(recipientId);
+                    setActiveTab('chats');
+                  }}
+                />
+              ) : activeTab === 'chats' ? (
+                <ChatPage 
+                  currentUser={user} 
+                  triggerToast={triggerToast} 
+                  initialRecipientId={selectedRecipientId}
+                  onClearInitialRecipient={() => setSelectedRecipientId(null)}
+                />
               ) : (
                 <ProfilePage initialUser={user} onLogout={() => setUser(null)} />
               )}

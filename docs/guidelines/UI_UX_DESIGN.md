@@ -192,4 +192,13 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
     .animate-bouncy-pop {
       animation: bouncy-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
-    ```
+
+### 6.4. Real-Time Chat & Status Syncing (Trải nghiệm Chat Real-Time & Trạng thái Tin nhắn)
+*   **Nguyên tắc Trực quan:** Mọi tin nhắn đều phải có chỉ báo trạng thái thời gian thực tương ứng để người gửi luôn nắm được tiến trình gửi nhận.
+*   **Chỉ báo trạng thái tin nhắn (Message Status Indicators):**
+    *   **PENDING (Đang gửi - ⏱️):** Hiển thị ngay lập tức khi người dùng click gửi (lớp mờ hoặc icon xoay nhẹ).
+    *   **SENT (Đã gửi - ✓):** Đổi thành icon 1 dấu check xám nhạt khi server đã nhận và lưu vào MongoDB thành công.
+    *   **DELIVERED (Đã nhận - ✓✓):** Đổi thành icon 2 dấu check khi thiết bị của người nhận đang online và nhận được tin qua WebSocket.
+    *   **SEEN (Đã xem - 👁️ / Avatar):** Đổi thành avatar nhỏ hoặc icon con mắt xanh dương dịu mát khi người nhận mở cửa sổ chat hoặc đang active trong cuộc hội thoại đó.
+*   **Trợ năng cho Icon Trạng thái (A11y Compliance):** Do các icon vector không tự động hỗ trợ mô tả âm thanh, tất cả các icon trạng thái tin nhắn bắt buộc phải được bao bọc bằng thẻ `span` chứa thuộc tính `title` mô tả trạng thái (ví dụ: `title="Đã xem"`, `title="Đang gửi"`) để hỗ trợ người dùng sử dụng trình đọc màn hình.
+*   **Presence (Đèn báo Trạng thái Hoạt động):** Đèn báo trạng thái hoạt động màu xanh lá cây (`bg-green-500`) trên avatar bạn bè phải nhấp nháy tỏa bóng mờ (`animate-pulse`) để báo hiệu trạng thái hoạt động thời gian thực (Heartbeat).

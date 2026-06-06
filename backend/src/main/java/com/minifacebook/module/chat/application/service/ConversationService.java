@@ -9,6 +9,7 @@ import com.minifacebook.module.chat.application.dto.ParticipantResponse;
 import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
+import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
 import com.minifacebook.module.friendship.domain.entity.Friendship;
 import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
@@ -27,12 +28,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service xử lý nghiệp vụ quản lý cuộc hội thoại (Sprint 4.2).
+ * Service xử lý nghiệp vụ quản lý cuộc hội thoại (Sprint 4.2 & 4.3).
  */
 @Service
 @RequiredArgsConstructor
@@ -43,7 +43,7 @@ public class ConversationService {
   private final UserRepository userRepository;
   private final FriendshipRepository friendshipRepository;
   private final StringRedisTemplate redisTemplate;
-  private final SimpMessagingTemplate messagingTemplate;
+  private final ChatRedisPublisher chatRedisPublisher;
 
   private User getUserByEmail(String email) {
     return userRepository
@@ -198,9 +198,11 @@ public class ConversationService {
           .userId(currentUserId)
           .build();
 
-      messagingTemplate.convertAndSendToUser(
-          otherUserId,
-          "/queue/status",
+      // Gửi qua Redis Pub/Sub thay vì send trực tiếp để hỗ trợ multi-instance
+      chatRedisPublisher.publishStatus(
+          conversationId,
+          "SEEN",
+          List.of(otherUserId),
           event
       );
     }
