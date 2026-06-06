@@ -215,13 +215,16 @@
         - [x] Frontend: state `replyingTo`, Optimistic UI (giữ replyTo khi server không trả về), banner "Đang trả lời" trên input, nút Reply hover, **quote tách phía trên bong bóng màu trung tính** (dễ đọc trên mọi nền, giống Messenger/Zalo).
         - [x] **Verify:** Backend compile PASS, FE 0 lỗi, test 2 trình duyệt OK.
 
-    - [ ] **④ Media in Chat (ẢNH) — LÀM CUỐI CÙNG** ⛔
-        - [ ] Gửi ảnh trong tin nhắn — `MessageType.IMAGE` + `mediaUrl` đã có sẵn trong entity.
-        - [ ] **Reuse:** CloudinaryService (Phase 1) + Client-side compression (Phase 2) — hạ tầng đã có ~90%.
-        - [ ] 🆕 **CẢI TIẾN (USER duyệt) #1 — Bảo mật:** Tái dùng **Apache Tika magic-bytes scan** (Phase 1) để chặn file độc hại giả đuôi ảnh. *(Điểm cộng security cho CV/portfolio.)*
-        - [ ] 🆕 **CẢI TIẾN (USER duyệt) #2 — UX:** **Optimistic UI cho ảnh** — hiển thị blob preview local ngay khi chọn ảnh (trước khi upload xong), giống Messenger thật.
-        - [ ] 🆕 **CẢI TIẾN (USER duyệt) #3 — UX:** Thêm **upload progress bar** khi ảnh lớn.
-        - [ ] ⚠️ **Lưu ý Tech Debt:** 3 method trong `ConversationService` đã bỏ `@Transactional` (fix WriteConflict). Khi gửi media phải đảm bảo **atomic**: lưu message + update `lastMessageSummary` không bị lệch nếu lỗi giữa chừng. Review lại khi làm.
+    - [x] **④ Media in Chat (ẢNH) — LÀM CUỐI CÙNG** ✅ **HOÀN THÀNH**
+        - [x] Gửi ảnh trong tin nhắn — `MessageType.IMAGE` + `mediaUrl`. REST `POST /conversations/{id}/messages/image` (multipart).
+        - [x] **Reuse:** `MediaService.uploadAvatar()` (Cloudinary + Apache Tika magic-bytes scan từ Phase 1) + tái dùng luôn `sendMessage` type=IMAGE → ít code, atomic, tự có Pub/Sub realtime + reply.
+        - [x] 🆕 **Optimistic UI blob preview** — hiển thị ảnh GỐC local ngay (`URL.createObjectURL`) → user luôn thấy đúng ảnh, **tránh "ảnh khác"**.
+        - [x] 🆕 **Upload progress bar** overlay % trên ảnh.
+        - [x] 🆕 **Nén thông minh**: skip GIF, skip file <1MB, `preserveExif`, nén WebP cho ảnh lớn.
+        - [x] 🆕 **Preview tray giống Messenger** — thumbnail tối đa 4, nút X xóa, nút + thêm, KHÔNG auto-gửi, gửi ảnh + text cùng lúc.
+        - [x] 🆕 **Click quote → nhảy tới tin gốc** (giống Facebook) + highlight viền tím 1.6s.
+        - [x] **Bug fix:** race REST vs WebSocket echo gây trùng ảnh → dedup theo id trước + match optimistic ảnh theo type.
+        - [x] **Verify:** Backend compile PASS, FE 0 lỗi. Sandbox fallback (cloud `demo`→picsum) test không cần key thật.
 - [ ] **Sprint 4.5: Message Management**
     - [ ] **Delete Message**: Soft delete với option "Xóa cho tôi" / "Xóa cho mọi người".
         - *Time limit:* "Xóa cho mọi người" chỉ trong 15 phút.
@@ -327,12 +330,12 @@
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
-| 4 | Realtime Chat | 🟡 Đang làm | ~88% (4.1-4.3 + Typing + Reactions + Reply) |
+| 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.4 xong - 4.5 optional) |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~62%** (4/7 Phases hoàn thành + Sprint 4.1 xong)
+**Tổng tiến độ: ~70%** (4.x Chat hoàn thành 100% + chuẩn bị Phase 5)
 
 ---
 
@@ -400,6 +403,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.3 | Jun 2026 | **Sprint 4.4 ④ Media in Chat HOÀN THÀNH 🎉 → SPRINT 4.4 TRỌN VẸN**: Gửi ảnh qua REST `/conversations/{id}/messages/image` (multipart), reuse `MediaService` (Cloudinary+Tika) + `sendMessage` type=IMAGE. FE: preview tray giống Messenger (tối đa 4 ảnh, nút X/+, không auto-gửi), Optimistic blob preview (tránh "ảnh khác"), upload progress bar, nén thông minh (skip GIF/<1MB, preserveExif, WebP). Thêm click quote → nhảy tới tin gốc + highlight (giống Facebook). Fix race REST vs WS echo gây trùng ảnh (dedup theo id + match type). Sandbox fallback cho test không cần key. Phase 4 đạt 100%. |
 | 3.2 | Jun 2026 | **Sprint 4.4 ③ Reply to Message HOÀN THÀNH 🎉**: Trả lời tin nhắn cụ thể. Backend: value object `ReplyPreview` (denormalized snapshot: messageId+senderName+contentPreview) + `replyTo` vào Message/Document/Response, `replyToMessageId` vào SendRequest, validate cùng conversation, helper `buildShortPreview`. Frontend: state `replyingTo`, banner "Đang trả lời" trên input, nút Reply hover, **quote tách phía trên bong bóng màu trung tính** (giống Messenger/Zalo, dễ đọc mọi nền). **Quyết định:** lưu snapshot thay ID → quote hiển thị không query thêm (tránh N+1), giữ nội dung tại thời điểm reply. Fix: optimistic giữ replyTo khi server không trả về. Verify: backend compile PASS, FE 0 lỗi. |
 | 3.1 | Jun 2026 | **Sprint 4.4 ② Message Reactions HOÀN THÀNH 🎉**: React emoji (❤️👍😂😮😢😡) cho từng tin nhắn qua STOMP `/app/chat.react` + Redis Pub/Sub type "REACTION" → `/user/queue/reactions`. Backend: thêm `reactions` (embedded Map userId→emoji) vào Message/Document/Response, `ReactionRequest`/`MessageReactionEvent` DTO, `MessageService.reactToMessage()` (toggle + validate 6 emoji), ErrorCode `INVALID_REACTION` (3006). Frontend: Optimistic UI, nút hover 😊, picker popup, badge góc bong bóng, overlay click-outside. **Quyết định:** embedded Map thay collection riêng (chat 1-1 tối đa 2 react → không cần pagination như Post). Verify: backend compile PASS, FE 0 lỗi. |
 | 3.0 | Jun 2026 | **Sprint 4.4 ① Typing Indicator HOÀN THÀNH 🎉**: Realtime "đang nhập" qua STOMP `/app/chat.typing` + Redis Pub/Sub `chat.room.*`. Backend: `TypingRequest`, `TypingEvent`, `TypingService` (Redis TTL self-healing), mapping controller, subscriber handle type "TYPING". Frontend: subscribe `/user/queue/typing`, throttle gửi 2s, hiển thị 3 nơi (header/bubble/list). **Cascade 4 mốc:** throttle 2s < stop 3s < Redis TTL 4s < auto-clear 5s (mỗi lớp dự phòng lớp trước). Điểm hay: Redis TTL đảm bảo indicator tự hết kẹt khi đóng tab (đồng bộ pattern Presence Sprint 4.1). Verify: backend compile PASS, FE 0 lỗi, test 2 trình duyệt OK. |

@@ -496,3 +496,21 @@
     *   *Implemented a reply-to-message feature using denormalized snapshot embedding (ReplyPreview value object) to achieve zero-extra-query quote display and immutable conversation context preservation. Applied cross-conversation validation and neutral-color quote UI positioned above message bubbles for maximum readability.*
 
 ---
+
+### 🖼️ Highlight 32: Gửi Ảnh trong Chat — Reuse Hạ tầng + Optimistic Blob Preview + Xử lý Race Condition Realtime
+*   **Situation (Bối cảnh):** Tính năng gửi ảnh trong chat realtime đặt ra nhiều thách thức: (1) tránh viết lại pipeline upload đã có ở module Post/Avatar; (2) trải nghiệm gửi ảnh phải tức thì như Messenger (preview trước khi gửi, không auto-send nhầm); (3) realtime hai chiều dễ phát sinh race condition giữa REST response và WebSocket echo gây nhân đôi ảnh; (4) từng gặp vấn đề "ảnh hiển thị khác ảnh đã chọn" do nén/sandbox.
+*   **Task (Nhiệm vụ):** Xây dựng gửi ảnh chat tái sử dụng tối đa hạ tầng sẵn có, UX preview-tray giống Messenger (tối đa 4 ảnh, xóa/thêm), Optimistic UI tức thì, và xử lý triệt để race condition nhân đôi tin nhắn realtime.
+*   **Action (Hành động):**
+    *   **Reuse hạ tầng:** Backend tái dùng `MediaService.uploadAvatar()` (Cloudinary + Apache Tika magic-bytes scan từ Phase 1) và tái dùng luôn `sendMessage(type=IMAGE)` → endpoint upload chỉ vài dòng, tự thừa hưởng validation, denormalization, Redis Pub/Sub realtime và cả reply.
+    *   **Optimistic blob preview:** Frontend hiển thị ảnh gốc local qua `URL.createObjectURL` ngay khi chọn → người dùng luôn thấy đúng ảnh mình gửi, loại bỏ vấn đề "ảnh khác" do nén WebP/sandbox.
+    *   **Preview tray + nén thông minh:** Tray thumbnail tối đa 4 ảnh (nút X xóa, + thêm, không auto-gửi); nén client-side bỏ qua GIF (giữ animation) và file <1MB (giữ chất lượng), `preserveExif` giữ orientation, ép WebP cho ảnh lớn; upload progress bar %.
+    *   **Fix race condition:** REST response và WebSocket echo cùng thêm tin nhắn → ảnh (content rỗng) khiến dedup-by-content thất bại, sinh trùng key React. Giải pháp: dedup theo **id trước**, match optimistic ảnh theo **type** thay vì content, và REST replacement nhận diện khi WS đã thêm → idempotent bất kể thứ tự đến.
+    *   **Jump-to-message:** Bấm quote reply cuộn mượt tới tin gốc kèm highlight tạm thời (giống Facebook), dùng map ref DOM theo messageId.
+*   **Result (Kết quả):**
+    *   Tính năng gửi ảnh hoàn chỉnh, UX ngang Messenger, tái sử dụng ~90% hạ tầng (gần như không viết mới phần upload/realtime).
+    *   Loại bỏ hoàn toàn lỗi nhân đôi ảnh và duplicate-key warning bất kể race timing.
+    *   Sandbox fallback cho phép phát triển/test không cần API key thật, thay key production là chạy đúng ngay.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented chat image sending by reusing the existing Cloudinary/Tika upload pipeline and message-send flow, delivering a Messenger-style multi-image preview tray with optimistic blob previews and smart client-side compression. Resolved a REST-vs-WebSocket race condition causing duplicate messages via id-first deduplication and type-based optimistic matching, ensuring idempotency regardless of event ordering.*
+
+---

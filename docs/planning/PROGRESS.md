@@ -284,6 +284,16 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[UI cải tiến từ feedback USER]** Quote ban đầu nhúng trong bong bóng tím → khó đọc. Tách ra ngoài + đặt phía trên bong bóng + đè bằng `mb-[-6px]+z-10` cho cảm giác liền mạch. Màu trung tính dễ đọc trên mọi nền (bong bóng tím hay trắng).
   - [x] **[Verify]** Backend compile PASS, Frontend diagnostics 0 lỗi.
 
+- **Phiên 06/06/2026 (Sprint 4.4 ④ Media in Chat - HOÀN TẤT SPRINT 4.4):**
+  - [x] **[Backend]** `MessageService.sendImageMessage()`: upload qua `MediaService.uploadAvatar()` (reuse Cloudinary + Apache Tika magic-bytes scan + sandbox fallback) rồi tái dùng `sendMessage` với type=IMAGE → tự động có validation, lưu DB, unread, Pub/Sub realtime, cả reply. REST endpoint `POST /conversations/{id}/messages/image` (multipart + optional replyToMessageId).
+  - [x] **[Frontend]** `chatService.sendImage()` multipart + onUploadProgress callback. Render IMAGE trong bong bóng (click mở full).
+  - [x] **[Frontend - Preview tray giống Messenger]** Chọn ảnh → tray thumbnail (tối đa 4), mỗi ảnh có nút X xóa, nút + thêm; KHÔNG auto-gửi; bấm gửi mới upload tuần tự; gửi được ảnh + text cùng lúc; reply gắn vào ảnh đầu.
+  - [x] **[Frontend - Optimistic + nén]** Blob preview ảnh GỐC ngay (tránh "ảnh khác"); upload progress bar % overlay; nén thông minh (skip GIF/<1MB, preserveExif giữ orientation, WebP cho ảnh lớn).
+  - [x] **[Frontend - Jump to reply]** Click quote → scrollIntoView tin gốc + highlight viền tím 1.6s (giống Facebook). messageRefs map + highlightedMsgId state.
+  - [x] **[Bug fix - Race condition]** Gửi 1 ảnh ra 2 ảnh + duplicate key: REST response và WebSocket echo cùng thêm tin, optimistic ảnh match-by-content thất bại (ảnh content rỗng) → append trùng. Fix: dedup theo id TRƯỚC + match optimistic ảnh theo TYPE (không phải content) + REST replacement xử lý khi WS đã thêm. Chống mọi thứ tự race.
+  - [x] **[Quyết định kiến trúc - VÌ SAO]** Reuse 100% hạ tầng có sẵn (CloudinaryService + Tika + sendMessage) thay vì viết mới → ít code, atomic, nhất quán. Preview blob gốc thay vì chờ server → UX tức thì + tránh đúng vấn đề "ảnh khác" do nén/sandbox.
+  - [x] **[Verify]** Backend compile PASS, FE 0 lỗi. Test với cloud `demo` (sandbox fallback → picsum) chạy đúng flow, thay key thật sẽ hiện đúng ảnh không cần sửa code.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

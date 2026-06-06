@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * REST API Controller quản lý các cuộc trò chuyện (Sprint 4.2).
@@ -76,5 +78,16 @@ public class ConversationController {
       @PathVariable("id") String conversationId) {
     conversationService.markAllAsSeen(conversationId, jwt.getSubject());
     return ApiResponse.success("Đã đánh dấu đã xem thành công", null);
+  }
+
+  @PostMapping(value = "/{id}/messages/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "Gửi ảnh", description = "Upload và gửi tin nhắn ảnh trong cuộc hội thoại (Sprint 4.4)")
+  public ApiResponse<MessageResponse> sendImage(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable("id") String conversationId,
+      @RequestParam("file") MultipartFile file,
+      @RequestParam(value = "replyToMessageId", required = false) String replyToMessageId) {
+    MessageResponse response = messageService.sendImageMessage(jwt.getSubject(), conversationId, file, replyToMessageId);
+    return ApiResponse.success("Gửi ảnh thành công", response);
   }
 }

@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 06/06/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 4.4 ①②③ HOÀN THÀNH (Typing + Reactions + Reply). Tổng tiến độ **~85%**. Còn lại Sprint 4.4 ④ Media in Chat (cuối cùng) → Sprint 4.5 (Edit/Delete, Infinite Scroll). Chat đã có: Typing Indicator (Redis TTL self-healing), Message Reactions (6 emoji, embedded Map, toggle), Reply to Message (denormalized snapshot, quote phía trên bong bóng). Sẵn sàng ④ Media.
+## 🏁 Trạng thái hiện tại: ✅ SPRINT 4.4 HOÀN THÀNH TRỌN VẸN (①②③④). Tổng tiến độ **~88%**. Phase 4 Chat đạt 100%: Typing Indicator (Redis TTL), Message Reactions (embedded Map), Reply (snapshot + jump-to-message), Media in Chat (preview tray, Optimistic blob, nén, progress). Tiếp theo: Sprint 4.5 (Edit/Delete/Infinite Scroll - optional) hoặc Phase 5 (Notification System).
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
 

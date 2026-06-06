@@ -41,4 +41,30 @@ export const chatService = {
     const res = await axiosClient.put<ApiResponse<void>>(`/messages/${messageId}/delivered`);
     return res.data;
   },
+
+  // Gửi tin nhắn ảnh (Sprint 4.4 - Media in Chat). Hỗ trợ progress callback + reply.
+  sendImage: async (
+    conversationId: string,
+    file: File,
+    replyToMessageId?: string | null,
+    onProgress?: (percent: number) => void
+  ) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (replyToMessageId) {
+      formData.append('replyToMessageId', replyToMessageId);
+    }
+    const res = await axiosClient.post<ApiResponse<MessageResponse>>(
+      `/conversations/${conversationId}/messages/image`,
+      formData,
+      {
+        onUploadProgress: (e) => {
+          if (onProgress && e.total) {
+            onProgress(Math.round((e.loaded * 100) / e.total));
+          }
+        },
+      }
+    );
+    return res.data.data;
+  },
 };

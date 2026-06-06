@@ -15,6 +15,7 @@ import com.minifacebook.module.chat.domain.entity.ReplyPreview;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
 import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
+import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.time.Instant;
@@ -32,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Service xử lý nghiệp vụ quản lý tin nhắn (Sprint 4.2 & 4.3).
@@ -45,6 +47,7 @@ public class MessageService {
   private final UserRepository userRepository;
   private final StringRedisTemplate redisTemplate;
   private final ChatRedisPublisher chatRedisPublisher;
+  private final MediaService mediaService;
 
   /** Bộ cảm xúc hợp lệ cho tin nhắn (Sprint 4.4 - Message Reactions). */
   private static final Set<String> ALLOWED_EMOJIS = Set.of("❤️", "👍", "😂", "😮", "😢", "😡");
@@ -174,6 +177,23 @@ public class MessageService {
     chatRedisPublisher.publishNewMessage(conversationId, conv.getParticipantIds(), response);
 
     return response;
+  }
+
+  /**
+   * Gửi tin nhắn ảnh (Sprint 4.4 - Media in Chat).
+   * Upload ảnh qua MediaService (đã có Tika magic-bytes scan + sandbox fallback), rồi tái dùng
+   * toàn bộ luồng sendMessage với type=IMAGE.
+   */
+  @Transactional
+  public MessageResponse sendImageMessage(String senderEmail, String conversationId, MultipartFile file, String replyToMessageId) {
+    String imageUrl = mediaService.uploadAvatar(file);
+    MessageSendRequest request = MessageSendRequest.builder()
+        .conversationId(conversationId)
+        .type(MessageType.IMAGE)
+        .mediaUrl(imageUrl)
+        .replyToMessageId(replyToMessageId)
+        .build();
+    return sendMessage(senderEmail, request);
   }
 
   /**

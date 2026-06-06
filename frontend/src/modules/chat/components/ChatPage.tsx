@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import imageCompression from 'browser-image-compression';
 import { 
   Search, 
   Send, 
@@ -96,6 +97,16 @@ export default function ChatPage({
   const typingThrottleRef = useRef<number | null>(null);      // throttle gửi event "đang gõ"
   const typingStopTimerRef = useRef<number | null>(null);     // tự gửi "dừng gõ" sau khi ngừng nhập
   const typingClearTimersRef = useRef<Record<string, number>>({}); // auto-ẩn indicator nhận được (double-safety)
+
+  // Ref + state cho gửi ảnh (Sprint 4.4 - Media in Chat)
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({}); // tempId -> %
+  // Ảnh đã chọn chờ gửi (preview tray, tối đa 4 - giống Messenger)
+  const [pendingImages, setPendingImages] = useState<{ id: string; file: File; url: string }[]>([]);
+  // Tin nhắn đang được highlight khi nhảy tới (click quote reply)
+  const [highlightedMsgId, setHighlightedMsgId] = useState<string | null>(null);
+  // Map messageId -> DOM element để scroll tới khi bấm quote
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -233,18 +244,28 @@ export default function ChatPage({
           // Nếu là hội thoại đang active, append vào khung chat
           if (activeConversationRef.current?.id === newMsg.conversationId) {
             setMessages((prev) => {
-              // Tránh trùng tin nhắn do Optimistic UI
+              // Dedup theo id TRƯỚC (phòng REST đã thêm tin server rồi → tránh trùng key)
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+
               const isFromMe = newMsg.sender.id === currentUser.id;
               if (isFromMe) {
-                const pendingIdx = prev.findIndex(m => m.status === 'PENDING' && m.content === newMsg.content);
+                // Match optimistic: TEXT theo content, IMAGE/FILE theo type (ảnh không có content)
+                const pendingIdx = prev.findIndex(m =>
+                  m.status === 'PENDING' &&
+                  (newMsg.type === 'TEXT' ? m.content === newMsg.content : m.type === newMsg.type)
+                );
                 if (pendingIdx > -1) {
                   const next = [...prev];
-                  // Giữ replyTo của optimistic nếu server không trả về (bền vững khi backend cũ)
-                  next[pendingIdx] = { ...newMsg, status: 'SENT', replyTo: newMsg.replyTo ?? prev[pendingIdx].replyTo };
+                  // Giữ replyTo + blob preview của optimistic nếu server không trả về
+                  next[pendingIdx] = {
+                    ...newMsg,
+                    status: 'SENT',
+                    replyTo: newMsg.replyTo ?? prev[pendingIdx].replyTo,
+                    mediaUrl: newMsg.mediaUrl ?? prev[pendingIdx].mediaUrl,
+                  };
                   return next;
                 }
               }
-              if (prev.some(m => m.id === newMsg.id)) return prev;
               return [...prev, { ...newMsg, status: 'SENT' }];
             });
 
@@ -454,13 +475,144 @@ export default function ChatPage({
     webSocketService.send('/app/chat.react', { messageId, emoji });
   }, [currentUser.id]);
 
+  // Chọn ảnh → thêm vào tray preview (tối đa 4), KHÔNG gửi ngay (Sprint 4.4 - Media)
+  const handleSelectImages = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = ''; // reset để chọn lại cùng file được
+    if (files.length === 0) return;
+
+    setPendingImages((prev) => {
+      const remaining = 4 - prev.length;
+      if (remaining <= 0) {
+        triggerToast('Tối đa 4 ảnh mỗi lần gửi.');
+        return prev;
+      }
+      const toAdd: { id: string; file: File; url: string }[] = [];
+      for (const file of files) {
+        if (toAdd.length >= remaining) {
+          triggerToast('Tối đa 4 ảnh mỗi lần gửi.');
+          break;
+        }
+        if (!file.type.startsWith('image/')) {
+          triggerToast('Chỉ hỗ trợ file ảnh.');
+          continue;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          triggerToast(`Ảnh "${file.name}" quá lớn (tối đa 20MB).`);
+          continue;
+        }
+        toAdd.push({ id: `pimg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, file, url: URL.createObjectURL(file) });
+      }
+      return [...prev, ...toAdd];
+    });
+  };
+
+  // Xóa 1 ảnh khỏi tray preview
+  const removePendingImage = (id: string) => {
+    setPendingImages((prev) => {
+      const found = prev.find((p) => p.id === id);
+      if (found) URL.revokeObjectURL(found.url);
+      return prev.filter((p) => p.id !== id);
+    });
+  };
+
+  // Upload 1 ảnh (Optimistic + progress + nén). Trả promise để gửi tuần tự.
+  const uploadOneImage = async (file: File, replyId: string | null) => {
+    const convId = activeConversation!.id;
+    const tempId = `temp-img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const localPreview = URL.createObjectURL(file);
+
+    const optimistic: MessageResponse = {
+      id: tempId,
+      conversationId: convId,
+      sender: { id: currentUser.id, name: currentUser.fullName || 'Tôi', avatar: currentUser.avatar },
+      content: '',
+      type: 'IMAGE',
+      mediaUrl: localPreview,
+      createdAt: new Date().toISOString(),
+      status: 'PENDING',
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setUploadProgress((prev) => ({ ...prev, [tempId]: 0 }));
+    scrollToBottom('smooth');
+
+    try {
+      let toUpload = file;
+      if (file.type !== 'image/gif' && file.size > 1024 * 1024) {
+        const blob = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          preserveExif: true,
+          fileType: 'image/webp',
+        });
+        toUpload = new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), { type: 'image/webp' });
+      }
+
+      const serverMsg = await chatService.sendImage(convId, toUpload, replyId, (percent) => {
+        setUploadProgress((prev) => ({ ...prev, [tempId]: percent }));
+      });
+
+      setMessages((prev) => {
+        // Nếu WS đã thêm tin server rồi (race) → chỉ xóa optimistic tempId, tránh trùng
+        if (prev.some((m) => m.id === serverMsg.id)) {
+          return prev.filter((m) => m.id !== tempId);
+        }
+        // Giữ blob preview local cho mượt (ảnh server load ngầm)
+        return prev.map((m) => (m.id === tempId ? { ...serverMsg, status: 'SENT', mediaUrl: serverMsg.mediaUrl ?? m.mediaUrl } : m));
+      });
+      setUploadProgress((prev) => { const n = { ...prev }; delete n[tempId]; return n; });
+      URL.revokeObjectURL(localPreview);
+    } catch {
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: 'FAILED' } : m)));
+      setUploadProgress((prev) => { const n = { ...prev }; delete n[tempId]; return n; });
+      triggerToast('Gửi ảnh thất bại, vui lòng thử lại.');
+    }
+  };
+
+  // Gửi toàn bộ ảnh trong tray (mỗi ảnh = 1 message, reply gắn vào ảnh đầu tiên)
+  const flushPendingImages = async () => {
+    if (pendingImages.length === 0) return;
+    const images = [...pendingImages];
+    const replyId = replyingTo?.id ?? null;
+    setPendingImages([]);
+    setReplyingTo(null);
+    for (let i = 0; i < images.length; i++) {
+      // chỉ ảnh đầu tiên kèm reply (giống Messenger)
+      await uploadOneImage(images[i].file, i === 0 ? replyId : null);
+      URL.revokeObjectURL(images[i].url);
+    }
+  };
+
+  // Nhảy tới tin nhắn gốc khi bấm vào quote reply (Sprint 4.4 - giống Facebook)
+  const jumpToMessage = (messageId: string) => {
+    const el = messageRefs.current[messageId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMsgId(messageId);
+      setTimeout(() => setHighlightedMsgId(null), 1600);
+    } else {
+      triggerToast('Tin nhắn gốc không còn trong khung hiển thị.');
+    }
+  };
+
   // 6. Gửi tin nhắn mới (Optimistic UI)
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!messageInput.trim() || !activeConversation) return;
+    if (!activeConversation) return;
 
     // Dừng phát typing ngay khi gửi tin
     emitStopTyping();
+
+    const hasText = messageInput.trim().length > 0;
+    const hasImages = pendingImages.length > 0;
+    if (!hasText && !hasImages) return;
+
+    // Gửi ảnh trong tray trước (nếu có)
+    if (hasImages) {
+      await flushPendingImages();
+      if (!hasText) return; // chỉ có ảnh thì xong
+    }
 
     const contentToSend = messageInput.trim();
     setMessageInput('');
@@ -946,7 +1098,8 @@ export default function ChatPage({
                       return (
                         <div 
                           key={m.id} 
-                          className={`flex items-end gap-2.5 max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                          ref={(el) => { messageRefs.current[m.id] = el; }}
+                          className={`flex items-end gap-2.5 max-w-[75%] rounded-2xl transition-all duration-500 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} ${highlightedMsgId === m.id ? 'ring-2 ring-violet-400 ring-offset-2 bg-violet-50/40' : ''}`}
                         >
                           {/* Avatar đối phương */}
                           {!isMe && (
@@ -970,20 +1123,42 @@ export default function ChatPage({
                                   <CornerDownRight className="h-2.5 w-2.5" />
                                   {isMe ? 'Bạn' : (activePartner?.name?.split(' ').pop() || '')} đã trả lời {m.replyTo.senderId === currentUser.id ? 'chính mình' : m.replyTo.senderName}
                                 </span>
-                                <div className={`px-3 pt-1.5 pb-3 rounded-2xl bg-slate-100 text-slate-500 text-xs max-w-[240px] ${isMe ? 'rounded-br-md' : 'rounded-bl-md'}`}>
+                                <div
+                                  onClick={() => m.replyTo && jumpToMessage(m.replyTo.messageId)}
+                                  className={`px-3 pt-1.5 pb-3 rounded-2xl bg-slate-100 text-slate-500 text-xs max-w-[240px] cursor-pointer hover:bg-slate-200 transition ${isMe ? 'rounded-br-md' : 'rounded-bl-md'}`}
+                                  title="Xem tin nhắn gốc"
+                                >
                                   <p className="truncate">{m.replyTo.contentPreview || '(tin nhắn trống)'}</p>
                                 </div>
                               </div>
                             )}
                             <div className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                               <div 
-                                className={`relative z-10 px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
+                                className={`relative z-10 ${m.type === 'IMAGE' ? 'p-1' : 'px-4 py-2.5'} rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
                                   isMe 
                                     ? 'bg-violet-600 text-white rounded-br-md' 
                                     : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
                                 }`}
                               >
-                                {m.content}
+                                {m.type === 'IMAGE' ? (
+                                  <div className="relative">
+                                    <img
+                                      src={m.mediaUrl}
+                                      alt="Ảnh"
+                                      className="rounded-xl max-w-[220px] max-h-[280px] object-cover block cursor-pointer"
+                                      onClick={() => m.mediaUrl && window.open(m.mediaUrl, '_blank')}
+                                    />
+                                    {/* Overlay progress khi đang upload */}
+                                    {m.status === 'PENDING' && uploadProgress[m.id] !== undefined && (
+                                      <div className="absolute inset-0 rounded-xl bg-black/40 flex flex-col items-center justify-center gap-1.5">
+                                        <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                        <span className="text-white text-[11px] font-bold">{uploadProgress[m.id]}%</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  m.content
+                                )}
                                 {/* Hiển thị reactions (badge nổi ở góc dưới bong bóng) */}
                                 {m.reactions && Object.keys(m.reactions).length > 0 && (
                                   <div className={`absolute -bottom-2.5 ${isMe ? 'left-1' : 'right-1'} flex items-center bg-white border border-slate-200 rounded-full px-1.5 py-0.5 shadow-sm`}>
@@ -1109,6 +1284,35 @@ export default function ChatPage({
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Tray preview ảnh đã chọn (tối đa 4, có nút X) - Sprint 4.4 */}
+            {pendingImages.length > 0 && (
+              <div className="px-4 pt-3 pb-1 border-t border-slate-200 bg-white flex items-center gap-2 flex-wrap">
+                {pendingImages.map((img) => (
+                  <div key={img.id} className="relative h-16 w-16 rounded-xl overflow-hidden border border-slate-200 group">
+                    <img src={img.url} alt="preview" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePendingImage(img.id)}
+                      className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-rose-500 transition cursor-pointer"
+                      title="Xóa ảnh"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {pendingImages.length < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="h-16 w-16 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:border-violet-400 hover:text-violet-500 transition cursor-pointer"
+                    title="Thêm ảnh"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Banner "Replying to" trên Input bar (Sprint 4.4 - Reply) */}
             {replyingTo && (
               <div className="px-4 py-2 border-t border-slate-200 bg-violet-50/40 flex items-start gap-2">
@@ -1144,9 +1348,17 @@ export default function ChatPage({
                 <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Emoji">
                   <Smile className="h-4.5 w-4.5" />
                 </button>
-                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Ảnh">
+                <button type="button" onClick={() => imageInputRef.current?.click()} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer" title="Gửi ảnh">
                   <ImageIcon className="h-4.5 w-4.5" />
                 </button>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleSelectImages}
+                />
                 <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Mic">
                   <Mic className="h-4.5 w-4.5" />
                 </button>
@@ -1167,7 +1379,7 @@ export default function ChatPage({
               />
               <button 
                 type="submit"
-                disabled={!messageInput.trim() || isSending}
+                disabled={(!messageInput.trim() && pendingImages.length === 0) || isSending}
                 className="h-9 w-9 bg-violet-600 text-white rounded-full hover:bg-violet-500 disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
               >
                 {isSending ? (
