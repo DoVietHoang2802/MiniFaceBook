@@ -251,6 +251,18 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Backend]** Thêm API `GET /posts/{postId}/reactions` + `ReactionRepository.findByPostId` + DTO `ReactionUserResponse`. Service batch-load user info chống N+1.
   - [x] **[Guideline]** Bổ sung quy tắc **9.2.B** vào `AI_GUIDELINES.md`: phân biệt cải tiến THUẦN GIAO DIỆN (làm ngay) vs ĐỤNG CHỨC NĂNG (phải dừng, báo USER 4 bước + chờ quyết định). Theo yêu cầu USER để giữ quyền kiểm soát scope.
 
+- **Phiên 06/06/2026 (Chat UI 3 cột + Sprint 4.4 ① Typing Indicator):**
+  - [x] **[UI - 3 Column Layout]** Bổ sung cột 3 Profile Panel vào `ChatPage.tsx` (avatar lớn, tên, role/location, 3 nút Profile/Mute/More, Shared media grid, Shared files, Mutual friends — data placeholder). Chỉ hiện ở breakpoint `xl` (≥1280px). Nâng cấp toàn bộ sizing 3 cột cho khớp mockup.
+  - [x] **[UI - Fix khoảng trắng]** Khi vào tab Chats: ẩn top search bar, giảm padding/gap container, đặt `h-screen overflow-hidden` ở root + main → ChatPage chiếm full viewport, không scroll thừa ra khoảng trắng (giữ nguyên các tab khác).
+  - [x] **[Bug fix]** `scrollToBottom` đổi từ `scrollIntoView` → `scrollTo` trực tiếp trên container messages, fix lỗi click conversation làm nhảy cả trang.
+  - [x] **[Backend - Typing Indicator]** Tạo `TypingRequest`, `TypingEvent` DTO; `TypingService` set Redis key `typing:<convId>:<userId>` TTL 4s + publish Pub/Sub; mapping STOMP `/app/chat.typing`; `ChatRedisSubscriber` handle type "TYPING" → đẩy `/user/queue/typing`.
+  - [x] **[Frontend - Typing Indicator]** Subscribe `/user/queue/typing`; `emitTyping()` throttle 2s + auto stop sau 3s; hiển thị 3 nơi (chat header "Đang nhập...", bubble 3 chấm nhảy, preview conversation list); cleanup timers khi unmount; auto-scroll khi đối phương gõ.
+  - [x] **[Quyết định kiến trúc - VÌ SAO]**
+    - *Dùng Redis TTL thay WebSocket thuần:* nếu user đóng tab đột ngột (không kịp gửi "dừng gõ"), key tự hết hạn sau 4s → indicator không kẹt vĩnh viễn. Tái dùng đúng pattern Presence Online/Offline đã làm ở Sprint 4.1 → kiến trúc nhất quán, không phát minh lại.
+    - *Cascade 4 mốc thời gian `2s < 3s < 4s < 5s`:* throttle (2s) chống spam WebSocket khi gõ liên tục; stop-timer (3s) **phải lớn hơn throttle** để ping mới luôn reset stop-timer trước khi nó bắn → indicator không tắt oan giữa lúc đang gõ; Redis TTL (4s) là lưới an toàn server-side; client auto-clear (5s) là lưới an toàn cuối. Thứ tự tăng dần đảm bảo mỗi lớp dự phòng lớp trước, không nhấp nháy.
+    - *Reuse Redis Pub/Sub `chat.room.*` có sẵn:* không tạo channel mới, chỉ thêm `type="TYPING"` vào event — multi-server scale-ready miễn phí.
+  - [x] **[Verify]** Backend `mvn compile` PASS (exit 0), Frontend diagnostics 0 lỗi. Test thực tế 2 trình duyệt: typing hiện/ẩn đúng, đóng tab tự hết kẹt. Đã xóa spec tạm `chat-three-column-layout`.
+
 #### 🔧 Technical Debugging Log (Phase 2 Stabilization)
 | Vấn đề | Nguyên nhân | Giải pháp | Kết quả |
 | :--- | :--- | :--- | :--- |

@@ -446,3 +446,21 @@
 
 
 ---
+
+### ⌨️ Highlight 29: Typing Indicator Real-Time với Redis TTL Self-Healing & Cơ Chế Cascade Chống Kẹt Trạng Thái
+*   **Situation (Bối cảnh):** Tính năng "đang nhập..." (typing indicator) của chat realtime ẩn chứa một lỗi kinh điển mà nhiều hệ thống mắc phải: nếu chỉ dựa vào WebSocket event thuần (gửi "bắt đầu gõ" / "dừng gõ"), khi người dùng **đóng tab hoặc mất mạng đột ngột** thì event "dừng gõ" không bao giờ được gửi → đối phương thấy "đang nhập..." **kẹt vĩnh viễn**. Ngoài ra, việc gửi event mỗi lần gõ phím sẽ spam hàng chục message WebSocket mỗi giây.
+*   **Task (Nhiệm vụ):** Thiết kế typing indicator real-time đáng tin cậy, tự phục hồi (self-healing) khi client chết đột ngột, không spam mạng, và không bị hiện tượng nhấp nháy (flicker) trạng thái khi người dùng vẫn đang gõ liên tục.
+*   **Action (Hành động):**
+    *   **Redis TTL Self-Healing:** Thay vì chỉ dựa WebSocket event, server set key `typing:<convId>:<userId>` với **TTL 4s** mỗi khi nhận ping "đang gõ". Nếu client chết, key **tự hết hạn** → trạng thái typing tự dọn dẹp mà không cần cron job. Tái sử dụng đúng pattern Presence Online/Offline (TTL-based) đã thiết kế ở Sprint WebSocket Foundation → kiến trúc nhất quán, không phát minh lại bánh xe.
+    *   **Cơ chế Cascade 4 mốc thời gian** `throttle 2s < stop-timer 3s < Redis TTL 4s < client auto-clear 5s`: mỗi lớp là một lưới an toàn dự phòng cho lớp trước. Điểm mấu chốt là **stop-timer (3s) cố tình lớn hơn throttle (2s)** — đảm bảo khi người dùng gõ liên tục, ping mới (mỗi 2s) luôn reset stop-timer trước khi nó kịp bắn, triệt tiêu hoàn toàn hiện tượng indicator tắt oan giữa lúc đang gõ (anti-flicker).
+    *   **Throttle chống spam:** Client chỉ gửi tối đa 1 event "đang gõ" mỗi 2s dù gõ bao nhiêu phím, giảm tải WebSocket đáng kể.
+    *   **Reuse hạ tầng Pub/Sub:** Không tạo channel Redis mới — thêm `type="TYPING"` vào event đi qua kênh `chat.room.*` có sẵn → multi-server scale-ready miễn phí. Subscriber map `userId → email` rồi đẩy tới `/user/queue/typing`.
+    *   **Double-safety phía nhận:** Client auto-ẩn indicator sau 5s nếu không nhận thêm event, đề phòng cả trường hợp event "dừng gõ" bị thất lạc trên đường truyền.
+*   **Result (Kết quả):**
+    *   Typing indicator hoạt động real-time mượt mà, hiển thị đồng bộ 3 nơi (chat header, bubble 3 chấm nhảy, preview danh sách hội thoại).
+    *   **Không bao giờ kẹt trạng thái** kể cả khi người dùng đóng tab đột ngột (verified thực tế trên 2 trình duyệt) nhờ Redis TTL self-healing.
+    *   Không nhấp nháy khi gõ liên tục, không spam mạng — backend compile PASS, frontend 0 lỗi.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Engineered a self-healing real-time typing indicator using Redis TTL keys to auto-expire stale states on abrupt client disconnects (zero cron jobs), reusing the existing presence pattern for architectural consistency. Designed a 4-tier cascade (throttle 2s < stop 3s < TTL 4s < auto-clear 5s) where each layer backstops the previous, deliberately keeping the stop-timer above the throttle interval to eliminate indicator flicker during continuous typing.*
+
+---

@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 06/06/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 4.3 HOÀN THÀNH + Chat UI Refactor & Bug Fixes. Tổng tiến độ **~78%**. Chat hoạt động ổn định, giao diện ChatPage đã được refactor sang layout 2 cột mới (Facebook Messenger style), sửa 4 bug critical (MongoDB index, WriteConflict, infinite loop, crash filteredFriends). Sẵn sàng vào Sprint 4.4 (Typing Indicator, Read Receipts UI, Media Messages).
+## 🏁 Trạng thái hiện tại: ✅ CHAT UI 3 CỘT + SPRINT 4.4 ① TYPING INDICATOR HOÀN THÀNH. Tổng tiến độ **~80%**. ChatPage nâng cấp layout 3 cột (thêm Profile Panel), full-viewport không scroll thừa. Typing Indicator realtime hoạt động (STOMP + Redis TTL self-healing, cascade 4 mốc 2s/3s/4s/5s). Tiếp theo Sprint 4.4: ② Message Reactions → ③ Reply → ④ Media (cuối cùng).
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
 

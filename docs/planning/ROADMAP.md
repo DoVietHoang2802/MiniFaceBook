@@ -182,14 +182,39 @@
         - Truncate về 100 chars (97 + "...").
         - Handle IMAGE/FILE type với placeholder: "📷 Đã gửi một ảnh", "📎 Đã gửi một file".
 - [ ] **Sprint 4.4: Chat UX Enhancements**
-    - [ ] **Typing Indicator**: Hiển thị "Đang nhập..." khi người kia đang gõ.
-        - *Implementation:* Emit typing event qua WebSocket, debounce 1s.
-    - [ ] **Message Reactions**: React emoji cho từng tin nhắn (❤️ 👍 😂 😮 😢 😡).
-    - [ ] **Reply to Message**: Quote/Reply tin nhắn cụ thể.
-        - *UI:* Swipe right to reply (mobile) hoặc hover menu (desktop).
-    - [ ] **Media in Chat**: Gửi ảnh trong tin nhắn.
-        - *Reuse:* Cloudinary service từ Phase 1.
-        - *Compression:* Client-side compression từ Phase 2.
+
+    > **📌 Thứ tự triển khai (đã chốt với USER):** Làm tăng dần độ phức tạp, tận dụng hạ tầng sẵn có. **Media làm CUỐI CÙNG** — chỉ bắt đầu sau khi 3 tính năng kia chạy thành công.
+    > **Quy tắc:** Mỗi tính năng phải chạy & test thành công (kết quả thực tế) trước khi chuyển sang tính năng kế tiếp.
+
+    - [x] **① Typing Indicator** — *(Ưu tiên 1: quick win, không động DB)* ✅ **HOÀN THÀNH**
+        - [x] Emit typing event qua WebSocket STOMP `/app/chat.typing`, throttle 2s phía client.
+        - [x] Hiển thị "Đang nhập..." (3 nơi: chat header, bubble 3 chấm nhảy, preview conversation list).
+        - [x] 🆕 **CẢI TIẾN (USER duyệt):** Dùng **Redis TTL key** `typing:<convId>:<userId>` (TTL 4s) thay vì chỉ dựa WebSocket event thuần.
+            - *Lý do:* Nếu user đóng tab / mất mạng đột ngột, indicator **tự biến mất khi key expire** → không bị kẹt "đang nhập" mãi mãi.
+            - *Đồng bộ:* Tái sử dụng pattern **Presence TTL** đã làm ở Sprint 4.1 (nhất quán kiến trúc).
+            - *Client:* auto-clear indicator sau 5s nếu không nhận thêm event (double-safety).
+        - [x] **Cascade 4 mốc thời gian** (đã chốt với USER): throttle **2s** < stop-timer **3s** < Redis TTL **4s** < client auto-clear **5s**. Thứ tự tăng dần để mỗi lớp dự phòng lớp trước, tránh nhấp nháy.
+            - *Vì sao stop-timer (3s) > throttle (2s)?* Khi gõ liên tục, ping mới mỗi 2s luôn reset stop-timer trước khi nó kịp bắn → indicator không tắt oan giữa lúc đang gõ. Stop chỉ bắn khi thực sự ngừng ≥3s.
+        - [x] Cleanup timers khi unmount + auto-scroll khi đối phương bắt đầu gõ.
+        - [x] **Verify:** Backend compile PASS, Frontend diagnostics 0 lỗi. Test thực tế 2 trình duyệt: typing hiện/ẩn đúng, đóng tab tự hết kẹt.
+
+    - [ ] **② Message Reactions** — *(Ưu tiên 2: reuse logic Phase 2)*
+        - [ ] React emoji cho từng tin nhắn (❤️ 👍 😂 😮 😢 😡).
+        - [ ] Tái sử dụng logic Reaction từ **Post module (Phase 2)** — embedded/sub-collection trong Message entity.
+        - [ ] Emit realtime qua WebSocket để 2 bên thấy reaction ngay.
+
+    - [ ] **③ Reply to Message** — *(Ưu tiên 3)*
+        - [ ] Thêm field `replyToMessageId` (nullable) vào Message entity.
+        - [ ] UI: hover menu (desktop) / swipe right (mobile) để reply; hiển thị quote tin gốc phía trên bong bóng.
+        - [ ] 💡 *Cân nhắc (tùy thời gian):* Có thể hoãn sang Sprint 4.5 gộp chung nhóm "Message Management" (Edit/Delete) cho gọn.
+
+    - [ ] **④ Media in Chat (ẢNH) — LÀM CUỐI CÙNG** ⛔
+        - [ ] Gửi ảnh trong tin nhắn — `MessageType.IMAGE` + `mediaUrl` đã có sẵn trong entity.
+        - [ ] **Reuse:** CloudinaryService (Phase 1) + Client-side compression (Phase 2) — hạ tầng đã có ~90%.
+        - [ ] 🆕 **CẢI TIẾN (USER duyệt) #1 — Bảo mật:** Tái dùng **Apache Tika magic-bytes scan** (Phase 1) để chặn file độc hại giả đuôi ảnh. *(Điểm cộng security cho CV/portfolio.)*
+        - [ ] 🆕 **CẢI TIẾN (USER duyệt) #2 — UX:** **Optimistic UI cho ảnh** — hiển thị blob preview local ngay khi chọn ảnh (trước khi upload xong), giống Messenger thật.
+        - [ ] 🆕 **CẢI TIẾN (USER duyệt) #3 — UX:** Thêm **upload progress bar** khi ảnh lớn.
+        - [ ] ⚠️ **Lưu ý Tech Debt:** 3 method trong `ConversationService` đã bỏ `@Transactional` (fix WriteConflict). Khi gửi media phải đảm bảo **atomic**: lưu message + update `lastMessageSummary` không bị lệch nếu lỗi giữa chừng. Review lại khi làm.
 - [ ] **Sprint 4.5: Message Management**
     - [ ] **Delete Message**: Soft delete với option "Xóa cho tôi" / "Xóa cho mọi người".
         - *Time limit:* "Xóa cho mọi người" chỉ trong 15 phút.
@@ -295,7 +320,7 @@
 | 1 | Authentication & Identity | ✅ HOÀN THÀNH | 100% |
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
-| 4 | Realtime Chat | 🟡 Đang làm | 20% (1/5 Sprint) |
+| 4 | Realtime Chat | 🟡 Đang làm | ~70% (4.1-4.3 xong + Typing Indicator) |
 | 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
@@ -368,6 +393,8 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.0 | Jun 2026 | **Sprint 4.4 ① Typing Indicator HOÀN THÀNH 🎉**: Realtime "đang nhập" qua STOMP `/app/chat.typing` + Redis Pub/Sub `chat.room.*`. Backend: `TypingRequest`, `TypingEvent`, `TypingService` (Redis TTL self-healing), mapping controller, subscriber handle type "TYPING". Frontend: subscribe `/user/queue/typing`, throttle gửi 2s, hiển thị 3 nơi (header/bubble/list). **Cascade 4 mốc:** throttle 2s < stop 3s < Redis TTL 4s < auto-clear 5s (mỗi lớp dự phòng lớp trước). Điểm hay: Redis TTL đảm bảo indicator tự hết kẹt khi đóng tab (đồng bộ pattern Presence Sprint 4.1). Verify: backend compile PASS, FE 0 lỗi, test 2 trình duyệt OK. |
+| 2.9 | Jun 2026 | **Sprint 4.4 Planning Refinement (USER duyệt)**: Sắp xếp lại thứ tự triển khai 4.4 theo độ phức tạp tăng dần — ① Typing Indicator → ② Message Reactions → ③ Reply → ④ Media (LÀM CUỐI). Bổ sung các cải tiến đã duyệt: (1) Typing Indicator dùng **Redis TTL key** (auto-clear khi đóng tab, đồng bộ pattern Presence Sprint 4.1); (2) Media — tái dùng **Apache Tika magic-bytes scan** (security), **Optimistic UI blob preview**, **upload progress bar**; (3) Lưu ý atomic cho `ConversationService` (đã bỏ `@Transactional`). Quy tắc: mỗi tính năng phải chạy & test thành công trước khi sang tính năng kế. Đã xóa spec tạm `chat-three-column-layout` (feature 3-cột đã hoàn thành & commit). |
 | 2.8 | Jun 2026 | **Chat UI Refactor + Bug Fixes**: (1) Refactor ChatPage layout sang 2 cột mới với Stories carousel, Filter tabs (All/Unread/Groups/Requests), Search bar tròn, Input bar icons (Emoji/Image/Mic), Chat header icons (Search/Phone/Video/More). (2) Fix critical bug: MongoDB `participants_unique_idx` sai (unique trên multikey array → chặn user có >1 conversation) — đổi sang non-unique index. (3) Fix ConversationService WriteConflict: bỏ `@Transactional` trên 3 methods (concurrent requests conflict trên single-node replica set). (4) Fix frontend infinite loop: `onClearInitialRecipient` → `finally` block để không retry khi API fail. (5) Fix `filteredFriends` crash: thêm optional chaining `f.name?.toLowerCase()`. (6) Global UI compact: `html { font-size: 14px }` giảm toàn app ~12%. |
 | 2.7 | Jun 2026 | Hoàn tất review Sprint 4.2 và chuẩn bị Sprint 4.3. Bổ sung 2 improvement vào Sprint 4.3: (1) Redis TTL cho unread count (tránh memory leak khi user offline lâu), (2) ContentPreview helper method (sanitize HTML + truncate 100 chars). Thêm Tech Debt #7: StompBrokerRelay (RabbitMQ) - ưu tiên thấp, chỉ cần khi > 10 servers. Nguồn: AI review + Senior Architect validation. |
 | 2.6 | Jun 2026 | Hoàn thành Sprint 4.1 (WebSocket Foundation + Redis Presence + JWT Blacklist). Redis lần đầu được dùng thật trong dự án với 2 use case: Presence TTL Online/Offline (35s + heartbeat 25s) và JWT Blacklist Access Token (TTL = remaining token lifetime). Benchmark trên máy dev: Redis EXISTS 0.019ms/lần vs MongoDB findOne 0.75ms/lần → nhanh hơn ~40x. Áp dụng Port-Adapter (`TokenBlacklistPort` ở `shared/security`) tuân thủ Clean Architecture. Bug fix ProfilePage crash khi 401. Pub/Sub chưa làm — để dành khi scale 2+ server. |

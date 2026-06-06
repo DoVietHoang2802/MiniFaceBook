@@ -31,7 +31,8 @@ import { webSocketService } from '../services/webSocketService';
 import type { 
   ConversationResponse, 
   MessageResponse, 
-  MessageStatusEvent
+  MessageStatusEvent,
+  TypingEvent
 } from '../types/chat.types';
 
 interface ChatPageProps {
@@ -52,6 +53,9 @@ export default function ChatPage({
   const [activeConversation, setActiveConversation] = useState<ConversationResponse | null>(null);
   const [messages, setMessages] = useState<MessageResponse[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<String>>(new Set());
+
+  // Typing indicator: map conversationId -> tên người đang gõ (Sprint 4.4)
+  const [typingByConv, setTypingByConv] = useState<Record<string, string>>({});
   
   // Loading states
   const [isLoadingConvs, setIsLoadingConvs] = useState(false);
@@ -76,9 +80,32 @@ export default function ChatPage({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Refs cho Typing Indicator (Sprint 4.4)
+  const typingThrottleRef = useRef<number | null>(null);      // throttle gửi event "đang gõ"
+  const typingStopTimerRef = useRef<number | null>(null);     // tự gửi "dừng gõ" sau khi ngừng nhập
+  const typingClearTimersRef = useRef<Record<string, number>>({}); // auto-ẩn indicator nhận được (double-safety)
+
   useEffect(() => {
     activeConversationRef.current = activeConversation;
   }, [activeConversation]);
+
+  // Cleanup typing timers khi unmount (tránh memory leak) - Sprint 4.4
+  useEffect(() => {
+    const clearTimers = typingClearTimersRef.current;
+    return () => {
+      if (typingThrottleRef.current) clearTimeout(typingThrottleRef.current);
+      if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+      Object.values(clearTimers).forEach((t) => clearTimeout(t));
+    };
+  }, []);
+
+  // Auto-scroll khi đối phương bắt đầu gõ (để thấy indicator) - Sprint 4.4
+  useEffect(() => {
+    if (activeConversation && typingByConv[activeConversation.id]) {
+      scrollToBottom('smooth');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typingByConv, activeConversation]);
 
   // Scroll to bottom helper
   const scrollToBottom = (behavior: 'smooth' | 'auto' = 'smooth') => {
@@ -245,11 +272,52 @@ export default function ChatPage({
       }
     );
 
+    // Đăng ký nhận sự kiện "đang gõ" (Typing Indicator - Sprint 4.4)
+    const unsubscribeTyping = webSocketService.subscribe<TypingEvent>(
+      '/user/queue/typing',
+      (evt) => {
+        // Bỏ qua nếu event do chính mình phát (an toàn 2 lớp)
+        if (evt.userId === currentUser.id) return;
+
+        setTypingByConv((prev) => {
+          const next = { ...prev };
+          if (evt.typing) {
+            next[evt.conversationId] = evt.userName;
+          } else {
+            delete next[evt.conversationId];
+          }
+          return next;
+        });
+
+        // Clear timer auto-ẩn cũ
+        const existingTimer = typingClearTimersRef.current[evt.conversationId];
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          delete typingClearTimersRef.current[evt.conversationId];
+        }
+
+        // Double-safety: tự ẩn indicator sau 5s nếu không nhận thêm event
+        // (phòng khi event "dừng gõ" bị mất do đóng tab/mất mạng)
+        if (evt.typing) {
+          typingClearTimersRef.current[evt.conversationId] = window.setTimeout(() => {
+            setTypingByConv((prev) => {
+              const next = { ...prev };
+              delete next[evt.conversationId];
+              return next;
+            });
+            delete typingClearTimersRef.current[evt.conversationId];
+          }, 5000);
+        }
+      }
+    );
+
     return () => {
       unsubscribeMessages();
       unsubscribeStatus();
+      unsubscribeTyping();
     };
   }, [currentUser, triggerToast]);
+
 
   // 5. Load tin nhắn khi mở cuộc trò chuyện
   useEffect(() => {
@@ -298,10 +366,54 @@ export default function ChatPage({
     loadMessages();
   }, [activeConversation, currentUser.id, triggerToast]);
 
+  // Emit sự kiện "đang gõ" qua WebSocket với throttle (Sprint 4.4)
+  const emitTyping = useCallback(() => {
+    const conv = activeConversationRef.current;
+    if (!conv) return;
+
+    // Throttle: chỉ gửi "đang gõ" tối đa 1 lần mỗi 2s
+    if (!typingThrottleRef.current) {
+      webSocketService.send('/app/chat.typing', { conversationId: conv.id, typing: true });
+      typingThrottleRef.current = window.setTimeout(() => {
+        typingThrottleRef.current = null;
+      }, 2000);
+    }
+
+    // Reset timer tự gửi "dừng gõ" sau 3s không nhập thêm
+    if (typingStopTimerRef.current) {
+      clearTimeout(typingStopTimerRef.current);
+    }
+    typingStopTimerRef.current = window.setTimeout(() => {
+      webSocketService.send('/app/chat.typing', { conversationId: conv.id, typing: false });
+      if (typingThrottleRef.current) {
+        clearTimeout(typingThrottleRef.current);
+        typingThrottleRef.current = null;
+      }
+    }, 3000);
+  }, []);
+
+  // Gửi "dừng gõ" ngay lập tức (gọi khi gửi tin nhắn hoặc đóng conversation)
+  const emitStopTyping = useCallback(() => {
+    const conv = activeConversationRef.current;
+    if (!conv) return;
+    if (typingStopTimerRef.current) {
+      clearTimeout(typingStopTimerRef.current);
+      typingStopTimerRef.current = null;
+    }
+    if (typingThrottleRef.current) {
+      clearTimeout(typingThrottleRef.current);
+      typingThrottleRef.current = null;
+    }
+    webSocketService.send('/app/chat.typing', { conversationId: conv.id, typing: false });
+  }, []);
+
   // 6. Gửi tin nhắn mới (Optimistic UI)
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!messageInput.trim() || !activeConversation) return;
+
+    // Dừng phát typing ngay khi gửi tin
+    emitStopTyping();
 
     const contentToSend = messageInput.trim();
     setMessageInput('');
@@ -452,6 +564,8 @@ export default function ChatPage({
   // Lấy thông tin partner của cuộc trò chuyện hiện tại
   const activePartner = activeConversation?.participants.find(p => p.id !== currentUser.id);
   const isActivePartnerOnline = activePartner ? onlineUserIds.has(activePartner.id) : false;
+  // Người kia có đang gõ trong cuộc trò chuyện đang mở không (Sprint 4.4)
+  const isActivePartnerTyping = activeConversation ? Boolean(typingByConv[activeConversation.id]) : false;
 
   return (
     <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-24px)] animate-fade-in-up">
@@ -640,8 +754,10 @@ export default function ChatPage({
                       )}
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
-                      <p className={`text-xs truncate flex-grow pr-2 ${hasUnread ? 'text-slate-700 font-semibold' : 'text-slate-400'}`}>
-                        {lastMsg ? (
+                      <p className={`text-xs truncate flex-grow pr-2 ${typingByConv[conv.id] ? 'text-violet-600 font-semibold italic' : hasUnread ? 'text-slate-700 font-semibold' : 'text-slate-400'}`}>
+                        {typingByConv[conv.id] ? (
+                          'Đang nhập...'
+                        ) : lastMsg ? (
                           <>
                             {lastMsg.senderId === currentUser.id && <span className="text-slate-400 mr-1">Bạn:</span>}
                             {lastMsg.contentPreview}
@@ -710,7 +826,9 @@ export default function ChatPage({
                 <div className="text-left min-w-0">
                   <h4 className="text-sm font-bold text-slate-800 truncate">{activePartner?.name}</h4>
                   <span className="text-xs font-medium text-slate-400">
-                    {isActivePartnerOnline ? (
+                    {isActivePartnerTyping ? (
+                      <span className="text-violet-600 font-semibold">Đang nhập...</span>
+                    ) : isActivePartnerOnline ? (
                       <span className="text-emerald-600 font-semibold">Online</span>
                     ) : (
                       'Ngoại tuyến'
@@ -836,6 +954,27 @@ export default function ChatPage({
                   </div>
                 ))
               )}
+              {/* Typing indicator (Sprint 4.4) */}
+              {isActivePartnerTyping && (
+                <div className="flex items-end gap-2.5 max-w-[75%] mr-auto">
+                  <div className="h-8 w-8 rounded-full border overflow-hidden bg-slate-100 shrink-0">
+                    {activePartner?.avatar ? (
+                      <img src={activePartner.avatar} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold bg-slate-50 text-xs">
+                        {activePartner?.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-white border border-slate-200/60 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="h-1.5 w-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Element neo scroll */}
               <div ref={messagesEndRef} />
             </div>
@@ -862,7 +1001,14 @@ export default function ChatPage({
               <input 
                 type="text"
                 value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
+                onChange={(e) => {
+                  setMessageInput(e.target.value);
+                  if (e.target.value.trim()) {
+                    emitTyping();
+                  } else {
+                    emitStopTyping();
+                  }
+                }}
                 placeholder={`Message ${activePartner?.name || ''}...`}
                 className="flex-grow px-4 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-sm text-slate-700 transition-all font-medium"
               />

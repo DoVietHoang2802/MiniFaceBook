@@ -42,6 +42,13 @@ export interface MessageStatusEvent {
   userId: string;
 }
 
+export interface TypingEvent {
+  conversationId: string;
+  userId: string;
+  userName: string;
+  typing: boolean;
+}
+
 export interface Page<T> {
   content: T[];
   page: number;
