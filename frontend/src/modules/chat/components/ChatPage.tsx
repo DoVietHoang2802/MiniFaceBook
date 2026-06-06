@@ -17,7 +17,12 @@ import {
   Smile,
   Image as ImageIcon,
   Mic,
-  UserPlus
+  UserPlus,
+  User,
+  BellOff,
+  MoreHorizontal,
+  FileText,
+  Star
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -78,7 +83,12 @@ export default function ChatPage({
   // Scroll to bottom helper
   const scrollToBottom = (behavior: 'smooth' | 'auto' = 'smooth') => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior });
+      if (chatScrollContainerRef.current) {
+        chatScrollContainerRef.current.scrollTo({
+          top: chatScrollContainerRef.current.scrollHeight,
+          behavior
+        });
+      }
     }, 50);
   };
 
@@ -444,48 +454,48 @@ export default function ChatPage({
   const isActivePartnerOnline = activePartner ? onlineUserIds.has(activePartner.id) : false;
 
   return (
-    <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-120px)] animate-fade-in-up">
+    <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-24px)] animate-fade-in-up">
 
       {/* ========================================================== */}
       {/* CỘT 1: DANH SÁCH CUỘC TRÒ CHUYỆN                           */}
       {/* ========================================================== */}
-      <div className={`w-[240px] min-w-[240px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0 ${activeConversation ? 'hidden md:flex' : ''}`}>
+      <div className={`w-[280px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0 ${activeConversation ? 'hidden md:flex' : ''}`}>
         {/* Header Stories */}
-        <div className="px-2.5 pt-2.5 pb-1">
-          <h3 className="text-[10px] font-black text-slate-800 mb-1.5">Stories</h3>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        <div className="px-3 pt-3 pb-2">
+          <h3 className="text-xs font-black text-slate-800 mb-2">Stories</h3>
+          <div className="flex gap-3 overflow-x-auto pb-1.5 scrollbar-thin">
             {/* Your story */}
-            <div className="flex flex-col items-center gap-0.5 shrink-0 cursor-pointer group">
-              <div className="relative h-8 w-8 rounded-full border-[1.5px] border-dashed border-violet-300 flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition">
-                <Plus className="h-3 w-3 text-violet-500" />
+            <div className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+              <div className="relative h-12 w-12 rounded-full border-2 border-dashed border-violet-300 flex items-center justify-center bg-violet-50 group-hover:bg-violet-100 transition">
+                <Plus className="h-4 w-4 text-violet-500" />
               </div>
-              <span className="text-[8px] text-slate-500 font-medium">Bạn</span>
+              <span className="text-[10px] text-slate-500 font-medium">Your story</span>
             </div>
             
             {/* Stories từ partners */}
-            {conversations.slice(0, 6).map(conv => {
+            {conversations.slice(0, 4).map(conv => {
               const partner = conv.participants.find(p => p.id !== currentUser.id);
               if (!partner) return null;
               const isOnline = onlineUserIds.has(partner.id);
               return (
-                <div key={conv.id} className="flex flex-col items-center gap-0.5 shrink-0 cursor-pointer group">
+                <div key={conv.id} className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
                   <div className="relative">
-                    <div className="h-8 w-8 rounded-full p-[1.5px] bg-gradient-to-tr from-violet-500 to-pink-400">
-                      <div className="h-full w-full rounded-full border-[1.5px] border-white overflow-hidden bg-slate-100">
+                    <div className="h-12 w-12 rounded-full p-[2px] bg-gradient-to-tr from-violet-500 to-pink-400">
+                      <div className="h-full w-full rounded-full border-2 border-white overflow-hidden bg-slate-100">
                         {partner.avatar ? (
                           <img src={partner.avatar} alt={partner.name} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-[8px]">
+                          <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-xs">
                             {partner.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                     </div>
                     {isOnline && (
-                      <span className="absolute bottom-0 right-0 h-[6px] w-[6px] border border-white rounded-full bg-emerald-500"></span>
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-2 border-white rounded-full bg-emerald-500"></span>
                     )}
                   </div>
-                  <span className="text-[8px] text-slate-600 font-medium truncate max-w-[36px]">{partner.name.split(' ').pop()}</span>
+                  <span className="text-[10px] text-slate-600 font-medium truncate max-w-[48px]">{partner.name.split(' ').pop()}</span>
                 </div>
               );
             })}
@@ -493,50 +503,50 @@ export default function ChatPage({
         </div>
 
         {/* Search bar */}
-        <div className="px-2.5 pb-1.5">
-          <div className="relative flex items-center gap-1">
+        <div className="px-3 pb-2">
+          <div className="relative flex items-center gap-1.5">
             <div className="relative flex-grow">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input 
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Tìm bạn bè hoặc tin nhắn"
-                className="w-full pl-7 pr-2 py-1 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[10px] text-slate-700 transition-all font-medium"
+                placeholder="Search friends or messages"
+                className="w-full pl-9 pr-3 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-xs text-slate-700 transition-all font-medium"
               />
             </div>
             <button 
-              className="p-1 rounded-full bg-slate-100/70 hover:bg-slate-200 text-slate-500 transition cursor-pointer"
+              className="p-1.5 rounded-full bg-slate-100/70 hover:bg-slate-200 text-slate-500 transition cursor-pointer"
               title="Bộ lọc"
             >
-              <SlidersHorizontal className="h-3 w-3" />
+              <SlidersHorizontal className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
 
         {/* Filter tabs */}
-        <div className="px-2.5 pb-1.5 flex gap-1 overflow-x-auto">
+        <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
           <button
             onClick={() => setConversationFilter('all')}
-            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
               conversationFilter === 'all' 
                 ? 'bg-violet-600 text-white' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Tất cả
+            All
           </button>
           <button
             onClick={() => setConversationFilter('unread')}
-            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer flex items-center gap-0.5 ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 ${
               conversationFilter === 'unread' 
                 ? 'bg-violet-600 text-white' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Chưa đọc
+            Unread
             {totalUnread > 0 && (
-              <span className={`text-[7px] font-black px-1 rounded-full ${
+              <span className={`text-[9px] font-black px-1.5 rounded-full ${
                 conversationFilter === 'unread' ? 'bg-white text-violet-600' : 'bg-violet-600 text-white'
               }`}>
                 {totalUnread}
@@ -545,36 +555,36 @@ export default function ChatPage({
           </button>
           <button
             onClick={() => setConversationFilter('groups')}
-            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
               conversationFilter === 'groups' 
                 ? 'bg-violet-600 text-white' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Nhóm
+            Groups
           </button>
           <button
             onClick={() => setConversationFilter('requests')}
-            className={`px-2 py-0.5 rounded-full text-[9px] font-bold transition shrink-0 cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
               conversationFilter === 'requests' 
                 ? 'bg-violet-600 text-white' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Yêu cầu
+            Requests
           </button>
         </div>
 
         {/* List cuộc trò chuyện */}
-        <div className="flex-1 overflow-y-auto px-1.5 py-1 space-y-0">
+        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
           {isLoadingConvs && conversations.length === 0 ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 text-violet-500 animate-spin" />
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="text-center py-6 text-slate-400">
-              <MessageSquare className="h-5 w-5 mx-auto mb-1.5 opacity-30" />
-              <p className="text-[9px] font-semibold">Chưa có cuộc trò chuyện nào</p>
+            <div className="text-center py-8 text-slate-400">
+              <MessageSquare className="h-6 w-6 mx-auto mb-2 opacity-30" />
+              <p className="text-xs font-semibold">Chưa có cuộc trò chuyện nào</p>
             </div>
           ) : (
             filteredConversations.map((conv) => {
@@ -590,36 +600,37 @@ export default function ChatPage({
                 <div
                   key={conv.id}
                   onClick={() => setActiveConversation(conv)}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all hover:bg-slate-50 ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all hover:bg-slate-50 ${
                     isSelected 
-                      ? 'bg-violet-50/50 border-l-2 border-violet-500' 
-                      : ''
+                      ? 'bg-violet-50/60 border border-violet-200/50' 
+                      : 'border border-transparent'
                   }`}
                 >
                   {/* Avatar */}
                   <div className="relative shrink-0">
-                    <div className="h-7 w-7 rounded-full border border-slate-200/80 overflow-hidden bg-slate-100">
+                    <div className="h-11 w-11 rounded-full border border-slate-200/80 overflow-hidden bg-slate-100">
                       {partner.avatar ? (
                         <img src={partner.avatar} alt={partner.name} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-[9px] bg-slate-50">
+                        <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-sm bg-slate-50">
                           {partner.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     {isPartnerOnline && (
-                      <span className="absolute bottom-0 right-0 h-[6px] w-[6px] border border-white rounded-full bg-emerald-500"></span>
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-2 border-white rounded-full bg-emerald-500"></span>
                     )}
                   </div>
 
                   {/* Body Info */}
                   <div className="flex-grow min-w-0 text-left">
                     <div className="flex items-center justify-between">
-                      <h4 className={`text-xs font-bold truncate ${hasUnread ? 'text-slate-900 font-black' : 'text-slate-800'}`}>
+                      <h4 className={`text-sm font-semibold truncate ${hasUnread ? 'text-slate-900 font-bold' : 'text-slate-800'}`}>
                         {partner.name}
+                        {isPartnerOnline && <span className="inline-block ml-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500"></span>}
                       </h4>
                       {lastMsg && (
-                        <span className="text-[10px] text-slate-400 font-semibold shrink-0">
+                        <span className="text-[11px] text-slate-400 font-medium shrink-0 ml-2">
                           {new Date(lastMsg.sentAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -628,8 +639,8 @@ export default function ChatPage({
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <p className={`text-[11px] truncate flex-grow pr-2 ${hasUnread ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <p className={`text-xs truncate flex-grow pr-2 ${hasUnread ? 'text-slate-700 font-semibold' : 'text-slate-400'}`}>
                         {lastMsg ? (
                           <>
                             {lastMsg.senderId === currentUser.id && <span className="text-slate-400 mr-1">Bạn:</span>}
@@ -642,7 +653,7 @@ export default function ChatPage({
                       
                       {/* Unread count badge */}
                       {hasUnread && (
-                        <span className="h-4 min-w-4 px-1 flex items-center justify-center text-[8px] font-black bg-violet-600 text-white rounded-full shrink-0">
+                        <span className="h-5 min-w-5 px-1.5 flex items-center justify-center text-[10px] font-black bg-violet-600 text-white rounded-full shrink-0">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -655,13 +666,13 @@ export default function ChatPage({
         </div>
 
         {/* Nút tìm bạn mới */}
-        <div className="px-2 py-1.5 border-t border-slate-100">
+        <div className="px-3 py-2.5 border-t border-slate-100">
           <button 
             onClick={openNewChatModal}
-            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-full border border-violet-200 text-violet-600 font-bold text-[9px] hover:bg-violet-50 transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-full border border-violet-200 text-violet-600 font-bold text-xs hover:bg-violet-50 transition cursor-pointer"
           >
-            <UserPlus className="h-3 w-3" />
-            Tìm bạn mới
+            <UserPlus className="h-3.5 w-3.5" />
+            Find new friends
           </button>
         </div>
       </div>
@@ -673,52 +684,52 @@ export default function ChatPage({
         {activeConversation ? (
           <>
             {/* Header chat */}
-            <div className="px-3 py-1.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
-              <div className="flex items-center gap-2 flex-grow min-w-0">
+            <div className="px-4 py-2.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
+              <div className="flex items-center gap-3 flex-grow min-w-0">
                 <button 
                   onClick={() => setActiveConversation(null)}
-                  className="md:hidden p-1 hover:bg-slate-100 rounded transition cursor-pointer shrink-0"
+                  className="md:hidden p-1.5 hover:bg-slate-100 rounded-lg transition cursor-pointer shrink-0"
                   aria-label="Quay lại danh sách"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5 text-slate-600" />
+                  <ArrowLeft className="h-4 w-4 text-slate-600" />
                 </button>
                 <div className="relative shrink-0">
-                  <div className="h-7 w-7 rounded-full border border-slate-200 overflow-hidden bg-slate-100">
+                  <div className="h-9 w-9 rounded-full border border-slate-200 overflow-hidden bg-slate-100">
                     {activePartner?.avatar ? (
                       <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
                     ) : (
-                      <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-[9px] bg-slate-50">
+                      <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-sm bg-slate-50">
                         {activePartner?.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   {isActivePartnerOnline && (
-                    <span className="absolute bottom-0 right-0 h-[5px] w-[5px] border border-white rounded-full bg-emerald-500"></span>
+                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-2 border-white rounded-full bg-emerald-500"></span>
                   )}
                 </div>
                 <div className="text-left min-w-0">
-                  <h4 className="text-[10px] font-bold text-slate-800 truncate">{activePartner?.name}</h4>
-                  <span className="text-[8px] font-medium text-slate-400">
+                  <h4 className="text-sm font-bold text-slate-800 truncate">{activePartner?.name}</h4>
+                  <span className="text-xs font-medium text-slate-400">
                     {isActivePartnerOnline ? (
-                      <span className="text-emerald-600 font-bold">Đang hoạt động</span>
+                      <span className="text-emerald-600 font-semibold">Online</span>
                     ) : (
                       'Ngoại tuyến'
                     )}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-0 shrink-0">
-                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tìm kiếm">
-                  <Search className="h-3 w-3" />
+              <div className="flex items-center gap-1 shrink-0">
+                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tìm kiếm">
+                  <Search className="h-4 w-4" />
                 </button>
-                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi thoại">
-                  <Phone className="h-3 w-3" />
+                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi thoại">
+                  <Phone className="h-4 w-4" />
                 </button>
-                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi video">
-                  <Video className="h-3 w-3" />
+                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi video">
+                  <Video className="h-4 w-4" />
                 </button>
-                <button className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tùy chọn">
-                  <MoreVertical className="h-3 w-3" />
+                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tùy chọn">
+                  <MoreVertical className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -726,7 +737,7 @@ export default function ChatPage({
             {/* Khung chứa các tin nhắn */}
             <div 
               ref={chatScrollContainerRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"
+              className="flex-1 overflow-y-auto px-5 py-4 space-y-4 flex flex-col bg-slate-50/30"
             >
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center py-24 flex-grow">
@@ -754,15 +765,15 @@ export default function ChatPage({
                       return (
                         <div 
                           key={m.id} 
-                          className={`flex items-end gap-2 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                          className={`flex items-end gap-2.5 max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
                         >
                           {/* Avatar đối phương */}
                           {!isMe && (
-                            <div className="h-7 w-7 rounded-full border overflow-hidden bg-slate-100 shrink-0">
+                            <div className="h-8 w-8 rounded-full border overflow-hidden bg-slate-100 shrink-0">
                               {activePartner?.avatar ? (
                                 <img src={activePartner.avatar} alt="Avatar" className="h-full w-full object-cover" />
                               ) : (
-                                <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold bg-slate-50 text-[10px]">
+                                <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold bg-slate-50 text-xs">
                                   {activePartner?.name.charAt(0).toUpperCase()}
                                 </div>
                               )}
@@ -770,12 +781,12 @@ export default function ChatPage({
                           )}
 
                           {/* Bong bóng tin nhắn */}
-                          <div className="flex flex-col items-end">
+                          <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                             <div 
-                              className={`p-3 rounded-2xl text-[13px] leading-relaxed shadow-sm font-medium ${
+                              className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
                                 isMe 
-                                  ? 'bg-violet-600 text-white rounded-br-sm text-right' 
-                                  : 'bg-white text-slate-800 rounded-bl-sm border border-slate-200/60 text-left'
+                                  ? 'bg-violet-600 text-white rounded-br-md' 
+                                  : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
                               }`}
                             >
                               {m.content}
@@ -783,7 +794,7 @@ export default function ChatPage({
                             
                             {/* Metadata bên dưới bong bóng */}
                             <div className="flex items-center gap-1.5 mt-1 px-1">
-                              <span className="text-[9px] text-slate-400 font-medium">
+                              <span className="text-[10px] text-slate-400 font-medium">
                                 {formatTime(m.createdAt)}
                               </span>
 
@@ -832,38 +843,38 @@ export default function ChatPage({
             {/* Input bar */}
             <form 
               onSubmit={handleSendMessage}
-              className="px-2.5 py-1.5 border-t border-slate-200 bg-white flex items-center gap-1 z-10"
+              className="px-3 py-2.5 border-t border-slate-200 bg-white flex items-center gap-2 z-10"
             >
-              <div className="flex items-center shrink-0">
-                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer" title="Thêm">
-                  <Plus className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-0.5 shrink-0">
+                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer" title="Thêm">
+                  <Plus className="h-4.5 w-4.5" />
                 </button>
-                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Emoji">
-                  <Smile className="h-3.5 w-3.5" />
+                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Emoji">
+                  <Smile className="h-4.5 w-4.5" />
                 </button>
-                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Ảnh">
-                  <ImageIcon className="h-3.5 w-3.5" />
+                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Ảnh">
+                  <ImageIcon className="h-4.5 w-4.5" />
                 </button>
-                <button type="button" className="h-6 w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Mic">
-                  <Mic className="h-3.5 w-3.5" />
+                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Mic">
+                  <Mic className="h-4.5 w-4.5" />
                 </button>
               </div>
               <input 
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                placeholder={`Nhắn tin cho ${activePartner?.name || ''}...`}
-                className="flex-grow px-2.5 py-1 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[10px] text-slate-700 transition-all font-medium"
+                placeholder={`Message ${activePartner?.name || ''}...`}
+                className="flex-grow px-4 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-sm text-slate-700 transition-all font-medium"
               />
               <button 
                 type="submit"
                 disabled={!messageInput.trim() || isSending}
-                className="h-6 w-6 bg-violet-600 text-white rounded-full hover:bg-violet-500 disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center justify-center"
+                className="h-9 w-9 bg-violet-600 text-white rounded-full hover:bg-violet-500 disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
               >
                 {isSending ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-3 w-3" />
+                  <Send className="h-4 w-4" />
                 )}
               </button>
             </form>
@@ -878,6 +889,135 @@ export default function ChatPage({
           </div>
         )}
       </div>
+
+      {/* ========================================================== */}
+      {/* CỘT 3: PROFILE PANEL (chỉ hiện khi có active conversation) */}
+      {/* ========================================================== */}
+      {activeConversation && activePartner && (
+        <div className="w-[260px] border-l border-slate-200 flex flex-col h-full bg-white shrink-0 overflow-y-auto hidden xl:flex">
+          {/* Profile Header */}
+          <div className="flex flex-col items-center pt-8 pb-5 px-5">
+            {/* Avatar lớn */}
+            <div className="relative mb-4">
+              <div className="h-24 w-24 rounded-full border-3 border-slate-200 overflow-hidden bg-slate-100 shadow-md">
+                {activePartner.avatar ? (
+                  <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-3xl bg-gradient-to-br from-violet-50 to-slate-50">
+                    {activePartner.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              {isActivePartnerOnline && (
+                <span className="absolute bottom-1 right-1 h-5 w-5 border-3 border-white rounded-full bg-emerald-500"></span>
+              )}
+            </div>
+
+            {/* Tên + star */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <h3 className="text-base font-black text-slate-800">{activePartner.name}</h3>
+              <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+            </div>
+
+            {/* Bio / Role placeholder */}
+            <p className="text-xs text-slate-500 font-medium">UX Designer at Hizo</p>
+            <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
+              <span>📍</span> Ho Chi Minh City, Vietnam
+            </p>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-6 mt-5">
+              <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Xem Profile">
+                <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
+                  <User className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">Profile</span>
+              </button>
+              <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Tắt thông báo">
+                <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
+                  <BellOff className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">Mute</span>
+              </button>
+              <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Thêm tùy chọn">
+                <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
+                  <MoreHorizontal className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">More</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Shared Media */}
+          <div className="px-5 pt-4 pb-4 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-black text-slate-700">Shared media</h4>
+              <button className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer">See all</button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="aspect-square rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden cursor-pointer hover:opacity-80 transition">
+                  <div className="h-full w-full flex items-center justify-center">
+                    <ImageIcon className="h-5 w-5 text-slate-300" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Shared Files */}
+          <div className="px-5 pt-3 pb-4 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-black text-slate-700">Shared files</h4>
+              <button className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer">See all</button>
+            </div>
+            <div className="space-y-2.5">
+              {[
+                { name: 'Hizo_Project_Proposal.pdf', size: '2.4 MB', type: 'PDF' },
+                { name: 'Design_System_Update.fig', size: '18.6 MB', type: 'Figma' },
+                { name: 'Timeline_Project_Hizo.xlsx', size: '24.1 KB', type: 'Excel' },
+              ].map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition group">
+                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                    file.type === 'PDF' ? 'bg-rose-50 text-rose-500' :
+                    file.type === 'Figma' ? 'bg-purple-50 text-purple-500' :
+                    'bg-emerald-50 text-emerald-500'
+                  }`}>
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-grow">
+                    <p className="text-[11px] font-bold text-slate-700 truncate group-hover:text-violet-600 transition">{file.name}</p>
+                    <p className="text-[10px] text-slate-400">{file.size} • {file.type}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mutual Friends */}
+          <div className="px-5 pt-3 pb-5 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-black text-slate-700">Mutual friends</h4>
+              <button className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer">See all</button>
+            </div>
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div 
+                  key={i} 
+                  className="h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 -ml-2 first:ml-0 cursor-pointer hover:z-10 hover:scale-110 transition shadow-sm"
+                >
+                  <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-[10px] bg-gradient-to-br from-violet-50 to-slate-100">
+                    {String.fromCharCode(65 + i)}
+                  </div>
+                </div>
+              ))}
+              <div className="h-9 w-9 rounded-full border-2 border-white bg-violet-50 -ml-2 flex items-center justify-center cursor-pointer hover:bg-violet-100 transition shadow-sm">
+                <span className="text-[10px] font-black text-violet-600">+12</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL TẠO CHAT MỚI */}
       {showNewChatModal && (

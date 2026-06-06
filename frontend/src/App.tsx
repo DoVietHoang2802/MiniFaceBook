@@ -168,7 +168,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))] text-slate-800 flex flex-col relative select-none">
+    <div className={`bg-[hsl(var(--background))] text-slate-800 flex flex-col relative select-none ${activeTab === 'chats' ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
       {/* Banner mất kết nối Internet (chuẩn Facebook/Discord) */}
       <NetworkStatusBanner />
       {/* Hiệu ứng hào quang nền nhẹ nhàng (Minimalist Light Radial Glow) */}
@@ -177,7 +177,7 @@ function App() {
 
       {user ? (
         /* TRANG CHÍNH 3 CỘT (Hizo - khớp Giaodiennangcap.png) */
-        <div className="flex-grow w-full px-4 lg:px-6 xl:px-8 max-w-[1600px] mx-auto flex justify-center lg:justify-between gap-5 xl:gap-7 min-h-screen relative">
+        <div className={`flex-grow w-full max-w-[1600px] mx-auto flex justify-center lg:justify-between relative ${activeTab === 'chats' ? 'px-2 lg:px-3 gap-3 h-screen overflow-hidden' : 'px-4 lg:px-6 xl:px-8 gap-5 xl:gap-7 min-h-screen'}`}>
           
           {/* CỘT TRÁI: SIDEBAR ĐIỀU HƯỚNG */}
           <aside className="hidden md:flex flex-col w-[80px] lg:w-[240px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 lg:pr-2 transition-all duration-300">
@@ -294,9 +294,9 @@ function App() {
           </aside>
 
             {/* CỘT GIỮA: BẢNG TIN HOẶC PROFILE */}
-            <main className="flex-1 w-full min-w-0 lg:max-w-[680px] mx-auto py-3 min-h-screen transition-all duration-300">
-            {/* Top Bar toàn năng */}
-            <div className="flex items-center justify-between gap-4 mb-5">
+            <main className={`flex-1 w-full min-w-0 mx-auto transition-all duration-300 ${activeTab === 'chats' ? 'lg:max-w-full py-1 h-screen overflow-hidden' : 'lg:max-w-[680px] py-3 min-h-screen'}`}>
+            {/* Top Bar toàn năng - ẩn khi ở Chats */}
+            <div className={`flex items-center justify-between gap-4 mb-5 ${activeTab === 'chats' ? 'hidden' : ''}`}>
               <div className="relative flex-grow">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input 
@@ -384,7 +384,7 @@ function App() {
           </main>
 
           {/* CỘT PHẢI: TRENDING & PEOPLE YOU MAY KNOW */}
-          <aside className="hidden lg:flex flex-col w-[300px] xl:w-[340px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 pl-1 transition-all duration-300">
+          <aside className={`hidden lg:flex flex-col w-[300px] xl:w-[340px] shrink-0 sticky top-3 h-[calc(100vh-24px)] justify-between py-3 pl-1 transition-all duration-300 ${activeTab === 'chats' ? '!hidden' : ''}`}>
             <div className="space-y-4 overflow-y-auto pr-1">
               
               {/* Widget 1: Trending Topics (khớp Giaodiennangcap.png - có % tăng) */}
