@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 07/06/2026
-## 🏁 Trạng thái hiện tại: 🚧 PHASE 5 NOTIFICATION ~80% (Sprint 5.1→5.3 + 4/5 trigger 5.4). Tổng tiến độ **~75%**. Notification center realtime đầy đủ: event-driven decoupling (`@Async @TransactionalEventListener AFTER_COMMIT`), self-guard, Redis unread cache, chuông + badge + dropdown, toast realtime, 4 trigger (LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED). Đã test 2 trình duyệt OK. Còn lại: chat unread badge realtime ra sidebar (5.4), sound (5.3), email (5.5). Tiếp theo dự kiến: **Realtime like/comment count cho feed** (topic `/topic/post.<id>`, chỉ subscribe bài đang mở).
+## 🏁 Trạng thái hiện tại: 🚧 PHASE 5 NOTIFICATION ~80% + ⚡ Realtime Feed Counts XONG. Tổng tiến độ **~75%**. Notification center realtime đầy đủ (event-driven `@Async @TransactionalEventListener AFTER_COMMIT`, self-guard, Redis unread cache, chuông + badge + dropdown, toast, 4 trigger LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED). **Mới:** realtime số like/comment trên feed (topic `/topic/post.<id>`, subscribe-on-mount). Đã test 2 trình duyệt OK. Còn lại Phase 5: chat unread badge realtime ra sidebar (5.4), sound (5.3), email (5.5).
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
 
@@ -36,7 +36,8 @@
 - **Feed/comment KHÔNG realtime** (đúng thiết kế): user B phải F5 để thấy comment/like count mới. Dự kiến làm realtime feed (topic `/topic/post.<id>`, chỉ subscribe bài đang mở) ở phiên sau.
 
 ### Bước tiếp theo (đã chốt với USER):
-- **Realtime like/comment count cho feed:** thêm topic `/topic/post.<postId>`, publish khi có like/comment, frontend chỉ subscribe bài đang mở (đóng → unsubscribe) để không giữ kết nối thừa.
+- ✅ **Realtime like/comment count cho feed** — ĐÃ XONG (topic `/topic/post.<postId>`, subscribe-on-mount, unsubscribe-on-unmount, broadcast con số tuyệt đối).
+- Còn lại Phase 5: **chat unread badge realtime** ra sidebar (5.4 cuối), sound (5.3), email (5.5).
 
 ---
 

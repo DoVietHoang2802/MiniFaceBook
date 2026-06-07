@@ -28,6 +28,7 @@ public class ReactionService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PostRealtimeBroadcaster postRealtimeBroadcaster;
 
     public void reactToPost(String email, String postId, ReactionRequest request) {
         User user = userRepository.findByEmail(email)
@@ -77,6 +78,9 @@ public class ReactionService {
         
         // Lưu lại bộ đếm mới vào Post
         postRepository.save(post);
+
+        // Broadcast số đếm mới realtime tới mọi người đang xem bài (mọi thay đổi: thêm/gỡ/đổi).
+        postRealtimeBroadcaster.broadcastCounts(post);
     }
     
     private void incrementReactionCount(Map<ReactionType, Integer> map, ReactionType type) {

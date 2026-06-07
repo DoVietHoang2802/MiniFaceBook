@@ -428,3 +428,21 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 | Số bình luận hiển thị 3 dù đã thêm thành 4 | `CommentSection` (cache react-query) và số đếm `PostCard` (`localPost`) là 2 state tách rời | Callback `onCommentCountChange` từ CommentSection → PostCard điều chỉnh count Optimistic (+1 khi thêm, -1 khi lỗi) |
 
 - **Kết quả:** `mvn clean compile` PASS, ArchUnit PASS, frontend 0 lỗi. Test 2 trình duyệt: realtime like/comment/kết bạn đẩy chuông tức thì, đánh dấu đã đọc persist sau F5.
+
+
+---
+
+## ⚡ REALTIME FEED COUNTS (like/comment) — ĐÃ HOÀN THÀNH ✅
+**Đánh giá tổng quan:** Bổ sung realtime cho **con số** like/comment trên bảng tin (Facebook-style): ai đó tương tác bài → mọi người đang xem bài đó thấy số nhảy ngay, không cần F5. Đây là phần mở rộng sau Phase 5, tái dùng 100% hạ tầng WebSocket sẵn có.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Topic công khai `/topic/post.<postId>`** (khác `/user/queue/...` 1-1 của chat/notification) — **VÌ SAO:** like/comment là thông tin công khai, cần broadcast cho *bất kỳ ai* đang xem bài, không gửi riêng 1 người.
+- **subscribe-on-mount + unsubscribe-on-unmount** — **VÌ SAO (nguyên tắc tối ưu đã chốt với USER):** mỗi `PostCard` chỉ lắng nghe đúng bài của nó khi đang hiển thị; cuộn đi/đổi tab → tự ngắt → **không giữ kết nối thừa**. Tránh subscribe tất cả bài trong feed.
+- **Payload nhẹ `PostCountEvent`** (chỉ số đếm + map reaction, KHÔNG kèm nội dung) — **VÌ SAO:** giảm băng thông khi broadcast; phần nội dung comment đầy đủ không cần realtime (đúng phạm vi).
+- **Cập nhật con số TUYỆT ĐỐI từ server** (không cộng dồn ở client) — **VÌ SAO:** event realtime quay về sau Optimistic UI của chính người thao tác → ghi đè bằng giá trị tuyệt đối nên không bị lệch/nhân đôi.
+- **Dùng `SimpMessagingTemplate` trực tiếp** (in-memory broker, 1 server) — nhất quán với NotificationService; khi scale 2+ server chỉ đổi broker relay, không sửa code nghiệp vụ.
+
+### 🐞 Bài học vận hành (đáng ghi nhớ):
+- Triệu chứng "code mới không ăn, y như cũ" thực chất do **backend cũ vẫn chạy chiếm cổng 8080** → bản mới `APPLICATION FAILED TO START (Port 8080 in use)` nên không bao giờ chạy broadcaster mới. **Luôn Ctrl+C tắt hẳn backend cũ trước khi chạy bản mới.**
+
+- **Kết quả:** `mvn compile` PASS, ArchUnit PASS, FE 0 lỗi. Test 2 trình duyệt: like/gỡ/comment → số + cụm emoji nhảy realtime 2 phía, không F5.

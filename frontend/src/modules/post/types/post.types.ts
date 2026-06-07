@@ -30,6 +30,14 @@ export interface ReactionRequest {
   type: ReactionType;
 }
 
+/** Sự kiện realtime cập nhật số đếm tương tác của 1 bài (topic /topic/post.<id>). */
+export interface PostCountEvent {
+  postId: string;
+  reactCount: number;
+  commentCount: number;
+  reactionsCount: Record<string, number>;
+}
+
 export interface ReactionUserResponse {
   userId: string;
   name: string;

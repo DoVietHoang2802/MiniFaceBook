@@ -565,3 +565,18 @@
     *   Tích lũy kinh nghiệm debug thực chiến: đọc **code generated** để tìm lỗi ORM silent, hiểu sâu vòng đời transaction event và quản lý subscription STOMP.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Built an event-driven notification system using Spring `@Async @TransactionalEventListener(AFTER_COMMIT)` for full module decoupling (zero cross-module coupling, ArchUnit-verified), with self-healing STOMP re-subscription on reconnect and Redis-cached unread counts; diagnosed a silent MapStruct/Lombok boolean-mapping bug by inspecting generated code.*
+
+### ⚡ Highlight 36: Realtime Feed Counts với Topic-per-Post & Subscribe-on-Mount (Tối ưu kết nối)
+*   **Situation (Bối cảnh):** Số like/comment trên bảng tin không cập nhật realtime — người dùng khác phải F5 mới thấy thay đổi. Cần realtime nhưng KHÔNG được giữ hàng loạt kết nối thừa (mỗi feed có nhiều bài, mỗi bài nhiều người xem → dễ bùng nổ subscription nếu làm ẩu).
+*   **Task (Nhiệm vụ):** Thêm realtime cho con số like/comment, tái dùng hạ tầng WebSocket sẵn có, với nguyên tắc tối ưu: chỉ lắng nghe bài đang hiển thị, đóng thì ngắt.
+*   **Action (Hành động):**
+    *   **Topic-per-post:** broadcast tới topic công khai `/topic/post.<postId>` (khác user-queue 1-1 của chat) vì like/comment là thông tin công khai cho mọi người đang xem bài. Payload nhẹ `PostCountEvent` (chỉ reactCount + commentCount + map reaction, không kèm nội dung).
+    *   **Subscribe-on-mount / unsubscribe-on-unmount:** mỗi `PostCard` tự subscribe đúng topic của nó khi render, tự `unsubscribe()` khi unmount → cuộn đi/đổi tab là ngắt ngay, không giữ kết nối thừa.
+    *   **Absolute-value override:** client cập nhật con số tuyệt đối từ server thay vì cộng dồn → không lệch/nhân đôi với Optimistic UI của người vừa thao tác.
+    *   **Reuse hạ tầng:** dùng `SimpMessagingTemplate` + broker in-memory sẵn có; `ReactionService`/`CommentService` broadcast sau khi cập nhật DB; tận dụng cơ chế re-subscribe-on-reconnect đã xây trước đó.
+*   **Result (Kết quả):**
+    *   Số like/comment + cụm emoji nhảy realtime giữa các người dùng, không cần F5; trải nghiệm gần Facebook.
+    *   Mô hình subscription "đúng-lúc-đúng-chỗ" → không lãng phí tài nguyên kết nối, sẵn sàng scale (đổi broker relay khi cần).
+    *   Tích lũy bài học vận hành: chẩn đoán "code mới không chạy" hóa ra do tiến trình cũ kẹt cổng — luôn dừng hẳn server cũ trước khi chạy bản mới.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented realtime feed interaction counts via a topic-per-post STOMP broadcast with a subscribe-on-mount / unsubscribe-on-unmount model to avoid idle connections, using absolute-value server updates to stay consistent with optimistic UI — reusing existing WebSocket infrastructure with zero new servers.*

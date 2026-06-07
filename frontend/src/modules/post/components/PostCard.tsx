@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { MessageCircle, Share2, MoreHorizontal, Clock, ThumbsUp } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import type { PostResponse, ReactionType } from '../types/post.types';
+import type { PostResponse, ReactionType, PostCountEvent } from '../types/post.types';
 import { postService } from '../services/postService';
+import { webSocketService } from '../../chat/services/webSocketService';
 
 const REACTION_ICONS: Record<string, { emoji: string; color: string; label: string; bgColor: string; activeColor: string }> = {
   LIKE: { emoji: '👍', color: 'text-blue-600', label: 'Thích', bgColor: 'bg-blue-100', activeColor: '#1877F2' },
@@ -40,6 +41,23 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
   React.useEffect(() => {
     setLocalPost(post);
   }, [post]);
+
+  // Realtime số đếm like/comment (Phase 5): subscribe-on-mount đúng bài này, unmount tự hủy.
+  // Chỉ cập nhật con số tuyệt đối từ server (không cộng dồn) → không lệch với Optimistic UI.
+  React.useEffect(() => {
+    const unsubscribe = webSocketService.subscribe<PostCountEvent>(
+      `/topic/post.${post.id}`,
+      (evt) => {
+        setLocalPost((prev) => ({
+          ...prev,
+          reactCount: evt.reactCount,
+          commentCount: evt.commentCount,
+          reactionsCount: evt.reactionsCount ?? prev.reactionsCount,
+        }));
+      }
+    );
+    return () => unsubscribe();
+  }, [post.id]);
 
   const reactionMutation = useMutation({
     mutationFn: (type: ReactionType) => postService.reactToPost(localPost.id, { type }),

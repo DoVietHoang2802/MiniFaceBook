@@ -25,6 +25,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final MediaService mediaService;
     private final ApplicationEventPublisher eventPublisher;
+    private final PostRealtimeBroadcaster postRealtimeBroadcaster;
 
     public CommentResponse addComment(String email, String postId, CommentRequest request) {
         User user = userRepository.findByEmail(email)
@@ -50,6 +51,9 @@ public class CommentService {
         // Tăng biến đếm comment của Post
         post.setCommentCount(post.getCommentCount() + 1);
         postRepository.save(post);
+
+        // Broadcast số comment mới realtime tới mọi người đang xem bài.
+        postRealtimeBroadcaster.broadcastCounts(post);
 
         // Thông báo cho chủ bài viết (self-guard tự bỏ qua nếu tự bình luận bài mình).
         eventPublisher.publishEvent(
