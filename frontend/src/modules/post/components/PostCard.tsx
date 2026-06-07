@@ -72,6 +72,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
 
   const [showReactionsModal, setShowReactionsModal] = useState(false);
 
+  // Điều chỉnh số đếm bình luận tức thì khi thêm/lỗi (đồng bộ với CommentSection - chống lệch số 3/4).
+  const adjustCommentCount = (delta: number) => {
+    setLocalPost((prev) => ({
+      ...prev,
+      commentCount: Math.max(0, prev.commentCount + delta),
+    }));
+  };
+
   // Tính danh sách các loại emoji đang có (để hiển thị chồng lên nhau ở dòng thống kê)
   const topReactionTypes = Object.entries(localPost.reactionsCount || {})
     .filter(([, count]) => count > 0)
@@ -267,7 +275,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
 
         {/* Comment Section Placeholder */}
         {showComments && (
-          <CommentSection postId={localPost.id} currentUser={currentUser} />
+          <CommentSection postId={localPost.id} currentUser={currentUser} onCommentCountChange={adjustCommentCount} />
         )}
       </div>
     </div>

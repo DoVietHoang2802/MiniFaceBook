@@ -9,7 +9,9 @@ import com.minifacebook.module.post.domain.entity.Post;
 import com.minifacebook.module.post.domain.repository.CommentRepository;
 import com.minifacebook.module.post.domain.repository.PostRepository;
 import com.minifacebook.shared.domain.service.MediaService;
+import com.minifacebook.shared.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final MediaService mediaService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public CommentResponse addComment(String email, String postId, CommentRequest request) {
         User user = userRepository.findByEmail(email)
@@ -47,6 +50,16 @@ public class CommentService {
         // Tăng biến đếm comment của Post
         post.setCommentCount(post.getCommentCount() + 1);
         postRepository.save(post);
+
+        // Thông báo cho chủ bài viết (self-guard tự bỏ qua nếu tự bình luận bài mình).
+        eventPublisher.publishEvent(
+                NotificationEvent.builder()
+                        .recipientId(post.getAuthorId())
+                        .actorId(user.getId())
+                        .type("COMMENT")
+                        .entityId(postId)
+                        .content("đã bình luận về bài viết của bạn")
+                        .build());
 
         return mapToResponse(savedComment, user);
     }

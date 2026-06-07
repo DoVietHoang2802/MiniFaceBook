@@ -7,9 +7,11 @@ import type { CommentResponse } from '../types/post.types';
 interface CommentSectionProps {
   postId: string;
   currentUser: any;
+  /** Báo cho PostCard điều chỉnh số đếm bình luận (optimistic). +1 khi thêm, -1 khi lỗi. */
+  onCommentCountChange?: (delta: number) => void;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, onCommentCountChange }) => {
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -74,14 +76,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser }) 
         };
       });
 
+      // Cập nhật số đếm trên PostCard ngay (optimistic)
+      onCommentCountChange?.(1);
+
       return { previousComments };
     },
     onError: (err: any, _newContent, context) => {
       alert(`Lỗi khi bình luận: ${err.response?.data?.message || err.message}`);
-      // Nếu lỗi thì rollback lại snapshot
+      // Nếu lỗi thì rollback lại snapshot + hoàn số đếm
       if (context?.previousComments) {
         queryClient.setQueryData(['comments', postId], context.previousComments);
       }
+      onCommentCountChange?.(-1);
     },
     onSettled: () => {
       // Bất kể thành công hay thất bại, gọi lại API để đồng bộ dữ liệu thật

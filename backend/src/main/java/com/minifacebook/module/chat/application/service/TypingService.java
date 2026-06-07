@@ -7,7 +7,7 @@ import com.minifacebook.module.chat.application.dto.ChatPubSubEvent;
 import com.minifacebook.module.chat.application.dto.TypingEvent;
 import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
-import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
+import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.time.Duration;
@@ -42,7 +42,7 @@ public class TypingService {
   private final UserRepository userRepository;
   private final ConversationRepository conversationRepository;
   private final StringRedisTemplate redisTemplate;
-  private final ChatRedisPublisher chatRedisPublisher;
+  private final ChatEventPublisher chatRedisPublisher;
   private final ObjectMapper objectMapper;
 
   /**

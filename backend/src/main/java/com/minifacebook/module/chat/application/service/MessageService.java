@@ -15,7 +15,7 @@ import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.entity.ReplyPreview;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
-import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
+import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
@@ -49,7 +49,7 @@ public class MessageService {
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
   private final StringRedisTemplate redisTemplate;
-  private final ChatRedisPublisher chatRedisPublisher;
+  private final ChatEventPublisher chatRedisPublisher;
   private final MediaService mediaService;
 
   /** Bộ cảm xúc hợp lệ cho tin nhắn (Sprint 4.4 - Message Reactions). */

@@ -29,6 +29,9 @@ import FriendsPage from './modules/friends/components/FriendsPage';
 import { friendService } from './modules/friends/services/friendService';
 import ChatPage from './modules/chat/components/ChatPage';
 import { useWebSocket } from './modules/chat/hooks/useWebSocket';
+import { useNotifications } from './modules/notification/hooks/useNotifications';
+import NotificationBell from './modules/notification/components/NotificationBell';
+import type { NotificationResponse } from './modules/notification/types/notification.types';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
@@ -51,6 +54,28 @@ function App() {
   // Kích hoạt Toast thông báo
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
+  };
+
+  // Notification Center (Phase 5.1): badge realtime + dropdown chuông.
+  const {
+    notifications,
+    unreadCount,
+    loading: notifLoading,
+    loaded: notifLoaded,
+    loadNotifications,
+    markAsRead: markNotifAsRead,
+    markAllAsRead: markAllNotifAsRead,
+  } = useNotifications(!!user, (n) => {
+    triggerToast(`${n.actorName} ${n.content ?? 'có hoạt động mới'}`);
+  });
+
+  // Điều hướng khi click vào một thông báo.
+  const handleNotifNavigate = (n: NotificationResponse) => {
+    if (n.type === 'FRIEND_REQUEST' || n.type === 'FRIEND_ACCEPTED') {
+      setActiveTab('friends');
+    } else {
+      setActiveTab('feed');
+    }
   };
 
   // Tải danh sách gợi ý kết bạn thật (Mutual Friends - Sprint 3.4) khi đã đăng nhập
@@ -199,7 +224,7 @@ function App() {
                   { id: 'friends', label: 'Network', icon: Users, badge: null },
                   { id: 'communities', label: 'Communities', icon: Globe, badge: null },
                   { id: 'chats', label: 'Chats', icon: MessageCircle, badge: null },
-                  { id: 'notifications', label: 'Notifications', icon: Bell, badge: '3' },
+                  { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null },
                   { id: 'collections', label: 'Collections', icon: Bookmark, badge: null },
                   { id: 'profile', label: 'Profile', icon: User, badge: null },
                   { id: 'settings', label: 'Settings', icon: Settings, badge: null }
@@ -320,14 +345,16 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                   </svg>
                 </button>
-                <button 
-                  onClick={() => triggerToast("Bạn có 3 thông báo mới!")} 
-                  title="Thông báo"
-                  className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 relative transition-all cursor-pointer shadow-sm"
-                >
-                  <Bell className="h-4.5 w-4.5" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500"></span>
-                </button>
+                <NotificationBell
+                  unreadCount={unreadCount}
+                  notifications={notifications}
+                  loading={notifLoading}
+                  loaded={notifLoaded}
+                  onOpen={loadNotifications}
+                  onMarkAsRead={markNotifAsRead}
+                  onMarkAllAsRead={markAllNotifAsRead}
+                  onNavigate={handleNotifNavigate}
+                />
                 <div className="h-9 w-9 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-sm">
                   {user.avatar ? (
                     <img src={user.avatar} alt="Avatar" className="h-full w-full object-cover" />

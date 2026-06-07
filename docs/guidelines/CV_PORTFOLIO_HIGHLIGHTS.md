@@ -549,3 +549,19 @@
     *   *Built chat infinite scroll with DESC pagination and client-side reverse, preserving scroll position on prepend via useLayoutEffect scroll-height-diff (no jump/flicker) — choosing a lightweight manual approach over virtualization for the demo scale while matching Messenger-grade UX.*
 
 ---
+
+### 🔔 Highlight 35: Notification System — Event-Driven Decoupling, Self-Healing Realtime & Hành trình Debug 4 lỗi tinh vi
+*   **Situation (Bối cảnh):** Hệ thống cần trung tâm thông báo realtime (like/comment/kết bạn) đúng logic Facebook/Zalo, NHƯNG không được để module Post/Friendship phụ thuộc trực tiếp vào module Notification (phá vỡ Clean Architecture/ArchUnit). Đồng thời quá trình tích hợp lộ ra 4 lỗi tinh vi điển hình của hệ thống realtime + ORM.
+*   **Task (Nhiệm vụ):** Xây trung tâm thông báo realtime decoupled, giữ ArchUnit pass, và xử lý dứt điểm các lỗi: kênh realtime "chết" sau reconnect, trạng thái đã đọc không persist, lệch số đếm UI.
+*   **Action (Hành động):**
+    *   **Event-driven decoupling:** Module nguồn chỉ `publishEvent(NotificationEvent)` (đặt ở tầng `shared`); module Notification lắng nghe bằng `@Async @TransactionalEventListener(AFTER_COMMIT)`. Tạo thông báo **sau commit** (không "thông báo ma" khi rollback) và **luồng nền** (request gốc trả về tức thì). Kèm **self-guard** (`actorId==recipientId` → bỏ qua) và **Redis unread cache** `notif:unread:<userId>`.
+    *   **Gỡ nợ kiến trúc Phase 4:** ArchUnit phát hiện 13 vi phạm có sẵn (service `application` gọi thẳng `ChatRedisPublisher` ở `infrastructure`). Tách **port `ChatEventPublisher`** (application) cho publisher implement → Dependency Inversion → ArchUnit pass 100%.
+    *   **Self-healing realtime:** STOMP tự reconnect nhưng KHÔNG tự đăng ký lại kênh → sau khi server restart phải F5. Cho `webSocketService` **ghi nhớ danh sách intents** và re-subscribe trong `onConnect` mỗi lần (re)connect (lợi cho cả chat).
+    *   **Debug MapStruct + Lombok:** Đánh dấu đã đọc 1 thông báo không persist (F5 lại chưa đọc) trong khi "mark all" thì được. Đọc **mapper được generate** phát hiện MapStruct **bỏ sót** `isRead`: field boolean `isXxx` + `@Builder` làm lệch tên property (getter→`read`, builder→`isRead`). Fix bằng `@Mapping(target="isRead", source="read")` + `@JsonProperty("isRead")` cho JSON; kiểm chứng lại mapper generated.
+    *   **Đồng bộ state tách rời:** Số "X bình luận" (PostCard) lệch với danh sách (CommentSection, react-query) → thêm callback `onCommentCountChange` điều chỉnh Optimistic (+1/-1 rollback).
+*   **Result (Kết quả):**
+    *   Trung tâm thông báo realtime hoàn chỉnh (chuông + badge + dropdown + toast), 4 loại sự kiện, decoupled hoàn toàn, ArchUnit pass 100%.
+    *   Realtime "tự lành" sau khi mất kết nối/restart — không còn phải F5; trạng thái đã đọc persist chính xác.
+    *   Tích lũy kinh nghiệm debug thực chiến: đọc **code generated** để tìm lỗi ORM silent, hiểu sâu vòng đời transaction event và quản lý subscription STOMP.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Built an event-driven notification system using Spring `@Async @TransactionalEventListener(AFTER_COMMIT)` for full module decoupling (zero cross-module coupling, ArchUnit-verified), with self-healing STOMP re-subscription on reconnect and Redis-cached unread counts; diagnosed a silent MapStruct/Lombok boolean-mapping bug by inspecting generated code.*

@@ -59,6 +59,9 @@ public enum ErrorCode {
   EDIT_TIME_EXPIRED(3008, "Đã quá thời gian cho phép chỉnh sửa (15 phút)", HttpStatus.BAD_REQUEST),
   DELETE_TIME_EXPIRED(3009, "Đã quá thời gian cho phép thu hồi (15 phút)", HttpStatus.BAD_REQUEST),
   CANNOT_EDIT_NON_TEXT(3010, "Chỉ có thể chỉnh sửa tin nhắn văn bản", HttpStatus.BAD_REQUEST),
+
+  // ===== NOTIFICATION (Phase 5.1) =====
+  NOTIFICATION_NOT_FOUND(4001, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
   ;
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {

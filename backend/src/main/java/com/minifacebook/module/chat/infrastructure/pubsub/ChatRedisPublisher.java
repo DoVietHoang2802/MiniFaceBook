@@ -6,6 +6,7 @@ import com.minifacebook.module.chat.application.dto.MessageReactionEvent;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
 import com.minifacebook.module.chat.application.dto.MessageUpdateEvent;
+import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +15,13 @@ import org.springframework.stereotype.Component;
 
 /**
  * Publisher gửi các sự kiện Chat vào Redis Pub/Sub (Sprint 4.3).
+ *
+ * <p>Adapter hiện thực hóa port {@link ChatEventPublisher} của tầng application.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ChatRedisPublisher {
+public class ChatRedisPublisher implements ChatEventPublisher {
 
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
@@ -26,6 +29,7 @@ public class ChatRedisPublisher {
   /**
    * Publish sự kiện dạng raw ChatPubSubEvent.
    */
+  @Override
   public void publish(String conversationId, ChatPubSubEvent event) {
     try {
       String json = objectMapper.writeValueAsString(event);
@@ -40,6 +44,7 @@ public class ChatRedisPublisher {
   /**
    * Publish sự kiện tin nhắn mới.
    */
+  @Override
   public void publishNewMessage(String conversationId, List<String> participantIds, MessageResponse response) {
     try {
       String payload = objectMapper.writeValueAsString(response);
@@ -57,6 +62,7 @@ public class ChatRedisPublisher {
   /**
    * Publish sự kiện thay đổi trạng thái (DELIVERED hoặc SEEN).
    */
+  @Override
   public void publishStatus(String conversationId, String statusType, List<String> participantIds, MessageStatusEvent statusEvent) {
     try {
       String payload = objectMapper.writeValueAsString(statusEvent);
@@ -74,6 +80,7 @@ public class ChatRedisPublisher {
   /**
    * Publish sự kiện cập nhật reaction của tin nhắn (Sprint 4.4).
    */
+  @Override
   public void publishReaction(String conversationId, List<String> participantIds, MessageReactionEvent reactionEvent) {
     try {
       String payload = objectMapper.writeValueAsString(reactionEvent);
@@ -91,6 +98,7 @@ public class ChatRedisPublisher {
   /**
    * Publish sự kiện cập nhật tin nhắn (sửa / thu hồi) (Sprint 4.5).
    */
+  @Override
   public void publishUpdate(String conversationId, List<String> participantIds, MessageUpdateEvent updateEvent) {
     try {
       String payload = objectMapper.writeValueAsString(updateEvent);

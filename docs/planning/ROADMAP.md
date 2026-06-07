@@ -239,38 +239,45 @@
 
 ---
 
-## � PHASE 5: NOTIFICATION SYSTEM ⏳
+## � PHASE 5: NOTIFICATION SYSTEM 🚧 (~80% — còn chat unread badge, sound, email)
 *Mục tiêu: Thông báo realtime cho mọi tương tác trong hệ thống.*
 *Lý do tách riêng: Notification là cross-cutting concern, dùng chung cho nhiều module.*
 
-- [ ] **Sprint 5.1: Notification Infrastructure**
-    - [ ] Thiết kế **Notification Entity**.
-        - *Fields:* `recipientId`, `type`, `title`, `content`, `data` (JSON), `isRead`, `createdAt`.
-        - *Types:* `LIKE`, `COMMENT`, `FRIEND_REQUEST`, `FRIEND_ACCEPTED`, `NEW_MESSAGE`, `MENTION`.
-    - [ ] Tạo **NotificationService** với các methods:
-        - `createNotification(recipientId, type, data)`
-        - `markAsRead(notificationId)`
-        - `markAllAsRead(recipientId)`
-        - `getUnreadCount(recipientId)`
-    - [ ] Tạo **NotificationRepository** với Spring Data MongoDB.
-- [ ] **Sprint 5.2: In-App Notifications**
-    - [ ] API Lấy danh sách notifications (`GET /notifications`) - Có phân trang.
-    - [ ] API Đánh dấu đã đọc (`PUT /notifications/{id}/read`).
-    - [ ] API Đánh dấu tất cả đã đọc (`PUT /notifications/read-all`).
-    - [ ] API Lấy số lượng chưa đọc (`GET /notifications/unread-count`).
-    - [ ] Giao diện **Notification Bell** với badge count.
-    - [ ] Giao diện **Notification Dropdown** với danh sách thông báo.
-- [ ] **Sprint 5.3: Realtime Push Notifications**
-    - [ ] Tích hợp với WebSocket từ Phase 4 để push notification realtime.
-    - [ ] Emit notification qua STOMP topic `/user/{userId}/notifications`.
-    - [ ] Frontend: Subscribe và hiển thị toast notification khi nhận.
+- [x] **Sprint 5.1: Notification Infrastructure** ✅ *(HOÀN THÀNH — theo logic Facebook/Zalo)*
+
+    > **🎯 NGUYÊN TẮC: 2 luồng riêng biệt (giống Facebook/Zalo)**
+    > - **Chat unread** → 🔴 chấm đỏ/badge trên nút **Chats** (sidebar), KHÔNG vào notification center. (Đã có sẵn `unreadCount` ở Phase 4, cần wire realtime badge ra nav — *để 5.4*.)
+    > - **Notification center** (🔔 chuông) → CHỈ chứa: LIKE, COMMENT, FRIEND_REQUEST, FRIEND_ACCEPTED. **KHÔNG có NEW_MESSAGE** (tránh trùng lặp với chat unread).
+
+    - [x] Thiết kế **Notification Entity** (domain POJO + `NotificationType` enum).
+        - *Fields:* `recipientId`, `actorId`, `type`, `entityId`, `content`, `isRead`, `createdAt`.
+        - *Types:* `LIKE`, `COMMENT`, `FRIEND_REQUEST`, `FRIEND_ACCEPTED`.
+        - *Indexes:* compound `(recipientId, createdAt DESC)` cho list; đếm unread qua `countByRecipientIdAndReadFalse`.
+    - [x] 🆕 **Event-driven decoupling:** `NotificationEvent` (shared) + `ApplicationEventPublisher`; listener `@Async @TransactionalEventListener(AFTER_COMMIT)` → chỉ tạo thông báo sau khi giao dịch nguồn commit (tránh thông báo "ma" khi rollback), chạy luồng nền không chặn request gốc. Module Post/Friendship chỉ `publishEvent(...)` → ArchUnit pass.
+    - [x] Tạo **NotificationService**: `createNotification` (kèm **self-guard** `actorId == recipientId`), `markAsRead`, `markAllAsRead` (updateMulti), `getUnreadCount`.
+    - [x] 🆕 **Redis unread cache** `notif:unread:<userId>` (TTL 1 ngày) — đếm nhanh, invalidate khi có thông báo mới / mark-read.
+    - [x] Tạo **NotificationRepository** (port) + Mongo adapter + Document + MapStruct mapper (chuẩn 4 lớp). *(Lưu ý: ép `@Mapping isRead` vì Lombok boolean `isXxx` + `@Builder` làm MapStruct bỏ sót.)*
+    - [x] 🆕 **Tái dùng realtime infra Phase 4:** push trực tiếp qua `SimpMessagingTemplate` → `/user/queue/notifications`. Tách port `ChatEventPublisher` cho `ChatRedisPublisher` → fix nợ ArchUnit Phase 4 (application không phụ thuộc infra).
+    - [x] **AsyncConfig** (`@EnableAsync` + thread pool `taskExecutor`).
+- [x] **Sprint 5.2: In-App Notifications** ✅
+    - [x] API Lấy danh sách notifications (`GET /notifications`) - Có phân trang (mới nhất trước).
+    - [x] API Đánh dấu đã đọc (`PUT /notifications/{id}/read`).
+    - [x] API Đánh dấu tất cả đã đọc (`PUT /notifications/read-all`).
+    - [x] API Lấy số lượng chưa đọc (`GET /notifications/unread-count`).
+    - [x] Giao diện **Notification Bell** với badge count (đồng bộ cả badge sidebar).
+    - [x] Giao diện **Notification Dropdown** với danh sách (icon theo loại, thời gian tương đối, chấm chưa đọc, "đánh dấu tất cả đã đọc", Optimistic UI).
+- [x] **Sprint 5.3: Realtime Push Notifications** ✅
+    - [x] Tích hợp WebSocket từ Phase 4 để push notification realtime.
+    - [x] Emit notification qua STOMP `/user/queue/notifications`.
+    - [x] Frontend: Subscribe + hiển thị toast khi nhận + tăng badge realtime.
+    - [x] 🆕 **Fix re-subscribe on reconnect:** `webSocketService` ghi nhớ intents và tự đăng ký lại mỗi lần (re)connect → không còn "chết kênh" phải F5 sau khi server restart (áp dụng cho cả chat).
     - [ ] **Sound notification** (optional): Phát âm thanh khi có thông báo mới.
-- [ ] **Sprint 5.4: Notification Triggers Integration**
-    - [ ] Trigger notification khi có **Like** bài viết (Phase 2).
-    - [ ] Trigger notification khi có **Comment** bài viết (Phase 2).
-    - [ ] Trigger notification khi có **Friend Request** (Phase 3).
-    - [ ] Trigger notification khi **Friend Request được chấp nhận** (Phase 3).
-    - [ ] Trigger notification khi có **Tin nhắn mới** (Phase 4).
+- [x] **Sprint 5.4: Notification Triggers Integration** *(4/5 — còn chat unread badge)*
+    - [x] Trigger notification khi có **Like** bài viết — `ReactionService` publish `NotificationEvent` (chỉ khi thả MỚI, không bắn khi gỡ).
+    - [x] Trigger notification khi có **Comment** bài viết — `CommentService` publish `NotificationEvent`.
+    - [x] Trigger notification khi có **Friend Request** — `FriendshipService.sendRequest` publish event.
+    - [x] Trigger notification khi **Friend Request được chấp nhận** — `FriendshipService.acceptRequest` publish event.
+    - [ ] **Tin nhắn mới (Phase 4):** KHÔNG vào notification center. Thay vào đó → realtime **chấm đỏ/badge unread trên nút Chats** ở sidebar (giống Messenger). Wire `unreadCount` tổng + WebSocket signal ra App nav. *(Chưa làm)*
 - [ ] **Sprint 5.5: Email Notifications (Optional)**
     - [ ] Tái sử dụng **Resend Service** từ Phase 1.
     - [ ] Gửi email khi có Friend Request (nếu user offline > 24h).
@@ -336,11 +343,11 @@
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
-| 5 | Notification System | ⏳ Chưa bắt đầu | 0% |
+| 5 | Notification System | 🚧 Đang làm | ~80% (5.1→5.3 xong, 5.4 còn chat-badge) |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~70%** (4.x Chat hoàn thành 100% + chuẩn bị Phase 5)
+**Tổng tiến độ: ~75%** (Phase 4 Chat 100% + Phase 5 Notification ~80%: realtime like/comment/friend đã chạy)
 
 ---
 
@@ -408,6 +415,8 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+iijh| 3.7 | Jun 2026 | **Phase 5 Notification — Sprint 5.1→5.3 + triggers 5.4 HOÀN THÀNH & TEST OK 🎉**: Module `notification` chuẩn Clean Architecture 4 lớp (entity/port/Mongo adapter/MapStruct/service/listener/controller). Event-driven: `NotificationEvent` (shared) + `@Async @TransactionalEventListener(AFTER_COMMIT)` (chỉ tạo sau commit, luồng nền); self-guard `actor==recipient`; Redis cache `notif:unread:<userId>`. Realtime push `/user/queue/notifications` + toast + badge (chuông & sidebar). **4 trigger:** LIKE (chỉ khi thả mới), COMMENT, FRIEND_REQUEST, FRIEND_ACCEPTED. **Fix kèm:** (1) tách port `ChatEventPublisher` → ArchUnit pass 100% (gỡ nợ Phase 4); (2) `webSocketService` tự re-subscribe khi reconnect (hết lỗi phải F5 sau restart); (3) MapStruct bỏ sót `isRead` (Lombok boolean+`@Builder`) → ép `@Mapping` + `@JsonProperty("isRead")` → fix bug đánh dấu đã đọc không lưu; (4) comment count đồng bộ optimistic giữa CommentSection↔PostCard. Verify: `mvn clean compile` PASS, ArchUnit PASS, FE 0 lỗi, test 2 trình duyệt OK. Còn lại 5.4: chat unread badge realtime; 5.3 sound; 5.5 email. |
+| 3.6 | Jun 2026 | **Phân tích & tinh chỉnh Phase 5 (Notification) theo logic Facebook/Zalo (USER duyệt)**: Chốt **2 luồng riêng** — Chat unread → chấm đỏ trên nút Chats (KHÔNG vào notification center); Notification center (chuông) chỉ chứa LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED. Sprint 5.1 bổ sung: **Event-driven decoupling** (`ApplicationEvent` + `@EventListener @Async`) giữ Clean Architecture (module Post/Friendship không gọi trực tiếp NotificationService); thêm `actorId`/`entityId` vào entity; self-guard; Redis unread cache; tái dùng realtime infra Phase 4. Sprint 5.4: NEW_MESSAGE → chuyển thành chat unread badge realtime thay vì notification. |
 | 3.5 | Jun 2026 | **Sprint 4.5 đợt 2: Infinite Scroll HOÀN THÀNH → PHASE 4 CHAT 100% 🏆**: Backend `getMessages` sort DESC (page 0 = mới nhất), page size 15. FE load 15 tin mới → reverse hiển thị cũ→mới; cuộn lên đầu tự tải page kế → prepend; **giữ vị trí cuộn** bằng `useLayoutEffect` đo chênh lệch scrollHeight (không nháy/nhảy màn hình); spinner đầu khung, lọc trùng id, dừng khi hết. Phase 4 Realtime Chat hoàn thành toàn bộ (Sprint 4.1→4.5). |
 | 3.4 | Jun 2026 | **Sprint 4.5 đợt 1: Delete + Edit Message HOÀN THÀNH 🎉**: Xóa tin 2 chế độ (xóa riêng qua `deletedFor` Set không báo người khác / thu hồi cho mọi người qua `deleted` flag, sender + 15 phút, realtime). Sửa tin TEXT trong 15 phút + nhãn "(đã chỉnh sửa)". Backend: `editMessage`/`deleteMessage`, `PUT/DELETE /messages/{id}`, `MessageUpdateEvent` Pub/Sub "UPDATE" → `/user/queue/updates`, 4 error code. FE: Optimistic UI, hover Pencil/Trash, menu xóa mở lên trên, banner sửa, placeholder thu hồi. **Perf fix:** tắt verbose STOMP debug logging (gây lag khi mở DevTools). Còn lại: Infinite Scroll (đợt 2). |
 | 3.3 | Jun 2026 | **Sprint 4.4 ④ Media in Chat HOÀN THÀNH 🎉 → SPRINT 4.4 TRỌN VẸN**: Gửi ảnh qua REST `/conversations/{id}/messages/image` (multipart), reuse `MediaService` (Cloudinary+Tika) + `sendMessage` type=IMAGE. FE: preview tray giống Messenger (tối đa 4 ảnh, nút X/+, không auto-gửi), Optimistic blob preview (tránh "ảnh khác"), upload progress bar, nén thông minh (skip GIF/<1MB, preserveExif, WebP). Thêm click quote → nhảy tới tin gốc + highlight (giống Facebook). Fix race REST vs WS echo gây trùng ảnh (dedup theo id + match type). Sandbox fallback cho test không cần key. Phase 4 đạt 100%. |

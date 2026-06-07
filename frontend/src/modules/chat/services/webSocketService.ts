@@ -1,6 +1,13 @@
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+/** Một "ý định subscribe" được ghi nhớ để tự đăng ký lại sau mỗi lần (re)connect. */
+interface SubscriptionIntent {
+  destination: string;
+  callback: (data: unknown) => void;
+  sub?: StompSubscription;
+}
+
 /**
  * WebSocket Service - Quản lý kết nối STOMP với backend.
  *
@@ -9,11 +16,18 @@ import SockJS from 'sockjs-client';
  * - JWT trong Cookie được backend đọc qua HandshakeInterceptor.
  * - Auto-reconnect khi mất kết nối.
  * - Singleton pattern - 1 connection duy nhất cho toàn app.
+ *
+ * QUAN TRỌNG (fix Phase 5.1): STOMP tự reconnect nhưng KHÔNG tự đăng ký lại các kênh đã subscribe.
+ * Vì vậy service tự ghi nhớ danh sách kênh (intents) và re-subscribe trong onConnect mỗi lần
+ * (re)connect — đảm bảo thông báo / tin nhắn realtime không "chết" sau khi server restart hay mạng
+ * chập chờn (trước đây phải F5).
  */
 class WebSocketService {
   private client: Client | null = null;
-  private subscriptions: Map<string, StompSubscription> = new Map();
+  /** Các kênh mong muốn được duy trì, key = id duy nhất. */
+  private intents: Map<string, SubscriptionIntent> = new Map();
   private connectionPromise: Promise<void> | null = null;
+  private idCounter = 0;
 
   /**
    * Kết nối WebSocket. Idempotent - gọi nhiều lần chỉ tạo 1 connection.
@@ -42,6 +56,8 @@ class WebSocketService {
         },
         onConnect: () => {
           console.log('[WebSocket] Connected');
+          // Đăng ký lại TẤT CẢ kênh đã ghi nhớ (xử lý cả lần đầu lẫn reconnect).
+          this.resubscribeAll();
           resolve();
         },
         onStompError: (frame) => {
@@ -54,6 +70,10 @@ class WebSocketService {
         },
         onDisconnect: () => {
           console.log('[WebSocket] Disconnected');
+          // Đánh dấu các sub cũ không còn hiệu lực (sẽ tạo lại khi onConnect).
+          this.intents.forEach((intent) => {
+            intent.sub = undefined;
+          });
           this.connectionPromise = null;
         },
       });
@@ -64,28 +84,47 @@ class WebSocketService {
     return this.connectionPromise;
   }
 
-  /**
-   * Subscribe một destination. Trả về unsubscribe function.
-   */
-  subscribe<T>(destination: string, callback: (data: T) => void): () => void {
-    if (!this.client?.connected) {
-      console.warn('[WebSocket] Not connected, cannot subscribe to', destination);
-      return () => {};
-    }
-
-    const sub = this.client.subscribe(destination, (msg: IMessage) => {
+  /** Tạo subscription STOMP thực sự cho một intent (nếu đang kết nối). */
+  private activateIntent(id: string, intent: SubscriptionIntent): void {
+    if (!this.client?.connected) return;
+    intent.sub = this.client.subscribe(intent.destination, (msg: IMessage) => {
       try {
-        const data = JSON.parse(msg.body) as T;
-        callback(data);
+        intent.callback(JSON.parse(msg.body));
       } catch (e) {
         console.error('[WebSocket] Failed to parse message:', e);
       }
     });
+    this.intents.set(id, intent);
+  }
 
-    this.subscriptions.set(destination, sub);
+  /** Đăng ký lại toàn bộ kênh đã ghi nhớ (gọi trong onConnect). */
+  private resubscribeAll(): void {
+    this.intents.forEach((intent, id) => {
+      this.activateIntent(id, intent);
+    });
+  }
+
+  /**
+   * Subscribe một destination. Trả về unsubscribe function.
+   *
+   * <p>Kênh được ghi nhớ nên sẽ tự đăng ký lại sau mỗi lần reconnect. Có thể gọi cả khi chưa kết
+   * nối — intent sẽ được kích hoạt ngay khi WS connect.
+   */
+  subscribe<T>(destination: string, callback: (data: T) => void): () => void {
+    const id = `sub-${++this.idCounter}`;
+    const intent: SubscriptionIntent = {
+      destination,
+      callback: callback as (data: unknown) => void,
+    };
+    this.intents.set(id, intent);
+
+    // Nếu đã kết nối thì subscribe ngay; nếu chưa, onConnect sẽ lo.
+    this.activateIntent(id, intent);
+
     return () => {
-      sub.unsubscribe();
-      this.subscriptions.delete(destination);
+      const current = this.intents.get(id);
+      current?.sub?.unsubscribe();
+      this.intents.delete(id);
     };
   }
 
@@ -108,8 +147,8 @@ class WebSocketService {
    */
   disconnect(): void {
     if (this.client) {
-      this.subscriptions.forEach((sub) => sub.unsubscribe());
-      this.subscriptions.clear();
+      this.intents.forEach((intent) => intent.sub?.unsubscribe());
+      this.intents.clear();
       void this.client.deactivate();
       this.client = null;
       this.connectionPromise = null;

@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
+import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 
 /**
  * Unit Test cho ConversationService (Sprint 4.2 & 4.3).
@@ -41,7 +41,7 @@ public class ConversationServiceTest {
   @Mock private FriendshipRepository friendshipRepository;
   @Mock private StringRedisTemplate redisTemplate;
   @Mock private ValueOperations<String, String> valueOperations;
-  @Mock private ChatRedisPublisher chatRedisPublisher;
+  @Mock private ChatEventPublisher chatRedisPublisher;
 
   @InjectMocks private ConversationService conversationService;
 

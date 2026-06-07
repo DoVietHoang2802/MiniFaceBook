@@ -1,13 +1,46 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 06/06/2026
-## 🏁 Trạng thái hiện tại: 🏆 PHASE 4 REALTIME CHAT HOÀN THÀNH 100% (Sprint 4.1→4.5). Tổng tiến độ **~90%**. Chat đầy đủ tính năng: WebSocket+Redis, status SENT/DELIVERED/SEEN, Typing Indicator, Reactions, Reply (+jump), Media (preview tray), Edit/Delete (15 phút), Infinite Scroll. Tiếp theo: **Phase 5 - Notification System** (thông báo realtime cho like/comment/friend/message).
+## 📅 Cập nhật ngày: 07/06/2026
+## 🏁 Trạng thái hiện tại: 🚧 PHASE 5 NOTIFICATION ~80% (Sprint 5.1→5.3 + 4/5 trigger 5.4). Tổng tiến độ **~75%**. Notification center realtime đầy đủ: event-driven decoupling (`@Async @TransactionalEventListener AFTER_COMMIT`), self-guard, Redis unread cache, chuông + badge + dropdown, toast realtime, 4 trigger (LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED). Đã test 2 trình duyệt OK. Còn lại: chat unread badge realtime ra sidebar (5.4), sound (5.3), email (5.5). Tiếp theo dự kiến: **Realtime like/comment count cho feed** (topic `/topic/post.<id>`, chỉ subscribe bài đang mở).
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
 
 ---
 
-## 📋 TÓM TẮT PHIÊN LÀM VIỆC (06/06/2026)
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (07/06/2026)
+
+### Công việc đã thực hiện (Phase 5 Notification — Sprint 5.1→5.3 + triggers 5.4):
+
+1. **Module Notification (Clean Architecture 4 lớp):** entity + `NotificationType` enum, port `NotificationRepository`, Mongo adapter (Document index `(recipientId, createdAt DESC)`), MapStruct mapper, `NotificationService`, listener, `NotificationController`.
+
+2. **Event-driven decoupling:** `NotificationEvent` (shared) + `ApplicationEventPublisher`. Listener `@Async @TransactionalEventListener(AFTER_COMMIT)` — tạo thông báo sau commit, luồng nền. Self-guard `actorId==recipientId`. Redis cache `notif:unread:<userId>`.
+
+3. **Realtime + UI:** push `/user/queue/notifications` qua `SimpMessagingTemplate`; `NotificationBell` (badge + dropdown + toast + Optimistic UI), badge sidebar đồng bộ.
+
+4. **4 trigger:** LIKE (chỉ thả mới), COMMENT, FRIEND_REQUEST, FRIEND_ACCEPTED.
+
+5. **Fix nợ kiến trúc Phase 4:** tách port `ChatEventPublisher` cho `ChatRedisPublisher` → ArchUnit pass 100%.
+
+6. **Fix bug khi test:** (a) `webSocketService` tự re-subscribe khi reconnect (hết lỗi phải F5 sau restart); (b) MapStruct bỏ sót `isRead` (Lombok boolean+`@Builder`) → `@Mapping` + `@JsonProperty("isRead")` (fix đánh dấu đã đọc không lưu); (c) comment count đồng bộ optimistic CommentSection↔PostCard.
+
+### Files chính:
+- `backend/.../module/notification/**` (toàn bộ module mới)
+- `backend/.../shared/event/NotificationEvent.java`, `infrastructure/config/AsyncConfig.java`
+- `backend/.../module/chat/application/port/ChatEventPublisher.java` (+ publisher implement)
+- `backend/.../module/{friendship,post}/application/service/*` (publish events)
+- `frontend/src/modules/notification/**`, `frontend/src/App.tsx`, `frontend/src/modules/chat/services/webSocketService.ts`, `frontend/src/modules/post/components/{PostCard,CommentSection}.tsx`
+
+### Known Issues / Chưa làm:
+- **Chat unread badge realtime** (Sprint 5.4 cuối): tin nhắn mới → chấm đỏ trên nút Chats sidebar. Chưa wire.
+- **Sound notification** (5.3 optional), **Email notification** (5.5) — chưa làm.
+- **Feed/comment KHÔNG realtime** (đúng thiết kế): user B phải F5 để thấy comment/like count mới. Dự kiến làm realtime feed (topic `/topic/post.<id>`, chỉ subscribe bài đang mở) ở phiên sau.
+
+### Bước tiếp theo (đã chốt với USER):
+- **Realtime like/comment count cho feed:** thêm topic `/topic/post.<postId>`, publish khi có like/comment, frontend chỉ subscribe bài đang mở (đóng → unsubscribe) để không giữ kết nối thừa.
+
+---
+
+## 📋 PHIÊN TRƯỚC (06/06/2026 — Phase 4 Chat)
 
 ### Công việc đã thực hiện (6 thay đổi):
 

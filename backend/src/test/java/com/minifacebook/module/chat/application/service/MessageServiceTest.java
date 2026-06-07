@@ -15,7 +15,7 @@ import com.minifacebook.module.chat.domain.entity.Message;
 import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
-import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
+import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.time.Instant;
@@ -44,7 +44,7 @@ public class MessageServiceTest {
   @Mock private ConversationRepository conversationRepository;
   @Mock private UserRepository userRepository;
   @Mock private StringRedisTemplate redisTemplate;
-  @Mock private ChatRedisPublisher chatRedisPublisher;
+  @Mock private ChatEventPublisher chatRedisPublisher;
 
   @InjectMocks private MessageService messageService;
 

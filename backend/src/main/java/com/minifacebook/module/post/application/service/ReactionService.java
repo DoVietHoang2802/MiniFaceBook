@@ -9,7 +9,9 @@ import com.minifacebook.module.post.domain.entity.Reaction;
 import com.minifacebook.module.post.domain.entity.ReactionType;
 import com.minifacebook.module.post.domain.repository.PostRepository;
 import com.minifacebook.module.post.domain.repository.ReactionRepository;
+import com.minifacebook.shared.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +27,7 @@ public class ReactionService {
     private final ReactionRepository reactionRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void reactToPost(String email, String postId, ReactionRequest request) {
         User user = userRepository.findByEmail(email)
@@ -60,6 +63,16 @@ public class ReactionService {
                     .build();
             reactionRepository.save(newReaction);
             incrementReactionCount(reactionsCount, request.getType());
+
+            // Thông báo cho chủ bài viết (self-guard tự bỏ qua nếu tự thả cảm xúc bài mình).
+            eventPublisher.publishEvent(
+                    NotificationEvent.builder()
+                            .recipientId(post.getAuthorId())
+                            .actorId(user.getId())
+                            .type("LIKE")
+                            .entityId(postId)
+                            .content("đã bày tỏ cảm xúc về bài viết của bạn")
+                            .build());
         }
         
         // Lưu lại bộ đếm mới vào Post

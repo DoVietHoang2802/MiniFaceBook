@@ -9,7 +9,7 @@ import com.minifacebook.module.chat.application.dto.ParticipantResponse;
 import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
-import com.minifacebook.module.chat.infrastructure.pubsub.ChatRedisPublisher;
+import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 import com.minifacebook.module.friendship.domain.entity.Friendship;
 import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
@@ -45,7 +45,7 @@ public class ConversationService {
   private final UserRepository userRepository;
   private final FriendshipRepository friendshipRepository;
   private final StringRedisTemplate redisTemplate;
-  private final ChatRedisPublisher chatRedisPublisher;
+  private final ChatEventPublisher chatRedisPublisher;
 
   private User getUserByEmail(String email) {
     return userRepository

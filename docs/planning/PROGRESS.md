@@ -397,3 +397,34 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Accessibility & Polish]** Bổ sung các nhãn `title` hỗ trợ Accessibility cho các nút điều hướng và đóng modal ở `App.tsx`, `ChatPage.tsx`, `FriendsPage.tsx`. Loại bỏ hoàn toàn các import thừa ở cả Frontend và Backend, biên dịch 0 cảnh báo.
   - [x] **[Testing & Verification]** Chạy Maven test thành công 100% (7/7 tests passed).
 
+
+---
+
+## 🔔 PHASE 5: NOTIFICATION SYSTEM (ĐANG TRIỂN KHAI 🚧 ~80%)
+**Đánh giá tổng quan:** Xây dựng trung tâm thông báo realtime theo đúng logic Facebook/Zalo — tách bạch **2 luồng**: tin nhắn chat đi qua chấm đỏ unread riêng, còn chuông 🔔 chỉ chứa LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED. Hoàn thành Sprint 5.1→5.3 + 4/5 trigger của 5.4, đã test 2 trình duyệt OK.
+
+### 🏆 Các tính năng & Quyết định kiến trúc (VÌ SAO):
+
+#### 1. Sprint 5.1: Hạ tầng Notification (Clean Architecture 4 lớp)
+- **Đã làm:** Module `com.minifacebook.module.notification` đầy đủ: `Notification`/`NotificationType` (domain) → `NotificationRepository` (port) → Mongo adapter (`NotificationDocument` index `(recipientId, createdAt DESC)`, `MongoNotificationRepository`, `NotificationRepositoryImpl`) → MapStruct `NotificationMapper` → `NotificationService` → `NotificationController`.
+- **Quyết định "Event-driven decoupling" — VÌ SAO:** Module Post/Friendship **không** gọi trực tiếp `NotificationService` (sẽ tạo coupling chéo module, vi phạm Clean Architecture). Thay vào đó publish `NotificationEvent` (đặt ở tầng `shared`); module Notification lắng nghe qua listener. Module nguồn không hề biết Notification tồn tại → gỡ bỏ dễ dàng, sẵn sàng đổi sang Kafka khi scale mà logic nghiệp vụ không đổi.
+- **Quyết định `@TransactionalEventListener(AFTER_COMMIT)` + `@Async` — VÌ SAO:** Chỉ tạo thông báo **sau khi** giao dịch nguồn commit thành công → tránh "thông báo ma" khi nghiệp vụ rollback (vd gửi lời mời lỗi nhưng đã bắn thông báo). `@Async` cho chạy luồng nền (pool `taskExecutor`) → request gốc (like/comment/kết bạn) trả về tức thì, không phải chờ ghi notification.
+- **Quyết định Self-guard — VÌ SAO:** Bỏ qua khi `actorId == recipientId` (tự like/comment bài mình) — giống Facebook, tránh tự thông báo cho chính mình.
+- **Quyết định Redis cache `notif:unread:<userId>` — VÌ SAO:** Badge chuông hỏi số chưa đọc liên tục; cache (TTL 1 ngày) tránh đếm DB mỗi lần, invalidate khi có thông báo mới / đánh dấu đã đọc.
+
+#### 2. Sprint 5.2 + 5.3: In-App + Realtime Push
+- **Đã làm:** API `GET /notifications` (phân trang), `unread-count`, `PUT /{id}/read`, `read-all`. Frontend: `NotificationBell` (badge + dropdown icon theo loại + thời gian tương đối + Optimistic UI), subscribe STOMP `/user/queue/notifications` → toast + tăng badge realtime.
+- **Quyết định tái dùng hạ tầng WS Phase 4 — VÌ SAO:** Không dựng server WebSocket mới; push thẳng qua `SimpMessagingTemplate` tới principal (email) — đúng cơ chế chat đã chạy ổn định.
+
+#### 3. Sprint 5.4: Triggers (4/5)
+- **Đã làm:** Gắn `publishEvent` tại `FriendshipService` (FRIEND_REQUEST + FRIEND_ACCEPTED), `ReactionService` (LIKE — chỉ khi thả MỚI, không bắn khi gỡ để tránh spam), `CommentService` (COMMENT). Còn lại: chat unread badge realtime ra sidebar.
+
+#### 4. Các bug đã phát hiện & sửa trong quá trình test (giá trị thực chiến)
+| Vấn đề | Nguyên nhân gốc | Giải pháp |
+| :--- | :--- | :--- |
+| ArchUnit fail 13 vi phạm | Service tầng `application` của chat (Phase 4) gọi thẳng `ChatRedisPublisher` ở tầng `infrastructure` | Tách port `ChatEventPublisher` (application) cho publisher implement → Dependency Inversion → ArchUnit pass 100% |
+| Thông báo phải F5 mới hiện | STOMP tự reconnect nhưng KHÔNG tự đăng ký lại kênh đã subscribe → kênh "mồ côi" sau khi server restart | `webSocketService` ghi nhớ danh sách intents, re-subscribe trong `onConnect` mỗi lần (re)connect (lợi cho cả chat) |
+| Đánh dấu đã đọc không lưu (F5 lại chưa đọc) | MapStruct **bỏ sót** field `isRead` do Lombok boolean `isXxx` + `@Builder` lệch tên property (getter→"read", builder→"isRead") | Ép `@Mapping(target="isRead", source="read")` + `@JsonProperty("isRead")` trên DTO; kiểm chứng bằng mapper generated |
+| Số bình luận hiển thị 3 dù đã thêm thành 4 | `CommentSection` (cache react-query) và số đếm `PostCard` (`localPost`) là 2 state tách rời | Callback `onCommentCountChange` từ CommentSection → PostCard điều chỉnh count Optimistic (+1 khi thêm, -1 khi lỗi) |
+
+- **Kết quả:** `mvn clean compile` PASS, ArchUnit PASS, frontend 0 lỗi. Test 2 trình duyệt: realtime like/comment/kết bạn đẩy chuông tức thì, đánh dấu đã đọc persist sau F5.

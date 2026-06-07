@@ -9,6 +9,7 @@ import com.minifacebook.module.friendship.application.dto.UserSearchResponse;
 import com.minifacebook.module.friendship.domain.entity.Friendship;
 import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
+import com.minifacebook.shared.event.NotificationEvent;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,6 +46,7 @@ public class FriendshipService {
 
   private final FriendshipRepository friendshipRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /** Gửi lời mời kết bạn từ user hiện tại (theo email) tới addresseeId. */
   @Transactional
@@ -73,6 +76,7 @@ public class FriendshipService {
           friendship.setAddresseeId(addressee.getId());
           friendship.setStatus(FriendshipStatus.PENDING);
           Friendship saved = friendshipRepository.save(friendship);
+          publishFriendRequest(saved, requester.getId(), addressee.getId());
           return toResponse(saved, addressee);
         }
         default -> throw new AppException(ErrorCode.FRIEND_REQUEST_EXISTED);
@@ -87,6 +91,7 @@ public class FriendshipService {
             .build();
 
     Friendship saved = friendshipRepository.save(friendship);
+    publishFriendRequest(saved, requester.getId(), addressee.getId());
     return toResponse(saved, addressee);
   }
 
@@ -120,6 +125,17 @@ public class FriendshipService {
         userRepository
             .findById(saved.getRequesterId())
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    // Thông báo cho người GỬI lời mời rằng đã được chấp nhận (recipient = requester, actor = addressee).
+    eventPublisher.publishEvent(
+        NotificationEvent.builder()
+            .recipientId(saved.getRequesterId())
+            .actorId(addressee.getId())
+            .type("FRIEND_ACCEPTED")
+            .entityId(saved.getId())
+            .content("đã chấp nhận lời mời kết bạn của bạn")
+            .build());
+
     return toResponse(saved, requester);
   }
 
@@ -404,6 +420,18 @@ public class FriendshipService {
   }
 
   // ===== Helpers =====
+
+  /** Phát event thông báo lời mời kết bạn tới người nhận (addressee). */
+  private void publishFriendRequest(Friendship friendship, String requesterId, String addresseeId) {
+    eventPublisher.publishEvent(
+        NotificationEvent.builder()
+            .recipientId(addresseeId)
+            .actorId(requesterId)
+            .type("FRIEND_REQUEST")
+            .entityId(friendship.getId())
+            .content("đã gửi cho bạn một lời mời kết bạn")
+            .build());
+  }
 
   private User getUserByEmail(String email) {
     return userRepository
