@@ -93,6 +93,18 @@ public class ChatRedisSubscriber implements MessageListener {
             );
           });
         }
+      } else if ("CHAT_UNREAD".equals(event.getType())) {
+        // Tín hiệu thay đổi tổng unread → client tự gọi lại API lấy số chính xác.
+        Map<String, Object> payload = Map.of("conversationId", event.getPayloadJson());
+        for (String participantId : event.getParticipantIds()) {
+          userRepository.findById(participantId).ifPresent(user -> {
+            messagingTemplate.convertAndSendToUser(
+                user.getEmail(),
+                "/queue/chat-unread",
+                payload
+            );
+          });
+        }
       }
     } catch (Exception e) {
       log.error("Lỗi khi xử lý message từ Redis Pub/Sub", e);

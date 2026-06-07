@@ -78,12 +78,10 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
 
     // Đăng ký kênh NGAY: webSocketService ghi nhớ intent và tự kích hoạt khi (re)connect xong,
     // nên không còn race với thời điểm kết nối (fix bug phải F5).
-    console.log('[Notifications] subscribing /user/queue/notifications');
     const unsubscribe = webSocketService.subscribe<NotificationResponse>(
       '/user/queue/notifications',
       (raw) => {
         const notif = normalizeNotification(raw);
-        console.log('[Notifications] received realtime', notif);
         setNotifications((prev) => {
           if (prev.some((n) => n.id === notif.id)) return prev; // chống trùng
           return [notif, ...prev];

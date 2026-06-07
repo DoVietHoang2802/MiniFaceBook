@@ -239,7 +239,7 @@
 
 ---
 
-## � PHASE 5: NOTIFICATION SYSTEM 🚧 (~80% — còn chat unread badge, sound, email)
+## � PHASE 5: NOTIFICATION SYSTEM 🚧 (~90% — 5.1→5.4 xong, còn sound 5.3 + email 5.5 optional)
 *Mục tiêu: Thông báo realtime cho mọi tương tác trong hệ thống.*
 *Lý do tách riêng: Notification là cross-cutting concern, dùng chung cho nhiều module.*
 
@@ -272,12 +272,12 @@
     - [x] Frontend: Subscribe + hiển thị toast khi nhận + tăng badge realtime.
     - [x] 🆕 **Fix re-subscribe on reconnect:** `webSocketService` ghi nhớ intents và tự đăng ký lại mỗi lần (re)connect → không còn "chết kênh" phải F5 sau khi server restart (áp dụng cho cả chat).
     - [ ] **Sound notification** (optional): Phát âm thanh khi có thông báo mới.
-- [x] **Sprint 5.4: Notification Triggers Integration** *(4/5 — còn chat unread badge)*
+- [x] **Sprint 5.4: Notification Triggers Integration** ✅ *(5/5 HOÀN THÀNH)*
     - [x] Trigger notification khi có **Like** bài viết — `ReactionService` publish `NotificationEvent` (chỉ khi thả MỚI, không bắn khi gỡ).
     - [x] Trigger notification khi có **Comment** bài viết — `CommentService` publish `NotificationEvent`.
     - [x] Trigger notification khi có **Friend Request** — `FriendshipService.sendRequest` publish event.
     - [x] Trigger notification khi **Friend Request được chấp nhận** — `FriendshipService.acceptRequest` publish event.
-    - [ ] **Tin nhắn mới (Phase 4):** KHÔNG vào notification center. Thay vào đó → realtime **chấm đỏ/badge unread trên nút Chats** ở sidebar (giống Messenger). Wire `unreadCount` tổng + WebSocket signal ra App nav. *(Chưa làm)*
+    - [x] **Tin nhắn mới (Phase 4) → chấm đỏ badge nút Chats sidebar** (KHÔNG vào notification center). Backend: `MessageService` bắn tín hiệu `CHAT_UNREAD` tới người nhận, `markAllAsSeen` bắn tới chính mình; `GET /conversations/unread/total`. Frontend: hook `useChatUnread` (fetch tổng + subscribe `/user/queue/chat-unread` → refetch số chính xác), badge số đỏ trên nút Chats. **Hoàn tất logic 2 luồng riêng giống Messenger.**
 - [ ] **Sprint 5.5: Email Notifications (Optional)**
     - [ ] Tái sử dụng **Resend Service** từ Phase 1.
     - [ ] Gửi email khi có Friend Request (nếu user offline > 24h).
@@ -343,7 +343,7 @@
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
-| 5 | Notification System | 🚧 Đang làm | ~80% (5.1→5.3 xong, 5.4 còn chat-badge) |
+| 5 | Notification System | 🚧 Đang làm | ~90% (5.1→5.4 xong; còn sound/email optional) |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
@@ -415,6 +415,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.9 | Jun 2026 | **Chat Unread Badge realtime — KHEP TRON Sprint 5.4 (5/5) 🎉**: Tin nhan moi -> cham do/badge tren nut Chats o sidebar (giong Messenger), KHONG vao notification center -> hoan tat logic "2 luong rieng". Backend: `ChatEventPublisher.publishChatUnread` + subscriber day `/user/queue/chat-unread` (payload nhe, chi la tin hieu); `MessageService.sendMessage` ban toi nguoi nhan; `markAllAsSeen` ban toi chinh minh (dong bo moi tab); `GET /conversations/unread/total` cong don unread (Redis cache + fallback DB). Frontend: `chatService.getTotalUnread`, hook `useChatUnread` (fetch tong luc dang nhap + subscribe tin hieu -> refetch so chinh xac, khong cong/tru thu cong -> khong lech), badge so do tren nut Chats. Don log debug. Verify: mvn compile PASS, ArchUnit PASS, FE 0 loi, test 2 trinh duyet OK. Con lai Phase 5: sound (5.3 optional), email (5.5 optional). |
 | 3.8 | Jun 2026 | **Realtime Feed Counts (like/comment) HOÀN THÀNH & TEST OK 🎉**: Số like/comment của bài viết cập nhật realtime cho mọi người đang xem, không cần F5. Backend: `PostCountEvent` (payload nhẹ: postId + reactCount + commentCount + reactionsCount) + `PostRealtimeBroadcaster` đẩy tới topic công khai `/topic/post.<id>` qua `SimpMessagingTemplate`; `ReactionService` broadcast ở MỌI thay đổi (thêm/gỡ/đổi), `CommentService` broadcast khi có comment. Frontend: `PostCard` **subscribe-on-mount** đúng topic của bài, **unmount tự unsubscribe** (không giữ kết nối thừa — đúng nguyên tắc đã chốt); cập nhật con số TUYỆT ĐỐI từ server (không cộng dồn → không lệch với Optimistic UI). Tái dùng 100% hạ tầng WS sẵn có. **Lưu ý vận hành:** lỗi "tưởng không ăn" thực ra do backend cũ kẹt cổng 8080 (bản mới không start được) → phải tắt hẳn process cũ trước khi chạy. Verify: `mvn compile` PASS, ArchUnit PASS, FE 0 lỗi, test 2 trình duyệt OK. |
 | 3.7 | Jun 2026 | **Phase 5 Notification — Sprint 5.1→5.3 + triggers 5.4 HOÀN THÀNH & TEST OK 🎉**: Module `notification` chuẩn Clean Architecture 4 lớp (entity/port/Mongo adapter/MapStruct/service/listener/controller). Event-driven: `NotificationEvent` (shared) + `@Async @TransactionalEventListener(AFTER_COMMIT)` (chỉ tạo sau commit, luồng nền); self-guard `actor==recipient`; Redis cache `notif:unread:<userId>`. Realtime push `/user/queue/notifications` + toast + badge (chuông & sidebar). **4 trigger:** LIKE (chỉ khi thả mới), COMMENT, FRIEND_REQUEST, FRIEND_ACCEPTED. **Fix kèm:** (1) tách port `ChatEventPublisher` → ArchUnit pass 100% (gỡ nợ Phase 4); (2) `webSocketService` tự re-subscribe khi reconnect (hết lỗi phải F5 sau restart); (3) MapStruct bỏ sót `isRead` (Lombok boolean+`@Builder`) → ép `@Mapping` + `@JsonProperty("isRead")` → fix bug đánh dấu đã đọc không lưu; (4) comment count đồng bộ optimistic giữa CommentSection↔PostCard. Verify: `mvn clean compile` PASS, ArchUnit PASS, FE 0 lỗi, test 2 trình duyệt OK. Còn lại 5.4: chat unread badge realtime; 5.3 sound; 5.5 email. |
 | 3.6 | Jun 2026 | **Phân tích & tinh chỉnh Phase 5 (Notification) theo logic Facebook/Zalo (USER duyệt)**: Chốt **2 luồng riêng** — Chat unread → chấm đỏ trên nút Chats (KHÔNG vào notification center); Notification center (chuông) chỉ chứa LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED. Sprint 5.1 bổ sung: **Event-driven decoupling** (`ApplicationEvent` + `@EventListener @Async`) giữ Clean Architecture (module Post/Friendship không gọi trực tiếp NotificationService); thêm `actorId`/`entityId` vào entity; self-guard; Redis unread cache; tái dùng realtime infra Phase 4. Sprint 5.4: NEW_MESSAGE → chuyển thành chat unread badge realtime thay vì notification. |

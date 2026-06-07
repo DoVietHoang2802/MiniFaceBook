@@ -36,6 +36,12 @@ export const chatService = {
     return res.data;
   },
 
+  // Tổng tin nhắn chưa đọc trên mọi hội thoại (cho chấm đỏ nút Chats sidebar)
+  getTotalUnread: async () => {
+    const res = await axiosClient.get<ApiResponse<number>>('/conversations/unread/total');
+    return res.data.data;
+  },
+
   // Đánh dấu 1 tin nhắn cụ thể là đã nhận (Delivered)
   markAsDelivered: async (messageId: string) => {
     const res = await axiosClient.put<ApiResponse<void>>(`/messages/${messageId}/delivered`);

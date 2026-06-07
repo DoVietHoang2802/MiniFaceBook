@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 07/06/2026
-## 🏁 Trạng thái hiện tại: 🚧 PHASE 5 NOTIFICATION ~80% + ⚡ Realtime Feed Counts XONG. Tổng tiến độ **~75%**. Notification center realtime đầy đủ (event-driven `@Async @TransactionalEventListener AFTER_COMMIT`, self-guard, Redis unread cache, chuông + badge + dropdown, toast, 4 trigger LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED). **Mới:** realtime số like/comment trên feed (topic `/topic/post.<id>`, subscribe-on-mount). Đã test 2 trình duyệt OK. Còn lại Phase 5: chat unread badge realtime ra sidebar (5.4), sound (5.3), email (5.5).
+## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION ~90% (Sprint 5.1→5.4 XONG TRỌN VẸN) + ⚡ Realtime Feed Counts. Tổng tiến độ **~78%**. Notification center realtime (event-driven, self-guard, Redis cache, chuông + badge + dropdown + toast, 4 trigger LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED) + **chat unread badge realtime** (trigger thứ 5, chấm đỏ nút Chats sidebar - logic 2 luồng riêng giống Messenger) + realtime số like/comment trên feed. Đã test 2 trình duyệt OK. Còn lại Phase 5 (optional): sound 5.3, email 5.5.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
 
@@ -36,8 +36,10 @@
 - **Feed/comment KHÔNG realtime** (đúng thiết kế): user B phải F5 để thấy comment/like count mới. Dự kiến làm realtime feed (topic `/topic/post.<id>`, chỉ subscribe bài đang mở) ở phiên sau.
 
 ### Bước tiếp theo (đã chốt với USER):
-- ✅ **Realtime like/comment count cho feed** — ĐÃ XONG (topic `/topic/post.<postId>`, subscribe-on-mount, unsubscribe-on-unmount, broadcast con số tuyệt đối).
-- Còn lại Phase 5: **chat unread badge realtime** ra sidebar (5.4 cuối), sound (5.3), email (5.5).
+- ✅ **Realtime like/comment count cho feed** — ĐÃ XONG.
+- ✅ **Chat unread badge realtime** (trigger 5/5 của 5.4) — ĐÃ XONG (chấm đỏ nút Chats sidebar, logic 2 luồng riêng).
+- Còn lại Phase 5 (optional, làm khi cần): **sound notification** (5.3), **email notification** (5.5).
+- Gợi ý tiếp theo: Phase 6 (Optimization, Testing coverage, CI/CD, Deployment).
 
 ---
 

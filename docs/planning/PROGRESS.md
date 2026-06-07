@@ -446,3 +446,24 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 - Triệu chứng "code mới không ăn, y như cũ" thực chất do **backend cũ vẫn chạy chiếm cổng 8080** → bản mới `APPLICATION FAILED TO START (Port 8080 in use)` nên không bao giờ chạy broadcaster mới. **Luôn Ctrl+C tắt hẳn backend cũ trước khi chạy bản mới.**
 
 - **Kết quả:** `mvn compile` PASS, ArchUnit PASS, FE 0 lỗi. Test 2 trình duyệt: like/gỡ/comment → số + cụm emoji nhảy realtime 2 phía, không F5.
+
+
+---
+
+## 🔴 CHAT UNREAD BADGE REALTIME — KHÉP TRỌN SPRINT 5.4 ✅
+**Đánh giá tổng quan:** Hoàn tất mục cuối của Phase 5.4 — tin nhắn mới hiện **chấm đỏ/số trên nút Chats ở sidebar** (giống Messenger), KHÔNG vào notification center. Qua đó chốt trọn vẹn logic "2 luồng riêng" đã thống nhất với USER.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **2 luồng riêng (Facebook/Zalo):** chuông 🔔 = LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED; chấm đỏ nút Chats = tin nhắn chưa đọc. **VÌ SAO:** tránh trùng lặp, đúng thói quen người dùng — tin nhắn và thông báo xã hội là 2 ngữ cảnh khác nhau.
+- **Tín hiệu + refetch (không đẩy thẳng con số):** backend chỉ bắn tín hiệu `CHAT_UNREAD` (payload nhẹ), client gọi lại `GET /conversations/unread/total` để lấy số chính xác. **VÌ SAO:** đếm tuyệt đối từ DB/Redis → tránh lệch do cộng/trừ thủ công khi nhiều hội thoại, nhiều tab; đơn giản & chính xác hơn maintain bộ đếm tổng dễ drift.
+- **Bắn tín hiệu 2 phía:** `sendMessage` → tới người nhận (badge lên); `markAllAsSeen` → tới chính mình (badge xuống ở mọi tab). **VÌ SAO:** đồng bộ trạng thái đọc giữa ChatPage và sidebar App mà không cần wire chéo component.
+- **Tái dùng 100% hạ tầng:** dùng lại `ChatEventPublisher`/Redis Pub/Sub + cơ chế re-subscribe-on-reconnect; chỉ thêm 1 nhánh `CHAT_UNREAD` ở subscriber.
+
+### 🐞 Phân loại log nhiễu khi test (đáng ghi nhớ — KHÔNG phải bug app):
+| Log | Nguồn | Xử lý |
+| :--- | :--- | :--- |
+| `proxy.js Uncaught Error: disconnected port` | Extension React DevTools/Copilot của trình duyệt | Tắt extension hoặc bỏ qua |
+| `[Violation] unload is not allowed` | Cảnh báo policy của SockJS | Vô hại |
+| `401 /auth/me, /presence/heartbeat, /comments` | Access token hết hạn/phiên lapse lúc test lâu | App tự cleanup WS + re-auth, bình thường |
+
+- **Kết quả:** mvn compile PASS, ArchUnit PASS, FE 0 lỗi. Test 2 trình duyệt: B ở tab Feed nhận tin → badge nút Chats lên realtime; mở đọc → badge về 0. Đã dọn log debug cho console sạch.

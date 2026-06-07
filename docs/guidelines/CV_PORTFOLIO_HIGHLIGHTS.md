@@ -580,3 +580,18 @@
     *   Tích lũy bài học vận hành: chẩn đoán "code mới không chạy" hóa ra do tiến trình cũ kẹt cổng — luôn dừng hẳn server cũ trước khi chạy bản mới.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Implemented realtime feed interaction counts via a topic-per-post STOMP broadcast with a subscribe-on-mount / unsubscribe-on-unmount model to avoid idle connections, using absolute-value server updates to stay consistent with optimistic UI — reusing existing WebSocket infrastructure with zero new servers.*
+
+### 🔴 Highlight 37: Chat Unread Badge realtime với mô hình "Signal + Refetch" (2 luồng thông báo tách biệt)
+*   **Situation (Bối cảnh):** Theo chuẩn Facebook/Messenger, tin nhắn chưa đọc KHÔNG nên trộn vào notification center mà cần một badge riêng trên nút Chats. Đồng thời con số tổng unread phải chính xác xuyên nhiều hội thoại và nhiều tab, không được lệch.
+*   **Task (Nhiệm vụ):** Hiện thực chấm đỏ/số tin chưa đọc realtime trên sidebar, tách biệt khỏi chuông thông báo, đảm bảo số luôn đúng.
+*   **Action (Hành động):**
+    *   **Two-stream design:** chuông = like/comment/friend; badge Chats = tin nhắn. Hai ngữ cảnh tách biệt, tránh trùng lặp.
+    *   **Signal + Refetch:** backend chỉ phát tín hiệu nhẹ `CHAT_UNREAD` qua Redis Pub/Sub → STOMP `/user/queue/chat-unread`; client nhận tín hiệu rồi gọi `GET /conversations/unread/total` để lấy con số tuyệt đối (đếm từ Redis cache + fallback DB). Tránh maintain bộ đếm tổng dễ drift khi tăng/giảm thủ công.
+    *   **Bắn 2 phía:** gửi tin → tín hiệu tới người nhận (badge tăng); đánh dấu đã đọc → tín hiệu tới chính mình (badge giảm ở mọi tab) — đồng bộ ChatPage ↔ sidebar không cần wire chéo component.
+    *   **Reuse hạ tầng:** tái dùng port `ChatEventPublisher` + Pub/Sub + cơ chế re-subscribe-on-reconnect; chỉ thêm một nhánh xử lý mới.
+*   **Result (Kết quả):**
+    *   Badge tin chưa đọc nhảy realtime đúng chuẩn Messenger, tách bạch khỏi notification center; số luôn chính xác nhờ refetch tuyệt đối.
+    *   Khép trọn Sprint 5.4 (5/5 trigger) với chi phí code tối thiểu nhờ tái dùng hạ tầng.
+    *   Kỹ năng chẩn đoán log nhiễu: phân biệt lỗi extension trình duyệt (`proxy.js disconnected port`) và 401 do token hết hạn với lỗi thật của ứng dụng.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Delivered a Messenger-style realtime unread chat badge using a lightweight signal-then-refetch model over STOMP/Redis Pub/Sub, keeping totals authoritative (server-counted) to avoid drift across conversations and tabs, cleanly separated from the social notification center.*

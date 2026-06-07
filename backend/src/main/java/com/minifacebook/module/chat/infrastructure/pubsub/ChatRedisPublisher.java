@@ -112,4 +112,18 @@ public class ChatRedisPublisher implements ChatEventPublisher {
       log.error("Lỗi khi serialize MessageUpdateEvent", e);
     }
   }
+
+  /**
+   * Báo hiệu thay đổi tổng unread tới các user (chấm đỏ nút Chats sidebar). Payload nhẹ: chỉ kèm
+   * conversationId; client chỉ dùng làm tín hiệu để gọi lại API tổng unread.
+   */
+  @Override
+  public void publishChatUnread(String conversationId, List<String> userIds) {
+    ChatPubSubEvent event = ChatPubSubEvent.builder()
+        .type("CHAT_UNREAD")
+        .participantIds(userIds)
+        .payloadJson(conversationId)
+        .build();
+    publish(conversationId, event);
+  }
 }

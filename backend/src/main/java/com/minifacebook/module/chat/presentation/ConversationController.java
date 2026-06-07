@@ -50,6 +50,13 @@ public class ConversationController {
     return ApiResponse.success("Lấy danh sách chat thành công", response);
   }
 
+  @GetMapping("/unread/total")
+  @Operation(summary = "Tổng tin chưa đọc", description = "Tổng số tin nhắn chưa đọc trên mọi hội thoại - cho chấm đỏ nút Chats ở sidebar")
+  public ApiResponse<Long> getTotalUnread(@AuthenticationPrincipal Jwt jwt) {
+    long total = conversationService.getTotalUnread(jwt.getSubject());
+    return ApiResponse.success("Lấy tổng tin chưa đọc thành công", total);
+  }
+
   @PostMapping
   @Operation(summary = "Tạo hoặc lấy cuộc trò chuyện", description = "Tạo mới hoặc lấy cuộc trò chuyện 1-1 đã có với bạn bè")
   public ApiResponse<ConversationResponse> getOrCreateConversation(

@@ -29,6 +29,7 @@ import FriendsPage from './modules/friends/components/FriendsPage';
 import { friendService } from './modules/friends/services/friendService';
 import ChatPage from './modules/chat/components/ChatPage';
 import { useWebSocket } from './modules/chat/hooks/useWebSocket';
+import { useChatUnread } from './modules/chat/hooks/useChatUnread';
 import { useNotifications } from './modules/notification/hooks/useNotifications';
 import NotificationBell from './modules/notification/components/NotificationBell';
 import type { NotificationResponse } from './modules/notification/types/notification.types';
@@ -42,6 +43,9 @@ function App() {
 
   // Kích hoạt kết nối WebSocket & heartbeat cho presence
   useWebSocket(!!user);
+
+  // Tổng tin nhắn chưa đọc cho chấm đỏ nút Chats sidebar (Phase 5.4 - realtime).
+  const { totalUnread: chatUnread } = useChatUnread(!!user);
 
   // Trạng thái giao diện cao cấp
   const [showProfilePopover, setShowProfilePopover] = useState(false);
@@ -223,7 +227,7 @@ function App() {
                   { id: 'feed', label: 'Discover', icon: Compass, badge: null },
                   { id: 'friends', label: 'Network', icon: Users, badge: null },
                   { id: 'communities', label: 'Communities', icon: Globe, badge: null },
-                  { id: 'chats', label: 'Chats', icon: MessageCircle, badge: null },
+                  { id: 'chats', label: 'Chats', icon: MessageCircle, badge: chatUnread > 0 ? (chatUnread > 99 ? '99+' : String(chatUnread)) : null },
                   { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null },
                   { id: 'collections', label: 'Collections', icon: Bookmark, badge: null },
                   { id: 'profile', label: 'Profile', icon: User, badge: null },

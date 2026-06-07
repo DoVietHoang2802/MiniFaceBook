@@ -151,6 +151,9 @@ public class MessageService {
       String redisKey = "unread:" + conversationId + ":" + recipientId;
       redisTemplate.opsForValue().increment(redisKey);
       redisTemplate.expire(redisKey, 7, TimeUnit.DAYS);
+
+      // Báo hiệu tổng unread thay đổi → chấm đỏ nút Chats ở sidebar của người nhận (Phase 5.4).
+      chatRedisPublisher.publishChatUnread(conversationId, List.of(recipientId));
     }
 
     // Map sang DTO Response (Chỉ load đúng 2 participants để tránh N+1)

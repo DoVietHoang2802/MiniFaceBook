@@ -29,4 +29,10 @@ public interface ChatEventPublisher {
 
   void publishUpdate(
       String conversationId, List<String> participantIds, MessageUpdateEvent updateEvent);
+
+  /**
+   * Báo hiệu thay đổi tổng tin chưa đọc (cho chấm đỏ badge nút Chats ở sidebar). Chỉ là tín hiệu;
+   * client nhận sẽ gọi lại API tổng unread để lấy số chính xác.
+   */
+  void publishChatUnread(String conversationId, List<String> userIds);
 }

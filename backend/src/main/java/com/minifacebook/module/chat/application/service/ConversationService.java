@@ -195,6 +195,9 @@ public class ConversationService {
     String redisKey = "unread:" + conversationId + ":" + currentUserId;
     redisTemplate.delete(redisKey);
 
+    // Báo hiệu tổng unread của CHÍNH user giảm → cập nhật chấm đỏ nút Chats ở mọi tab (Phase 5.4).
+    chatRedisPublisher.publishChatUnread(conversationId, List.of(currentUserId));
+
     // Gửi sự kiện WebSocket (SEEN) tới người gửi
     String otherUserId = conv.getParticipantIds().stream()
         .filter(id -> !id.equals(currentUserId))
@@ -217,6 +220,33 @@ public class ConversationService {
           event
       );
     }
+  }
+
+  /**
+   * Tổng số tin nhắn chưa đọc trên TẤT CẢ cuộc hội thoại của user (cho chấm đỏ nút Chats sidebar).
+   * Quy mô demo: duyệt các hội thoại của user rồi cộng dồn unread (Redis cache, fallback DB).
+   */
+  public long getTotalUnread(String email) {
+    User currentUser = getUserByEmail(email);
+    String currentUserId = currentUser.getId();
+
+    Page<Conversation> conversations =
+        conversationRepository.findByParticipantId(
+            currentUserId, org.springframework.data.domain.PageRequest.of(0, 500));
+
+    long total = 0;
+    for (Conversation conv : conversations.getContent()) {
+      String redisKey = "unread:" + conv.getId() + ":" + currentUserId;
+      String cachedVal = redisTemplate.opsForValue().get(redisKey);
+      if (cachedVal != null) {
+        total += Long.parseLong(cachedVal);
+      } else {
+        int count = messageRepository.countUnreadMessages(conv.getId(), currentUserId);
+        redisTemplate.opsForValue().set(redisKey, String.valueOf(count), 1, TimeUnit.HOURS);
+        total += count;
+      }
+    }
+    return total;
   }
 
   private ConversationResponse mapToResponse(Conversation conversation, User currentUser, User recipient) {
