@@ -88,7 +88,8 @@ public class AuthService {
 
     if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
       log.warn("Login failed: Incorrect password for user {}", request.getEmail());
-      throw new AppException(ErrorCode.UNAUTHENTICATED);
+      // Dùng INVALID_CREDENTIALS, không dùng UNAUTHENTICATED, để tránh hiển thị thông báo sai cho user
+      throw new AppException(ErrorCode.INVALID_CREDENTIALS);
     }
 
     // Yêu cầu tài khoản phải được xác minh email trước khi đăng nhập

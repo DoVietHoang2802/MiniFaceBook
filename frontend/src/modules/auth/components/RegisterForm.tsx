@@ -21,7 +21,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
   // Trạng thái cho Password Strength Meter
   const [passwordStrength, setPasswordStrength] = useState(0); // 0 -> 4
   const [strengthLabel, setStrengthLabel] = useState('Yếu');
-  const [strengthColor, setStrengthColor] = useState('bg-red-500');
+  const [strengthColor, setStrengthColor] = useState('bg-slate-200');
 
   // Lắng nghe thay đổi mật khẩu để tính toán độ mạnh thời gian thực
   useEffect(() => {
@@ -29,7 +29,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
     if (!password) {
       setPasswordStrength(0);
       setStrengthLabel('Rỗng');
-      setStrengthColor('bg-slate-700');
+      setStrengthColor('bg-slate-200');
       return;
     }
 
@@ -69,12 +69,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
     setAuthError(null);
 
     // Validate dữ liệu đầu vào bằng Zod (Luật validate nghiêm ngặt)
-    const result = registerSchema.safeParse({
-      name,
-      email,
-      password,
-      confirmPassword,
-    });
+    const result = registerSchema.safeParse({ name, email, password, confirmPassword });
 
     if (!result.success) {
       const fieldErrors: { [key: string]: string } = {};
@@ -98,7 +93,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
       setConfirmPassword('');
       setAuthError(null);
       setErrors({});
-      onToggleForm(); // Quay lại trang đăng nhập
+      onToggleForm();
     } catch (err: any) {
       // Phân biệt Network Error vs API Error
       if (!err.response) {
@@ -112,110 +107,99 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
     }
   };
 
+  // Shared input class — đồng nhất toàn bộ input trong form (light theme)
+  const inputClass = "w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm sm:text-base";
+  const inputWithToggleClass = "w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm sm:text-base";
+  const labelClass = "text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500";
+  const iconClass = "absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none";
+
   return (
-    <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl border border-slate-800/80 bg-[hsl(var(--card))]/70 shadow-[0_0_50px_-12px_rgba(59,130,246,0.15)] backdrop-blur-xl animate-fade-in-up hover:border-slate-700/60 transition-all duration-300">
+    <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl border border-slate-200 bg-white shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)] animate-fade-in-up hover:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12)] transition-all duration-300">
       {/* Tiêu đề chính */}
       <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-3xl font-extrabold tracking-tight text-white mb-2 font-outfit">Tạo tài khoản mới</h2>
-        <p className="text-[hsl(var(--muted))] text-sm">Trở thành thành viên của gia đình MiniFaceBook</p>
+        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2 font-outfit">Tạo tài khoản mới</h2>
+        <p className="text-slate-500 text-sm">Trở thành thành viên của gia đình MiniFaceBook</p>
       </div>
 
       {authError && (
-        <div className="p-3.5 mb-5 rounded-lg text-sm bg-red-500/10 border border-red-500/20 text-red-400 flex items-center space-x-2 animate-shake">
+        <div className="p-3.5 mb-5 rounded-lg text-sm bg-red-50 border border-red-200 text-red-600 flex items-center space-x-2 animate-shake">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{authError}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4.5">
+      <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
         {/* Name Input */}
         <div className="space-y-1.5">
-          <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
-            Họ và tên
-          </label>
+          <label htmlFor="register-name" className={labelClass}>Họ và tên</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
-              <User className="h-5 w-5" />
-            </span>
+            <span className={iconClass}><User className="h-5 w-5" /></span>
             <input
+              id="register-name"
               type="text"
               placeholder="Nguyễn Văn A"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+              className={inputClass}
               disabled={isLoading}
             />
           </div>
-          {errors.name && <span className="text-red-400 text-xs font-medium block">{errors.name}</span>}
+          {errors.name && <span className="text-red-500 text-xs font-medium block">{errors.name}</span>}
         </div>
 
         {/* Email Input */}
         <div className="space-y-1.5">
-          <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
-            Địa chỉ Email
-          </label>
+          <label htmlFor="register-email" className={labelClass}>Địa chỉ Email</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
-              <Mail className="h-5 w-5" />
-            </span>
+            <span className={iconClass}><Mail className="h-5 w-5" /></span>
             <input
+              id="register-email"
               type="email"
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+              className={inputClass}
               disabled={isLoading}
             />
           </div>
-          {errors.email && <span className="text-red-400 text-xs font-medium block">{errors.email}</span>}
+          {errors.email && <span className="text-red-500 text-xs font-medium block">{errors.email}</span>}
         </div>
 
         {/* Mật khẩu Input */}
         <div className="space-y-1.5">
-          <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
-            Mật khẩu
-          </label>
+          <label htmlFor="register-password" className={labelClass}>Mật khẩu</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
-              <Lock className="h-5 w-5" />
-            </span>
+            <span className={iconClass}><Lock className="h-5 w-5" /></span>
             <input
+              id="register-password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+              className={inputWithToggleClass}
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-white"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 transition-colors"
               disabled={isLoading}
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-          {errors.password && <span className="text-red-400 text-xs font-medium block">{errors.password}</span>}
+          {errors.password && <span className="text-red-500 text-xs font-medium block">{errors.password}</span>}
 
           {/* Password Strength Meter (Thanh đo độ mạnh mật khẩu mượt mà) */}
           {password && (
-            <div className="space-y-1 mt-2.5 animate-fade-in">
+            <div className="space-y-1 mt-2 animate-fade-in">
               <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
-                <span className="text-[hsl(var(--muted))]">Độ mạnh mật khẩu:</span>
-                <span
-                  className={
-                    passwordStrength >= 4
-                      ? 'text-green-400'
-                      : passwordStrength >= 3
-                      ? 'text-yellow-400'
-                      : 'text-red-400'
-                  }
-                >
+                <span className="text-slate-400">Độ mạnh mật khẩu:</span>
+                <span className={passwordStrength >= 4 ? 'text-green-600' : passwordStrength >= 3 ? 'text-yellow-600' : 'text-red-500'}>
                   {strengthLabel}
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all duration-500 ease-out ${strengthColor}`}></div>
               </div>
             </div>
@@ -224,39 +208,36 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
 
         {/* Xác nhận mật khẩu Input */}
         <div className="space-y-1.5">
-          <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
-            Xác nhận Mật khẩu
-          </label>
+          <label htmlFor="register-confirm" className={labelClass}>Xác nhận Mật khẩu</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
-              <Lock className="h-5 w-5" />
-            </span>
+            <span className={iconClass}><Lock className="h-5 w-5" /></span>
             <input
+              id="register-confirm"
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+              className={inputWithToggleClass}
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-white"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 transition-colors"
               disabled={isLoading}
             >
               {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
           {errors.confirmPassword && (
-            <span className="text-red-400 text-xs font-medium block">{errors.confirmPassword}</span>
+            <span className="text-red-500 text-xs font-medium block">{errors.confirmPassword}</span>
           )}
         </div>
 
         {/* Nút bấm Đăng ký */}
         <button
           type="submit"
-          className="w-full py-2.5 sm:py-3 px-4 rounded-lg bg-[hsl(var(--primary))] text-white font-bold flex items-center justify-center space-x-2 hover-lift cursor-pointer text-sm sm:text-base mt-3"
+          className="w-full py-2.5 sm:py-3 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold flex items-center justify-center space-x-2 transition-all hover:shadow-lg hover:shadow-violet-500/25 active:scale-[0.98] cursor-pointer text-sm sm:text-base mt-3"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -274,11 +255,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
       </form>
 
       {/* Liên kết sang Form đăng nhập */}
-      <div className="mt-6 sm:mt-8 text-center text-sm text-[hsl(var(--muted))]">
+      <div className="mt-6 sm:mt-8 text-center text-sm text-slate-500">
         Đã có tài khoản?{' '}
         <button
           onClick={onToggleForm}
-          className="font-bold text-[hsl(var(--primary))] hover:underline cursor-pointer"
+          className="font-bold text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
           disabled={isLoading}
         >
           Đăng nhập ngay

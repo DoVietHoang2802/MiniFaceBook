@@ -644,3 +644,20 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Designed and implemented a highly secure, stateless "Forgot Password" authentication flow using Redis TTL cache (5-min OTP / 2-min verification token expiration), protecting against user enumeration and securing 100% session revocation upon password updates, backed by an auto-focusing 6-digit verification React component.*
 
+---
+
+### 💎 Highlight 41: Tái Cấu Trúc Giao Diện Xác Thực Sáng Slate Light, Chuẩn Hóa Accessibility A11y & Phân Tách Mã Lỗi Đăng Nhập
+*   **Situation (Bối cảnh):** Giao diện xác thực cũ có phong cách xám tối khó đọc, không tương thích với thiết kế Slate Light Notion đã thống nhất cho Feed. Đồng thời các form đăng nhập, đăng ký và quên mật khẩu dính cảnh báo về tiếp cận (Accessibility - A11y) do thiếu liên kết rõ ràng giữa nhãn (`<label>`) và ô nhập liệu (`<input>`), gây khó khăn cho trình đọc màn hình. Lỗi xác thực phía Backend còn gặp tình trạng dùng chung mã lỗi `UNAUTHENTICATED`, khiến người dùng nhập sai mật khẩu nhận được thông báo hết hạn phiên đăng nhập rất khó hiểu.
+*   **Task (Nhiệm vụ):** Tái thiết kế toàn bộ hệ thống form đăng ký/đăng nhập/quên mật khẩu sang phong cách sáng Slate Light tinh tế, chuẩn hóa 100% thuộc tính Accessibility cho các ô nhập liệu (bao gồm cả mảng 6 ô nhập OTP), tách biệt mã lỗi xác thực để người dùng nhận được thông báo lỗi mật khẩu chính xác mà không ảnh hưởng tới comments/notes của các lập trình viên cũ.
+*   **Action (Hành động):**
+    *   Đồng bộ màu sắc sang tone màu trắng tinh khôi kết hợp với viền màu xám dịu nhẹ (`border-slate-200`) và bóng mờ tinh tế giúp form sáng sủa, chuyên nghiệp.
+    *   Giải quyết dứt điểm các lỗi A11y bằng cách liên kết thuộc tính `htmlFor` của `<label>` với `id` tương ứng của từng `<input>` trên toàn bộ các form (`LoginForm`, `RegisterForm`, `ForgotPasswordForm`). Thêm `aria-label`, `title`, và `placeholder` rõ ràng cho các ô nhập số OTP.
+    *   Phân tách mã lỗi: Thêm mã `INVALID_CREDENTIALS` (1028) vào backend `ErrorCode.java` và chỉnh sửa `AuthService.java` để ném đúng mã này khi nhập sai mật khẩu, giúp frontend bắt lỗi và hiển thị thông báo "Email hoặc mật khẩu không chính xác" thay vì "Phiên đăng nhập hết hạn".
+*   **Result (Kết quả):**
+    *   Cải thiện **100%** cảnh báo A11y trên các form Auth.
+    *   Người dùng nhận phản hồi lỗi đăng nhập cực kỳ trực quan và chuẩn xác.
+    *   Đảm bảo tính nhất quán thẩm mỹ Premium cho toàn bộ ứng dụng từ trang ngoài vào trang trong.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Refactored authentication interfaces to a premium slate light design, resolving 100% of accessibility (A11y) warnings by properly mapping htmlFor/id associations and embedding aria-labels. Segregated authentication error codes on the Spring Boot backend (`INVALID_CREDENTIALS` 1028) to deliver precise validation messages without violating existing business logic rules.*
+
+

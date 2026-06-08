@@ -236,3 +236,21 @@ Khi USER nhờ "cải tiến / chỉnh / thêm" một thứ gì đó, AI **BẮT
 ---
 **Mọi hành động đẩy code là một dấu ấn lịch sử của dự án. Hãy làm nó chuyên nghiệp.**
 
+---
+
+## 💬 12. QUY CHUẨN GIAO TIẾP VỀ SỰ CỐ & CẢI TIẾN (COMMUNICATION STYLE) ⭐
+Mỗi khi USER đưa ra logs lỗi, vấn đề kỹ thuật hoặc yêu cầu cải tiến, AI **BẮT BUỘC** phải phản hồi theo cấu trúc 3 phần chặt chẽ dưới đây:
+
+### 1. 🔍 PHÂN TÍCH VẤN ĐỀ
+* Phân loại chi tiết các nhóm lỗi/cảnh báo bằng bảng biểu, bullet points, hoặc sơ đồ trình tự (Sequence Diagram) trực quan.
+* Chỉ rõ nguyên nhân gốc rễ (Root Cause) và cơ chế xảy ra lỗi.
+
+### 2. 🛠️ PHƯƠNG ÁN KHẮC PHỤC
+* Giải thích chi tiết các file cần sửa đổi và giải pháp kỹ thuật tương ứng.
+* Giữ nguyên 100% các dòng ghi chú/comment của lập trình viên cũ trong file nguồn.
+
+### 3. 💡 HÀNH ĐỘNG CẦN LÀM (HỎI Ý KIẾN BẠN TRƯỚC)
+* Liệt kê các lệnh (PowerShell, Git...) hoặc các thay đổi file sẽ thực hiện.
+* **Chờ phản hồi đồng ý từ USER** rồi mới dùng tool để chỉnh sửa hoặc chạy lệnh.
+
+

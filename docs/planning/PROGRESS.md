@@ -511,3 +511,28 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Thiết kế UI `ForgotPasswordForm.tsx` with mảng 6 ô vuông tự động focus, Resend Timer 60s, và hiển thị kiểm tra tiêu chuẩn mật khẩu an toàn.
   - [x] Tích hợp form Quên mật khẩu và chuyển đổi trạng thái `authMode` tại `App.tsx` & `LoginForm.tsx`.
 
+---
+
+## 🎨 TÁI CẤU TRÚC AUTHENTICATION & CHUẨN HÓA ACCESSIBILITY (A11Y) ✅
+**Đánh giá tổng quan:** Hoàn thành chuyển đổi giao diện Auth sang tone màu sáng Slate Light thanh lịch, giải quyết triệt để cảnh báo tiếp cận (A11y) trên toàn bộ form Auth, đồng thời phân tách mã lỗi Backend giúp hiển thị thông báo nhập sai mật khẩu chính xác.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Giao diện Slate Light đồng nhất:** Chuyển đổi LoginForm, RegisterForm, ForgotPasswordForm từ theme xám cũ sang tone trắng sang trọng (`bg-white` card, `border-slate-200`, `text-slate-800`), đồng nhất 100% với giao diện News Feed phong cách Notion.
+- **Giải quyết triệt để lỗi Accessibility (A11y):**
+  - Liên kết thuộc tính `htmlFor` của `<label>` và `id` của `<input>` cho tất cả các trường trên các form.
+  - Thêm `aria-label`, `title` động, và `placeholder="-"` cho cả 6 ô nhập OTP độc lập.
+  - **VÌ SAO:** Giúp các công cụ Screen Reader nhận dạng chính xác chức năng từng ô nhập liệu, vượt qua kiểm định nghiêm ngặt về tiêu chuẩn chất lượng UI/UX của dự án.
+- **Tách biệt mã lỗi đăng nhập (`INVALID_CREDENTIALS`):**
+  - Thêm mã lỗi `1028` (INVALID_CREDENTIALS) vào `ErrorCode.java`.
+  - Thay đổi logic so sánh mật khẩu trong `AuthService.java` để ném đúng mã này thay vì mã chung `UNAUTHENTICATED (1006)`.
+  - **VÌ SAO:** Phân biệt rõ ràng lỗi nhập sai mật khẩu với lỗi hết hạn phiên làm việc, ngăn chặn việc hiển thị sai thông báo "Phiên đăng nhập hết hạn" khi nhập sai mật khẩu trên giao diện.
+
+- **Kết quả:** `mvn compile` thành công, `npm run build` thành công không phát sinh lỗi kiểu dữ liệu.
+
+- **Nhật ký phiên làm việc (08/06/2026 - Sprint 5.6):**
+  - [x] Chuyển đổi theme form Auth sang màu sáng Slate Light (Login, Register, Forgot Password).
+  - [x] Liên kết label-input và bổ sung aria attributes cho các ô OTP để sửa lỗi A11y.
+  - [x] Tạo mã lỗi `INVALID_CREDENTIALS` (1028) trên Backend và tích hợp vào logic Auth.
+  - [x] Cập nhật Quy chuẩn giao tiếp 3 phần vào `AI_GUIDELINES.md` để lưu vết phong cách hỗ trợ tốt nhất cho lập trình viên.
+
+

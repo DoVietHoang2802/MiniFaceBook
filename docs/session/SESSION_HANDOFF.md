@@ -1,13 +1,27 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 08/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🔑 FORGOT PASSWORD OTP 6 SỐ & REDIS CACHE HOÀN THÀNH. Tổng tiến độ **~85%**. Toàn bộ backend và frontend cho luồng quên mật khẩu/đặt lại mật khẩu sử dụng mã OTP 6 chữ số lưu trong Redis và gửi qua Email đã chạy mượt mà, vượt qua kiểm tra biên dịch Java và build production Vite React.
+## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🔑 FORGOT PASSWORD OTP 6 SỐ & REDIS CACHE HOÀN THÀNH + 🎨 AUTHENTICATION UI REFACTOR & A11Y COMPLIANT. Tổng tiến độ **~87%**. Hệ thống Authentication Forms đã chuyển hẳn sang theme sáng Slate Light Notion, loại bỏ 100% cảnh báo tiếp cận A11y, phân tách thành công mã lỗi `INVALID_CREDENTIALS` (1028) trên Backend và lưu vết Quy chuẩn giao tiếp 3 phần vào `AI_GUIDELINES.md`.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System & Security Flows). Chi tiết xem `ROADMAP.md`.
 
 ---
 
-## 📋 TÓM TẮT PHIÊN LÀM VIỆC (07/06/2026)
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (08/06/2026 - SPRINT 5.6)
+
+### Công việc đã thực hiện:
+
+1. **Authentication Form UI Refactoring:** Chuyển đổi LoginForm, RegisterForm, ForgotPasswordForm từ phong cách xám đậm cũ sang theme sáng Slate Light đồng nhất với thiết kế của News Feed.
+2. **Accessibility (A11y) Compliance:** Liên kết label và input bằng `htmlFor`/`id` trên toàn bộ các trường, bổ sung đầy đủ `aria-label`, `title`, và `placeholder` cho mảng 6 ô nhập OTP.
+3. **Phân tách mã lỗi đăng nhập (Error Code Segregation):** Thêm mã lỗi `INVALID_CREDENTIALS` (1028) trong `ErrorCode.java` và throw đúng mã này trong `AuthService.java` khi đăng nhập sai mật khẩu, giúp hiển thị chuẩn xác thông báo lỗi thay vì "Phiên hết hạn".
+4. **Cơ chế ghi nhớ phong cách giao tiếp:** Ghi trực tiếp quy tắc phản hồi 3 phần (Phân tích, Phương án, Hành động) vào file `AI_GUIDELINES.md` để lưu dấu vĩnh viễn cho các phiên làm việc sau.
+
+### Files chính:
+- `backend/src/main/java/com/minifacebook/shared/exception/ErrorCode.java`
+- `backend/src/main/java/com/minifacebook/module/auth/application/service/AuthService.java`
+- `frontend/src/modules/auth/components/{LoginForm.tsx, RegisterForm.tsx, ForgotPasswordForm.tsx}`
+- `docs/guidelines/AI_GUIDELINES.md`
+
 
 ### Công việc đã thực hiện (Phase 5 Notification — Sprint 5.1→5.3 + triggers 5.4):
 

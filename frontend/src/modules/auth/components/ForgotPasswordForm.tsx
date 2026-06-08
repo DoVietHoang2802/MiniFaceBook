@@ -215,7 +215,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
   const hasNumber = /[0-9]/.test(newPassword);
 
   return (
-    <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl border border-slate-800/80 bg-[hsl(var(--card))]/70 shadow-[0_0_50px_-12px_rgba(59,130,246,0.15)] backdrop-blur-xl animate-fade-in-up hover:border-slate-700/60 transition-all duration-300">
+    <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl border border-slate-200 bg-white shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)] animate-fade-in-up hover:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12)] transition-all duration-300">
       
       {/* Nút quay lại */}
       {step !== 'PASSWORD' && (
@@ -229,7 +229,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
               onBackToLogin();
             }
           }}
-          className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-6 cursor-pointer"
+          className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors mb-6 cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Quay lại</span>
@@ -238,12 +238,12 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
 
       {/* Tiêu đề chính động */}
       <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-3xl font-extrabold tracking-tight text-white mb-2 font-outfit">
+        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2 font-outfit">
           {step === 'EMAIL' && 'Quên mật khẩu?'}
           {step === 'OTP' && 'Xác thực Email'}
           {step === 'PASSWORD' && 'Mật khẩu mới'}
         </h2>
-        <p className="text-[hsl(var(--muted))] text-sm">
+        <p className="text-slate-500 text-sm">
           {step === 'EMAIL' && 'Nhập email của bạn để nhận mã xác minh OTP 6 số'}
           {step === 'OTP' && `Chúng tôi đã gửi mã xác thực tới ${email}`}
           {step === 'PASSWORD' && 'Thiết lập mật khẩu cực kỳ bảo mật cho tài khoản của bạn'}
@@ -251,7 +251,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
       </div>
 
       {formError && (
-        <div className="p-3.5 mb-5 rounded-lg text-sm bg-red-500/10 border border-red-500/20 text-red-400 flex items-center space-x-2 animate-shake">
+        <div className="p-3.5 mb-5 rounded-lg text-sm bg-red-50 border border-red-200 text-red-600 flex items-center space-x-2 animate-shake">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{formError}</span>
         </div>
@@ -261,7 +261,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
       {step === 'EMAIL' && (
         <form onSubmit={handleRequestOtp} className="space-y-5">
           <div className="space-y-1.5">
-            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
+            <label htmlFor="forgot-email" className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">
               Địa chỉ Email tài khoản
             </label>
             <div className="relative">
@@ -269,11 +269,12 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
                 <Mail className="h-5 w-5" />
               </span>
               <input
+                id="forgot-email"
                 type="email"
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+                className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm sm:text-base"
                 disabled={isLoading}
               />
             </div>
@@ -304,7 +305,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
       {step === 'OTP' && (
         <form onSubmit={handleVerifyOtp} className="space-y-6">
           <div className="space-y-3">
-            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))] text-center block">
+            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 text-center block">
               Mã bảo mật gồm 6 số
             </label>
             
@@ -321,7 +322,10 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(index, e)}
                   onPaste={handleOtpPaste}
-                  className="w-11 h-12 text-center text-xl font-bold bg-slate-950/60 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all select-all"
+                  aria-label={`Ký tự OTP thứ ${index + 1}`}
+                  title={`Ký tự OTP thứ ${index + 1}`}
+                  placeholder="-"
+                  className="w-11 h-12 text-center text-xl font-bold bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all select-all shadow-sm"
                   disabled={isLoading}
                 />
               ))}
@@ -351,7 +355,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
             <div className="text-center text-xs">
               {resendTimer > 0 ? (
                 <span className="text-slate-500">
-                  Gửi lại mã mới sau <strong className="text-slate-300 font-bold">{resendTimer}s</strong>
+                  Gửi lại mã mới sau <strong className="text-slate-700 font-bold">{resendTimer}s</strong>
                 </span>
               ) : (
                 <button
@@ -374,7 +378,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
           
           {/* Mật khẩu mới */}
           <div className="space-y-1.5">
-            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
+            <label htmlFor="forgot-new-password" className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">
               Mật khẩu mới
             </label>
             <div className="relative">
@@ -382,17 +386,18 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
                 <Lock className="h-5 w-5" />
               </span>
               <input
+                id="forgot-new-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+                className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm sm:text-base"
                 disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-white"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 transition-colors"
                 disabled={isLoading}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -403,7 +408,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
 
           {/* Xác nhận mật khẩu mới */}
           <div className="space-y-1.5">
-            <label className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted))]">
+            <label htmlFor="forgot-confirm-password" className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">
               Xác nhận mật khẩu mới
             </label>
             <div className="relative">
@@ -411,11 +416,12 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
                 <ShieldCheck className="h-5 w-5" />
               </span>
               <input
+                id="forgot-confirm-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-800/80 bg-slate-950/50 text-white placeholder-slate-600 glass-focus-glow text-sm sm:text-base"
+                className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm sm:text-base"
                 disabled={isLoading}
               />
             </div>
@@ -423,24 +429,24 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
           </div>
 
           {/* Gợi ý tiêu chuẩn mật khẩu */}
-          <div className="p-3 bg-slate-950/40 border border-slate-800/50 rounded-lg text-xs space-y-2 text-slate-400">
-            <h4 className="font-semibold text-slate-300">Tiêu chuẩn mật khẩu an toàn:</h4>
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2 text-slate-500">
+            <h4 className="font-semibold text-slate-700">Tiêu chuẩn mật khẩu an toàn:</h4>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex items-center space-x-1.5">
-                <CheckCircle className={`h-4 w-4 shrink-0 ${hasMinLength ? 'text-emerald-500' : 'text-slate-600'}`} />
-                <span className={hasMinLength ? 'text-slate-300' : ''}>Tối thiểu 8 ký tự</span>
+                <CheckCircle className={`h-4 w-4 shrink-0 ${hasMinLength ? 'text-emerald-500' : 'text-slate-300'}`} />
+                <span className={hasMinLength ? 'text-slate-700 font-medium' : ''}>Tối thiểu 8 ký tự</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle className={`h-4 w-4 shrink-0 ${hasLowercase ? 'text-emerald-500' : 'text-slate-600'}`} />
-                <span className={hasLowercase ? 'text-slate-300' : ''}>Chữ thường (a-z)</span>
+                <CheckCircle className={`h-4 w-4 shrink-0 ${hasLowercase ? 'text-emerald-500' : 'text-slate-300'}`} />
+                <span className={hasLowercase ? 'text-slate-700 font-medium' : ''}>Chữ thường (a-z)</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle className={`h-4 w-4 shrink-0 ${hasUppercase ? 'text-emerald-500' : 'text-slate-600'}`} />
-                <span className={hasUppercase ? 'text-slate-300' : ''}>Chữ in hoa (A-Z)</span>
+                <CheckCircle className={`h-4 w-4 shrink-0 ${hasUppercase ? 'text-emerald-500' : 'text-slate-300'}`} />
+                <span className={hasUppercase ? 'text-slate-700 font-medium' : ''}>Chữ in hoa (A-Z)</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle className={`h-4 w-4 shrink-0 ${hasNumber ? 'text-emerald-500' : 'text-slate-600'}`} />
-                <span className={hasNumber ? 'text-slate-300' : ''}>Chữ số (0-9)</span>
+                <CheckCircle className={`h-4 w-4 shrink-0 ${hasNumber ? 'text-emerald-500' : 'text-slate-300'}`} />
+                <span className={hasNumber ? 'text-slate-700 font-medium' : ''}>Chữ số (0-9)</span>
               </div>
             </div>
           </div>
