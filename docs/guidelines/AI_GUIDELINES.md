@@ -108,7 +108,9 @@ Khi USER hỏi về tiến độ dự án, tech stack hoặc thành tựu, AI **
 
 ## 🔄 7. QUY TRÌNH VẬN HÀNH AI (MANDATORY WORKFLOW)
 1. **Sync Context:** Đọc `SESSION_HANDOFF.md` trước khi làm bất cứ việc gì.
-2. **Execute:** Code -> Checkstyle -> ArchUnit Test.
+2. **Execute:**
+   * **Code:** Phát triển tính năng mới nhưng **bắt buộc tránh làm hỏng các logic cũ và cấu hình hiện tại** của dự án.
+   * **Validate:** Checkstyle -> ArchUnit Test.
 3. **Analyze:** Nếu gặp lỗi bất thường (Build fail, Dependency conflict), phải báo cáo USER kèm theo ít nhất 02 phương án giải quyết.
 4. **Document:** Cập nhật `PROGRESS.md`, `ROADMAP.md` và viết lại `SESSION_HANDOFF.md`.
 5. **Skill Update:** Nếu phát hiện một quy trình tốt hơn, phải đề xuất cập nhật vào bộ Skill nội bộ của dự án.
@@ -222,6 +224,14 @@ Khi USER nhờ "cải tiến / chỉnh / thêm" một thứ gì đó, AI **BẮT
   6. `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md` (Thành tựu STAR)
   7. `docs/guidelines/UI_UX_DESIGN.md` (Quy chuẩn giao diện)
 - Sau khi rà soát và cập nhật xong, AI bắt buộc phải tự động gom nhóm bằng `git add docs/`, tiến hành `git commit` và đẩy code lên kho lưu trữ.
+
+### 9.8. Quy trình Kiểm thử và Nghiệm thu trước khi đẩy Git (User Testing & Git Push Protocol) ⭐
+- **Nguyên tắc cốt lõi:** AI tuyệt đối **KHÔNG** được tự ý thực hiện các lệnh commit (`git commit`) hoặc đẩy code lên remote repository (`git push`) ngay sau khi tự chạy test thành công nếu chưa có sự nghiệm thu trực tiếp và phê duyệt từ USER.
+- **Quy trình phối hợp nghiệm thu:**
+  1. **Tự kiểm thử nội bộ:** AI tự viết code và chạy test (unit tests, integration tests, hoặc browser agent) để đảm bảo tính ổn định kỹ thuật cơ bản.
+  2. **Bàn giao kiểm thử:** AI dừng lại, cung cấp hướng dẫn kiểm thử chi tiết và các địa chỉ truy cập giao diện (URL) để USER trực tiếp kiểm thử trên môi trường của họ.
+  3. **Nghiệm thu thực tế:** USER trực tiếp thao tác, kiểm tra giao diện và tính năng trên máy.
+  4. **Quyết định đẩy Git:** Chỉ khi USER đã kiểm thử thành công, xác nhận hài lòng và ra lệnh đồng ý (ví dụ: *"Ok đã test xong, đẩy lên git đi"*, *"Ok, đẩy lên"*), AI mới được phép tiến hành `git add`, `git commit` và `git push`.
 
 ---
 **Mọi hành động đẩy code là một dấu ấn lịch sử của dự án. Hãy làm nó chuyên nghiệp.**
