@@ -60,4 +60,40 @@ public class ResendEmailAdapter implements EmailService {
       log.error("Failed to send verification email to {} via Resend REST API", toEmail, e);
     }
   }
+
+  @Override
+  public void sendResetOtpEmail(String toEmail, String otp) {
+    String url = "https://api.resend.com/emails";
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + apiKey);
+
+    log.info("=========================================================================");
+    log.info("[DEVELOPMENT ONLY] Reset Password OTP for {}:", toEmail);
+    log.info("👉 Code: {}", otp);
+    log.info("=========================================================================");
+
+    String htmlContent = "<h3>Reset Password Verification</h3>"
+        + "<p>You requested to reset your password. Please use the verification code below to proceed:</p>"
+        + "<h2 style=\"background-color: #f2f2f2; padding: 10px; display: inline-block; letter-spacing: 5px; color: #2563EB;\">" + otp + "</h2>"
+        + "<p>This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>";
+
+    Map<String, Object> body = Map.of(
+        "from", "MiniFaceBook <security@resend.dev>",
+        "to", new String[]{toEmail},
+        "subject", "Reset your password - MiniFaceBook",
+        "html", htmlContent
+    );
+
+    HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+    try {
+      ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+      log.info("Reset OTP email sent to {} successfully. Response status: {}", toEmail, response.getStatusCode());
+    } catch (Exception e) {
+      log.error("Failed to send reset OTP email to {} via Resend REST API", toEmail, e);
+    }
+  }
 }
+

@@ -62,7 +62,16 @@ public enum ErrorCode {
 
   // ===== NOTIFICATION (Phase 5.1) =====
   NOTIFICATION_NOT_FOUND(4001, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
+
+  // ===== FORGOT PASSWORD (Phase 5.3 OTP) =====
+  INVALID_OTP(1022, "Mã xác thực OTP không chính xác hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+  INVALID_RESET_TOKEN(1023, "Mã xác thực đổi mật khẩu không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
+  PASSWORD_TOO_SHORT(1024, "Mật khẩu mới phải có ít nhất 6 ký tự", HttpStatus.BAD_REQUEST),
+  RESET_TOKEN_REQUIRED(1025, "Thiếu mã xác thực đổi mật khẩu", HttpStatus.BAD_REQUEST),
+  OTP_REQUIRED(1026, "Vui lòng nhập mã OTP", HttpStatus.BAD_REQUEST),
+  OTP_INVALID_SIZE(1027, "Mã OTP phải có đúng 6 chữ số", HttpStatus.BAD_REQUEST),
   ;
+
 
   ErrorCode(int code, String message, HttpStatusCode statusCode) {
     this.code = code;

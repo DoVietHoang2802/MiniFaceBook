@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import LoginForm from './modules/auth/components/LoginForm';
 import RegisterForm from './modules/auth/components/RegisterForm';
+import ForgotPasswordForm from './modules/auth/components/ForgotPasswordForm';
 import ProfilePage from './modules/profile/components/ProfilePage';
 import { NetworkStatusBanner } from './components/NetworkStatusBanner';
 import { 
@@ -35,7 +36,7 @@ import NotificationBell from './modules/notification/components/NotificationBell
 import type { NotificationResponse } from './modules/notification/types/notification.types';
 
 function App() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot_password'>('login');
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState<'feed' | 'profile' | 'friends' | 'chats'>('feed');
@@ -635,10 +636,17 @@ function App() {
 
               {/* Cột phải: Form Đăng nhập / Đăng ký */}
               <div className="lg:col-span-5 flex justify-center w-full">
-                {isLogin ? (
-                  <LoginForm key="login" onToggleForm={() => setIsLogin(false)} onLoginSuccess={(u) => setUser(u)} />
+                {authMode === 'login' ? (
+                  <LoginForm 
+                    key="login" 
+                    onToggleForm={() => setAuthMode('register')} 
+                    onForgotPassword={() => setAuthMode('forgot_password')} 
+                    onLoginSuccess={(u) => setUser(u)} 
+                  />
+                ) : authMode === 'register' ? (
+                  <RegisterForm key="register" onToggleForm={() => setAuthMode('login')} />
                 ) : (
-                  <RegisterForm key="register" onToggleForm={() => setIsLogin(true)} />
+                  <ForgotPasswordForm key="forgot" onBackToLogin={() => setAuthMode('login')} triggerToast={triggerToast} />
                 )}
               </div>
 

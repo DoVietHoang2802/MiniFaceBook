@@ -1,10 +1,9 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 08/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🛡️ TYPESCRIPT HARDENING. Tổng tiến độ **~82%**. Hệ thống âm thanh thông báo Facebook & tin nhắn Messenger đã tích hợp hoàn hảo toàn cục, xử lý autoplay browser an toàn. TypeScript Strict Mode đã được kích hoạt và đồng bộ hóa thành công.
+## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🔑 FORGOT PASSWORD OTP 6 SỐ & REDIS CACHE HOÀN THÀNH. Tổng tiến độ **~85%**. Toàn bộ backend và frontend cho luồng quên mật khẩu/đặt lại mật khẩu sử dụng mã OTP 6 chữ số lưu trong Redis và gửi qua Email đã chạy mượt mà, vượt qua kiểm tra biên dịch Java và build production Vite React.
 
-
-> ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System & Security Flows). Chi tiết xem `ROADMAP.md`.
 
 ---
 

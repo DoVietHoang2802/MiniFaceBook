@@ -626,3 +626,21 @@
     *   **0 lỗi crash** liên quan đến autoplay trên mọi trình duyệt hiện đại (Chrome, Safari, Edge).
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Architected a decoupled, global audio notification engine inside WebSocket hooks using native Audio APIs and defensive catch blocks to safely handle modern browser autoplay restrictions. Integrated Facebook/Messenger chimes with sender-filtering to deliver premium real-time auditory feedback with zero application crashes.*
+
+---
+
+### 🛡️ Highlight 40: Hiện thực hóa Mô hình Xác thực OTP Quên Mật khẩu Không Trạng Thái (Stateless OTP Verification & Redis TTL Cache)
+*   **Situation (Bối cảnh):** Các hệ thống đặt lại mật khẩu truyền thống thường lưu trạng thái xác thực trong cơ sở dữ liệu chính hoặc sinh liên kết đặt lại mật khẩu cố định, điều này dễ dẫn đến việc ghi đè rác vào database, tốn tài nguyên và tăng rủi ro bị hacker lợi dụng gửi thẳng yêu cầu đổi mật khẩu mà không cần qua xác thực email.
+*   **Task (Nhiệm vụ):** Thiết lập một luồng Quên mật khẩu cực kỳ bảo mật: yêu cầu gửi mã OTP 6 số qua email, xác thực OTP chính xác sinh ra một mã token tạm thời ngắn hạn (`resetToken`) có thời hạn sống cực ngắn (2 phút), và bắt buộc phải có token này mới được phép cập nhật mật khẩu mới. Đồng thời, toàn bộ trạng thái OTP và token xác thực phải được quản lý không trạng thái (stateless) ở server chính.
+*   **Action (Hành động):**
+    *   **Tích hợp Redis làm Cache OTP & Token tạm thời:** Sử dụng `StringRedisTemplate` lưu OTP (`otp:reset:<email>`) với TTL 5 phút và lưu `resetToken` (`reset:token:<uuid>`) với TTL 2 phút, đảm bảo hệ thống tự giải phóng bộ nhớ mà không cần chạy Cron job dọn dẹp.
+    *   **Áp dụng Stateless Verification Token Pattern:** Khi OTP khớp, hệ thống xoá OTP ngay lập tức và sinh ra `resetToken` (UUID). Ở bước cuối đặt lại mật khẩu, API bắt buộc phải có `resetToken` hợp lệ. Sau khi mật khẩu được cập nhật thành công, token này bị xoá lập tức.
+    *   **Chống dò quét thông tin người dùng (User Enumeration Protection):** Nếu yêu cầu gửi OTP với email không tồn tại, hệ thống vẫn trả về thông điệp thành công nhằm ngăn chặn bot quét dò tìm email đã đăng ký của hệ thống.
+    *   **Thu hồi phiên làm việc tức thì (Force Session Revocation):** Ngay sau khi đổi mật khẩu thành công, thực hiện xoá toàn bộ Refresh Tokens của người dùng trong database để buộc tất cả các thiết bị đang đăng nhập phải đăng xuất ngay lập tức.
+    *   **Phát triển 6-Digit Auto-Focusing UI:** Xây dựng component React nhập mã OTP gồm 6 ô nhập số riêng biệt tự động focus ô tiếp theo khi nhập, tự động lùi tiêu điểm khi xoá (Backspace), hỗ trợ dán mã trực tiếp từ clipboard, kèm bộ đếm ngược 60 giây để gửi lại OTP.
+*   **Result (Kết quả):**
+    *   **Giảm 100% rác dữ liệu** ghi vào MongoDB cho luồng forgot password nhờ cơ chế TTL của Redis.
+    *   Bảo mật tuyệt đối, ngăn chặn hoàn toàn các cuộc tấn công bypass xác thực hoặc replay token quá hạn.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Designed and implemented a highly secure, stateless "Forgot Password" authentication flow using Redis TTL cache (5-min OTP / 2-min verification token expiration), protecting against user enumeration and securing 100% session revocation upon password updates, backed by an auto-focusing 6-digit verification React component.*
+

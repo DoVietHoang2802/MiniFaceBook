@@ -3,6 +3,9 @@ package com.minifacebook.module.auth.application.service;
 import com.minifacebook.module.auth.application.dto.LoginRequest;
 import com.minifacebook.module.auth.application.dto.LoginResult;
 import com.minifacebook.module.auth.application.dto.RegisterRequest;
+import com.minifacebook.module.auth.application.dto.ForgotPasswordRequest;
+import com.minifacebook.module.auth.application.dto.VerifyOtpRequest;
+import com.minifacebook.module.auth.application.dto.ResetPasswordRequest;
 import com.minifacebook.module.auth.application.dto.UpdateProfileRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
 import com.minifacebook.module.auth.application.mapper.AuthMapper;
@@ -20,8 +23,11 @@ import com.minifacebook.shared.security.TokenBlacklistPort;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.security.SecureRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +38,10 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class AuthService {
 
+  private static final String OTP_KEY_PREFIX = "otp:reset:";
+  private static final String RESET_TOKEN_KEY_PREFIX = "reset:token:";
+  private final SecureRandom secureRandom = new SecureRandom();
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final TokenService tokenService;
@@ -40,6 +50,8 @@ public class AuthService {
   private final RefreshTokenRepository refreshTokenRepository;
   private final MediaService mediaService;
   private final TokenBlacklistPort tokenBlacklistService;
+  private final StringRedisTemplate redisTemplate;
+
 
   /** Đăng ký người dùng mới và gửi email kích hoạt qua Resend. */
   public UserResponse register(RegisterRequest request) {
@@ -221,5 +233,80 @@ public class AuthService {
     log.info("Avatar uploaded and updated successfully for user: {}", email);
     return authMapper.toUserResponse(savedUser);
   }
+
+  /** Yêu cầu đặt lại mật khẩu: Sinh mã OTP 6 số, lưu vào Redis và gửi qua email. */
+  public void forgotPassword(ForgotPasswordRequest request) {
+    String email = request.getEmail();
+    if (!userRepository.existsByEmail(email)) {
+      // Trả về âm thầm để chống dò quét email
+      log.info("Password reset requested for non-existing email: {}", email);
+      return;
+    }
+
+    // Sinh mã OTP 6 số
+    int otpNum = 100000 + secureRandom.nextInt(900000);
+    String otp = String.valueOf(otpNum);
+
+    // Lưu OTP vào Redis với TTL 5 phút
+    String redisKey = OTP_KEY_PREFIX + email;
+    redisTemplate.opsForValue().set(redisKey, otp, 5, TimeUnit.MINUTES);
+    log.info("Generated OTP {} for email {} and saved to Redis", otp, email);
+
+    // Gửi email OTP
+    emailService.sendResetOtpEmail(email, otp);
+  }
+
+  /** Xác thực OTP 6 số từ email, sinh resetToken lưu vào Redis và trả về cho Client. */
+  public String verifyForgotPasswordOtp(VerifyOtpRequest request) {
+    String email = request.getEmail();
+    String otp = request.getOtp();
+
+    String redisKey = OTP_KEY_PREFIX + email;
+    String cachedOtp = redisTemplate.opsForValue().get(redisKey);
+
+    if (cachedOtp == null || !cachedOtp.equals(otp)) {
+      log.warn("Invalid or expired OTP entered for email: {}", email);
+      throw new AppException(ErrorCode.INVALID_OTP);
+    }
+
+    // OTP chính xác, xóa OTP ngay lập tức
+    redisTemplate.delete(redisKey);
+
+    // Sinh resetToken tạm thời có thời hạn 2 phút
+    String resetToken = UUID.randomUUID().toString();
+    String tokenKey = RESET_TOKEN_KEY_PREFIX + resetToken;
+    redisTemplate.opsForValue().set(tokenKey, email, 2, TimeUnit.MINUTES);
+
+    log.info("OTP verified successfully for email {}. Temporary resetToken generated: {}", email, resetToken);
+    return resetToken;
+  }
+
+  /** Đặt lại mật khẩu mới sử dụng resetToken hợp lệ trong Redis. */
+  public void resetPassword(ResetPasswordRequest request) {
+    String resetToken = request.getResetToken();
+    String tokenKey = RESET_TOKEN_KEY_PREFIX + resetToken;
+    String email = redisTemplate.opsForValue().get(tokenKey);
+
+    if (email == null) {
+      log.warn("Invalid or expired resetToken submitted: {}", resetToken);
+      throw new AppException(ErrorCode.INVALID_RESET_TOKEN);
+    }
+
+    // Token hợp lệ, xóa token ngay để tránh dùng lại
+    redisTemplate.delete(tokenKey);
+
+    // Tìm người dùng và cập nhật mật khẩu
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+    userRepository.save(user);
+
+    // Thu hồi toàn bộ Refresh Token của user (Đăng xuất khỏi mọi thiết bị khác)
+    refreshTokenRepository.deleteByEmail(email);
+
+    log.info("Password reset and sessions revoked successfully for user: {}", email);
+  }
 }
+
 

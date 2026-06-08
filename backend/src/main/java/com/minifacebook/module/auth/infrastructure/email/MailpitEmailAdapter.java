@@ -49,4 +49,33 @@ public class MailpitEmailAdapter implements EmailService {
       log.error("Failed to send verification email to {} via Mailpit SMTP: {}", toEmail, e.getMessage(), e);
     }
   }
+
+  @Override
+  public void sendResetOtpEmail(String toEmail, String otp) {
+    log.info("=========================================================================");
+    log.info("[MAILPIT] Reset Password OTP for {}:", toEmail);
+    log.info("👉 Code: {}", otp);
+    log.info("=========================================================================");
+
+    try {
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+      String htmlContent = "<h3>Reset Password Verification</h3>"
+          + "<p>You requested to reset your password. Please use the verification code below to proceed:</p>"
+          + "<h2 style=\"background-color: #f2f2f2; padding: 10px; display: inline-block; letter-spacing: 5px; color: #2563EB;\">" + otp + "</h2>"
+          + "<p>This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>";
+
+      helper.setText(htmlContent, true);
+      helper.setTo(toEmail);
+      helper.setSubject("Reset your password - MiniFaceBook");
+      helper.setFrom("security@minifacebook.com");
+
+      mailSender.send(mimeMessage);
+      log.info("Reset OTP email sent to {} via Mailpit SMTP successfully.", toEmail);
+    } catch (Exception e) {
+      log.error("Failed to send reset OTP email to {} via Mailpit: {}", toEmail, e.getMessage(), e);
+    }
+  }
 }
+

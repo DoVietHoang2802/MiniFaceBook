@@ -214,3 +214,14 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
     *   Các trình duyệt hiện đại (Chrome, Safari) cấm phát âm thanh tự động nếu người dùng chưa tương tác với trang.
     *   Bắt buộc bao bọc lệnh phát âm thanh `.play()` trong khối `try-catch` và chuỗi `.catch(error => ...)` để bỏ qua các lỗi này một cách âm thầm, ngăn chặn hoàn toàn việc crash ứng dụng do chính sách bảo mật trình duyệt.
 
+### 6.6. 6-Digit OTP Verification UX (Quy chuẩn ô nhập mã xác thực OTP 6 số)
+*   **Nguyên tắc Giao diện:** Giao diện xác thực mã OTP phải gồm 6 ô vuông nhập số riêng biệt được căn giữa (`justify-center`).
+*   **Quản lý Con trỏ (Focus Flow):**
+    *   **Auto-Focus:** Tự động tập trung con trỏ vào ô nhập số đầu tiên khi màn hình xác thực được hiển thị.
+    *   **Auto-Advance:** Khi gõ một chữ số hợp lệ, con trỏ phải tự động nhảy sang ô kế tiếp bên phải.
+    *   **Auto-Retreat:** Khi bấm phím xoá `Backspace`, nếu ô hiện tại đang trống, con trỏ phải tự động lùi về ô trước đó bên trái và xoá ký tự.
+    *   **Paste Support:** Cho phép người dùng dán (Paste) trực tiếp mã 6 số từ Clipboard. Trình duyệt tự phân tách 6 chữ số và điền đầy vào 6 ô tương ứng.
+*   **Bảo mật:** Chỉ chấp nhận nhập chữ số (`0-9`), chặn các ký tự chữ cái hoặc ký tự đặc biệt ngay khi gõ.
+*   **Timer & Resend:** Hiển thị bộ đếm ngược 60 giây và chỉ cho phép click gửi lại mã OTP sau khi bộ đếm đã về 0.
+
+

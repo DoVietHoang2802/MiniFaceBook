@@ -6,9 +6,10 @@ import { authService } from '../services/authService';
 interface LoginFormProps {
   onToggleForm: () => void;
   onLoginSuccess: (user: any) => void;
+  onForgotPassword: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess, onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -104,12 +105,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess }) =
               className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--primary))] hover:underline"
               onClick={(e) => {
                 e.preventDefault();
-                alert('Tính năng quên mật khẩu sẽ ra mắt ở các Sprint sau!');
+                onForgotPassword();
               }}
             >
               Quên mật khẩu?
             </a>
           </div>
+
           <div className="relative">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
               <Lock className="h-5 w-5" />

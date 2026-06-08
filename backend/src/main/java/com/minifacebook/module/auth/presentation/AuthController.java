@@ -4,6 +4,9 @@ import com.minifacebook.module.auth.application.dto.LoginRequest;
 import com.minifacebook.module.auth.application.dto.LoginResult;
 import com.minifacebook.module.auth.application.dto.RegisterRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
+import com.minifacebook.module.auth.application.dto.ForgotPasswordRequest;
+import com.minifacebook.module.auth.application.dto.VerifyOtpRequest;
+import com.minifacebook.module.auth.application.dto.ResetPasswordRequest;
 import com.minifacebook.module.auth.application.service.AuthService;
 import com.minifacebook.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -162,6 +165,64 @@ public class AuthController {
 
     return ResponseEntity.ok(apiResponse);
   }
+
+  /** Yêu cầu đặt lại mật khẩu bằng cách gửi mã OTP qua email. */
+  @PostMapping("/forgot-password")
+  @Operation(
+      summary = "Yêu cầu đặt lại mật khẩu",
+      description = "Gửi mã OTP 6 số qua email của người dùng nếu tài khoản tồn tại.")
+  public ResponseEntity<ApiResponse<String>> forgotPassword(
+      @Valid @RequestBody ForgotPasswordRequest request) {
+    authService.forgotPassword(request);
+
+    ApiResponse<String> apiResponse =
+        ApiResponse.<String>builder()
+            .status(HttpStatus.OK.value())
+            .message("Nếu email hợp lệ, mã OTP xác nhận đã được gửi vào hòm thư của bạn.")
+            .data("OTP sent.")
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
+  /** Xác thực mã OTP 6 số và nhận về resetToken tạm thời. */
+  @PostMapping("/forgot-password/verify")
+  @Operation(
+      summary = "Xác nhận OTP đặt lại mật khẩu",
+      description = "Xác nhận OTP 6 số từ email và trả về resetToken tạm thời.")
+  public ResponseEntity<ApiResponse<String>> verifyForgotPasswordOtp(
+      @Valid @RequestBody VerifyOtpRequest request) {
+    String resetToken = authService.verifyForgotPasswordOtp(request);
+
+    ApiResponse<String> apiResponse =
+        ApiResponse.<String>builder()
+            .status(HttpStatus.OK.value())
+            .message("Xác thực OTP thành công.")
+            .data(resetToken)
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
+  /** Thực hiện đặt lại mật khẩu mới. */
+  @PostMapping("/reset-password")
+  @Operation(
+      summary = "Đặt lại mật khẩu mới",
+      description = "Cập nhật mật khẩu mới sử dụng resetToken hợp lệ thu được từ bước xác thực OTP.")
+  public ResponseEntity<ApiResponse<String>> resetPassword(
+      @Valid @RequestBody ResetPasswordRequest request) {
+    authService.resetPassword(request);
+
+    ApiResponse<String> apiResponse =
+        ApiResponse.<String>builder()
+            .status(HttpStatus.OK.value())
+            .message("Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.")
+            .data("Password reset successfully.")
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
 
   private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
     ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)

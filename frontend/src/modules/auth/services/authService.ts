@@ -41,4 +41,23 @@ export const authService = {
     const response = await axiosClient.get<ApiResponse<UserResponse>>('/auth/me');
     return response.data;
   },
+
+  // Yêu cầu gửi mã OTP quên mật khẩu
+  forgotPassword: async (email: string): Promise<ApiResponse<string>> => {
+    const response = await axiosClient.post<ApiResponse<string>>('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Xác thực OTP để nhận resetToken
+  verifyForgotPasswordOtp: async (email: string, otp: string): Promise<ApiResponse<string>> => {
+    const response = await axiosClient.post<ApiResponse<string>>('/auth/forgot-password/verify', { email, otp });
+    return response.data;
+  },
+
+  // Đặt lại mật khẩu mới
+  resetPassword: async (resetToken: string, newPassword: string): Promise<ApiResponse<string>> => {
+    const response = await axiosClient.post<ApiResponse<string>>('/auth/reset-password', { resetToken, newPassword });
+    return response.data;
+  },
 };
+

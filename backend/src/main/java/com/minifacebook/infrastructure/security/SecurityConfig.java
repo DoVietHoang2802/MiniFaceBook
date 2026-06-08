@@ -34,7 +34,8 @@ public class SecurityConfig {
   private final JwtDecoder jwtDecoder;
 
   private final String[] PUBLIC_POST_ENDPOINTS = {
-    "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect"
+    "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect",
+    "/auth/forgot-password", "/auth/forgot-password/verify", "/auth/reset-password"
   };
 
   private final String[] PUBLIC_GET_ENDPOINTS = {
@@ -74,7 +75,8 @@ public class SecurityConfig {
                 .bearerTokenResolver(
                     request -> {
                       String path = request.getRequestURI();
-                      if (path.endsWith("/auth/login") || path.endsWith("/auth/register") || path.endsWith("/auth/refresh")) {
+                      if (path.endsWith("/auth/login") || path.endsWith("/auth/register") || path.endsWith("/auth/refresh")
+                          || path.contains("/auth/forgot-password") || path.contains("/auth/reset-password")) {
                         return null; // Bỏ qua JWT filter cho các API public
                       }
 

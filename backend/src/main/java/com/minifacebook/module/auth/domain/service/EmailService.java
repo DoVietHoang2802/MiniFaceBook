@@ -10,4 +10,10 @@ public interface EmailService {
    * Gửi email kèm mã xác thực tài khoản.
    */
   void sendVerificationEmail(String toEmail, String verificationToken);
+
+  /**
+   * Gửi email kèm mã OTP 6 số để đặt lại mật khẩu.
+   */
+  void sendResetOtpEmail(String toEmail, String otp);
 }
+

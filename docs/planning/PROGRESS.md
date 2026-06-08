@@ -488,3 +488,26 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Thêm thuộc tính hỗ trợ tiếp cận (a11y) cho input file ẩn trong `ChatPage.tsx`.
   - [x] Tải và lưu trữ âm thanh thông báo Facebook và tin nhắn Messenger vào `public/sounds`.
   - [x] Triển khai phát âm thanh toàn cục qua hook `useChatUnread` và `useNotifications`.
+
+---
+
+## 🔑 QUÊN MẬT KHẨU QUA EMAIL OTP 6 SỐ & REDIS CACHE ✅
+**Đánh giá tổng quan:** Triển khai luồng Quên mật khẩu bảo mật chuẩn Big Tech với mã xác thực 6 số gửi qua Email, lưu trữ tạm thời trong Redis Cache (tự động hết hạn qua TTL) kết hợp giao diện 6 ô vuông nhập số tự động chuyển con trỏ.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Stateless Verification Token Pattern:** Nhập OTP đúng sinh ra `resetToken` chỉ thọ 2 phút. **VÌ SAO:** Ngăn chặn tin tặc gửi mật khẩu mới trực tiếp lên server bằng cách bypass bước xác thực OTP.
+- **Lưu trữ OTP trên Redis thay vì MongoDB:** Dùng Redis lưu `otp:reset:<email>` với TTL 5 phút. **VÌ SAO:** Tự động dọn dẹp mã OTP hết hạn không cần cron job, tránh ghi rác vào MongoDB.
+- **Chống dò quét Email (No User Enumeration):** Yêu cầu reset mật khẩu với email không tồn tại vẫn trả về thông điệp thành công giả lập. **VÌ SAO:** Bảo vệ danh tính người dùng đã đăng ký khỏi hacker dò quét.
+- **Hủy toàn bộ phiên làm việc khác (Force Session Revocation):** Xóa toàn bộ Refresh Token của user trong database khi đổi mật khẩu xong. **VÌ SAO:** Buộc mọi thiết bị khác phải đăng nhập lại để bảo mật tuyệt đối.
+- **6 ô vuông nhập số tự động chuyển con trỏ (Auto-focus):** Giao diện React cao cấp tự chuyển ô khi gõ số, xoá lùi lùi ô khi bấm Backspace, hỗ trợ Paste 6 số trực tiếp từ clipboard.
+
+- **Kết quả:** `mvn clean compile` biên dịch thành công 100%, `npm run build` biên dịch thành công 100% không phát sinh lỗi kiểu dữ liệu.
+
+- **Nhật ký phiên làm việc (08/06/2026 - Sprint 5.5):**
+  - [x] Tạo các DTO `ForgotPasswordRequest`, `VerifyOtpRequest`, `ResetPasswordRequest`.
+  - [x] Bổ sung phương thức `sendResetOtpEmail` vào `EmailService` và các adapter `MailpitEmailAdapter`, `ResendEmailAdapter`.
+  - [x] Triển khai logic `forgotPassword`, `verifyForgotPasswordOtp`, và `resetPassword` trong `AuthService` tích hợp RedisTemplate.
+  - [x] Cấu hình PermitAll các URL quên mật khẩu và bỏ qua JWT filter trong `SecurityConfig.java`.
+  - [x] Thiết kế UI `ForgotPasswordForm.tsx` with mảng 6 ô vuông tự động focus, Resend Timer 60s, và hiển thị kiểm tra tiêu chuẩn mật khẩu an toàn.
+  - [x] Tích hợp form Quên mật khẩu và chuyển đổi trạng thái `authMode` tại `App.tsx` & `LoginForm.tsx`.
+
