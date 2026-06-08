@@ -467,3 +467,24 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 | `401 /auth/me, /presence/heartbeat, /comments` | Access token hết hạn/phiên lapse lúc test lâu | App tự cleanup WS + re-auth, bình thường |
 
 - **Kết quả:** mvn compile PASS, ArchUnit PASS, FE 0 lỗi. Test 2 trình duyệt: B ở tab Feed nhận tin → badge nút Chats lên realtime; mở đọc → badge về 0. Đã dọn log debug cho console sạch.
+
+---
+
+## 🎼 TÍCH HỢP ÂM THANH FACEBOOK & CHUẨN HÓA TYPESCRIPT STRICT ✅
+**Đánh giá tổng quan:** Kích hoạt chế độ nghiêm ngặt cho TypeScript trên toàn frontend và tích hợp hệ thống âm thanh thông báo/tin nhắn chuẩn Facebook & Messenger giúp nâng tầm trải nghiệm người dùng.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Bật `"strict": true` cho TypeScript:** Bật tính năng kiểm tra kiểu nghiêm ngặt và đồng nhất target về `ES2022` ở cả 2 file `tsconfig` để loại bỏ cảnh báo schema. Giúp giảm thiểu lỗi runtime.
+- **Tách âm thanh thông báo và tin nhắn (Facebook & Messenger):** Tải và lưu trữ các âm thanh chuẩn (`notification.mp3` và `message.mp3`) trong thư mục `public/sounds/`.
+- **Phát âm thanh toàn cục thông minh:** Nhúng trực tiếp vào `useChatUnread` (cho tin nhắn) và `useNotifications` (cho thông báo hệ thống) thay vì component giao diện. 
+  - *VÌ SAO:* Cho phép người dùng nghe thấy tiếng chuông/pop ở bất kỳ trang nào (Feed, Profile, Friends) chứ không chỉ ở màn hình Chat.
+  - *VÌ SAO:* Lọc người gửi để tránh tự phát nhạc khi chính mình nhắn tin.
+- **Sửa lỗi a11y:** Thêm `title` và `aria-label` cho input file ẩn trong `ChatPage.tsx` để vượt qua kiểm tra a11y linter.
+
+- **Kết quả:** `npm run build` biên dịch thành công 100% không phát sinh lỗi kiểu dữ liệu.
+
+- **Nhật ký phiên làm việc (08/06/2026):**
+  - [x] Kích hoạt `strict: true` và sửa target thành `ES2022` tại `tsconfig.node.json` và `tsconfig.app.json`.
+  - [x] Thêm thuộc tính hỗ trợ tiếp cận (a11y) cho input file ẩn trong `ChatPage.tsx`.
+  - [x] Tải và lưu trữ âm thanh thông báo Facebook và tin nhắn Messenger vào `public/sounds`.
+  - [x] Triển khai phát âm thanh toàn cục qua hook `useChatUnread` và `useNotifications`.

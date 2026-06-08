@@ -180,6 +180,23 @@ Khi USER nhờ "cải tiến / chỉnh / thêm" một thứ gì đó, AI **BẮT
 
 - **Mục đích:** Tránh tình trạng AI tự mở rộng scope, tự thêm chức năng ngoài ý muốn khiến USER mất kiểm soát lộ trình. USER luôn là người quyết định một chức năng được làm hay hoãn.
 
+### 9.2.C. Quy trình "Giải thích & Thảo luận trước - Code sau" (Explain-First Protocol) ⭐
+- **Kỷ luật giao tiếp:** Khi USER hỏi giải thích, đặt câu hỏi hoặc đưa câu lệnh kết hợp vừa hỏi vừa đồng ý chốt (Ví dụ: *"ok tôi thích kiểu này chốt nhé và giải thích tôi làm sao thế nào ra sao"*), AI **BẮT BUỘC phải dừng lại giải thích chi tiết cơ chế và phác thảo kế hoạch trước**, tuyệt đối KHÔNG được tự ý viết code hay chỉnh sửa bất kỳ file nào trong lượt trả lời đó.
+- **Quy trình thực hiện:**
+  1. Giải thích rõ ràng cơ chế hoạt động, kiến trúc.
+  2. Phác thảo các bước triển khai chi tiết bằng chữ (Plan / Todo List).
+  3. Chờ USER đọc, duyệt giải pháp và ra lệnh tiếp theo (Ví dụ: *"ok làm đi"*, *"triển khai đi"*).
+  4. Chỉ khi có xác nhận này, AI mới được phép chỉnh sửa mã nguồn.
+
+### 9.2.D. Giao thức Tự Kiểm Tra mỗi lượt trả lời (Turn Self-Check Protocol) ⭐
+- **Kỷ luật thực thi:** Ở đầu **MỖI LƯỢT TRẢ LỜI** (không có ngoại lệ), AI bắt buộc phải thực hiện bước tự kiểm tra này trong **suy nghĩ thầm kín (hidden &lt;thought&gt; tag)** để định hướng tư duy và ranh giới hành động trước khi viết nội dung chính hoặc gọi công cụ.
+- **TUYỆT ĐỐI CẤM:** Không được in block tự kiểm tra này ra văn bản chat phản hồi để tránh làm USER phân tâm. AI tự nhớ và tự tuân thủ ngầm.
+  - Cấu trúc tự kiểm tra ngầm:
+    - Yêu cầu hiện tại: ...
+    - Trạng thái phê duyệt: ...
+    - Hành động được phép: ...
+    - Trạng thái Working Tree: ...
+
 ### 9.3. Kỷ luật cập nhật tài liệu & Lộ trình (Documentation & Roadmap Discipline)
 - **Kiểm tra kỹ lưỡng trước khi cập nhật:** Trước khi chỉnh sửa bất kỳ tệp tài liệu nào (đặc biệt là `ROADMAP.md` và `PROGRESS.md`), AI phải rà soát và kiểm tra kỹ lưỡng trạng thái và lộ trình thực tế hiện có của dự án để tránh ghi đè, làm mất hoặc xáo trộn các phần việc/sprint đã được thống nhất hoặc thiết lập sẵn.
 - **Báo cáo và xin phê duyệt trước khi thay đổi:** Nếu có bất kỳ lý do kỹ thuật hoặc bối cảnh thực tiễn nào cần phải tái cấu trúc hoặc thay đổi lộ trình phát triển của dự án, AI **TUYỆT ĐỐI KHÔNG** được tự ý thay đổi hay cập nhật. Phải báo cáo ngay lập tức cho chủ sở hữu (USER), giải thích rõ nguyên nhân, phương án đề xuất và chỉ được tiến hành cập nhật sau khi nhận được sự phê duyệt đồng ý rõ ràng từ USER.

@@ -271,7 +271,7 @@
     - [x] Emit notification qua STOMP `/user/queue/notifications`.
     - [x] Frontend: Subscribe + hiển thị toast khi nhận + tăng badge realtime.
     - [x] 🆕 **Fix re-subscribe on reconnect:** `webSocketService` ghi nhớ intents và tự đăng ký lại mỗi lần (re)connect → không còn "chết kênh" phải F5 sau khi server restart (áp dụng cho cả chat).
-    - [ ] **Sound notification** (optional): Phát âm thanh khi có thông báo mới.
+    - [x] **Sound notification** (optional): Phát âm thanh khi có thông báo mới (đã tích hợp chuông báo Facebook và tiếng tin nhắn Messenger chuẩn).
 - [x] **Sprint 5.4: Notification Triggers Integration** ✅ *(5/5 HOÀN THÀNH)*
     - [x] Trigger notification khi có **Like** bài viết — `ReactionService` publish `NotificationEvent` (chỉ khi thả MỚI, không bắn khi gỡ).
     - [x] Trigger notification khi có **Comment** bài viết — `CommentService` publish `NotificationEvent`.

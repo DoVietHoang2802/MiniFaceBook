@@ -1,14 +1,14 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
-import { 
-  Search, 
-  Send, 
-  MessageSquare, 
-  Users, 
-  Loader2, 
-  Check, 
-  CheckCheck, 
-  Plus, 
+import {
+  Search,
+  Send,
+  MessageSquare,
+  Users,
+  Loader2,
+  Check,
+  CheckCheck,
+  Plus,
   X,
   ArrowLeft,
   SlidersHorizontal,
@@ -33,9 +33,9 @@ import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
 import { friendService } from '../../friends/services/friendService';
 import { webSocketService } from '../services/webSocketService';
-import type { 
-  ConversationResponse, 
-  MessageResponse, 
+import type {
+  ConversationResponse,
+  MessageResponse,
   MessageStatusEvent,
   TypingEvent,
   MessageReactionEvent,
@@ -52,13 +52,13 @@ interface ChatPageProps {
 // Bộ cảm xúc cho tin nhắn (Sprint 4.4 - Message Reactions). Phải khớp ALLOWED_EMOJIS ở backend.
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡'];
 
-export default function ChatPage({ 
-  currentUser, 
-  triggerToast, 
-  initialRecipientId, 
-  onClearInitialRecipient 
+export default function ChatPage({
+  currentUser,
+  triggerToast,
+  initialRecipientId,
+  onClearInitialRecipient
 }: ChatPageProps) {
-  
+
   const [conversations, setConversations] = useState<ConversationResponse[]>([]);
   const [activeConversation, setActiveConversation] = useState<ConversationResponse | null>(null);
   const [messages, setMessages] = useState<MessageResponse[]>([]);
@@ -76,19 +76,19 @@ export default function ChatPage({
   // Sprint 4.5: tin nhắn đang sửa + menu xóa đang mở
   const [editingMessage, setEditingMessage] = useState<MessageResponse | null>(null);
   const [deleteMenuFor, setDeleteMenuFor] = useState<string | null>(null);
-  
+
   // Loading states
   const [isLoadingConvs, setIsLoadingConvs] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  
+
   // Input states
   const [searchText, setSearchText] = useState('');
   const [messageInput, setMessageInput] = useState('');
-  
+
   // Filter cho danh sách hội thoại (All / Unread / Groups / Requests)
   const [conversationFilter, setConversationFilter] = useState<'all' | 'unread' | 'groups' | 'requests'>('all');
-  
+
   // New chat modal
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [friendsList, setFriendsList] = useState<any[]>([]);
@@ -164,7 +164,7 @@ export default function ChatPage({
     try {
       const data = await chatService.getConversations(0, 100);
       setConversations(data.content);
-      
+
       // Nếu có selectId, chọn hội thoại đó làm active
       if (selectId) {
         const found = data.content.find(c => c.id === selectId);
@@ -185,7 +185,7 @@ export default function ChatPage({
   // 2. Định kỳ check trạng thái Online của partner trong danh sách
   useEffect(() => {
     if (conversations.length === 0) return;
-    
+
     const checkOnline = () => {
       const partnerIds = conversations.map(c => {
         const partner = c.participants.find(p => p.id !== currentUser.id);
@@ -198,7 +198,7 @@ export default function ChatPage({
         .then((onlineList) => {
           setOnlineUserIds(new Set(onlineList));
         })
-        .catch(() => {});
+        .catch(() => { });
     };
 
     checkOnline();
@@ -286,12 +286,12 @@ export default function ChatPage({
             });
 
             // Tự động báo đã xem (Seen) cho server
-            chatService.markAsSeen(newMsg.conversationId).catch(() => {});
+            chatService.markAsSeen(newMsg.conversationId).catch(() => { });
             scrollToBottom('smooth');
           } else {
             // Nếu hội thoại khác và tin nhắn do đối phương gửi, đánh dấu là DELIVERED (nhận thành công)
             if (newMsg.sender.id !== currentUser.id) {
-              chatService.markAsDelivered(newMsg.id).catch(() => {});
+              chatService.markAsDelivered(newMsg.id).catch(() => { });
             }
           }
         }
@@ -422,12 +422,12 @@ export default function ChatPage({
         });
         setMessages(mapped);
         setHasMoreMessages(data.content.length === PAGE_SIZE);
-        
+
         // Đánh dấu đã xem toàn bộ tin nhắn chưa đọc
         if (activeConversation.unreadCount > 0) {
           await chatService.markAsSeen(activeConversation.id);
           // Update unread count cục bộ về 0
-          setConversations(prev => 
+          setConversations(prev =>
             prev.map(c => c.id === activeConversation.id ? { ...c, unreadCount: 0 } : c)
           );
         }
@@ -435,7 +435,7 @@ export default function ChatPage({
         // Đánh dấu DELIVERED cho các tin nhắn của đối phương mà chưa DELIVERED
         mapped.forEach(m => {
           if (m.sender.id !== currentUser.id && !m.deliveredAt) {
-            chatService.markAsDelivered(m.id).catch(() => {});
+            chatService.markAsDelivered(m.id).catch(() => { });
           }
         });
 
@@ -826,7 +826,7 @@ export default function ChatPage({
       setReplyingTo(null);
     } catch {
       // Đổi trạng thái sang FAILED nếu mất mạng / lỗi gửi
-      setMessages(prev => 
+      setMessages(prev =>
         prev.map(m => m.id === tempId ? { ...m, status: 'FAILED' } : m)
       );
       triggerToast('Gửi tin nhắn thất bại, vui lòng thử lại.');
@@ -878,7 +878,7 @@ export default function ChatPage({
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
-    
+
     if (d.toDateString() === today.toDateString()) {
       return 'Hôm nay';
     } else if (d.toDateString() === yesterday.toDateString()) {
@@ -906,7 +906,7 @@ export default function ChatPage({
     const partner = c.participants.find(p => p.id !== currentUser.id);
     const matchSearch = partner?.name.toLowerCase().includes(searchText.toLowerCase());
     if (!matchSearch) return false;
-    
+
     if (conversationFilter === 'unread') return c.unreadCount > 0;
     if (conversationFilter === 'groups') return false; // Chưa có group chat
     if (conversationFilter === 'requests') return false; // Chưa có message request
@@ -916,7 +916,7 @@ export default function ChatPage({
   // Đếm số conversation chưa đọc cho badge
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount > 0 ? 1 : 0), 0);
 
-  const filteredFriends = friendsList.filter(f => 
+  const filteredFriends = friendsList.filter(f =>
     f.name?.toLowerCase().includes(friendSearchText.toLowerCase())
   );
 
@@ -944,7 +944,7 @@ export default function ChatPage({
               </div>
               <span className="text-[10px] text-slate-500 font-medium">Your story</span>
             </div>
-            
+
             {/* Stories từ partners */}
             {conversations.slice(0, 4).map(conv => {
               const partner = conv.participants.find(p => p.id !== currentUser.id);
@@ -980,7 +980,7 @@ export default function ChatPage({
           <div className="relative flex items-center gap-1.5">
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-              <input 
+              <input
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -988,7 +988,7 @@ export default function ChatPage({
                 className="w-full pl-9 pr-3 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-xs text-slate-700 transition-all font-medium"
               />
             </div>
-            <button 
+            <button
               className="p-1.5 rounded-full bg-slate-100/70 hover:bg-slate-200 text-slate-500 transition cursor-pointer"
               title="Bộ lọc"
             >
@@ -1001,48 +1001,43 @@ export default function ChatPage({
         <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto">
           <button
             onClick={() => setConversationFilter('all')}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
-              conversationFilter === 'all' 
-                ? 'bg-violet-600 text-white' 
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${conversationFilter === 'all'
+                ? 'bg-violet-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             All
           </button>
           <button
             onClick={() => setConversationFilter('unread')}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 ${
-              conversationFilter === 'unread' 
-                ? 'bg-violet-600 text-white' 
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 ${conversationFilter === 'unread'
+                ? 'bg-violet-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             Unread
             {totalUnread > 0 && (
-              <span className={`text-[9px] font-black px-1.5 rounded-full ${
-                conversationFilter === 'unread' ? 'bg-white text-violet-600' : 'bg-violet-600 text-white'
-              }`}>
+              <span className={`text-[9px] font-black px-1.5 rounded-full ${conversationFilter === 'unread' ? 'bg-white text-violet-600' : 'bg-violet-600 text-white'
+                }`}>
                 {totalUnread}
               </span>
             )}
           </button>
           <button
             onClick={() => setConversationFilter('groups')}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
-              conversationFilter === 'groups' 
-                ? 'bg-violet-600 text-white' 
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${conversationFilter === 'groups'
+                ? 'bg-violet-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             Groups
           </button>
           <button
             onClick={() => setConversationFilter('requests')}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
-              conversationFilter === 'requests' 
-                ? 'bg-violet-600 text-white' 
+            className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${conversationFilter === 'requests'
+                ? 'bg-violet-600 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+              }`}
           >
             Requests
           </button>
@@ -1073,11 +1068,10 @@ export default function ChatPage({
                 <div
                   key={conv.id}
                   onClick={() => setActiveConversation(conv)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all hover:bg-slate-50 ${
-                    isSelected 
-                      ? 'bg-violet-50/60 border border-violet-200/50' 
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all hover:bg-slate-50 ${isSelected
+                      ? 'bg-violet-50/60 border border-violet-200/50'
                       : 'border border-transparent'
-                  }`}
+                    }`}
                 >
                   {/* Avatar */}
                   <div className="relative shrink-0">
@@ -1125,7 +1119,7 @@ export default function ChatPage({
                           <span className="italic text-slate-300">Bắt đầu trò chuyện</span>
                         )}
                       </p>
-                      
+
                       {/* Unread count badge */}
                       {hasUnread && (
                         <span className="h-5 min-w-5 px-1.5 flex items-center justify-center text-[10px] font-black bg-violet-600 text-white rounded-full shrink-0">
@@ -1142,7 +1136,7 @@ export default function ChatPage({
 
         {/* Nút tìm bạn mới */}
         <div className="px-3 py-2.5 border-t border-slate-100">
-          <button 
+          <button
             onClick={openNewChatModal}
             className="w-full flex items-center justify-center gap-1.5 py-2 rounded-full border border-violet-200 text-violet-600 font-bold text-xs hover:bg-violet-50 transition cursor-pointer"
           >
@@ -1161,7 +1155,7 @@ export default function ChatPage({
             {/* Header chat */}
             <div className="px-4 py-2.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
               <div className="flex items-center gap-3 flex-grow min-w-0">
-                <button 
+                <button
                   onClick={() => setActiveConversation(null)}
                   className="md:hidden p-1.5 hover:bg-slate-100 rounded-lg transition cursor-pointer shrink-0"
                   aria-label="Quay lại danh sách"
@@ -1212,7 +1206,7 @@ export default function ChatPage({
             </div>
 
             {/* Khung chứa các tin nhắn */}
-            <div 
+            <div
               ref={chatScrollContainerRef}
               onScroll={handleMessagesScroll}
               className="flex-1 overflow-y-auto px-5 py-4 space-y-4 flex flex-col bg-slate-50/30"
@@ -1254,8 +1248,8 @@ export default function ChatPage({
                       const showStatus = isMe && idx === dateMsgs.length - 1; // Chỉ show status cho tin nhắn cuối cùng trong nhóm của mình
 
                       return (
-                        <div 
-                          key={m.id} 
+                        <div
+                          key={m.id}
                           ref={(el) => { messageRefs.current[m.id] = el; }}
                           className={`flex items-end gap-2.5 max-w-[75%] rounded-2xl transition-all duration-500 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} ${highlightedMsgId === m.id ? 'ring-2 ring-violet-400 ring-offset-2 bg-violet-50/40' : ''}`}
                         >
@@ -1291,14 +1285,13 @@ export default function ChatPage({
                               </div>
                             )}
                             <div className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                              <div 
-                                className={`relative z-10 ${m.deleted ? 'px-4 py-2.5 italic opacity-80' : m.type === 'IMAGE' ? 'p-1' : 'px-4 py-2.5'} rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${
-                                  m.deleted
+                              <div
+                                className={`relative z-10 ${m.deleted ? 'px-4 py-2.5 italic opacity-80' : m.type === 'IMAGE' ? 'p-1' : 'px-4 py-2.5'} rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${m.deleted
                                     ? (isMe ? 'bg-violet-300 text-white rounded-br-md' : 'bg-slate-100 text-slate-400 rounded-bl-md border border-slate-200/60')
-                                    : isMe 
-                                      ? 'bg-violet-600 text-white rounded-br-md' 
+                                    : isMe
+                                      ? 'bg-violet-600 text-white rounded-br-md'
                                       : 'bg-white text-slate-800 rounded-bl-md border border-slate-200/60'
-                                }`}
+                                  }`}
                               >
                                 {m.deleted ? (
                                   <span className="text-xs">Tin nhắn đã được thu hồi</span>
@@ -1422,7 +1415,7 @@ export default function ChatPage({
                                 )}
                               </div>
                             </div>
-                            
+
                             {/* Metadata bên dưới bong bóng */}
                             <div className={`flex items-center gap-1.5 mt-1.5 px-1 ${m.reactions && Object.keys(m.reactions).length > 0 ? 'mt-3' : ''}`}>
                               <span className="text-[10px] text-slate-400 font-medium">
@@ -1569,7 +1562,7 @@ export default function ChatPage({
             )}
 
             {/* Input bar */}
-            <form 
+            <form
               onSubmit={handleSendMessage}
               className="px-3 py-2.5 border-t border-slate-200 bg-white flex items-center gap-2 z-10"
             >
@@ -1590,12 +1583,14 @@ export default function ChatPage({
                   multiple
                   className="hidden"
                   onChange={handleSelectImages}
+                  title="Chọn ảnh tải lên"
+                  aria-label="Chọn ảnh tải lên"
                 />
                 <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Mic">
                   <Mic className="h-4.5 w-4.5" />
                 </button>
               </div>
-              <input 
+              <input
                 type="text"
                 value={messageInput}
                 onChange={(e) => {
@@ -1609,7 +1604,7 @@ export default function ChatPage({
                 placeholder={`Message ${activePartner?.name || ''}...`}
                 className="flex-grow px-4 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-sm text-slate-700 transition-all font-medium"
               />
-              <button 
+              <button
                 type="submit"
                 disabled={(!messageInput.trim() && pendingImages.length === 0) || isSending}
                 className="h-9 w-9 bg-violet-600 text-white rounded-full hover:bg-violet-500 disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
@@ -1721,11 +1716,10 @@ export default function ChatPage({
                 { name: 'Timeline_Project_Hizo.xlsx', size: '24.1 KB', type: 'Excel' },
               ].map((file, idx) => (
                 <div key={idx} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition group">
-                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
-                    file.type === 'PDF' ? 'bg-rose-50 text-rose-500' :
-                    file.type === 'Figma' ? 'bg-purple-50 text-purple-500' :
-                    'bg-emerald-50 text-emerald-500'
-                  }`}>
+                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${file.type === 'PDF' ? 'bg-rose-50 text-rose-500' :
+                      file.type === 'Figma' ? 'bg-purple-50 text-purple-500' :
+                        'bg-emerald-50 text-emerald-500'
+                    }`}>
                     <FileText className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-grow">
@@ -1745,8 +1739,8 @@ export default function ChatPage({
             </div>
             <div className="flex items-center">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 -ml-2 first:ml-0 cursor-pointer hover:z-10 hover:scale-110 transition shadow-sm"
                 >
                   <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-[10px] bg-gradient-to-br from-violet-50 to-slate-100">
@@ -1769,7 +1763,7 @@ export default function ChatPage({
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
               <span className="font-outfit font-black text-slate-800 text-sm">Trò chuyện mới</span>
-              <button 
+              <button
                 onClick={() => setShowNewChatModal(false)}
                 title="Đóng"
                 className="p-1.5 rounded-lg hover:bg-slate-200 transition text-slate-400 hover:text-slate-600 cursor-pointer"
@@ -1782,7 +1776,7 @@ export default function ChatPage({
             <div className="p-3 border-b border-slate-100">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                <input 
+                <input
                   type="text"
                   value={friendSearchText}
                   onChange={(e) => setFriendSearchText(e.target.value)}

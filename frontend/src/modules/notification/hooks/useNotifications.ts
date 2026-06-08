@@ -87,6 +87,16 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
           return [notif, ...prev];
         });
         setUnreadCount((c) => c + 1);
+
+        // Phát âm thanh thông báo (Sprint 5.3)
+        try {
+          const audio = new Audio('/sounds/notification.mp3');
+          audio.volume = 0.5;
+          audio.play().catch((err) => console.log('[Audio] Notification play blocked/failed', err));
+        } catch (err) {
+          console.error('[Audio] Error playing notification sound', err);
+        }
+
         onNewRef.current?.(notif);
       }
     );

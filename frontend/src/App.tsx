@@ -45,7 +45,7 @@ function App() {
   useWebSocket(!!user);
 
   // Tổng tin nhắn chưa đọc cho chấm đỏ nút Chats sidebar (Phase 5.4 - realtime).
-  const { totalUnread: chatUnread } = useChatUnread(!!user);
+  const { totalUnread: chatUnread } = useChatUnread(!!user, user?.id);
 
   // Trạng thái giao diện cao cấp
   const [showProfilePopover, setShowProfilePopover] = useState(false);
