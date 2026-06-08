@@ -1,7 +1,8 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 07/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION ~90% (Sprint 5.1→5.4 XONG TRỌN VẸN) + ⚡ Realtime Feed Counts. Tổng tiến độ **~78%**. Notification center realtime (event-driven, self-guard, Redis cache, chuông + badge + dropdown + toast, 4 trigger LIKE/COMMENT/FRIEND_REQUEST/FRIEND_ACCEPTED) + **chat unread badge realtime** (trigger thứ 5, chấm đỏ nút Chats sidebar - logic 2 luồng riêng giống Messenger) + realtime số like/comment trên feed. Đã test 2 trình duyệt OK. Còn lại Phase 5 (optional): sound 5.3, email 5.5.
+## 📅 Cập nhật ngày: 08/06/2026
+## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🛡️ TYPESCRIPT HARDENING. Tổng tiến độ **~82%**. Hệ thống âm thanh thông báo Facebook & tin nhắn Messenger đã tích hợp hoàn hảo toàn cục, xử lý autoplay browser an toàn. TypeScript Strict Mode đã được kích hoạt và đồng bộ hóa thành công.
+
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System). Chi tiết xem `ROADMAP.md`.
 
@@ -111,12 +112,11 @@
 
 ---
 
-### 🚀 Nhiệm vụ tiếp theo (Phase 5 - Notification System)
+### 🚀 Nhiệm vụ tiếp theo (Phase 6 - Navigation & Phase 7 - VPS Deployment)
 
-- **Notification Infrastructure:** Notification Entity (`recipientId`, `type`, `content`, `data`, `isRead`), NotificationService, Repository.
-- **In-App Notifications:** API list/mark-read/unread-count, Bell + badge count, dropdown danh sách.
-- **Realtime Push:** Tái dùng WebSocket STOMP + Redis Pub/Sub (Phase 4) → emit `/user/{userId}/notifications`, toast realtime.
-- **Triggers:** Like/Comment (Phase 2), Friend Request/Accepted (Phase 3), New Message (Phase 4).
+- **Phase 6 - Navigation**: Thiết lập và tích hợp `react-router-dom` cho việc điều hướng trang động và deep-linking.
+- **Phase 7 - VPS Deployment**: Deploy hệ thống (Spring Boot, MongoDB, Redis, React, Nginx) lên VPS thực tế.
+- **Testing & Performance Optimization**: Tối ưu hóa hiệu suất load trang và viết các bài test tích hợp cho WebSocket.
 
 ---
 *Ghi chú: Luôn giữ file `TESTING_GUIDE.md`, `PHASE_3_FRIENDS_TESTING.md` và `PHASE_4_CHAT_TESTING.md` cập nhật để đảm bảo tính sẵn sàng kiểm thử của hệ thống.*

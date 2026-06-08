@@ -202,3 +202,15 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
     *   **SEEN (Đã xem - 👁️ / Avatar):** Đổi thành avatar nhỏ hoặc icon con mắt xanh dương dịu mát khi người nhận mở cửa sổ chat hoặc đang active trong cuộc hội thoại đó.
 *   **Trợ năng cho Icon Trạng thái (A11y Compliance):** Do các icon vector không tự động hỗ trợ mô tả âm thanh, tất cả các icon trạng thái tin nhắn bắt buộc phải được bao bọc bằng thẻ `span` chứa thuộc tính `title` mô tả trạng thái (ví dụ: `title="Đã xem"`, `title="Đang gửi"`) để hỗ trợ người dùng sử dụng trình đọc màn hình.
 *   **Presence (Đèn báo Trạng thái Hoạt động):** Đèn báo trạng thái hoạt động màu xanh lá cây (`bg-green-500`) trên avatar bạn bè phải nhấp nháy tỏa bóng mờ (`animate-pulse`) để báo hiệu trạng thái hoạt động thời gian thực (Heartbeat).
+
+### 6.5. Real-Time Sound Feedback & Browser Autoplay Guidelines (Âm thanh phản hồi thời gian thực)
+*   **Nguyên tắc Phản hồi Thính giác:** Âm thanh phải dễ chịu, có độ dài ngắn dưới 2 giây và được phân loại rõ ràng theo ngữ cảnh để tránh gây mệt mỏi cho thính giác (alert fatigue).
+*   **Quy chuẩn Âm thanh:**
+    *   **Tin nhắn mới (New Message):** Sử dụng âm thanh bong bóng pop đặc trưng của Messenger (`message.mp3`).
+    *   **Thông báo mới (Social Notification):** Sử dụng tiếng chuông chime chuẩn của Facebook (`notification.mp3`).
+*   **Âm lượng (Volume Spec):** Âm lượng mặc định được giới hạn ở mức **50% (0.5)** để đảm bảo âm thanh rõ ràng nhưng không đột ngột gây giật mình.
+*   **Cơ chế Chặn Tiếng Ồn Trùng Lặp (Sender Filter):** Khi chính người dùng hiện tại thực hiện hành động (như gửi tin nhắn), tuyệt đối không được phát âm thanh tin nhắn mới. Chỉ phát khi nhận được tin nhắn từ người khác.
+*   **Bảo vệ Autoplay của Trình duyệt (Autoplay Protection):** 
+    *   Các trình duyệt hiện đại (Chrome, Safari) cấm phát âm thanh tự động nếu người dùng chưa tương tác với trang.
+    *   Bắt buộc bao bọc lệnh phát âm thanh `.play()` trong khối `try-catch` và chuỗi `.catch(error => ...)` để bỏ qua các lỗi này một cách âm thầm, ngăn chặn hoàn toàn việc crash ứng dụng do chính sách bảo mật trình duyệt.
+

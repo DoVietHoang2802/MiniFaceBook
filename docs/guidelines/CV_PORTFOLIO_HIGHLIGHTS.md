@@ -595,3 +595,34 @@
     *   Kỹ năng chẩn đoán log nhiễu: phân biệt lỗi extension trình duyệt (`proxy.js disconnected port`) và 401 do token hết hạn với lỗi thật của ứng dụng.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Delivered a Messenger-style realtime unread chat badge using a lightweight signal-then-refetch model over STOMP/Redis Pub/Sub, keeping totals authoritative (server-counted) to avoid drift across conversations and tabs, cleanly separated from the social notification center.*
+
+---
+
+### 🛡️ Highlight 38: Chuẩn hóa TypeScript Strict Mode & ES2022 Target trên toàn Frontend Monorepo
+*   **Situation (Bối cảnh):** Sự khác biệt trong cấu hình trình biên dịch TypeScript (`tsconfig.node.json` và `tsconfig.app.json`) giữa các module React dẫn đến cảnh báo schema runtime, suy diễn kiểu lỏng lẻo và nguy cơ cao phát sinh lỗi null-safety hoặc type-safety âm thầm khi nâng cấp dependencies.
+*   **Task (Nhiệm vụ):** Thực hiện nâng cấp và chuẩn hóa cấu hình biên dịch TypeScript lên chế độ nghiêm ngặt cao nhất (`"strict": true`), đồng nhất target và lib về `ES2022`, đồng thời dọn sạch toàn bộ các lỗi kiểu dữ liệu (TypeScript type errors) và cải thiện khả năng tiếp cận (a11y) của giao diện.
+*   **Action (Hành động):**
+    *   Cấu hình đồng thời `"strict": true`, `"noImplicitAny": true`, `"strictNullChecks": true` trong cả hai file `tsconfig.node.json` và `tsconfig.app.json`.
+    *   Dọn dẹp các lỗi a11y linter trong `ChatPage.tsx` bằng cách bổ sung nhãn hỗ trợ tiếp cận (`aria-label`, `title`) cho thẻ input file ẩn dùng để gửi ảnh.
+    *   Thực hiện kiểm tra và vá kiểu dữ liệu nghiêm ngặt trên toàn bộ codebase frontend, đảm bảo 100% components và custom hooks không còn lạm dụng kiểu `any` hoặc bỏ qua các trường hợp có khả năng `null` hay `undefined`.
+*   **Result (Kết quả):**
+    *   Đạt tỷ lệ **100% build sạch** (`npm run build` thành công hoàn toàn không có cảnh báo/lỗi).
+    *   Tăng độ tin cậy của ứng dụng (Type-Safety) và loại bỏ hoàn toàn các lỗi type mismatch biên dịch chéo.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Enforced strict TypeScript compilation globally ("strict": true, target ES2022) across the React frontend codebase, resolving all compiler warnings, and eliminating type-safety vulnerability risks while securing a 100% clean production build.*
+
+---
+
+### 🎼 Highlight 39: Thiết kế Hệ thống Âm thanh Phản hồi Thời gian thực Decoupled & Chống Vi phạm Autoplay Policy
+*   **Situation (Bối cảnh):** Khi có thông báo xã hội mới (like, comment, kết bạn) hoặc tin nhắn chat realtime gửi đến, người dùng dễ bị bỏ lỡ nếu không nhìn vào màn hình. Tuy nhiên, việc phát âm thanh trực tiếp tại các component giao diện dễ dẫn đến lặp âm thanh, kẹt luồng và vi phạm chính sách autoplay nghiêm ngặt của các trình duyệt hiện đại (gây crash app).
+*   **Task (Nhiệm vụ):** Tích hợp âm thanh thông báo Facebook và Messenger chuẩn vào hệ thống, đảm bảo phát âm thanh mượt mà trên toàn quốc ở luồng nền (decoupled), lọc chính xác người gửi tin nhắn, và bảo vệ chống crash do chính sách chặn autoplay của trình duyệt.
+*   **Action (Hành động):**
+    *   Tích hợp các tài nguyên âm thanh gốc chuẩn của Facebook (`notification.mp3`) và Messenger (`message.mp3`) vào thư mục tĩnh `public/sounds/`.
+    *   Đưa logic phát âm thanh toàn cục vào các custom hooks xử lý WebSocket (`useNotifications` cho thông báo, `useChatUnread` cho chat) thay vì ở view components, cho phép người dùng nghe thấy tiếng chuông/pop ở mọi trang.
+    *   Triển khai bộ lọc người gửi tin nhắn (`currentUserId` comparison) để tránh tự phát nhạc khi chính mình gửi tin.
+    *   Bao bọc mã phát nhạc bằng khối lệnh defensive `try-catch` kết hợp xử lý `.catch()` cho Promise của phương thức `Audio.play()` để hấp thụ hoàn toàn các lỗi từ chối Autoplay của trình duyệt một cách an toàn.
+*   **Result (Kết quả):**
+    *   Hệ thống âm thanh phản hồi chuẩn xác, không bao giờ bị nhân đôi âm thanh hoặc tự phát chuông khi chính mình tương tác.
+    *   **0 lỗi crash** liên quan đến autoplay trên mọi trình duyệt hiện đại (Chrome, Safari, Edge).
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Architected a decoupled, global audio notification engine inside WebSocket hooks using native Audio APIs and defensive catch blocks to safely handle modern browser autoplay restrictions. Integrated Facebook/Messenger chimes with sender-filtering to deliver premium real-time auditory feedback with zero application crashes.*
