@@ -7,19 +7,25 @@
 
 ---
 
-## 📋 TÓM TẮT PHIÊN LÀM VIỆC (12/06/2026 - CHAT QUALITY HARDENING)
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (12/06/2026 - CHAT HARDENING & ACCESSIBILITY FIXES)
 
 ### Công việc đã thực hiện:
 
 1. **Review 1 - Frontend Rollback Optimistic UI:** Gia cố ChatPage.tsx để tự khôi phục trạng thái cũ khi edit message, delete me, hoặc delete everyone thất bại. Tránh tình trạng UI báo đã xóa/sửa nhưng backend reject do hết hạn 15 phút, mất mạng hoặc hết phiên.
 2. **Review 2 - Backend Unit Tests:** Mở rộng MessageServiceTest.java thêm các kịch bản: owner-only, text-only, cửa sổ 15 phút, deletedFor, soft delete cho mọi người, và lọc tin nhắn đã xóa riêng.
-3. **Verify:** Chạy mvn -Dtest=MessageServiceTest test PASS 13/13.
+3. **Accessibility (A11y) Linter Fixes:** Bổ sung thuộc tính `title` mô tả hành động cho các thẻ `<input type="file" className="hidden" />` trong `CreatePostCard.tsx` (dòng 163) và `ProfilePage.tsx` (dòng 300), giải quyết triệt để lỗi đỏ của A11y Linter.
+4. **Dọn dẹp Warnings Backend:** Xóa bỏ các `import` thư viện thừa không sử dụng tại `ConversationService.java`, `NotificationEventListener.java`, và `MessageServiceTest.java`.
+5. **Verify:** Chạy `mvn test` PASS 18/18 tests thành công trên Backend.
 
 ### Files chính:
 - `frontend/src/modules/chat/components/ChatPage.tsx`
+- `frontend/src/modules/post/components/CreatePostCard.tsx`
+- `frontend/src/modules/profile/components/ProfilePage.tsx`
+- `backend/src/main/java/com/minifacebook/module/chat/application/service/ConversationService.java`
+- `backend/src/main/java/com/minifacebook/module/notification/application/listener/NotificationEventListener.java`
 - `backend/src/test/java/com/minifacebook/module/chat/application/service/MessageServiceTest.java`
-- docs/planning/PROGRESS.md
-- docs/planning/ROADMAP.md
+- `docs/planning/PROGRESS.md`
+- `docs/planning/ROADMAP.md`
 
 ---
 ## 📋 TÓM TẮT PHIÊN LÀM VIỆC (08/06/2026 - SPRINT 5.7)

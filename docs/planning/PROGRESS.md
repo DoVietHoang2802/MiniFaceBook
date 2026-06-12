@@ -564,3 +564,26 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Việt hóa các Widget xu hướng, Gợi ý kết bạn và thông tin footer tại `App.tsx`.
   - [x] Việt hóa placeholder và các nút chức năng tại `CreatePostCard.tsx`.
   - [x] Tái thiết kế vùng Drag & Drop ảnh đại diện tại `ProfilePage.tsx` theo theme Slate Light để sửa lỗi tương phản text.
+
+---
+
+## 🎨 KHẮC PHỤC LỖI ACCESSIBILITY THẺ INPUT ẨN & DỌN DẸP WARNINGS ✅
+**Đánh giá tổng quan:** Sửa triệt để các cảnh báo lỗi đỏ của Accessibility (A11y) liên quan đến các thẻ `input type="file" className="hidden"` trên giao diện Tạo bài viết và Cài đặt cá nhân, đồng thời dọn dẹp các import thừa trên Backend giúp dự án đạt trạng thái "Clean Code" tuyệt đối.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Sửa lỗi Accessibility (A11y) Linter:**
+  - Bổ sung thuộc tính `title` mô tả rõ ràng cho các thẻ `<input type="file" className="hidden">` tại `CreatePostCard.tsx` (dòng 163) và `ProfilePage.tsx` (dòng 300).
+  - **VÌ SAO:** Mặc dù các thẻ input này được ẩn gián tiếp và chỉ kích hoạt qua code trigger (Ref), trình kiểm định A11y vẫn yêu cầu có thông tin mô tả để đảm bảo các thiết bị hỗ trợ Screen Reader có thể tương tác chuẩn hóa, nâng điểm chất lượng UI/UX lên mức tối đa.
+- **Dọn dẹp Java Checkstyle Warnings:**
+  - Loại bỏ import thừa `org.springframework.transaction.annotation.Transactional` trong `ConversationService.java` (dòng 33).
+  - Loại bỏ import thừa `org.springframework.context.event.EventListener` trong `NotificationEventListener.java` (dòng 8).
+  - Loại bỏ import thừa `java.util.Map` trong `MessageServiceTest.java` (dòng 27).
+  - **VÌ SAO:** Đảm bảo mã nguồn gọn gàng, giảm thiểu warnings khi build dự án bằng Maven và giữ cho công cụ Checkstyle hoạt động tối ưu.
+
+- **Kết quả:** `mvn test` PASS 18/18 tests thành công, không còn lỗi A11y đỏ ở các file đã chỉnh sửa.
+
+- **Nhật ký phiên làm việc (12/06/2026 - Sprint 5.8):**
+  - [x] Bổ sung thuộc tính `title` cho input tải ảnh tại `CreatePostCard.tsx`.
+  - [x] Bổ sung thuộc tính `title` cho input tải ảnh đại diện tại `ProfilePage.tsx`.
+  - [x] Xóa bỏ các `import` thư viện thừa không sử dụng ở Backend.
+  - [x] Chạy kiểm thử tự động `mvn test` đảm bảo 100% build thành công.

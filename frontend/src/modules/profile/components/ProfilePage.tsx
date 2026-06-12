@@ -303,6 +303,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 onChange={handleFileChange} 
                 accept="image/*" 
                 className="hidden" 
+                title="Chọn hình ảnh làm ảnh đại diện" 
               />
             </div>
 

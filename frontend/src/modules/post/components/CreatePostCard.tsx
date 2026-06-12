@@ -160,7 +160,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                 <ImageIcon className="h-4.5 w-4.5" />
                 <span>Ảnh / Video</span>
               </button>
-              <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleFileChange} className="hidden" />
+              <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleFileChange} className="hidden" title="Chọn hình ảnh hoặc video để đăng" />
 
               <button 
                 onClick={() => {
