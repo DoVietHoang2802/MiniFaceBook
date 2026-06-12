@@ -293,6 +293,7 @@
     - [ ] Áp dụng **Soft Delete** cho tin nhắn và bài viết.
     - [ ] **Redis Caching** cho dữ liệu tĩnh (user profile, friend list).
     - [ ] Viết **Unit Test** bằng JUnit 5 (coverage > 70%).
+        - *Đã có bước đệm:* Module Chat đã được hardening thêm test cho edit/delete message và rollback Optimistic UI ngày 12/06/2026.
     - [ ] Viết **Integration Test** bằng MockMvc + Testcontainers.
 - [ ] **Sprint 6.2: CI/CD Pipeline**
     - [ ] Viết **E2E Test** bằng Playwright cho các luồng chính.
@@ -364,6 +365,11 @@
 | 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (dùng field `name`, Sprint 3.3) |
 | 6 | Tối ưu phân trang Search (aggregation pipeline) | Hiệu năng | 🟢 Thấp | 🔴 Chưa làm | Khi scale > 1000 users |
 | 7 | StompBrokerRelay (RabbitMQ) cho scale lớn | Hạ tầng | 🟢 Thấp | 🔴 Chưa làm | Phase 7 (> 10 servers) |
+| 8 | Infinite Scroll cho News Feed | Logic/UX | 🟡 TB | 🔴 Chưa làm | Phase 6 |
+| 9 | Dọn dẹp Checkstyle Java Warnings | Chuẩn hóa | 🟢 Thấp | 🔴 Chưa làm | Phase 6 |
+| 10 | Redis Caching cho User Profile và Friend List | Hiệu năng | 🟡 TB | 🔴 Chưa làm | Phase 6 |
+| 11 | Trang Cài đặt tài khoản (Account/Settings Page) | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Phase 6 |
+
 
 ### ✅ #1: MongoDB Replica Set + TransactionManager (ĐÃ HOÀN THÀNH 30/05)
 - **Hiện trạng "nửa vời":** `@Transactional` ĐÃ viết trong `FriendshipService` (Sprint 3.1) nhưng CHƯA hoạt động thật do thiếu `MongoTransactionManager` Bean + MongoDB đang chạy standalone (không hỗ trợ transaction).
@@ -409,7 +415,24 @@
 - **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
 - **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
 
+### 🔴 #8: Infinite Scroll cho News Feed (ĐỀ XUẤT CẢI TIẾN)
+- **Vấn đề:** Hiện tại News Feed đang load các bài viết theo phân trang tĩnh hoặc load cứng, chưa mang lại trải nghiệm cuộn liền mạch như các mạng xã hội hiện đại.
+- **Giải pháp:** Tích hợp logic scroll listener phía Frontend, phát hiện khi người dùng cuộn đến gần cuối trang thì tự động gọi API lấy trang tiếp theo và nối vào danh sách hiện tại.
+
+### 🔴 #9: Dọn dẹp Checkstyle Java Warnings (ĐỀ XUẤT CẢI TIẾN)
+- **Vấn đề:** Codebase Backend còn tồn tại một số cảnh báo Checkstyle (thụt lề, thiếu Javadoc, wildcard import) gây mất điểm chất lượng khi quét kiểm thử tự động.
+- **Giải pháp:** Rà soát và sửa đổi code Java để tuân thủ 100% quy tắc Google Java Style được định nghĩa trong cấu hình Checkstyle của dự án.
+
+### 🔴 #10: Redis Caching cho User Profile và Friend List (ĐỀ XUẤT CẢI TIẾN)
+- **Vấn đề:** Các dữ liệu thông tin cá nhân và danh sách bạn bè được truy vấn liên tục từ MongoDB khi tải trang chủ hoặc chat, gây overhead không cần thiết.
+- **Giải pháp:** Triển khai cơ chế cache (Read-through/Write-through) lên Redis với thời gian TTL phù hợp để tăng tốc độ phản hồi API.
+
+### 🔴 #11: Trang Cài đặt tài khoản (Account/Settings Page) (ĐỀ XUẤT CẢI TIẾN)
+- **Vấn đề:** Chưa có màn hình quản trị tài khoản để người dùng tự đổi mật khẩu (khi đang đăng nhập) hoặc thiết lập các tùy chọn nhận thông báo.
+- **Giải pháp:** Xây dựng màn hình Settings trong Frontend và tích hợp các API tương ứng ở Backend.
+
 ---
+
 
 ## 📝 CHANGELOG
 

@@ -184,7 +184,8 @@ Lưu trữ toàn bộ tin nhắn trong conversations.
 > - **Reactions:** STOMP `/app/chat.react` → toggle emoji → Pub/Sub event "REACTION" → `/user/queue/reactions`.
 > - **Reply:** `replyToMessageId` trong request → backend dựng snapshot `replyTo` (validate cùng conversation).
 > - **Edit:** `PUT /messages/{id}` → set `editedAt` → Pub/Sub event "UPDATE" → `/user/queue/updates`.
-> - **Delete:** `DELETE /messages/{id}?scope=me|everyone`. `me` → thêm vào `deletedFor` (không báo). `everyone` → set `deleted=true`, clear content/mediaUrl, Pub/Sub "UPDATE".
+> - **Delete:** DELETE /messages/{id}?scope=me|everyone. me → thêm vào deletedFor (không báo). everyone → set deleted=true, clear content/mediaUrl, Pub/Sub "UPDATE".
+> - **Frontend UX Hardening (12/06/2026):** Các thao tác edit/delete dùng Optimistic UI nhưng phải có rollback nếu API thất bại, tránh lệch trạng thái giữa giao diện và dữ liệu thật.
 > - **Infinite Scroll:** `GET /conversations/{id}/messages?page=&size=15` sort `createdAt DESC` (page 0 = mới nhất), frontend reverse + prepend khi cuộn lên.
 
 ---

@@ -305,6 +305,10 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Quyết định kiến trúc - VÌ SAO]** "Xóa cho riêng tôi" dùng `deletedFor` Set thay vì xóa hẳn DB → tin vẫn hiện với người kia (đúng hành vi Messenger), reversible. "Thu hồi" dùng soft-delete `deleted` flag thay vì xóa cứng → giữ lịch sử + có thể audit. Cả 2 reuse Pub/Sub "UPDATE" có sẵn.
   - [x] **[Verify]** Backend compile PASS, FE 0 lỗi.
 
+- **Phiên 12/06/2026 (Chat Quality Hardening - Review 1 & 2):**
+  - [x] **[Frontend/Review 1]** Gia cố ChatPage.tsx với cơ chế **rollback Optimistic UI** cho 3 thao tác nhạy cảm: sửa tin nhắn, xóa cho riêng tôi và thu hồi cho mọi người. Nếu API thất bại (quá 15 phút, mất mạng, hết phiên), giao diện tự khôi phục đúng trạng thái cũ thay vì chỉ hiện Toast lỗi.
+  - [x] **[Backend/Review 2]** Mở rộng MessageServiceTest thêm 9 kịch bản kiểm thử cho editMessage, deleteMessage(scope=me|everyone) và lọc deletedFor, khóa chặt các rule nghiệp vụ kiểu Facebook/Zalo (owner-only, text-only, cửa sổ 15 phút, soft delete, hide phía mình).
+  - [x] **[Verify]** Chạy mvn -Dtest=MessageServiceTest test PASS **13/13 tests**. Xác nhận phần cứng hóa chất lượng chat hoạt động ổn định mà không cần sửa logic backend cốt lõi.
 - **Phiên 06/06/2026 (Sprint 4.5 đợt 2 - Infinite Scroll → PHASE 4 HOÀN THÀNH 100%):**
   - [x] **[Backend]** `getMessages` đổi sort sang DESC (page 0 = tin mới nhất), page size 15 → đúng chuẩn chat infinite scroll (trước đó ASC page 0 = tin cũ nhất, sai cho conv lớn).
   - [x] **[Frontend]** Load đầu: page 0 DESC → reverse hiển thị cũ→mới → scroll bottom. Cuộn lên gần đầu (`scrollTop < 80`) → tải page kế → prepend tin cũ (lọc trùng id). `hasMoreMessages` dừng khi hết.
@@ -535,4 +539,28 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Tạo mã lỗi `INVALID_CREDENTIALS` (1028) trên Backend và tích hợp vào logic Auth.
   - [x] Cập nhật Quy chuẩn giao tiếp 3 phần vào `AI_GUIDELINES.md` để lưu vết phong cách hỗ trợ tốt nhất cho lập trình viên.
 
+---
 
+## 🇻🇳 VIỆT HÓA TOÀN DIỆN GIAO DIỆN CHÍNH & KHẮC PHỤC CONTRAST SCREEN ✅
+**Đánh giá tổng quan:** Hoàn tất Việt hóa toàn bộ văn bản còn sót lại trên giao diện chính của Dashboard, thanh Sidebar điều hướng, khung tạo bài viết, widget xu hướng và sửa lỗi độ tương phản của vùng kéo thả ảnh đại diện trong trang cá nhân.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Bản địa hóa (Localization) 100% giao diện:**
+  - Sidebar bên trái: Khám phá, Bạn bè, Cộng đồng, Trò chuyện, Thông báo, Bộ sưu tập, Trang cá nhân, Cài đặt.
+  - Thanh tìm kiếm: Placeholder "Tìm kiếm bạn bè, bài viết, cộng đồng...".
+  - Widgets bên phải: "Chủ đề xu hướng" (phần tử con: "Xem tất cả", "bài viết"), "Gợi ý kết bạn" (phần tử con: "Kết bạn", "Xem thêm", "Đã gửi").
+  - Khung đăng bài: Placeholder "Bạn đang nghĩ gì thế...?", các nút hành động "Ảnh / Video", "Cảm xúc", "Check-in", "Bình chọn", "Đăng bài".
+  - Footer trang Landing / Auth: "Nhắn tin thời gian thực", "Đồ thị mạng xã hội", "Bảo mật tối đa", "Bảo lưu mọi quyền".
+  - **VÌ SAO:** Cung cấp trải nghiệm người dùng tự nhiên và đồng nhất 100% bằng tiếng Việt cho thị trường bản địa, loại bỏ hoàn toàn các văn bản tiếng Anh mặc định.
+- **Sửa lỗi tương phản (Contrast Fix) trên ProfilePage:**
+  - Đưa tiêu đề "Kéo & Thả ảnh đại diện" từ màu trắng `text-white` sang màu tối `text-slate-800`.
+  - Thay đổi theme của vùng kéo thả Drag & Drop từ màu tối (dành cho dark mode trước đây) sang màu sáng Slate Light đồng nhất (`border-slate-200`, `bg-slate-50/50`, `text-slate-600`).
+  - **VÌ SAO:** Khắc phục lỗi chữ bị tàng hình trong light mode, đảm bảo tiêu chuẩn tương phản màu sắc của giao diện (A11y/WCAG compliance).
+
+- **Kết quả:** `npm run build` thành công trên nhánh local, dev server hoạt động trơn tru.
+
+- **Nhật ký phiên làm việc (08/06/2026 - Sprint 5.7):**
+  - [x] Việt hóa thanh Sidebar và thanh Tìm kiếm của Dashboard tại `App.tsx`.
+  - [x] Việt hóa các Widget xu hướng, Gợi ý kết bạn và thông tin footer tại `App.tsx`.
+  - [x] Việt hóa placeholder và các nút chức năng tại `CreatePostCard.tsx`.
+  - [x] Tái thiết kế vùng Drag & Drop ảnh đại diện tại `ProfilePage.tsx` theo theme Slate Light để sửa lỗi tương phản text.

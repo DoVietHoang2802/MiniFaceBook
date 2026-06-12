@@ -59,6 +59,9 @@ backend/src/main/java/com/minifacebook/
     *   **Bắt buộc** sử dụng thư viện `@Valid` để kiểm duyệt dữ liệu nhập (ví dụ: `@NotBlank`, `@Email`, `@Size`).
     *   Tuyệt đối không để lộ cấu trúc bảng dữ liệu (Entities) ra ngoài API.
 
+### Chat Quality Notes (Sprint 4.5 Hardening)
+*   **Optimistic UI Rollback:** Với các thao tác nhạy cảm ở Frontend chat (edit message, delete me, delete everyone), giao diện phải hỗ trợ rollback nếu backend từ chối do hết hạn 15 phút, mất mạng hoặc lỗi phiên. Đây là lớp bảo vệ UX bắt buộc khi dùng realtime + optimistic update.
+*   **Service Rule Locking:** Các use case editMessage() và deleteMessage() của chat phải luôn được khóa bằng unit tests cho các điều kiện owner-only, text-only, cửa sổ 15 phút, deletedFor, và soft delete cho mọi người. Quy tắc này đã được hardening ngày 12/06/2026 qua MessageServiceTest.
 ### B. Application Layer (Tầng Logic Ứng Dụng)
 *   **Nhiệm vụ:** Hiện thực hóa các kịch bản nghiệp vụ (Use Cases). Điều phối dữ liệu từ Repository, thực hiện các tính toán trung gian và cập nhật trạng thái hệ thống.
 *   **Quy tắc:**

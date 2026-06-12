@@ -223,5 +223,3 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
     *   **Paste Support:** Cho phép người dùng dán (Paste) trực tiếp mã 6 số từ Clipboard. Trình duyệt tự phân tách 6 chữ số và điền đầy vào 6 ô tương ứng.
 *   **Bảo mật:** Chỉ chấp nhận nhập chữ số (`0-9`), chặn các ký tự chữ cái hoặc ký tự đặc biệt ngay khi gõ.
 *   **Timer & Resend:** Hiển thị bộ đếm ngược 60 giây và chỉ cho phép click gửi lại mã OTP sau khi bộ đếm đã về 0.
-
-

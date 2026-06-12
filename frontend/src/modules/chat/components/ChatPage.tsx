@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
 import {
   Search,
@@ -712,6 +712,7 @@ export default function ChatPage({
     if (!newContent) return;
     const msgId = editingMessage.id;
     const nowIso = new Date().toISOString();
+    const previousMessage = editingMessage;
 
     setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, content: newContent, editedAt: nowIso } : m)));
     setEditingMessage(null);
@@ -720,6 +721,15 @@ export default function ChatPage({
     try {
       await chatService.editMessage(msgId, newContent);
     } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, content: previousMessage.content, editedAt: previousMessage.editedAt }
+            : m
+        )
+      );
+      setEditingMessage(previousMessage);
+      setMessageInput(previousMessage.content ?? '');
       triggerToast('Không sửa được tin nhắn (quá 15 phút hoặc lỗi).');
     }
   };
@@ -727,6 +737,7 @@ export default function ChatPage({
   // Xóa tin nhắn (me = xóa riêng, everyone = thu hồi)
   const handleDelete = async (m: MessageResponse, scope: 'me' | 'everyone') => {
     setDeleteMenuFor(null);
+    const previousMessages = messages;
     if (scope === 'everyone') {
       // Optimistic: đánh dấu thu hồi
       setMessages((prev) => prev.map((x) => (x.id === m.id ? { ...x, deleted: true, content: '', mediaUrl: undefined, reactions: {} } : x)));
@@ -737,6 +748,7 @@ export default function ChatPage({
     try {
       await chatService.deleteMessage(m.id, scope);
     } catch {
+      setMessages(previousMessages);
       triggerToast('Không xóa được tin nhắn.');
     }
   };
@@ -1827,3 +1839,4 @@ export default function ChatPage({
     </div>
   );
 }
+

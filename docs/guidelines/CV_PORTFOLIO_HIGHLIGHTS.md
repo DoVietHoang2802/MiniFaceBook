@@ -659,5 +659,15 @@
     *   Đảm bảo tính nhất quán thẩm mỹ Premium cho toàn bộ ứng dụng từ trang ngoài vào trang trong.
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Refactored authentication interfaces to a premium slate light design, resolving 100% of accessibility (A11y) warnings by properly mapping htmlFor/id associations and embedding aria-labels. Segregated authentication error codes on the Spring Boot backend (`INVALID_CREDENTIALS` 1028) to deliver precise validation messages without violating existing business logic rules.*
-
-
+### 🧪 Highlight 42: Cứng hóa Chat Realtime bằng Rollback Optimistic UI & Bộ Test Nghiệp vụ cho Edit/Delete Message
+*   **Situation (Bối cảnh):** Tính năng sửa/xóa tin nhắn trong chat realtime đã hoạt động, nhưng tồn tại một khe hở UX quan trọng: Frontend cập nhật giao diện trước khi API xác nhận, dẫn đến nguy cơ UI hiển thị sai nếu backend từ chối thao tác (hết hạn 15 phút, mất mạng, token hết hạn). Đồng thời phần test backend chưa khóa chặt đầy đủ các rule nghiệp vụ owner-only/text-only/soft-delete.
+*   **Task (Nhiệm vụ):** Gia cố module chat theo hướng production-ready: thêm cơ chế rollback cho Optimistic UI ở các thao tác nhạy cảm, và mở rộng unit test để khóa chặt logic sửa/xóa tin nhắn theo đúng hành vi Facebook/Zalo.
+*   **Action (Hành động):**
+    *   Sửa ChatPage.tsx để chụp trạng thái cũ trước khi Optimistic Update, sau đó tự động khôi phục lại nếu edit message, delete for me, hoặc delete for everyone thất bại.
+    *   Mở rộng MessageServiceTest với các kịch bản quan trọng: chỉ owner mới được sửa/thu hồi, chỉ tin TEXT mới được sửa, giới hạn 15 phút, deletedFor chỉ ẩn phía người xóa, soft delete everyone phải clear content/mediaUrl và giữ record.
+    *   Chạy verify độc lập bằng mvn -Dtest=MessageServiceTest test để xác thực toàn bộ phần cứng hóa chất lượng.
+*   **Result (Kết quả):**
+    *   Loại bỏ trạng thái lệch giữa UI và backend cho các thao tác edit/delete nhạy cảm trong chat.
+    *   Tăng độ tin cậy của module chat với **13/13** test PASS, tạo bước đệm trực tiếp cho Phase 6.1 (Optimization & Quality Audit).
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Production-hardened a real-time chat module by adding optimistic-UI rollback for message edit/delete failures and expanding backend unit coverage to enforce ownership, content-type, time-window, and soft-delete rules, validating the workflow with a dedicated 13/13 passing test suite.*

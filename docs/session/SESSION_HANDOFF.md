@@ -1,9 +1,47 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 08/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🔑 FORGOT PASSWORD OTP 6 SỐ & REDIS CACHE HOÀN THÀNH + 🎨 AUTHENTICATION UI REFACTOR & A11Y COMPLIANT. Tổng tiến độ **~87%**. Hệ thống Authentication Forms đã chuyển hẳn sang theme sáng Slate Light Notion, loại bỏ 100% cảnh báo tiếp cận A11y, phân tách thành công mã lỗi `INVALID_CREDENTIALS` (1028) trên Backend và lưu vết Quy chuẩn giao tiếp 3 phần vào `AI_GUIDELINES.md`.
+## 📅 Cập nhật ngày: 12/06/2026
+## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🔒 CHAT QUALITY HARDENING (REVIEW 1 & 2) HOÀN THÀNH + 🔑 FORGOT PASSWORD OTP 6 SỐ & REDIS CACHE HOÀN THÀNH + 🎨 AUTHENTICATION UI REFACTOR & A11Y COMPLIANT + 🇻🇳 VIỆT HÓA TOÀN DIỆN GIAO DIỆN CHÍNH & KHẮC PHỤC CONTRAST SCREEN. Tổng tiến độ **~88%**. Chat module đã được gia cố thêm rollback Optimistic UI và bộ unit test 13/13 cho edit/delete message.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System & Security Flows). Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (12/06/2026 - CHAT QUALITY HARDENING)
+
+### Công việc đã thực hiện:
+
+1. **Review 1 - Frontend Rollback Optimistic UI:** Gia cố ChatPage.tsx để tự khôi phục trạng thái cũ khi edit message, delete me, hoặc delete everyone thất bại. Tránh tình trạng UI báo đã xóa/sửa nhưng backend reject do hết hạn 15 phút, mất mạng hoặc hết phiên.
+2. **Review 2 - Backend Unit Tests:** Mở rộng MessageServiceTest.java thêm các kịch bản: owner-only, text-only, cửa sổ 15 phút, deletedFor, soft delete cho mọi người, và lọc tin nhắn đã xóa riêng.
+3. **Verify:** Chạy mvn -Dtest=MessageServiceTest test PASS 13/13.
+
+### Files chính:
+- `frontend/src/modules/chat/components/ChatPage.tsx`
+- `backend/src/test/java/com/minifacebook/module/chat/application/service/MessageServiceTest.java`
+- docs/planning/PROGRESS.md
+- docs/planning/ROADMAP.md
+
+---
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (08/06/2026 - SPRINT 5.7)
+
+### Công việc đã thực hiện:
+
+1. **Dashboard Localization (Việt hóa toàn diện):**
+   * Sidebar bên trái: Dịch toàn bộ sang tiếng Việt (Khám phá, Bạn bè, Cộng đồng, Trò chuyện, Thông báo, Bộ sưu tập, Trang cá nhân, Cài đặt).
+   * Thanh tìm kiếm: Placeholder đổi thành "Tìm kiếm bạn bè, bài viết, cộng đồng...".
+   * Widgets bên phải: Việt hóa "Chủ đề xu hướng", "Gợi ý kết bạn", nút "Xem tất cả", "Kết bạn", "Xem thêm".
+   * Khung tạo bài viết (`CreatePostCard`): Đổi placeholder "Bạn đang nghĩ gì thế...?" và dịch các nút "Ảnh / Video", "Cảm xúc", "Check-in", "Bình chọn", "Đăng bài".
+   * Landing & Footer: Việt hóa các nhãn tính năng nổi bật của Vizo cùng dòng bản quyền ở footer.
+2. **Sửa lỗi độ tương phản (Contrast Fix) trên ProfilePage:**
+   * Thay đổi class tiêu đề "Kéo & Thả ảnh đại diện" từ `text-white` sang `text-slate-800` để tránh bị ẩn trên nền sáng.
+   * Tái thiết kế vùng kéo thả ảnh (Drag & Drop box) từ theme dark-mode cũ sang phong cách Slate Light đồng nhất (`border-slate-200`, `bg-slate-50/50`, `text-slate-600`), nâng cao trải nghiệm A11y.
+
+### Files chính:
+- `frontend/src/App.tsx`
+- `frontend/src/modules/post/components/CreatePostCard.tsx`
+- `frontend/src/modules/profile/components/ProfilePage.tsx`
+- `docs/planning/PROGRESS.md`
+- `docs/planning/ROADMAP.md`
 
 ---
 
