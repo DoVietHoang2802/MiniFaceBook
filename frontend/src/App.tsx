@@ -225,14 +225,14 @@ function App() {
               {/* Menu Items (Hizo - khớp Giaodiennangcap.png) */}
               <nav className="space-y-1">
                 {[
-                  { id: 'feed', label: 'Discover', icon: Compass, badge: null },
-                  { id: 'friends', label: 'Network', icon: Users, badge: null },
-                  { id: 'communities', label: 'Communities', icon: Globe, badge: null },
-                  { id: 'chats', label: 'Chats', icon: MessageCircle, badge: chatUnread > 0 ? (chatUnread > 99 ? '99+' : String(chatUnread)) : null },
-                  { id: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null },
-                  { id: 'collections', label: 'Collections', icon: Bookmark, badge: null },
-                  { id: 'profile', label: 'Profile', icon: User, badge: null },
-                  { id: 'settings', label: 'Settings', icon: Settings, badge: null }
+                  { id: 'feed', label: 'Khám phá', icon: Compass, badge: null },
+                  { id: 'friends', label: 'Bạn bè', icon: Users, badge: null },
+                  { id: 'communities', label: 'Cộng đồng', icon: Globe, badge: null },
+                  { id: 'chats', label: 'Trò chuyện', icon: MessageCircle, badge: chatUnread > 0 ? (chatUnread > 99 ? '99+' : String(chatUnread)) : null },
+                  { id: 'notifications', label: 'Thông báo', icon: Bell, badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null },
+                  { id: 'collections', label: 'Bộ sưu tập', icon: Bookmark, badge: null },
+                  { id: 'profile', label: 'Trang cá nhân', icon: User, badge: null },
+                  { id: 'settings', label: 'Cài đặt', icon: Settings, badge: null }
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
@@ -331,7 +331,7 @@ function App() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Search for people, posts, communities..." 
+                  placeholder="Tìm kiếm bạn bè, bài viết, cộng đồng..." 
                   className="w-full pl-10 pr-16 py-2.5 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-xs text-slate-700 transition-all font-medium shadow-sm"
                   onClick={() => triggerToast("Tính năng Tìm kiếm nâng cao sẽ ra mắt ở Phase 4!")}
                 />
@@ -422,21 +422,21 @@ function App() {
               {/* Widget 1: Trending Topics (khớp Giaodiennangcap.png - có % tăng) */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800 text-sm font-outfit">Trending Topics</span>
+                  <span className="font-bold text-slate-800 text-sm font-outfit">Chủ đề xu hướng</span>
                   <button 
                     onClick={() => triggerToast("Xem danh mục xu hướng chi tiết...")}
                     className="text-[11px] font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
                   >
-                    View all
+                    Xem tất cả
                   </button>
                 </div>
                 <div className="space-y-3 pt-1">
                   {[
-                    { tag: '#JavaScript', posts: '12.5K posts', growth: '+24%' },
-                    { tag: '#Frontend', posts: '8.7K posts', growth: '+18%' },
-                    { tag: '#WebDev', posts: '6.3K posts', growth: '+15%' },
-                    { tag: '#UIUX', posts: '4.2K posts', growth: '+8%' },
-                    { tag: '#AI', posts: '3.1K posts', growth: '+6%' }
+                    { tag: '#JavaScript', posts: '12.5K bài viết', growth: '+24%' },
+                    { tag: '#Frontend', posts: '8.7K bài viết', growth: '+18%' },
+                    { tag: '#WebDev', posts: '6.3K bài viết', growth: '+15%' },
+                    { tag: '#UIUX', posts: '4.2K bài viết', growth: '+8%' },
+                    { tag: '#AI', posts: '3.1K bài viết', growth: '+6%' }
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between cursor-pointer group">
                       <div className="flex items-center space-x-3">
@@ -460,12 +460,12 @@ function App() {
               {/* Widget 2: Suggested Friends (Khớp 100% TrangChu4.png) */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800 text-sm font-outfit">People You May Know</span>
+                  <span className="font-bold text-slate-800 text-sm font-outfit">Gợi ý kết bạn</span>
                   <button 
                     onClick={() => setActiveTab('friends')}
                     className="text-[11px] font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
                   >
-                    View all
+                    Xem tất cả
                   </button>
                 </div>
 
@@ -506,7 +506,7 @@ function App() {
                           <>Đã gửi</>
                         ) : (
                           <>
-                            <UserPlus className="h-3.5 w-3.5" /> Follow
+                            <UserPlus className="h-3.5 w-3.5" /> Kết bạn
                           </>
                         )}
                       </button>
@@ -519,7 +519,7 @@ function App() {
                   onClick={() => setActiveTab('friends')}
                   className="w-full flex items-center justify-center space-x-1 py-2 text-slate-400 hover:text-slate-700 text-xs font-bold transition-colors cursor-pointer border-t border-slate-100 pt-3 mt-2"
                 >
-                  <span>Show more</span>
+                  <span>Xem thêm</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </div>
@@ -528,14 +528,14 @@ function App() {
             {/* Footer của Sidebar */}
             <div className="text-left text-[10px] text-slate-400 leading-relaxed max-w-[280px] pt-4">
               <div className="flex flex-wrap gap-x-2 gap-y-1">
-                <a href="#about" className="hover:underline">About</a>·
-                <a href="#help" className="hover:underline">Help</a>·
-                <a href="#terms" className="hover:underline">Terms</a>·
-                <a href="#privacy" className="hover:underline">Privacy</a>·
+                <a href="#about" className="hover:underline">Giới thiệu</a>·
+                <a href="#help" className="hover:underline">Hỗ trợ</a>·
+                <a href="#terms" className="hover:underline">Điều khoản</a>·
+                <a href="#privacy" className="hover:underline">Quyền riêng tư</a>·
                 <a href="#cookies" className="hover:underline">Cookies</a>·
-                <a href="#more" className="hover:underline">More</a>
+                <a href="#more" className="hover:underline">Thêm</a>
               </div>
-              <p className="mt-2 text-slate-400">© 2026 Hizo. All rights reserved.</p>
+              <p className="mt-2 text-slate-400">© 2026 Hizo. Bảo lưu mọi quyền.</p>
             </div>
           </aside>
 
@@ -597,7 +597,7 @@ function App() {
                       <MessageSquare className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm">Realtime Messaging</h4>
+                      <h4 className="font-bold text-slate-800 text-sm">Nhắn tin thời gian thực</h4>
                       <p className="text-slate-500 text-xs mt-1">STOMP WebSocket & Redis Pub/Sub</p>
                     </div>
                   </div>
@@ -607,7 +607,7 @@ function App() {
                       <Share2 className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm">Social Graph DB</h4>
+                      <h4 className="font-bold text-slate-800 text-sm">Đồ thị mạng xã hội</h4>
                       <p className="text-slate-500 text-xs mt-1">Đồ thị quan hệ bạn bè Neo4j</p>
                     </div>
                   </div>
@@ -617,7 +617,7 @@ function App() {
                       <Shield className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-800 text-sm">Strict Security</h4>
+                      <h4 className="font-bold text-slate-800 text-sm">Bảo mật tối đa</h4>
                       <p className="text-slate-500 text-xs mt-1">HttpOnly Cookies & Token Rotation</p>
                     </div>
                   </div>
@@ -656,7 +656,7 @@ function App() {
           {/* Footer tối giản */}
           <footer className="w-full border-t border-slate-200 py-6 z-10 bg-white mt-auto">
             <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
-              <p>© 2026 Vizo Project. All rights reserved.</p>
+              <p>© 2026 Vizo Project. Bảo lưu mọi quyền.</p>
               <div className="flex space-x-6">
                 <a href="#privacy" className="hover:underline">Điều khoản bảo mật</a>
                 <a href="#terms" className="hover:underline">Điều khoản dịch vụ</a>

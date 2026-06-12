@@ -128,7 +128,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={`What's on your mind, ${currentUser?.fullName?.split(' ')[0] || 'Viet'}?`}
+            placeholder={`Bạn đang nghĩ gì thế, ${currentUser?.fullName?.split(' ')[0] || 'Viet'}?`}
             className="w-full bg-transparent text-slate-800 placeholder-slate-400 resize-none outline-none text-sm min-h-[50px] focus:min-h-[90px] transition-all duration-300 font-medium"
             disabled={isSubmitting}
           />
@@ -158,7 +158,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                 disabled={isSubmitting}
               >
                 <ImageIcon className="h-4.5 w-4.5" />
-                <span>Photo / Video</span>
+                <span>Ảnh / Video</span>
               </button>
               <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleFileChange} className="hidden" />
 
@@ -172,7 +172,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                 className="flex items-center space-x-1.5 text-amber-500 hover:bg-amber-50 px-3 py-1.5 rounded-xl transition text-xs font-bold cursor-pointer"
               >
                 <span className="text-sm">😊</span>
-                <span>Feeling</span>
+                <span>Cảm xúc</span>
               </button>
 
               <button 
@@ -188,7 +188,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>Check in</span>
+                <span>Check-in</span>
               </button>
 
               <button 
@@ -203,7 +203,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                 <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span>Poll</span>
+                <span>Bình chọn</span>
               </button>
             </div>
             
@@ -213,7 +213,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-xs transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md shadow-indigo-500/10 hover-lift shrink-0"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              <span>Post</span>
+              <span>Đăng bài</span>
             </button>
           </div>
         </div>

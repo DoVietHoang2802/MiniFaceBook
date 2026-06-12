@@ -406,8 +406,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
             {/* Cột phải: Vùng kéo thả hình ảnh Drag-and-Drop nâng cao */}
             <div className="lg:col-span-5 space-y-3">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <UploadCloud className="h-5 w-5 text-indigo-400" />
+              <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                <UploadCloud className="h-5 w-5 text-violet-500" />
                 <span>Kéo & Thả ảnh đại diện</span>
               </h3>
 
@@ -420,17 +420,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 onClick={triggerFileInput}
                 className={`w-full p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
                   dragActive 
-                    ? 'border-blue-500 bg-blue-500/5 scale-[1.02] shadow-[0_0_20px_rgba(59,130,246,0.1)]' 
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-950/10 hover:bg-slate-950/20'
+                    ? 'border-violet-500 bg-violet-50 scale-[1.02] shadow-[0_0_20px_rgba(124,58,237,0.1)]' 
+                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-50'
                 }`}
               >
-                <div className={`p-4 rounded-full bg-slate-900 border border-slate-800 mb-4 transition-transform duration-300 ${dragActive ? 'scale-110 rotate-12 text-blue-400' : 'text-slate-400'}`}>
+                <div className={`p-4 rounded-full bg-white border border-slate-200 mb-4 transition-transform duration-300 ${dragActive ? 'scale-110 rotate-12 text-violet-500' : 'text-slate-400'}`}>
                   <UploadCloud className="h-8 w-8" />
                 </div>
-                <p className="text-sm font-bold text-slate-300">
+                <p className="text-sm font-bold text-slate-600">
                   {dragActive ? "Thả tệp tin vào đây" : "Thả ảnh vào đây hoặc nhấp để chọn"}
                 </p>
-                <p className="text-xs text-slate-600 mt-2 font-medium">
+                <p className="text-xs text-slate-400 mt-2 font-medium">
                   Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB.
                 </p>
               </div>
