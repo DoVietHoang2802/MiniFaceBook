@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { postService } from '../services/postService';
 import type { ReactionUserResponse, ReactionType } from '../types/post.types';
@@ -13,29 +13,31 @@ const REACTION_EMOJI: Record<ReactionType, { emoji: string; label: string }> = {
 };
 
 interface ReactionsModalProps {
-  postId: string;
+  postId?: string;
+  commentId?: string;
+  title?: string;
   onClose: () => void;
 }
 
-/**
- * Modal hiển thị danh sách "ai đã thả cảm xúc gì" (giống Facebook).
- * Có tab "Tất cả" + tab lọc theo từng loại cảm xúc kèm số đếm.
- */
-const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, onClose }) => {
+const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, commentId, title = 'Cảm xúc', onClose }) => {
   const [reactions, setReactions] = useState<ReactionUserResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<ReactionType | 'ALL'>('ALL');
 
   useEffect(() => {
     setIsLoading(true);
-    postService
-      .getReactions(postId)
+    const request = commentId
+      ? postService.getCommentReactions(commentId)
+      : postId
+        ? postService.getReactions(postId)
+        : Promise.resolve([]);
+
+    request
       .then((data) => setReactions(data))
       .catch(() => setReactions([]))
       .finally(() => setIsLoading(false));
-  }, [postId]);
+  }, [postId, commentId]);
 
-  // Đếm số lượng theo từng loại
   const counts = reactions.reduce(
     (acc, r) => {
       acc[r.type] = (acc[r.type] || 0) + 1;
@@ -44,13 +46,8 @@ const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, onClose }) => {
     {} as Record<string, number>
   );
 
-  // Các loại có người thả (để render tab)
-  const presentTypes = (Object.keys(REACTION_EMOJI) as ReactionType[]).filter(
-    (t) => counts[t] > 0
-  );
-
-  const filtered =
-    activeFilter === 'ALL' ? reactions : reactions.filter((r) => r.type === activeFilter);
+  const presentTypes = (Object.keys(REACTION_EMOJI) as ReactionType[]).filter((t) => counts[t] > 0);
+  const filtered = activeFilter === 'ALL' ? reactions : reactions.filter((r) => r.type === activeFilter);
 
   return (
     <div
@@ -61,9 +58,8 @@ const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, onClose }) => {
         className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800 text-base font-outfit">Cảm xúc</h3>
+          <h3 className="font-bold text-slate-800 text-base font-outfit">{title}</h3>
           <button
             onClick={onClose}
             className="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
@@ -72,14 +68,11 @@ const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, onClose }) => {
           </button>
         </div>
 
-        {/* Tabs lọc */}
         <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-100 overflow-x-auto">
           <button
             onClick={() => setActiveFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-              activeFilter === 'ALL'
-                ? 'bg-violet-50 text-violet-600'
-                : 'text-slate-500 hover:bg-slate-50'
+              activeFilter === 'ALL' ? 'bg-violet-50 text-violet-600' : 'text-slate-500 hover:bg-slate-50'
             }`}
           >
             Tất cả {reactions.length}
@@ -98,7 +91,6 @@ const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, onClose }) => {
           ))}
         </div>
 
-        {/* Danh sách người thả */}
         <div className="max-h-[360px] overflow-y-auto p-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-10 text-slate-400">
@@ -121,7 +113,6 @@ const ReactionsModal: React.FC<ReactionsModalProps> = ({ postId, onClose }) => {
                         r.name?.charAt(0).toUpperCase()
                       )}
                     </div>
-                    {/* Emoji badge tròn nhỏ góc dưới-phải avatar (giống Facebook) */}
                     <span className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-white flex items-center justify-center text-[12px] leading-none shadow ring-1 ring-slate-100">
                       {REACTION_EMOJI[r.type].emoji}
                     </span>

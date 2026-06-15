@@ -27,9 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * REST API Controller quản lý các cuộc trò chuyện (Sprint 4.2).
- */
 @RestController
 @RequestMapping("/conversations")
 @RequiredArgsConstructor
@@ -93,8 +90,9 @@ public class ConversationController {
       @AuthenticationPrincipal Jwt jwt,
       @PathVariable("id") String conversationId,
       @RequestParam("file") MultipartFile file,
+      @RequestParam(value = "content", required = false) String content,
       @RequestParam(value = "replyToMessageId", required = false) String replyToMessageId) {
-    MessageResponse response = messageService.sendImageMessage(jwt.getSubject(), conversationId, file, replyToMessageId);
+    MessageResponse response = messageService.sendImageMessage(jwt.getSubject(), conversationId, file, content, replyToMessageId);
     return ApiResponse.success("Gửi ảnh thành công", response);
   }
 }

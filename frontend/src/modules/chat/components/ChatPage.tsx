@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
 import {
   Search,
@@ -611,7 +611,7 @@ export default function ChatPage({
   };
 
   // Upload 1 ảnh (Optimistic + progress + nén). Trả promise để gửi tuần tự.
-  const uploadOneImage = async (file: File, replyId: string | null) => {
+  const uploadOneImage = async (file: File, replyId: string | null, attachedContent?: string) => {
     const convId = activeConversation!.id;
     const tempId = `temp-img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const localPreview = URL.createObjectURL(file);
@@ -620,7 +620,7 @@ export default function ChatPage({
       id: tempId,
       conversationId: convId,
       sender: { id: currentUser.id, name: currentUser.fullName || 'Tôi', avatar: currentUser.avatar },
-      content: '',
+      content: attachedContent || '',
       type: 'IMAGE',
       mediaUrl: localPreview,
       createdAt: new Date().toISOString(),
@@ -643,7 +643,7 @@ export default function ChatPage({
         toUpload = new File([blob], file.name.replace(/\.[^/.]+$/, '.webp'), { type: 'image/webp' });
       }
 
-      const serverMsg = await chatService.sendImage(convId, toUpload, replyId, (percent) => {
+      const serverMsg = await chatService.sendImage(convId, toUpload, attachedContent, replyId, (percent) => {
         setUploadProgress((prev) => ({ ...prev, [tempId]: percent }));
       });
 
@@ -665,15 +665,15 @@ export default function ChatPage({
   };
 
   // Gửi toàn bộ ảnh trong tray (mỗi ảnh = 1 message, reply gắn vào ảnh đầu tiên)
-  const flushPendingImages = async () => {
+  const flushPendingImages = async (attachedContent?: string) => {
     if (pendingImages.length === 0) return;
     const images = [...pendingImages];
     const replyId = replyingTo?.id ?? null;
     setPendingImages([]);
     setReplyingTo(null);
     for (let i = 0; i < images.length; i++) {
-      // chỉ ảnh đầu tiên kèm reply (giống Messenger)
-      await uploadOneImage(images[i].file, i === 0 ? replyId : null);
+      const contentForThisImage = i === 0 ? attachedContent : undefined;
+      await uploadOneImage(images[i].file, i === 0 ? replyId : null, contentForThisImage);
       URL.revokeObjectURL(images[i].url);
     }
   };
@@ -771,10 +771,12 @@ export default function ChatPage({
     const hasImages = pendingImages.length > 0;
     if (!hasText && !hasImages) return;
 
-    // Gửi ảnh trong tray trước (nếu có)
+    // Gửi ảnh trong tray trước (nếu có) kèm theo chữ làm Caption
     if (hasImages) {
-      await flushPendingImages();
-      if (!hasText) return; // chỉ có ảnh thì xong
+      const contentToSend = messageInput.trim();
+      setMessageInput('');
+      await flushPendingImages(contentToSend);
+      return; // Xong luôn, không gửi thêm tin TEXT riêng biệt nữa!
     }
 
     const contentToSend = messageInput.trim();
@@ -1839,4 +1841,6 @@ export default function ChatPage({
     </div>
   );
 }
+
+
 

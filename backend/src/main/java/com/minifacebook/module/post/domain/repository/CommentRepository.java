@@ -4,8 +4,10 @@ import com.minifacebook.module.post.domain.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
+
 public interface CommentRepository {
     Comment save(Comment comment);
     Page<Comment> findByPostIdOrderByCreatedAtDesc(String postId, Pageable pageable);
-    void delete(Comment comment);
+    Optional<Comment> findById(String commentId);
 }

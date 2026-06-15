@@ -1,4 +1,4 @@
-export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
+﻿export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
 
 export interface PostResponse {
   id: string;
@@ -24,6 +24,8 @@ export interface CommentResponse {
   content: string;
   imageUrl: string | null;
   createdAt: string;
+  reactionCounts: Record<string, number>;
+  myReaction: ReactionType | null;
 }
 
 export interface ReactionRequest {
@@ -36,6 +38,13 @@ export interface PostCountEvent {
   reactCount: number;
   commentCount: number;
   reactionsCount: Record<string, number>;
+}
+
+/** Sự kiện realtime cập nhật reaction counts cho 1 bình luận (topic /topic/comment.<id>). */
+export interface CommentReactionEvent {
+  commentId: string;
+  reactionCounts: Record<string, number>;
+  userReaction: ReactionType | null;
 }
 
 export interface ReactionUserResponse {

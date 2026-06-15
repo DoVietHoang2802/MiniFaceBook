@@ -1,13 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Camera, Smile, Send, Loader2, MoreHorizontal } from 'lucide-react';
+﻿import React, { useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Camera, Loader2, MoreHorizontal, Send, Smile } from 'lucide-react';
 import { postService } from '../services/postService';
-import type { CommentResponse } from '../types/post.types';
+import type { CommentResponse, ReactionType, CommentReactionEvent } from '../types/post.types';
+import { webSocketService } from '../../chat/services/webSocketService';
+import ReactionPicker from './ReactionPicker';
+import ReactionsModal from './ReactionsModal';
+import { REACTION_ICONS } from './reactionConfig';
 
 interface CommentSectionProps {
   postId: string;
   currentUser: any;
-  /** Báo cho PostCard điều chỉnh số đếm bình luận (optimistic). +1 khi thêm, -1 khi lỗi. */
   onCommentCountChange?: (delta: number) => void;
 }
 
@@ -15,9 +18,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
+  const [showReactionsFor, setShowReactionsFor] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch bình luận
   const { data, isLoading } = useQuery({
     queryKey: ['comments', postId],
     queryFn: () => postService.getComments(postId, 0, 50),
@@ -26,13 +30,49 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
 
   const comments = data?.data?.content || [];
 
-  // Tự động giãn nở ô nhập text
+  // WebSocket subscription cho comment reactions realtime
+  useEffect(() => {
+    // Track subscriptions để cleanup
+    const unsubscribes: (() => void)[] = [];
+
+    // Subscribe cho mỗi comment đang hiển thị
+    comments.forEach((comment: CommentResponse) => {
+      const unsubscribe = webSocketService.subscribe<CommentReactionEvent>(
+        `/topic/comment.${comment.id}`,
+        (event) => {
+          // Khi nhận reaction update, cập nhật reactionCounts của comment đó
+          queryClient.setQueryData(['comments', postId], (old: any) => {
+            if (!old?.data?.content) return old;
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                content: old.data.content.map((c: CommentResponse) => {
+                  if (c.id !== event.commentId) return c;
+                  return {
+                    ...c,
+                    reactionCounts: event.reactionCounts,
+                  };
+                })
+              }
+            };
+          });
+        }
+      );
+      unsubscribes.push(unsubscribe);
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
+  }, [comments, postId, queryClient]);
+
   const handleInput = () => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto'; // Reset để tính lại
+      textarea.style.height = 'auto';
       const scrollHeight = textarea.scrollHeight;
-      // Max height khoảng 5-6 dòng (~120px)
       textarea.style.height = scrollHeight > 120 ? '120px' : `${scrollHeight}px`;
     }
   };
@@ -41,17 +81,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
     handleInput();
   }, [content]);
 
-  // Optimistic UI Mutation
   const commentMutation = useMutation({
     mutationFn: (newContent: string) => postService.addComment(postId, newContent),
     onMutate: async (newContent) => {
-      // Dừng refetch đang dở dang
       await queryClient.cancelQueries({ queryKey: ['comments', postId] });
-
-      // Lấy snapshot hiện tại
       const previousComments = queryClient.getQueryData(['comments', postId]);
 
-      // Tạo comment fake với Optimistic UI
       const optimisticComment: CommentResponse = {
         id: `temp-${Date.now()}`,
         postId,
@@ -61,9 +96,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
         content: newContent,
         imageUrl: null,
         createdAt: new Date().toISOString(),
+        reactionCounts: {},
+        myReaction: null,
       };
 
-      // Chèn vào cache
       queryClient.setQueryData(['comments', postId], (old: any) => {
         if (!old || !old.data) return { data: { content: [optimisticComment], totalElements: 1 } };
         return {
@@ -76,21 +112,68 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
         };
       });
 
-      // Cập nhật số đếm trên PostCard ngay (optimistic)
       onCommentCountChange?.(1);
-
       return { previousComments };
     },
     onError: (err: any, _newContent, context) => {
       alert(`Lỗi khi bình luận: ${err.response?.data?.message || err.message}`);
-      // Nếu lỗi thì rollback lại snapshot + hoàn số đếm
       if (context?.previousComments) {
         queryClient.setQueryData(['comments', postId], context.previousComments);
       }
       onCommentCountChange?.(-1);
     },
     onSettled: () => {
-      // Bất kể thành công hay thất bại, gọi lại API để đồng bộ dữ liệu thật
+      queryClient.invalidateQueries({ queryKey: ['comments', postId] });
+    },
+  });
+
+  const reactMutation = useMutation({
+    mutationFn: ({ commentId, type }: { commentId: string; type: ReactionType }) => postService.reactToComment(commentId, { type }),
+    onMutate: async ({ commentId, type }) => {
+      await queryClient.cancelQueries({ queryKey: ['comments', postId] });
+      const previousComments = queryClient.getQueryData(['comments', postId]);
+
+      queryClient.setQueryData(['comments', postId], (old: any) => {
+        if (!old?.data?.content) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            content: old.data.content.map((comment: CommentResponse) => {
+              if (comment.id !== commentId) return comment;
+
+              const nextCounts = { ...(comment.reactionCounts || {}) };
+              const currentReaction = comment.myReaction;
+
+              if (currentReaction) {
+                const currentCount = nextCounts[currentReaction] || 0;
+                if (currentCount <= 1) delete nextCounts[currentReaction];
+                else nextCounts[currentReaction] = currentCount - 1;
+              }
+
+              const nextMyReaction = currentReaction === type ? null : type;
+              if (nextMyReaction) {
+                nextCounts[nextMyReaction] = (nextCounts[nextMyReaction] || 0) + 1;
+              }
+
+              return {
+                ...comment,
+                reactionCounts: nextCounts,
+                myReaction: nextMyReaction,
+              };
+            })
+          }
+        };
+      });
+
+      return { previousComments };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(['comments', postId], context.previousComments);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
     },
   });
@@ -99,7 +182,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
     if (!content.trim()) return;
     commentMutation.mutate(content.trim());
     setContent('');
-    // Thu nhỏ lại ô nhập
     if (textareaRef.current) {
       textareaRef.current.style.height = '36px';
     }
@@ -107,26 +189,31 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // Ngăn xuống dòng
+      e.preventDefault();
       handleSubmit();
     }
   };
 
-  // Format thời gian hiển thị tương đối
   const formatTime = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
     } catch {
       return 'Vừa xong';
     }
   };
 
+  const getTopReactionTypes = (reactionCounts: Record<string, number>) => {
+    return Object.entries(reactionCounts || {})
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type]) => type as ReactionType)
+      .slice(0, 3);
+  };
+
   return (
     <div className="pt-3 mt-1 border-t border-slate-100 animate-fade-in-up">
-      {/* KHUNG NHẬP BÌNH LUẬN */}
       <div className="flex items-start gap-2 mb-4">
-        {/* Avatar */}
         <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5">
           {currentUser?.avatar ? (
             <img src={currentUser.avatar} alt="Avatar" className="h-full w-full object-cover" />
@@ -137,7 +224,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
           )}
         </div>
 
-        {/* Khung Input Auto-resize */}
         <div className="flex-1 relative flex items-end">
           <div className={`w-full flex items-end bg-slate-100/70 border rounded-2xl transition-all duration-200 ${
             isFocused ? 'border-blue-500/50 bg-white shadow-[0_0_0_4px_rgba(59,130,246,0.1)]' : 'border-transparent'
@@ -153,7 +239,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
               className="w-full bg-transparent outline-none resize-none px-3 py-2 text-[0.9rem] text-slate-700 min-h-[36px] max-h-[120px] overflow-y-auto leading-relaxed"
               rows={1}
             />
-            {/* Icons Upload & Emoji */}
             <div className="flex items-center px-2 py-1.5 shrink-0 space-x-1">
               <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
                 <Smile className="h-4.5 w-4.5" />
@@ -163,10 +248,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
               </button>
             </div>
           </div>
-          
-          {/* Nút Send chỉ hiện khi có text */}
+
           {content.trim().length > 0 && (
-            <button 
+            <button
               onClick={handleSubmit}
               disabled={commentMutation.isPending}
               className="ml-2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shrink-0 shadow-sm"
@@ -174,65 +258,120 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
               {commentMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Send className="h-4 w-4 -ml-0.5" /> // Trừ hao ml xíu cho icon cân giữa
+                <Send className="h-4 w-4 -ml-0.5" />
               )}
             </button>
           )}
         </div>
       </div>
 
-      {/* DANH SÁCH BÌNH LUẬN (FLAT LIST) */}
       {isLoading ? (
         <div className="flex justify-center py-4">
           <Loader2 className="h-5 w-5 text-slate-400 animate-spin" />
         </div>
       ) : (
         <div className="space-y-3">
-          {comments.map((comment: CommentResponse) => (
-            <div key={comment.id} className="flex gap-2 group animate-fade-in-up">
-              {/* Avatar người comment */}
-              <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5">
-                {comment.authorAvatar ? (
-                  <img src={comment.authorAvatar} alt={comment.authorName} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-xs bg-slate-50">
-                    {comment.authorName?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                )}
-              </div>
+          {comments.map((comment: CommentResponse) => {
+            const topReactionTypes = getTopReactionTypes(comment.reactionCounts || {});
+            const reactionTotal = Object.values(comment.reactionCounts || {}).reduce((sum, count) => sum + count, 0);
+            const activeReaction = comment.myReaction ? REACTION_ICONS[comment.myReaction] : null;
 
-              {/* Nội dung comment */}
-              <div className="flex flex-col flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="bg-slate-100/80 px-3.5 py-2 rounded-2xl max-w-[90%]">
-                    <span className="font-bold text-slate-800 text-[0.85rem] block leading-tight mb-0.5">
-                      {comment.authorName}
-                    </span>
-                    <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">
-                      {comment.content}
-                    </span>
-                  </div>
-                  {/* Dấu 3 chấm (More) - Hiện khi hover */}
-                  <button className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
+            return (
+              <div key={comment.id} className="flex gap-2 group animate-fade-in-up">
+                <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5">
+                  {comment.authorAvatar ? (
+                    <img src={comment.authorAvatar} alt={comment.authorName} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-xs bg-slate-50">
+                      {comment.authorName?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
                 </div>
 
-                {/* Actions (Like, Reply) & Time */}
-                <div className="flex items-center gap-3 px-3 mt-1">
-                  <span className="text-[11px] text-slate-500">{formatTime(comment.createdAt)}</span>
-                  <button className="text-[11px] font-bold text-slate-500 hover:underline">Thích</button>
-                  <button className="text-[11px] font-bold text-slate-500 hover:underline">Phản hồi</button>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex items-start gap-2">
+                    <div className="max-w-[90%] min-w-0">
+                      <div className="bg-slate-100/80 px-3.5 py-2 rounded-2xl break-words">
+                        <span className="font-bold text-slate-800 text-[0.85rem] block leading-tight mb-0.5">
+                          {comment.authorName}
+                        </span>
+                        <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">
+                          {comment.content}
+                        </span>
+                      </div>
+
+                      {reactionTotal > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowReactionsFor(comment.id)}
+                          className="mt-1 ml-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 shadow-sm hover:bg-slate-50"
+                        >
+                          <div className="flex items-center">
+                            {topReactionTypes.map((type, idx) => (
+                              <span
+                                key={type}
+                                className="h-4 w-4 rounded-full bg-white flex items-center justify-center text-[11px] leading-none"
+                                style={{ marginLeft: idx === 0 ? 0 : '-4px', zIndex: 10 - idx }}
+                              >
+                                {REACTION_ICONS[type]?.emoji || '👍'}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-[10px] font-semibold text-slate-600">{reactionTotal}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <button className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-3 mt-1 relative flex-wrap">
+                    <span className="text-[11px] text-slate-500">{formatTime(comment.createdAt)}</span>
+                    <div
+                      className="relative"
+                      onMouseEnter={() => setReactionPickerFor(comment.id)}
+                      onMouseLeave={() => setReactionPickerFor((prev) => (prev === comment.id ? null : prev))}
+                    >
+                      {reactionPickerFor === comment.id && (
+                        <div className="absolute bottom-full left-0 z-30 pb-2">
+                          <ReactionPicker
+                            onSelect={(type) => {
+                              reactMutation.mutate({ commentId: comment.id, type });
+                              setReactionPickerFor(null);
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => reactMutation.mutate({ commentId: comment.id, type: (comment.myReaction || 'LIKE') as ReactionType })}
+                        className={`text-[11px] font-bold hover:underline ${activeReaction ? activeReaction.color : 'text-slate-500'}`}
+                      >
+                        {activeReaction?.label || 'Thích'}
+                      </button>
+                    </div>
+                    <button className="text-[11px] font-bold text-slate-500 hover:underline">Phản hồi</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {comments.length === 0 && (
             <div className="text-center text-sm text-slate-400 py-2">
               Chưa có bình luận nào. Hãy là người đầu tiên!
             </div>
           )}
         </div>
+      )}
+
+      {showReactionsFor && (
+        <ReactionsModal
+          commentId={showReactionsFor}
+          title="Cảm xúc bình luận"
+          onClose={() => setShowReactionsFor(null)}
+        />
       )}
     </div>
   );

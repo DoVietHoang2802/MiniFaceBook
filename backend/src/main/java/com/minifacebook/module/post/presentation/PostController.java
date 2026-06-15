@@ -1,13 +1,13 @@
 package com.minifacebook.module.post.presentation;
 
+import com.minifacebook.module.post.application.dto.CommentRequest;
+import com.minifacebook.module.post.application.dto.CommentResponse;
 import com.minifacebook.module.post.application.dto.CreatePostRequest;
 import com.minifacebook.module.post.application.dto.PostResponse;
 import com.minifacebook.module.post.application.dto.ReactionRequest;
-import com.minifacebook.module.post.application.dto.CommentRequest;
-import com.minifacebook.module.post.application.dto.CommentResponse;
+import com.minifacebook.module.post.application.service.CommentService;
 import com.minifacebook.module.post.application.service.PostService;
 import com.minifacebook.module.post.application.service.ReactionService;
-import com.minifacebook.module.post.application.service.CommentService;
 import com.minifacebook.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +19,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/posts")
@@ -85,11 +92,32 @@ public class PostController {
     @GetMapping("/{postId}/comments")
     @Operation(summary = "Lấy danh sách bình luận", description = "Lấy danh sách bình luận phân trang của một bài viết")
     public ApiResponse<Page<CommentResponse>> getComments(
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String postId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<CommentResponse> response = commentService.getCommentsByPost(postId, pageable);
+        Page<CommentResponse> response = jwt != null
+                ? commentService.getCommentsByPost(jwt.getSubject(), postId, pageable)
+                : commentService.getCommentsByPost(postId, pageable);
         return ApiResponse.success("Comments fetched successfully", response);
+    }
+
+    @GetMapping("/comments/{commentId}/reactions")
+    @Operation(summary = "Danh sách người đã thả cảm xúc bình luận", description = "Lấy danh sách người dùng đã thả cảm xúc vào bình luận, kèm loại cảm xúc - phục vụ hiển thị modal giống Facebook.")
+    public ApiResponse<java.util.List<com.minifacebook.module.post.application.dto.ReactionUserResponse>> getCommentReactions(
+            @PathVariable String commentId) {
+        return ApiResponse.success("Comment reactions fetched successfully", commentService.getCommentReactions(commentId));
+    }
+
+    @PostMapping("/comments/{commentId}/react")
+    @Operation(summary = "Bày tỏ cảm xúc với bình luận", description = "Bật/tắt cảm xúc trên bình luận. Gửi lại cùng loại cảm xúc sẽ gỡ bỏ cảm xúc đó.")
+    public ApiResponse<Void> reactToComment(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String commentId,
+            @RequestBody @Valid ReactionRequest request) {
+        String email = jwt.getSubject();
+        commentService.reactToComment(email, commentId, request);
+        return ApiResponse.success("Comment reaction updated successfully", null);
     }
 }

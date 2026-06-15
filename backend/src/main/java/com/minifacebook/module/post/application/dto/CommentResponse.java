@@ -2,7 +2,9 @@ package com.minifacebook.module.post.application.dto;
 
 import lombok.Builder;
 import lombok.Data;
+
 import java.time.Instant;
+import java.util.Map;
 
 @Data
 @Builder
@@ -15,4 +17,6 @@ public class CommentResponse {
     private String content;
     private String imageUrl;
     private Instant createdAt;
+    private Map<String, Integer> reactionCounts;
+    private String myReaction;
 }

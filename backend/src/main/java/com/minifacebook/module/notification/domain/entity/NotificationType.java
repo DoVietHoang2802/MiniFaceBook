@@ -9,6 +9,7 @@ package com.minifacebook.module.notification.domain.entity;
 public enum NotificationType {
   LIKE,
   COMMENT,
+  COMMENT_REACTION,
   FRIEND_REQUEST,
   FRIEND_ACCEPTED
 }

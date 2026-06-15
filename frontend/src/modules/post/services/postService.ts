@@ -1,4 +1,4 @@
-import axiosClient from '../../../core/api/axiosClient';
+﻿import axiosClient from '../../../core/api/axiosClient';
 import type { PostResponse, Page, ReactionRequest, CommentResponse, ReactionUserResponse } from '../types/post.types';
 
 export const postService = {
@@ -8,7 +8,7 @@ export const postService = {
     files.forEach((file) => {
       formData.append('images', file);
     });
-    
+
     const response = await axiosClient.post<{ data: PostResponse }>('/posts', formData);
     return response.data;
   },
@@ -25,13 +25,18 @@ export const postService = {
     return response.data;
   },
 
+  reactToComment: async (commentId: string, request: ReactionRequest) => {
+    const response = await axiosClient.post<{ data: void }>(`/posts/comments/${commentId}/react`, request);
+    return response.data;
+  },
+
   addComment: async (postId: string, content: string, image?: File) => {
     const formData = new FormData();
     formData.append('content', content);
     if (image) {
       formData.append('image', image);
     }
-    
+
     const response = await axiosClient.post<{ data: CommentResponse }>(`/posts/${postId}/comments`, formData);
     return response.data;
   },
@@ -43,9 +48,13 @@ export const postService = {
     return response.data;
   },
 
-  // Lấy danh sách người đã thả cảm xúc (ai thả gì) - phục vụ modal giống Facebook
   getReactions: async (postId: string) => {
     const response = await axiosClient.get<{ data: ReactionUserResponse[] }>(`/posts/${postId}/reactions`);
+    return response.data.data;
+  },
+
+  getCommentReactions: async (commentId: string) => {
+    const response = await axiosClient.get<{ data: ReactionUserResponse[] }>(`/posts/comments/${commentId}/reactions`);
     return response.data.data;
   }
 };
