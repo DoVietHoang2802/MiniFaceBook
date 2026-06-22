@@ -39,6 +39,7 @@ public class CommentService {
     private final ApplicationEventPublisher eventPublisher;
     private final PostRealtimeBroadcaster postRealtimeBroadcaster;
     private final CommentRealtimeBroadcaster commentRealtimeBroadcaster;
+    private final CommentEventBroadcaster commentEventBroadcaster;
 
     public CommentResponse addComment(String email, String postId, CommentRequest request) {
         User user = userRepository.findByEmail(email)
@@ -74,7 +75,11 @@ public class CommentService {
                         .content("đã bình luận về bài viết của bạn")
                         .build());
 
-        return mapToResponse(savedComment, user, Map.of(), null);
+        // Build response và broadcast comment event qua SSE
+        CommentResponse response = mapToResponse(savedComment, user, Map.of(), null);
+        commentEventBroadcaster.broadcast(response);
+
+        return response;
     }
 
     public void reactToComment(String email, String commentId, ReactionRequest request) {

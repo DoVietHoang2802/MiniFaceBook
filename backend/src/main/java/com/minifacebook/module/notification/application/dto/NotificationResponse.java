@@ -18,6 +18,9 @@ public class NotificationResponse {
 
   private String id;
 
+  /** Người nhận thông báo (dùng để filter SSE). */
+  private String recipientId;
+
   private String actorId;
 
   private String actorName;

@@ -1,9 +1,10 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, Loader2, MoreHorizontal, Send, Smile } from 'lucide-react';
 import { postService } from '../services/postService';
 import type { CommentResponse, ReactionType, CommentReactionEvent } from '../types/post.types';
 import { webSocketService } from '../../chat/services/webSocketService';
+import { sseService } from '../../core/services/sseService';
 import ReactionPicker from './ReactionPicker';
 import ReactionsModal from './ReactionsModal';
 import { REACTION_ICONS } from './reactionConfig';
@@ -21,6 +22,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   const [showReactionsFor, setShowReactionsFor] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const receivedCommentIds = useRef<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ['comments', postId],
@@ -68,6 +70,46 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
     };
   }, [comments, postId, queryClient]);
 
+  // SSE subscription cho new comments realtime
+  useEffect(() => {
+    // Clear tracking when postId changes
+    receivedCommentIds.current.clear();
+
+    const unsubscribe = sseService.subscribe<CommentResponse>(
+      `/api/events/comment?postIds=${postId}`,
+      (newComment) => {
+        // Deduplication: ignore if already added (from optimistic or previous SSE)
+        if (receivedCommentIds.current.has(newComment.id)) {
+          return;
+        }
+        receivedCommentIds.current.add(newComment.id);
+
+        // Update TanStack Query cache
+        queryClient.setQueryData(['comments', postId], (old: any) => {
+          if (!old?.data?.content) return old;
+
+          // Double-check duplicate (race condition with refetch)
+          if (old.data.content.some((c: CommentResponse) => c.id === newComment.id)) {
+            receivedCommentIds.current.delete(newComment.id);
+            return old;
+          }
+
+          // Prepend new comment (newest first)
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              content: [newComment, ...old.data.content],
+              totalElements: old.data.totalElements + 1,
+            },
+          };
+        });
+      }
+    );
+
+    return () => unsubscribe();
+  }, [postId, queryClient]);
+
   const handleInput = () => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -106,7 +148,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
           ...old,
           data: {
             ...old.data,
-            content: [...old.data.content, optimisticComment],
+            content: [optimisticComment, ...old.data.content],
             totalElements: old.data.totalElements + 1,
           }
         };
@@ -240,10 +282,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
               rows={1}
             />
             <div className="flex items-center px-2 py-1.5 shrink-0 space-x-1">
-              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
+              <button title="Chọn biểu cảm" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
                 <Smile className="h-4.5 w-4.5" />
               </button>
-              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
+              <button title="Đính kèm ảnh" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
                 <Camera className="h-4.5 w-4.5" />
               </button>
             </div>
@@ -310,8 +352,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
                             {topReactionTypes.map((type, idx) => (
                               <span
                                 key={type}
-                                className="h-4 w-4 rounded-full bg-white flex items-center justify-center text-[11px] leading-none"
-                                style={{ marginLeft: idx === 0 ? 0 : '-4px', zIndex: 10 - idx }}
+                                className={`h-4 w-4 rounded-full bg-white flex items-center justify-center text-[11px] leading-none ${
+                                  idx === 0 ? 'ml-0' : '-ml-1'
+                                } ${
+                                  idx === 0 ? 'z-[10]' : idx === 1 ? 'z-[9]' : 'z-[8]'
+                                }`}
                               >
                                 {REACTION_ICONS[type]?.emoji || '👍'}
                               </span>
@@ -322,7 +367,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
                       )}
                     </div>
 
-                    <button className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0">
+                    <button title="Tùy chọn bình luận" className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0">
                       <MoreHorizontal className="h-4 w-4" />
                     </button>
                   </div>

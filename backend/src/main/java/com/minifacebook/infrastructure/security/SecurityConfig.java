@@ -80,6 +80,13 @@ public class SecurityConfig {
                         return null; // Bỏ qua JWT filter cho các API public
                       }
 
+                      // 1. Check query param (for SSE)
+                      String tokenFromQuery = request.getParameter("access_token");
+                      if (tokenFromQuery != null && !tokenFromQuery.isBlank()) {
+                        return tokenFromQuery;
+                      }
+
+                      // 2. Check cookie (for WebSocket & SSE fallback)
                       if (request.getCookies() != null) {
                         for (var cookie : request.getCookies()) {
                           if ("accessToken".equals(cookie.getName())) {
@@ -87,6 +94,8 @@ public class SecurityConfig {
                           }
                         }
                       }
+
+                      // 3. Check Authorization header (standard)
                       String authorization = request.getHeader("Authorization");
                       if (authorization != null && authorization.startsWith("Bearer ")) {
                         return authorization.substring(7);

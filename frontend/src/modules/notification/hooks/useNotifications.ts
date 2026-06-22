@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { webSocketService } from '../../chat/services/webSocketService';
+import { sseService } from '../../core/services/sseService';
 import { notificationService, normalizeNotification } from '../services/notificationService';
 import type { NotificationResponse } from '../types/notification.types';
 
@@ -71,15 +71,10 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
       .then((count) => setUnreadCount(count))
       .catch(() => {});
 
-    // Đảm bảo WS được kích hoạt (idempotent - dùng chung singleton với useWebSocket).
-    webSocketService.connect().catch((err) =>
-      console.error('[Notifications] WS connect failed', err)
-    );
-
-    // Đăng ký kênh NGAY: webSocketService ghi nhớ intent và tự kích hoạt khi (re)connect xong,
-    // nên không còn race với thời điểm kết nối (fix bug phải F5).
-    const unsubscribe = webSocketService.subscribe<NotificationResponse>(
-      '/user/queue/notifications',
+    // Subscribe SSE cho notifications.
+    // Endpoint yêu cầu authentication (JWT cookie sẽ được gửi tự động).
+    const unsubscribe = sseService.subscribe<NotificationResponse>(
+      '/api/events/notifications',
       (raw) => {
         const notif = normalizeNotification(raw);
         setNotifications((prev) => {
