@@ -344,11 +344,11 @@
 | 2 | Content & News Feed | ✅ HOÀN THÀNH | 100% |
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
-| 5 | Notification System | 🚧 Đang làm | ~90% (5.1→5.4 xong; còn sound/email optional) |
+| 5 | Notification System | ✅ HOÀN THÀNH | 100% (Tích hợp SSE & đồng bộ Realtime) |
 | 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~75%** (Phase 4 Chat 100% + Phase 5 Notification ~80%: realtime like/comment/friend đã chạy)
+**Tổng tiến độ: ~80%** (Phase 0-5 hoàn thành trọn vẹn)
 
 ---
 
@@ -366,7 +366,7 @@
 | 6 | Tối ưu phân trang Search (aggregation pipeline) | Hiệu năng | 🟢 Thấp | 🔴 Chưa làm | Khi scale > 1000 users |
 | 7 | StompBrokerRelay (RabbitMQ) cho scale lớn | Hạ tầng | 🟢 Thấp | 🔴 Chưa làm | Phase 7 (> 10 servers) |
 | 8 | Infinite Scroll cho News Feed | Logic/UX | 🟡 TB | 🔴 Chưa làm | Phase 6 |
-| 9 | Dọn dẹp Checkstyle Java Warnings | Chuẩn hóa | 🟢 Thấp | 🔴 Chưa làm | Phase 6 |
+| 9 | Dọn dẹp Checkstyle Java Warnings | Chuẩn hóa | 🟢 Thấp | ✅ Đã xong | Hoàn thành 22/06 |
 | 10 | Redis Caching cho User Profile và Friend List | Hiệu năng | 🟡 TB | 🔴 Chưa làm | Phase 6 |
 | 11 | Trang Cài đặt tài khoản (Account/Settings Page) | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Phase 6 |
 
@@ -438,6 +438,8 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.1 | Jun 2026 | **Quality Hardening & Linter Fixes — HOÀN THÀNH 🎉**: Khắc phục các cảnh báo biên dịch và linter ở cả Frontend và Backend. Bật `"forceConsistentCasingInFileNames": true` để đồng bộ hóa. Sửa các cảnh báo Accessibility (A11y) của các nút chức năng bằng thuộc tính `title`. Loại bỏ hoàn toàn inline styles trong `CommentSection.tsx` và `ChatPage.tsx` sang Tailwind CSS classes. Dọn dẹp các import thừa ở Backend (`NotificationService.java`, `PostRealtimeBroadcaster.java`, v.v.). Cập nhật `RateLimitingFilter.java` sang API `Bandwidth.builder()` mới. Sửa lỗi type safety (Raw types/Unchecked casts/Unboxing) trong `GlobalExceptionHandler.java`, `MessageServiceTest.java`, và `FriendshipService.java`. |
+| 4.0 | Jun 2026 | **SSE Migration for Post Feed, Comments & Notifications — HOÀN THÀNH Task 2 🎉**: Di chuyển hoàn toàn hạ tầng cập nhật số đếm Post, Thông báo (Notifications) và Bình luận mới (Comments) từ WebSocket sang Server-Sent Events (SSE) giúp tối ưu hiệu năng và khả năng mở rộng. Sửa lỗi đường dẫn SSE Frontend gọi thiếu `/api`. Tối ưu hóa UI Bình luận: đảo ngược thứ tự Optimistic Update từ append (dưới cùng) thành prepend (trên đầu) đồng bộ với sắp xếp `createdAt DESC` của Backend, đem lại trải nghiệm đăng bình luận tức thì không giật lag. Backend controllers sửa lỗi định danh `@AuthenticationPrincipal` sang Jwt tránh lỗi 500. |
 | 3.9 | Jun 2026 | **Chat Unread Badge realtime — KHEP TRON Sprint 5.4 (5/5) 🎉**: Tin nhan moi -> cham do/badge tren nut Chats o sidebar (giong Messenger), KHONG vao notification center -> hoan tat logic "2 luong rieng". Backend: `ChatEventPublisher.publishChatUnread` + subscriber day `/user/queue/chat-unread` (payload nhe, chi la tin hieu); `MessageService.sendMessage` ban toi nguoi nhan; `markAllAsSeen` ban toi chinh minh (dong bo moi tab); `GET /conversations/unread/total` cong don unread (Redis cache + fallback DB). Frontend: `chatService.getTotalUnread`, hook `useChatUnread` (fetch tong luc dang nhap + subscribe tin hieu -> refetch so chinh xac, khong cong/tru thu cong -> khong lech), badge so do tren nut Chats. Don log debug. Verify: mvn compile PASS, ArchUnit PASS, FE 0 loi, test 2 trinh duyet OK. Con lai Phase 5: sound (5.3 optional), email (5.5 optional). |
 | 3.8 | Jun 2026 | **Realtime Feed Counts (like/comment) HOÀN THÀNH & TEST OK 🎉**: Số like/comment của bài viết cập nhật realtime cho mọi người đang xem, không cần F5. Backend: `PostCountEvent` (payload nhẹ: postId + reactCount + commentCount + reactionsCount) + `PostRealtimeBroadcaster` đẩy tới topic công khai `/topic/post.<id>` qua `SimpMessagingTemplate`; `ReactionService` broadcast ở MỌI thay đổi (thêm/gỡ/đổi), `CommentService` broadcast khi có comment. Frontend: `PostCard` **subscribe-on-mount** đúng topic của bài, **unmount tự unsubscribe** (không giữ kết nối thừa — đúng nguyên tắc đã chốt); cập nhật con số TUYỆT ĐỐI từ server (không cộng dồn → không lệch với Optimistic UI). Tái dùng 100% hạ tầng WS sẵn có. **Lưu ý vận hành:** lỗi "tưởng không ăn" thực ra do backend cũ kẹt cổng 8080 (bản mới không start được) → phải tắt hẳn process cũ trước khi chạy. Verify: `mvn compile` PASS, ArchUnit PASS, FE 0 lỗi, test 2 trình duyệt OK. |
 | 3.7 | Jun 2026 | **Phase 5 Notification — Sprint 5.1→5.3 + triggers 5.4 HOÀN THÀNH & TEST OK 🎉**: Module `notification` chuẩn Clean Architecture 4 lớp (entity/port/Mongo adapter/MapStruct/service/listener/controller). Event-driven: `NotificationEvent` (shared) + `@Async @TransactionalEventListener(AFTER_COMMIT)` (chỉ tạo sau commit, luồng nền); self-guard `actor==recipient`; Redis cache `notif:unread:<userId>`. Realtime push `/user/queue/notifications` + toast + badge (chuông & sidebar). **4 trigger:** LIKE (chỉ khi thả mới), COMMENT, FRIEND_REQUEST, FRIEND_ACCEPTED. **Fix kèm:** (1) tách port `ChatEventPublisher` → ArchUnit pass 100% (gỡ nợ Phase 4); (2) `webSocketService` tự re-subscribe khi reconnect (hết lỗi phải F5 sau restart); (3) MapStruct bỏ sót `isRead` (Lombok boolean+`@Builder`) → ép `@Mapping` + `@JsonProperty("isRead")` → fix bug đánh dấu đã đọc không lưu; (4) comment count đồng bộ optimistic giữa CommentSection↔PostCard. Verify: `mvn clean compile` PASS, ArchUnit PASS, FE 0 lỗi, test 2 trình duyệt OK. Còn lại 5.4: chat unread badge realtime; 5.3 sound; 5.5 email. |

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class PostRealtimeBroadcaster {
 
   private final SimpMessagingTemplate messagingTemplate;
+  private final PostEventBroadcaster postEventBroadcaster;
 
   /** Tính lại số đếm từ Post rồi broadcast tới topic của bài. */
   public void broadcastCounts(Post post) {
@@ -45,7 +46,11 @@ public class PostRealtimeBroadcaster {
             .reactionsCount(reactionsByName)
             .build();
 
+    // WebSocket broadcast (tương thích ngược, sẽ xóa sau khi frontend migrate)
     messagingTemplate.convertAndSend("/topic/post." + post.getId(), event);
-    log.debug("Broadcast counts for post={} react={} comment={}", post.getId(), reactTotal, post.getCommentCount());
+    log.debug("Broadcast counts via WebSocket: post={} react={} comment={}", post.getId(), reactTotal, post.getCommentCount());
+
+    // SSE broadcast (mới)
+    postEventBroadcaster.broadcast(event);
   }
 }

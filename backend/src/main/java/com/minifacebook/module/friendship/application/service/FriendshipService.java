@@ -416,7 +416,7 @@ public class FriendshipService {
     if (candidateId.equals(myId) || myFriendIds.contains(candidateId)) {
       return; // bỏ qua chính mình và bạn trực tiếp
     }
-    mutualCount.merge(candidateId, 1, Integer::sum);
+    mutualCount.put(candidateId, mutualCount.getOrDefault(candidateId, 0) + 1);
   }
 
   // ===== Helpers =====

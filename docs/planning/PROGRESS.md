@@ -587,3 +587,37 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Bổ sung thuộc tính `title` cho input tải ảnh đại diện tại `ProfilePage.tsx`.
   - [x] Xóa bỏ các `import` thư viện thừa không sử dụng ở Backend.
   - [x] Chạy kiểm thử tự động `mvn test` đảm bảo 100% build thành công.
+
+---
+
+## 📡 DI CHUYỂN REALTIME SANG SERVER-SENT EVENTS (SSE) & TỐI ƯU HÓA TRẢI NGHIỆM BÌNH LUẬN (ĐÃ HOÀN THÀNH 🏆)
+**Đánh giá tổng quan:** Thực hiện di chuyển hoàn toàn các cập nhật thời gian thực (realtime) một chiều bao gồm số đếm bài viết (Post counts), Thông báo (Notifications) và Bình luận mới (Comments) từ WebSocket sang Server-Sent Events (SSE). Cách tiếp cận này giúp giảm tải kết nối hai chiều không cần thiết trên server, đơn giản hóa kiến trúc và nâng cao độ ổn định.
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Di chuyển sang SSE một chiều:**
+  - **VÌ SAO:** Đối với các luồng chỉ nhận dữ liệu từ server như thông báo hoặc bài viết cập nhật, SSE cung cấp cơ chế tự động kết nối lại (auto-reconnect) tích hợp sẵn trong trình duyệt, nhẹ hơn và dễ mở rộng (scale-out) qua HTTP load balancers hơn WebSocket.
+- **Tách lọc sự kiện bình luận theo PostId ở Server:**
+  - **VÌ SAO:** Khách truy cập bài viết nào chỉ nhận sự kiện bình luận của bài viết đó qua `/api/events/comment?postIds=...`, tiết kiệm băng thông và tăng cường bảo mật dữ liệu.
+- **Tối ưu hóa UI đăng bình luận (Prepend thay vì Append):**
+  - **VÌ SAO:** Giao diện trước đây thêm bình luận mới vào cuối danh sách lúc gửi tạm thời (optimistic update), trong khi backend trả về sắp xếp mới nhất ở đầu (`createdAt DESC`). Điều này khiến bình luận bị giật chuyển vị trí khi API phản hồi xong. Đổi sang thêm vào đầu giúp trải nghiệm mượt mà tức thì.
+- **Sửa lỗi xác thực Principal trong Controller:**
+  - **VÌ SAO:** Đổi từ kiểu dữ liệu `User` sang `org.springframework.security.oauth2.jwt.Jwt` cho tham số `@AuthenticationPrincipal` trong các SSE Controller của post và comment, giải quyết dứt điểm lỗi 500 khi xác thực qua JWT.
+
+- **Kết quả:** `mvn compile` biên dịch thành công, Frontend và Backend chạy ổn định, bình luận mới hiển thị ngay lập tức không có độ trễ.
+
+- **Nhật ký phiên làm việc (22/06/2026 - Task 2 SSE Migration):**
+  - [x] Tạo `CommentEventBroadcaster` và triển khai Redis Pub/Sub đồng bộ bình luận realtime đa máy chủ.
+  - [x] Tạo `SseCommentController` và cấu hình phân phối luồng dữ liệu sự kiện bình luận.
+  - [x] Chuyển đổi tham số `@AuthenticationPrincipal` sang kiểu `Jwt` trong `SseEventController.java` và `SseCommentController.java`.
+  - [x] Đảo ngược vị trí hiển thị bình luận mới trong `CommentSection.tsx` sang đầu danh sách.
+  - [x] Khắc phục lỗi thiếu tiền tố `/api` trong đường dẫn đăng ký SSE của client.
+
+- **Nhật ký phiên làm việc (22/06/2026 - Quality Hardening & Linter Fixes):**
+  - [x] Thêm cấu hình `"forceConsistentCasingInFileNames": true` vào `tsconfig.app.json` và `tsconfig.node.json` để đồng bộ casing file ở mọi hệ điều hành.
+  - [x] Giải quyết cảnh báo Accessibility (A11y) trong `CommentSection.tsx` bằng cách thêm thuộc tính `title` mô tả cho các nút chọn biểu cảm, đính kèm ảnh và tùy chọn bình luận.
+  - [x] Loại bỏ các inline styles trong `CommentSection.tsx` và `ChatPage.tsx` bằng cách chuyển chúng sang các class Tailwind CSS (sử dụng Tailwind arbitrary properties cho animation-delay).
+  - [x] Xóa bỏ các import thừa và không sử dụng trong `NotificationService.java`, `PostRealtimeBroadcaster.java`, `SseCommentController.java`, và `SseEventController.java`.
+  - [x] Nâng cấp `RateLimitingFilter.java` sử dụng API `Bandwidth.builder()` hiện đại hơn của Bucket4j nhằm triệt tiêu các cảnh báo Deprecated.
+  - [x] Xử lý cảnh báo type safety về Raw types và Unchecked casts trong `GlobalExceptionHandler.java`, `MessageServiceTest.java` (dùng `@SuppressWarnings("unchecked")`), và `FriendshipService.java` (chuyển map.merge sang map.put kết hợp getOrDefault).
+
+

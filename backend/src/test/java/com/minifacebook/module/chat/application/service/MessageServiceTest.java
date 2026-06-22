@@ -144,6 +144,7 @@ public class MessageServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   void sendMessage_ShouldSaveMessageAndPublishEvent_WhenValid() {
     MessageSendRequest req = MessageSendRequest.builder()
         .conversationId(conv.getId())

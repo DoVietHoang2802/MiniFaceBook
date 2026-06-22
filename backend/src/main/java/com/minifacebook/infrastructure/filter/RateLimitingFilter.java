@@ -5,7 +5,6 @@ import com.minifacebook.shared.dto.ApiResponse;
 import com.minifacebook.shared.exception.ErrorCode;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,8 +26,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
   // Định nghĩa băng thông: 100 requests mỗi phút (Khoảng 1.5 request/giây)
   private Bucket createNewBucket() {
-    Bandwidth limit = Bandwidth.classic(100, Refill.greedy(100, Duration.ofMinutes(1)));
-    return Bucket.builder().addLimit(limit).build();
+    return Bucket.builder()
+        .addLimit(Bandwidth.builder().capacity(100).refillGreedy(100, Duration.ofMinutes(1)).build())
+        .build();
   }
 
   @Override

@@ -45,6 +45,7 @@ public class NotificationService {
   private final UserRepository userRepository;
   private final SimpMessagingTemplate messagingTemplate;
   private final StringRedisTemplate redisTemplate;
+  private final NotificationEventBroadcaster notificationEventBroadcaster;
 
   private static final String UNREAD_KEY_PREFIX = "notif:unread:";
   private static final Duration UNREAD_TTL = Duration.ofDays(1);
@@ -84,12 +85,15 @@ public class NotificationService {
         .ifPresent(
             recipient -> {
               NotificationResponse payload = toResponse(saved, resolveActor(actorId));
+              // WebSocket (legacy)
               messagingTemplate.convertAndSendToUser(
                   recipient.getEmail(), "/queue/notifications", payload);
               log.debug(
                   "Pushed realtime notification type={} to user={} (queue /user/queue/notifications)",
                   type,
                   recipient.getEmail());
+              // SSE broadcast (mới)
+              notificationEventBroadcaster.broadcast(payload);
             });
 
     log.debug("Created notification type={} for recipient={}", type, recipientId);
@@ -174,6 +178,7 @@ public class NotificationService {
   private NotificationResponse toResponse(Notification n, User actor) {
     return NotificationResponse.builder()
         .id(n.getId())
+        .recipientId(n.getRecipientId())
         .actorId(n.getActorId())
         .actorName(actor != null ? actor.getName() : "Người dùng")
         .actorAvatar(actor != null ? actor.getAvatar() : null)

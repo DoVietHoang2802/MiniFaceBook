@@ -1,9 +1,9 @@
 ﻿import React, { useState } from 'react';
 import { MessageCircle, Share2, MoreHorizontal, Clock, ThumbsUp } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import type { PostResponse, ReactionType, PostCountEvent } from '../types/post.types';
+import type { PostResponse, ReactionType } from '../types/post.types';
 import { postService } from '../services/postService';
-import { webSocketService } from '../../chat/services/webSocketService';
+import { sseService } from '../../core/services/sseService';
 import { REACTION_ICONS } from './reactionConfig';
 import ReactionPicker from './ReactionPicker';
 import CommentSection from './CommentSection';
@@ -33,9 +33,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
   }, [post]);
 
   React.useEffect(() => {
-    const unsubscribe = webSocketService.subscribe<PostCountEvent>(
-      `/topic/post.${post.id}`,
-      (evt) => {
+    // SSE: subscribe to post updates
+    const unsubscribe = sseService.subscribe<{
+      postId: string;
+      reactCount: number;
+      commentCount: number;
+      reactionsCount: Record<string, number>;
+    }>(`/api/events/post?postIds=${post.id}`, (evt) => {
+      if (evt.postId === post.id) {
         setLocalPost((prev) => ({
           ...prev,
           reactCount: evt.reactCount,
@@ -43,7 +48,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
           reactionsCount: evt.reactionsCount ?? prev.reactionsCount,
         }));
       }
-    );
+    });
     return () => unsubscribe();
   }, [post.id]);
 

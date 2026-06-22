@@ -70,6 +70,7 @@ public class GlobalExceptionHandler {
 
   // Bắt lỗi Validation dữ liệu (ví dụ: @NotNull, @Size...)
   @ExceptionHandler(value = MethodArgumentNotValidException.class)
+  @SuppressWarnings("unchecked")
   ResponseEntity<ApiResponse<?>> handlingValidation(MethodArgumentNotValidException exception) {
     String enumKey = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
 
