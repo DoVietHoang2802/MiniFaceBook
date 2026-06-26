@@ -23,6 +23,9 @@ public class Post {
     
     private int commentCount;
     
+    private boolean deleted;
+    private Instant deletedAt;
+    
     private Instant createdAt;
     private Instant updatedAt;
 }

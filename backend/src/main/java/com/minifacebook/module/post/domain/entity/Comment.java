@@ -14,6 +14,8 @@ public class Comment {
     private String authorId;
     private String content;
     private String imageUrl; // Cho phép bình luận bằng 1 ảnh (nếu cần)
+    private boolean deleted;
+    private Instant deletedAt;
     private Instant createdAt;
     private Instant updatedAt;
 }

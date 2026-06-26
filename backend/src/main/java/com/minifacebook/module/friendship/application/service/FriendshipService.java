@@ -23,9 +23,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,11 +47,14 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FriendshipService {
 
   private final FriendshipRepository friendshipRepository;
   private final UserRepository userRepository;
   private final ApplicationEventPublisher eventPublisher;
+  private final StringRedisTemplate redisTemplate;
+  private final ObjectMapper objectMapper;
 
   /** Gửi lời mời kết bạn từ user hiện tại (theo email) tới addresseeId. */
   @Transactional
@@ -136,6 +144,8 @@ public class FriendshipService {
             .content("đã chấp nhận lời mời kết bạn của bạn")
             .build());
 
+    evictFriendCaches(saved.getRequesterId(), saved.getAddresseeId());
+
     return toResponse(saved, requester);
   }
 
@@ -158,9 +168,30 @@ public class FriendshipService {
   /** Lấy danh sách bạn bè (đã ACCEPTED) của user hiện tại. Batch-load user info chống N+1. */
   @Transactional(readOnly = true)
   public List<FriendshipResponse> getFriends(String email) {
+    String cacheKey = "user:friends:email:" + email;
+    try {
+      String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+      if (cachedJson != null) {
+        log.debug("Cache hit for friend list of: {}", email);
+        return objectMapper.readValue(cachedJson, new TypeReference<List<FriendshipResponse>>() {});
+      }
+    } catch (Exception e) {
+      log.warn("Failed to read friend list cache for: {}", email, e);
+    }
+
     User me = getUserByEmail(email);
     List<Friendship> friendships = friendshipRepository.findAcceptedByUserId(me.getId());
-    return mapWithOtherUser(friendships, me.getId());
+    List<FriendshipResponse> response = mapWithOtherUser(friendships, me.getId());
+
+    try {
+      String json = objectMapper.writeValueAsString(response);
+      redisTemplate.opsForValue().set(cacheKey, json, 6, TimeUnit.HOURS);
+      log.debug("Cached friend list for: {}", email);
+    } catch (Exception e) {
+      log.error("Failed to cache friend list for: {}", email, e);
+    }
+
+    return response;
   }
 
   /** Lấy danh sách lời mời ĐANG CHỜ user hiện tại duyệt (user là addressee). */
@@ -195,6 +226,7 @@ public class FriendshipService {
     }
 
     friendshipRepository.delete(friendship);
+    evictFriendCaches(friendship.getRequesterId(), friendship.getAddresseeId());
   }
 
   /**
@@ -219,10 +251,18 @@ public class FriendshipService {
             .findBetweenUsers(me.getId(), target.getId())
             .orElse(Friendship.builder().build());
 
+    String prevRequesterId = friendship.getRequesterId();
+    String prevAddresseeId = friendship.getAddresseeId();
+
     friendship.setRequesterId(me.getId()); // người chặn
     friendship.setAddresseeId(target.getId()); // người bị chặn
     friendship.setStatus(FriendshipStatus.BLOCKED);
     friendshipRepository.save(friendship);
+
+    evictFriendCaches(me.getId(), target.getId());
+    if (prevRequesterId != null && prevAddresseeId != null) {
+      evictFriendCaches(prevRequesterId, prevAddresseeId);
+    }
   }
 
   /** Bỏ chặn. Chỉ người đã chặn (requester của bản ghi BLOCKED) mới được phép gỡ. */
@@ -243,6 +283,7 @@ public class FriendshipService {
     }
 
     friendshipRepository.delete(friendship);
+    evictFriendCaches(friendship.getRequesterId(), friendship.getAddresseeId());
   }
 
   // ===== Sprint 3.3: User Search & Discovery =====
@@ -514,5 +555,20 @@ public class FriendshipService {
         .sentByMe(sentByMe)
         .createdAt(friendship.getCreatedAt())
         .build();
+  }
+
+  private void evictFriendCaches(String user1Id, String user2Id) {
+    try {
+      userRepository.findById(user1Id).ifPresent(u -> {
+        redisTemplate.delete("user:friends:email:" + u.getEmail());
+        log.debug("Evicted friend cache for: {}", u.getEmail());
+      });
+      userRepository.findById(user2Id).ifPresent(u -> {
+        redisTemplate.delete("user:friends:email:" + u.getEmail());
+        log.debug("Evicted friend cache for: {}", u.getEmail());
+      });
+    } catch (Exception e) {
+      log.error("Failed to evict friend caches for {} and {}", user1Id, user2Id, e);
+    }
   }
 }

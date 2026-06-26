@@ -8,6 +8,7 @@ import com.minifacebook.module.post.domain.entity.Post;
 import com.minifacebook.module.post.domain.entity.Reaction;
 import com.minifacebook.module.post.domain.repository.PostRepository;
 import com.minifacebook.module.post.domain.repository.ReactionRepository;
+import com.minifacebook.module.post.domain.repository.CommentRepository;
 import com.minifacebook.shared.domain.service.MediaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final ReactionRepository reactionRepository;
+    private final CommentRepository commentRepository;
     private final MediaService mediaService;
 
     public PostResponse createPost(String email, CreatePostRequest request) {
@@ -44,7 +46,7 @@ public class PostService {
                 .content(request.getContent())
                 .imageUrls(imageUrls)
                 .build();
-                
+        
         Post savedPost = postRepository.save(post);
         return mapToResponse(savedPost, user.getId());
     }
@@ -53,6 +55,35 @@ public class PostService {
         User currentUser = userRepository.findByEmail(email).orElseThrow();
         Page<Post> posts = postRepository.findAllOrderByCreatedAtDesc(pageable);
         return posts.map(post -> mapToResponse(post, currentUser.getId()));
+    }
+
+    public void deletePost(String email, String postId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.isDeleted())
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (!post.getAuthorId().equals(user.getId())) {
+            throw new RuntimeException("You do not have permission to delete this post");
+        }
+
+        // Soft delete post
+        post.setDeleted(true);
+        post.setDeletedAt(java.time.Instant.now());
+        postRepository.save(post);
+
+        // Cascade soft delete all comments
+        List<com.minifacebook.module.post.domain.entity.Comment> comments = commentRepository.findByPostId(postId);
+        if (comments != null && !comments.isEmpty()) {
+            java.time.Instant now = java.time.Instant.now();
+            comments.forEach(comment -> {
+                comment.setDeleted(true);
+                comment.setDeletedAt(now);
+            });
+            commentRepository.saveAll(comments);
+        }
     }
 
     private PostResponse mapToResponse(Post post, String currentUserId) {

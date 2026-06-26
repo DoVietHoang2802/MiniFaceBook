@@ -46,6 +46,7 @@ public class CommentService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Post post = postRepository.findById(postId)
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         String imageUrl = null;
@@ -216,6 +217,35 @@ public class CommentService {
     private Map<String, Integer> toReactionCounts(List<CommentReaction> reactions) {
         return reactions.stream()
                 .collect(Collectors.groupingBy(reaction -> reaction.getType().name(), Collectors.summingInt(reaction -> 1)));
+    }
+
+    public void deleteComment(String email, String commentId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Comment comment = commentRepository.findById(commentId)
+                .filter(c -> !c.isDeleted())
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        Post post = postRepository.findById(comment.getPostId())
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        boolean isCommentOwner = comment.getAuthorId().equals(user.getId());
+        boolean isPostOwner = post.getAuthorId().equals(user.getId());
+
+        if (!isCommentOwner && !isPostOwner) {
+            throw new RuntimeException("You do not have permission to delete this comment");
+        }
+
+        comment.setDeleted(true);
+        comment.setDeletedAt(java.time.Instant.now());
+        commentRepository.save(comment);
+
+        if (!post.isDeleted()) {
+            post.setCommentCount(Math.max(0, post.getCommentCount() - 1));
+            postRepository.save(post);
+            postRealtimeBroadcaster.broadcastCounts(post);
+        }
     }
 
     private CommentResponse mapToResponse(Comment comment, User author, Map<String, Integer> reactionCounts, String myReaction) {

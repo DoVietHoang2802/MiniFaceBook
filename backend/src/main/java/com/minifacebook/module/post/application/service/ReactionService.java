@@ -35,6 +35,7 @@ public class ReactionService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         Post post = postRepository.findById(postId)
+                .filter(p -> !p.isDeleted())
                 .orElseThrow(() -> new RuntimeException("Post not found"));
                 
         Optional<Reaction> existingReactionOpt = reactionRepository.findByPostIdAndUserId(postId, user.getId());

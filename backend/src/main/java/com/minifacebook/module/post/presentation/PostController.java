@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -119,5 +120,25 @@ public class PostController {
         String email = jwt.getSubject();
         commentService.reactToComment(email, commentId, request);
         return ApiResponse.success("Comment reaction updated successfully", null);
+    }
+
+    @DeleteMapping("/{postId}")
+    @Operation(summary = "Xóa bài viết", description = "Xóa mềm một bài viết của bản thân")
+    public ApiResponse<Void> deletePost(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String postId) {
+        String email = jwt.getSubject();
+        postService.deletePost(email, postId);
+        return ApiResponse.success("Post deleted successfully", null);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @Operation(summary = "Xóa bình luận", description = "Xóa mềm một bình luận (Chủ bình luận hoặc chủ bài viết)")
+    public ApiResponse<Void> deleteComment(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String commentId) {
+        String email = jwt.getSubject();
+        commentService.deleteComment(email, commentId);
+        return ApiResponse.success("Comment deleted successfully", null);
     }
 }

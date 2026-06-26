@@ -1,0 +1,10 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI_TEST:mongodb://localhost:27018/miniface_db_test?directConnection=true}
+      auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST_TEST:localhost}
+      port: ${REDIS_PORT_TEST:6379}
+  mongock:
+    enabled: false # Tắt migration để tránh mất thời gian trong integration tests

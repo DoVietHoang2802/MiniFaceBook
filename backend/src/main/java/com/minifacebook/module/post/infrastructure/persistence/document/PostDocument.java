@@ -31,6 +31,9 @@ public class PostDocument {
     
     private int commentCount;
     
+    private boolean deleted;
+    private Instant deletedAt;
+    
     @CreatedDate
     private Instant createdAt;
     

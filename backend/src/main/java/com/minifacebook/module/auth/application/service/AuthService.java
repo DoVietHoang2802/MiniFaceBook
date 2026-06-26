@@ -28,6 +28,7 @@ import java.security.SecureRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +52,7 @@ public class AuthService {
   private final MediaService mediaService;
   private final TokenBlacklistPort tokenBlacklistService;
   private final StringRedisTemplate redisTemplate;
+  private final ObjectMapper objectMapper;
 
 
   /** Đăng ký người dùng mới và gửi email kích hoạt qua Resend. */
@@ -200,9 +202,30 @@ public class AuthService {
 
   /** Lấy thông tin tài khoản người dùng hiện tại đang đăng nhập. */
   public UserResponse getCurrentUser(String email) {
+    String cacheKey = "user:profile:email:" + email;
+    try {
+      String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+      if (cachedJson != null) {
+        log.debug("Cache hit for user profile of: {}", email);
+        return objectMapper.readValue(cachedJson, UserResponse.class);
+      }
+    } catch (Exception e) {
+      log.warn("Failed to read user profile cache for: {}", email, e);
+    }
+
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-    return authMapper.toUserResponse(user);
+    UserResponse response = authMapper.toUserResponse(user);
+
+    try {
+      String json = objectMapper.writeValueAsString(response);
+      redisTemplate.opsForValue().set(cacheKey, json, 24, TimeUnit.HOURS);
+      log.debug("Cached user profile for: {}", email);
+    } catch (Exception e) {
+      log.error("Failed to cache user profile for: {}", email, e);
+    }
+
+    return response;
   }
 
   /** Cập nhật thông tin Trang cá nhân (avatar, bio). */
@@ -219,6 +242,14 @@ public class AuthService {
 
     User savedUser = userRepository.save(user);
     log.info("User profile updated successfully for: {}", email);
+
+    try {
+      redisTemplate.delete("user:profile:email:" + email);
+      log.debug("Evicted profile cache for: {}", email);
+    } catch (Exception e) {
+      log.error("Failed to evict profile cache for: {}", email, e);
+    }
+
     return authMapper.toUserResponse(savedUser);
   }
 
@@ -232,6 +263,14 @@ public class AuthService {
     user.setAvatar(avatarUrl);
     User savedUser = userRepository.save(user);
     log.info("Avatar uploaded and updated successfully for user: {}", email);
+
+    try {
+      redisTemplate.delete("user:profile:email:" + email);
+      log.debug("Evicted profile cache for: {}", email);
+    } catch (Exception e) {
+      log.error("Failed to evict profile cache for: {}", email, e);
+    }
+
     return authMapper.toUserResponse(savedUser);
   }
 

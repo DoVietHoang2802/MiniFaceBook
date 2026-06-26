@@ -25,6 +25,9 @@ public class CommentDocument {
     private String content;
     private String imageUrl;
     
+    private boolean deleted;
+    private Instant deletedAt;
+    
     @CreatedDate
     private Instant createdAt;
     
