@@ -46,6 +46,10 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser }) => {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto py-2 animate-fade-in">
       <CreatePostCard currentUser={currentUser} onPostCreated={handlePostCreated} />
@@ -62,7 +66,12 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser }) => {
       ) : (
         <div className="space-y-6 mt-4">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} currentUser={currentUser} />
+            <PostCard 
+              key={post.id} 
+              post={post} 
+              currentUser={currentUser} 
+              onPostDeleted={handlePostDeleted} 
+            />
           ))}
           
           {hasMore && (

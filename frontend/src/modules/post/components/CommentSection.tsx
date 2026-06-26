@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Loader2, MoreHorizontal, Send, Smile } from 'lucide-react';
+import { Camera, Loader2, MoreHorizontal, Send, Smile, Trash2 } from 'lucide-react';
 import { postService } from '../services/postService';
 import type { CommentResponse, ReactionType, CommentReactionEvent } from '../types/post.types';
 import { webSocketService } from '../../chat/services/webSocketService';
@@ -11,16 +11,18 @@ import { REACTION_ICONS } from './reactionConfig';
 
 interface CommentSectionProps {
   postId: string;
+  postAuthorId?: string;
   currentUser: any;
   onCommentCountChange?: (delta: number) => void;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, onCommentCountChange }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, currentUser, onCommentCountChange }) => {
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   const [showReactionsFor, setShowReactionsFor] = useState<string | null>(null);
+  const [activeCommentMenu, setActiveCommentMenu] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const receivedCommentIds = useRef<Set<string>>(new Set());
 
@@ -168,6 +170,33 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
     },
   });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => postService.deleteComment(commentId),
+    onSuccess: (_, commentId) => {
+      queryClient.setQueryData(['comments', postId], (old: any) => {
+        if (!old?.data?.content) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            content: old.data.content.filter((c: CommentResponse) => c.id !== commentId),
+            totalElements: Math.max(0, old.data.totalElements - 1),
+          }
+        };
+      });
+      onCommentCountChange?.(-1);
+    },
+    onError: (err: any) => {
+      alert(`Lỗi khi xóa bình luận: ${err.response?.data?.message || err.message}`);
+    }
+  });
+
+  const handleDeleteComment = (commentId: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa bình luận này không?')) {
+      deleteCommentMutation.mutate(commentId);
+    }
+  };
 
   const reactMutation = useMutation({
     mutationFn: ({ commentId, type }: { commentId: string; type: ReactionType }) => postService.reactToComment(commentId, { type }),
@@ -367,9 +396,38 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, currentUser, on
                       )}
                     </div>
 
-                    <button title="Tùy chọn bình luận" className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
+                    <div className="relative">
+                      <button 
+                        onClick={() => setActiveCommentMenu(activeCommentMenu === comment.id ? null : comment.id)}
+                        title="Tùy chọn bình luận" 
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0 cursor-pointer"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                      {activeCommentMenu === comment.id && (
+                        <div 
+                          className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-xl p-1 shadow-lg z-30 animate-fade-in"
+                          onMouseLeave={() => setActiveCommentMenu(null)}
+                        >
+                          {currentUser?.id === comment.authorId || currentUser?.id === postAuthorId ? (
+                            <button
+                              onClick={() => {
+                                setActiveCommentMenu(null);
+                                handleDeleteComment(comment.id);
+                              }}
+                              className="w-full flex items-center space-x-2 px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Xóa bình luận</span>
+                            </button>
+                          ) : (
+                            <div className="px-3 py-2 text-slate-400 text-xs font-semibold">
+                              Không có quyền xóa
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3 px-3 mt-1 relative flex-wrap">

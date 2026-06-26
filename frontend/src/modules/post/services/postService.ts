@@ -1,4 +1,4 @@
-﻿import axiosClient from '../../../core/api/axiosClient';
+import axiosClient from '../../../core/api/axiosClient';
 import type { PostResponse, Page, ReactionRequest, CommentResponse, ReactionUserResponse } from '../types/post.types';
 
 export const postService = {
@@ -56,5 +56,15 @@ export const postService = {
   getCommentReactions: async (commentId: string) => {
     const response = await axiosClient.get<{ data: ReactionUserResponse[] }>(`/posts/comments/${commentId}/reactions`);
     return response.data.data;
+  },
+
+  deletePost: async (postId: string) => {
+    const response = await axiosClient.delete<{ data: void }>(`/posts/${postId}`);
+    return response.data;
+  },
+
+  deleteComment: async (commentId: string) => {
+    const response = await axiosClient.delete<{ data: void }>(`/posts/comments/${commentId}`);
+    return response.data;
   }
 };

@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { MessageCircle, Share2, MoreHorizontal, Clock, ThumbsUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageCircle, Share2, MoreHorizontal, Clock, ThumbsUp, Trash2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import type { PostResponse, ReactionType } from '../types/post.types';
 import { postService } from '../services/postService';
@@ -12,9 +12,10 @@ import ReactionsModal from './ReactionsModal';
 interface PostCardProps {
   post: PostResponse;
   currentUser: any;
+  onPostDeleted?: (postId: string) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted }) => {
   const formatTime = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
@@ -27,6 +28,25 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
   const [localPost, setLocalPost] = useState(post);
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const deletePostMutation = useMutation({
+    mutationFn: () => postService.deletePost(localPost.id),
+    onSuccess: () => {
+      if (onPostDeleted) {
+        onPostDeleted(localPost.id);
+      }
+    },
+    onError: (err: any) => {
+      alert(`Lỗi khi xóa bài viết: ${err.response?.data?.message || err.message}`);
+    }
+  });
+
+  const handleDeletePost = () => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) {
+      deletePostMutation.mutate();
+    }
+  };
 
   React.useEffect(() => {
     setLocalPost(post);
@@ -113,9 +133,37 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
               </div>
             </div>
           </div>
-          <button className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg p-1.5 transition cursor-pointer">
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg p-1.5 transition cursor-pointer"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+            {showMenu && (
+              <div 
+                className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-xl p-1 shadow-lg z-30 animate-fade-in"
+                onMouseLeave={() => setShowMenu(false)}
+              >
+                {currentUser?.id === localPost.authorId ? (
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      handleDeletePost();
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Xóa bài viết</span>
+                  </button>
+                ) : (
+                  <div className="px-3 py-2 text-slate-400 text-xs font-semibold">
+                    Không có quyền quản trị
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {localPost.content && (
@@ -239,7 +287,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser }) => {
         )}
 
         {showComments && (
-          <CommentSection postId={localPost.id} currentUser={currentUser} onCommentCountChange={adjustCommentCount} />
+          <CommentSection 
+            postId={localPost.id} 
+            postAuthorId={localPost.authorId}
+            currentUser={currentUser} 
+            onCommentCountChange={adjustCommentCount} 
+          />
         )}
       </div>
     </div>
