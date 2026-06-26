@@ -20,7 +20,7 @@ graph TD
 
 ## 📁 2. Cấu trúc Gói Nghiệp vụ (Modular Monolith Package Structure)
 
-Mỗi module nghiệp vụ lớn (như `auth`, `user`, `chat`, `social`) được cô lập khép kín trong gói riêng của mình dưới thư mục `com.minifacebook.module`. Các thành phần hạ tầng dùng chung nằm tại `com.minifacebook.shared`.
+Mỗi module nghiệp vụ lớn (như `auth`, `user`, `chat`, `friendship`, `notification`) được cô lập khép kín trong gói riêng của mình dưới thư mục `com.minifacebook.module`. Các thành phần hạ tầng dùng chung nằm tại `com.minifacebook.shared`.
 
 ```text
 backend/src/main/java/com/minifacebook/
@@ -36,6 +36,15 @@ backend/src/main/java/com/minifacebook/
 │   │   ├── domain/
 │   │   └── infrastructure/
 │   ├── friendship/                # Module Quản lý Mối quan hệ Bạn bè
+│   │   ├── presentation/
+│   │   ├── application/
+│   │   ├── domain/
+│   │   └── infrastructure/
+│   ├── notification/              # Module Thông báo (Phase 5)
+│   │   ├── presentation/          # API nhận diện Server-Sent Events (SSE) & REST
+│   │   ├── application/           # Lắng nghe NotificationEvent để lưu thông báo
+│   │   ├── domain/
+│   │   └── infrastructure/
 │   └── chat/                      # Module Trò chuyện Thời gian thực
 │       ├── presentation/
 │       ├── application/
@@ -62,6 +71,11 @@ backend/src/main/java/com/minifacebook/
 ### Chat Quality Notes (Sprint 4.5 Hardening)
 *   **Optimistic UI Rollback:** Với các thao tác nhạy cảm ở Frontend chat (edit message, delete me, delete everyone), giao diện phải hỗ trợ rollback nếu backend từ chối do hết hạn 15 phút, mất mạng hoặc lỗi phiên. Đây là lớp bảo vệ UX bắt buộc khi dùng realtime + optimistic update.
 *   **Service Rule Locking:** Các use case editMessage() và deleteMessage() của chat phải luôn được khóa bằng unit tests cho các điều kiện owner-only, text-only, cửa sổ 15 phút, deletedFor, và soft delete cho mọi người. Quy tắc này đã được hardening ngày 12/06/2026 qua MessageServiceTest.
+
+### Notification Decoupling Notes (Phase 5 Architecture)
+*   **Event-Driven Architecture:** Tận dụng Spring `ApplicationEventPublisher` và `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)` để tách biệt hoàn toàn module `Notification` khỏi các module nghiệp vụ như `Post` hay `Friendship`. Luồng thông báo chạy bất đồng bộ `@Async` dưới nền để không cản trở request chính.
+*   **SSE connection limit management:** Sử dụng kết nối Server-Sent Events (SSE) để truyền tin tức thời tới client. Để tránh lỗi hết kết nối (connection limits) trong browser, hệ thống quản lý kết nối hiệu quả ở frontend và backend.
+
 ### B. Application Layer (Tầng Logic Ứng Dụng)
 *   **Nhiệm vụ:** Hiện thực hóa các kịch bản nghiệp vụ (Use Cases). Điều phối dữ liệu từ Repository, thực hiện các tính toán trung gian và cập nhật trạng thái hệ thống.
 *   **Quy tắc:**

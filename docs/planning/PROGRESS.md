@@ -620,4 +620,33 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Nâng cấp `RateLimitingFilter.java` sử dụng API `Bandwidth.builder()` hiện đại hơn của Bucket4j nhằm triệt tiêu các cảnh báo Deprecated.
   - [x] Xử lý cảnh báo type safety về Raw types và Unchecked casts trong `GlobalExceptionHandler.java`, `MessageServiceTest.java` (dùng `@SuppressWarnings("unchecked")`), và `FriendshipService.java` (chuyển map.merge sang map.put kết hợp getOrDefault).
 
+---
+
+## 🎨 CHI TIẾT GIAO DIỆN MODAL BÌNH LUẬN SPLIT-PANE & ĐỒNG BỘ HOVER TRẠNG THÁI (ĐÃ HOÀN THÀNH 🏆)
+**Đánh giá tổng quan:** Triển khai cấu trúc Modal hiển thị chi tiết bài viết và bình luận dạng 2 cột (Split-pane) giống phong cách Facebook. Đồng thời tối ưu hóa các kết nối SSE ngầm, giới hạn phạm vi hover hiển thị bảng chọn biểu cảm để cải thiện tối đa trải nghiệm người dùng (UX) và khả năng tiếp cận (Accessibility).
+
+### 🏆 Tính năng & Quyết định kiến trúc (VÌ SAO):
+- **Cấu trúc 2 cột (Split-pane Modal) cho chi tiết bài viết:**
+  - **VÌ SAO:** Khi bấm xem bình luận, thay vì đẩy nội dung trang chủ lên xuống gây mất thẩm mỹ, Modal mở lên sẽ cố định giao diện. Cột trái dành cho nội dung trực quan (Hình ảnh đối với bài viết có ảnh; Khung màu thương hiệu tím nhẹ `#F4F0FD` cùng câu trích dẫn nổi bật đối với bài viết dạng chữ). Cột phải hiển thị thông tin chi tiết, lượt tương tác và khung bình luận cuộn độc lập.
+- **Tách biệt Hover Cảm xúc (Reaction Hover Scoping):**
+  - **VÌ SAO:** Trước đây sự kiện hover được gắn ở thẻ div ngoài cùng của nhóm chức năng (Actions panel). Khi người dùng đưa chuột gần nút "Bình luận" hay "Chia sẻ" thì bảng chọn cảm xúc vẫn bị bật lên, gây cản trở tầm nhìn và khó chịu. Bằng cách scope sự kiện chỉ nằm duy nhất trong vùng chứa của nút "Thích", trải nghiệm trở nên tự nhiên và chính xác 100%.
+- **Khắc phục giới hạn kết nối SSE (SSE Connection Limits):**
+  - **VÌ SAO:** Trình duyệt giới hạn tối đa 6 kết nối SSE đồng thời trên cùng một tên miền. Việc mỗi bài viết tự động mở 1 kết nối SSE riêng gây lỗi cạn kiệt tài nguyên kết nối. Việc tối ưu hóa bằng cách gom nhóm đăng ký và giải phóng kết nối linh hoạt giúp ứng dụng chạy cực kỳ ổn định.
+- **Tiêu chuẩn Accessibility & Build 100% Pass:**
+  - **VÌ SAO:** Bổ sung thuộc tính `title` và `aria-label` đầy đủ cho các nút điều hướng ảnh, nút đóng Modal để vượt qua hoàn toàn quy trình linter khắt khe, giúp dự án compile hoàn hảo không có cảnh báo.
+
+- **Kết quả:** `npm run build` chạy thành công với Exit code 0, giao diện hoạt động mượt mà, phản hồi lập tức.
+
+- **Nhật ký phiên làm việc (26/06/2026 - Sprint 6.1):**
+  - [x] Tạo component `PostDetailModal.tsx` hỗ trợ giao diện Split-pane chia đôi.
+  - [x] Tích hợp Modal chi tiết vào sự kiện click nút Bình luận tại `PostCard.tsx`.
+  - [x] Định dạng khung hiển thị chữ chuyển sắc tím khói `bg-[#F4F0FD]` kết hợp nhãn trích dẫn cho bài viết không có ảnh (Option 1 - Hizo Signature).
+  - [x] Tinh chỉnh độ mờ nền của modal thành `backdrop-blur-[6px] bg-slate-950/50`.
+  - [x] Sửa lỗi kích hoạt nhầm bảng chọn cảm xúc khi di chuột vào nút bình luận/chia sẻ.
+  - [x] Bổ sung các thuộc tính A11y (`title`, `aria-label`) cho các button điều hướng trong Modal.
+  - [x] Triển khai phát sự kiện xóa bình luận kèm cờ `deleted: true` trong `CommentService.java`.
+  - [x] Cập nhật phía client `CommentSection.tsx` để bắt sự kiện xóa bình luận, lọc cache và trừ số lượng đếm bình luận tức thời.
+  - [x] Gia cố kiểm thử tự động `CommentServiceTest.java` để xác thực phân quyền xóa bình luận.
+
+
 

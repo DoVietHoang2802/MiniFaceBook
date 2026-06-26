@@ -230,8 +230,8 @@ public class CommentService {
         Post post = postRepository.findById(comment.getPostId())
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        boolean isCommentOwner = comment.getAuthorId().equals(user.getId());
-        boolean isPostOwner = post.getAuthorId().equals(user.getId());
+        boolean isCommentOwner = Objects.equals(comment.getAuthorId(), user.getId());
+        boolean isPostOwner = Objects.equals(post.getAuthorId(), user.getId());
 
         if (!isCommentOwner && !isPostOwner) {
             throw new RuntimeException("You do not have permission to delete this comment");
@@ -246,6 +246,14 @@ public class CommentService {
             postRepository.save(post);
             postRealtimeBroadcaster.broadcastCounts(post);
         }
+
+        // Broadcast comment deletion event via SSE
+        CommentResponse deletionEvent = CommentResponse.builder()
+                .id(comment.getId())
+                .postId(comment.getPostId())
+                .deleted(true)
+                .build();
+        commentEventBroadcaster.broadcast(deletionEvent);
     }
 
     private CommentResponse mapToResponse(Comment comment, User author, Map<String, Integer> reactionCounts, String myReaction) {
@@ -260,6 +268,7 @@ public class CommentService {
                 .createdAt(comment.getCreatedAt())
                 .reactionCounts(reactionCounts)
                 .myReaction(myReaction)
+                .deleted(comment.isDeleted())
                 .build();
     }
 }

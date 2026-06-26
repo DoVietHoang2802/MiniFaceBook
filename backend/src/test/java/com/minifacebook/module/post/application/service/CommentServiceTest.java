@@ -28,6 +28,8 @@ public class CommentServiceTest {
     private UserRepository userRepository;
     @Mock
     private PostRealtimeBroadcaster postRealtimeBroadcaster;
+    @Mock
+    private CommentEventBroadcaster commentEventBroadcaster;
 
     @InjectMocks
     private CommentService commentService;

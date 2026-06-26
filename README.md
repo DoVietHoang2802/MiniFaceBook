@@ -52,11 +52,11 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 2 | Content & News Feed | ✅ Hoàn thành |
 | 3 | Social Graph & Friends | ✅ Hoàn thành |
 | 4 | Realtime Chat | ✅ Hoàn thành (Sprint 4.1→4.5) |
-| 5 | Notification System | 🚧 Đang làm (~90%) |
-| 6 | Advanced & Deployment | ⏳ Chưa bắt đầu |
+| 5 | Notification System | ✅ Hoàn thành (Sprint 5.1→5.4 + Forgot Password OTP) |
+| 6 | Advanced & Deployment | 🚧 Đang làm (Sprint 6.1 hoàn thành) |
 | 7 | Extended Features | ⏳ Chưa bắt đầu |
 
-**Tiến độ: ~85% — Phase 5 Notification ~90% (Sprint 5.1→5.4 + Forgot Password OTP + Sound hoàn thành; còn Email notification optional)**
+**Tiến độ: ~88% — Phase 5 Notification hoàn thành 100%, đang thực hiện Phase 6 (Sprint 6.1 hoàn thành).**
 
 ---
 

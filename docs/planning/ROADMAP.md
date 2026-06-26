@@ -286,25 +286,31 @@
 
 ---
 
-## 🛠️ PHASE 6: ADVANCED & DEPLOYMENT ⏳
-*Mục tiêu: Hoàn thiện kỹ thuật chuyên sâu và đưa sản phẩm lên môi trường thật.*
+## 🛠️ PHASE 6: NAVIGATION, PERFORMANCE & TESTING ⏳
+*Mục tiêu: Cải tiến UI/UX chi tiết, tối ưu hóa hiệu năng, viết test và tích hợp CI/CD.*
 
-- [ ] **Sprint 6.1: Optimization & Quality Audit**
+- [ ] **Sprint 6.1: Split-Pane Post Detail Modal & Reaction Scoping UX Fix** ✅
+    - [x] Thiết kế **PostDetailModal** hiển thị chi tiết bài viết dạng 2 cột (Split-pane) giống Facebook.
+    - [x] Tích hợp nền tím khói thương hiệu Hizo (`bg-[#F4F0FD]`) cho bài viết không có ảnh (Option 1).
+    - [x] Khắc phục triệt để giới hạn kết nối SSE giúp quản lý luồng ngầm mượt mà.
+    - [x] Cố định sự kiện hover cảm xúc chỉ ở nút "Thích", tránh hiển thị nhầm khi di chuột qua "Bình luận" hay "Chia sẻ".
+    - [x] Sửa toàn bộ lỗi Accessibility và đạt trạng thái build thành công.
+- [ ] **Sprint 6.2: Optimization & Quality Audit**
     - [ ] Áp dụng **Soft Delete** cho tin nhắn và bài viết.
     - [ ] **Redis Caching** cho dữ liệu tĩnh (user profile, friend list).
     - [ ] Viết **Unit Test** bằng JUnit 5 (coverage > 70%).
         - *Đã có bước đệm:* Module Chat đã được hardening thêm test cho edit/delete message và rollback Optimistic UI ngày 12/06/2026.
     - [ ] Viết **Integration Test** bằng MockMvc + Testcontainers.
-- [ ] **Sprint 6.2: CI/CD Pipeline**
+- [ ] **Sprint 6.3: CI/CD Pipeline**
     - [ ] Viết **E2E Test** bằng Playwright cho các luồng chính.
     - [ ] Thiết lập **GitHub Actions** tự động Build & Test khi push code.
     - [ ] Cấu hình **SonarQube** để kiểm tra code quality (optional).
-- [ ] **Sprint 6.3: Production Deployment**
+- [ ] **Sprint 6.4: Production Deployment**
     - [ ] Deploy Backend lên **Render** hoặc **Railway**.
     - [ ] Deploy Frontend lên **Vercel** hoặc **Netlify**.
     - [ ] Cấu hình **Environment Variables** cho production.
     - [ ] Setup **Custom Domain** và **SSL Certificate**.
-- [ ] **Sprint 6.4: Monitoring & Observability**
+- [ ] **Sprint 6.5: Monitoring & Observability**
     - [ ] Tích hợp **Sentry** để theo dõi lỗi Realtime (Backend + Frontend).
     - [ ] **K6 Load Testing**: Kiểm tra sức chịu tải trước go-live.
         - *Target:* 100 concurrent users, response time < 500ms.
@@ -345,10 +351,10 @@
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
 | 5 | Notification System | ✅ HOÀN THÀNH | 100% (Tích hợp SSE & đồng bộ Realtime) |
-| 6 | Advanced & Deployment | ⏳ Chưa bắt đầu | 0% |
+| 6 | Navigation & Performance | 🟡 ĐANG THỰC HIỆN | 20% (Hoàn thành Sprint 6.1) |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~80%** (Phase 0-5 hoàn thành trọn vẹn)
+**Tổng tiến độ: ~88%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 đang triển khai)
 
 ---
 
@@ -438,6 +444,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.2 | Jun 2026 | **Split-Pane Post Detail Modal & Reaction Scoping UX Fix — HOÀN THÀNH Sprint 6.1 🎉**: Thiết kế giao diện Modal bình luận dạng 2 cột (Split-pane) kiểu Facebook. Đồng bộ hiển thị khung màu tím khói thương hiệu Hizo cho bài viết không có ảnh (Option 1) và hiển thị ảnh chi tiết bên trái. Scope lại hover reaction chỉ hiển thị ở nút "Thích", tránh kích hoạt nhầm khi di chuột qua "Bình luận" hay "Chia sẻ" ở cả `PostCard` và `PostDetailModal`. Khắc phục lỗi giới hạn kết nối SSE, tối ưu tài nguyên. Sửa lỗi Accessibility và build hoàn hảo 100% không lỗi. |
 | 4.1 | Jun 2026 | **Quality Hardening & Linter Fixes — HOÀN THÀNH 🎉**: Khắc phục các cảnh báo biên dịch và linter ở cả Frontend và Backend. Bật `"forceConsistentCasingInFileNames": true` để đồng bộ hóa. Sửa các cảnh báo Accessibility (A11y) của các nút chức năng bằng thuộc tính `title`. Loại bỏ hoàn toàn inline styles trong `CommentSection.tsx` và `ChatPage.tsx` sang Tailwind CSS classes. Dọn dẹp các import thừa ở Backend (`NotificationService.java`, `PostRealtimeBroadcaster.java`, v.v.). Cập nhật `RateLimitingFilter.java` sang API `Bandwidth.builder()` mới. Sửa lỗi type safety (Raw types/Unchecked casts/Unboxing) trong `GlobalExceptionHandler.java`, `MessageServiceTest.java`, và `FriendshipService.java`. |
 | 4.0 | Jun 2026 | **SSE Migration for Post Feed, Comments & Notifications — HOÀN THÀNH Task 2 🎉**: Di chuyển hoàn toàn hạ tầng cập nhật số đếm Post, Thông báo (Notifications) và Bình luận mới (Comments) từ WebSocket sang Server-Sent Events (SSE) giúp tối ưu hiệu năng và khả năng mở rộng. Sửa lỗi đường dẫn SSE Frontend gọi thiếu `/api`. Tối ưu hóa UI Bình luận: đảo ngược thứ tự Optimistic Update từ append (dưới cùng) thành prepend (trên đầu) đồng bộ với sắp xếp `createdAt DESC` của Backend, đem lại trải nghiệm đăng bình luận tức thì không giật lag. Backend controllers sửa lỗi định danh `@AuthenticationPrincipal` sang Jwt tránh lỗi 500. |
 | 3.9 | Jun 2026 | **Chat Unread Badge realtime — KHEP TRON Sprint 5.4 (5/5) 🎉**: Tin nhan moi -> cham do/badge tren nut Chats o sidebar (giong Messenger), KHONG vao notification center -> hoan tat logic "2 luong rieng". Backend: `ChatEventPublisher.publishChatUnread` + subscriber day `/user/queue/chat-unread` (payload nhe, chi la tin hieu); `MessageService.sendMessage` ban toi nguoi nhan; `markAllAsSeen` ban toi chinh minh (dong bo moi tab); `GET /conversations/unread/total` cong don unread (Redis cache + fallback DB). Frontend: `chatService.getTotalUnread`, hook `useChatUnread` (fetch tong luc dang nhap + subscribe tin hieu -> refetch so chinh xac, khong cong/tru thu cong -> khong lech), badge so do tren nut Chats. Don log debug. Verify: mvn compile PASS, ArchUnit PASS, FE 0 loi, test 2 trinh duyet OK. Con lai Phase 5: sound (5.3 optional), email (5.5 optional). |

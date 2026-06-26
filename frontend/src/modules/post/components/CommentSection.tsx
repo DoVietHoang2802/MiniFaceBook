@@ -78,8 +78,31 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
     receivedCommentIds.current.clear();
 
     const unsubscribe = sseService.subscribe<CommentResponse>(
-      `/api/events/comment?postIds=${postId}`,
+      '/api/events/comment',
       (newComment) => {
+        // Filter events by current postId
+        if (newComment.postId !== postId) return;
+
+        if (newComment.deleted) {
+          queryClient.setQueryData(['comments', postId], (old: any) => {
+            if (!old?.data?.content) return old;
+
+            const exists = old.data.content.some((c: CommentResponse) => c.id === newComment.id);
+            if (!exists) return old;
+
+            onCommentCountChange?.(-1);
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                content: old.data.content.filter((c: CommentResponse) => c.id !== newComment.id),
+                totalElements: Math.max(0, old.data.totalElements - 1),
+              }
+            };
+          });
+          return;
+        }
+
         // Deduplication: ignore if already added (from optimistic or previous SSE)
         if (receivedCommentIds.current.has(newComment.id)) {
           return;

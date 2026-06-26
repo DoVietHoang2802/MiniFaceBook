@@ -102,6 +102,22 @@ Lưu trữ cảm xúc của người dùng đối với bài viết.
 
 ---
 
+### E2. Collection: `comment_reactions`
+Lưu trữ cảm xúc của người dùng đối với bình luận (Sprint 6.1).
+
+*   **Indexes:**
+    *   `(commentId, userId)` (Compound Unique Index, tên: `comment_user_idx`) -> Đảm bảo một user chỉ thả duy nhất 1 reaction cho 1 bình luận.
+
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `commentId` | String | Liên kết tới `comments._id`. |
+| `userId` | String | Liên kết tới `users._id`. |
+| `type` | String (Enum) | Loại cảm xúc (`LIKE`, `LOVE`, `HAHA`, `WOW`, `SAD`, `ANGRY`). |
+| `createdAt` | Instant | Thời điểm thả cảm xúc. |
+
+---
+
 ## 🤝 2. MongoDB — Collection: `friendships`
 Lưu trữ quan hệ kết bạn giữa người dùng. Sử dụng Compound Index để đảm bảo không có cặp bạn bè trùng lặp và tốc độ truy vấn nhanh.
 
@@ -190,18 +206,40 @@ Lưu trữ toàn bộ tin nhắn trong conversations.
 
 ---
 
+## 🔔 3.b. MongoDB — Collections: Notification System (Phase 5)
+
+### H. Collection: `notifications`
+Lưu trữ thông báo trong hệ thống gửi đến người dùng.
+
+*   **Indexes:**
+    *   `(recipientId, createdAt DESC)` (Compound Index, tên: `recipient_created_idx`) -> Tối ưu hóa việc query danh sách thông báo của người nhận sắp xếp mới nhất lên đầu.
+
+| Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
+| :--- | :--- | :--- |
+| `_id` | ObjectId (String) | Khóa chính tự động sinh. |
+| `recipientId` | String | Liên kết tới `users._id` (người nhận thông báo). |
+| `actorId` | String | Liên kết tới `users._id` (người thực hiện hành động tạo thông báo). |
+| `type` | String (Enum) | Loại thông báo (`LIKE`, `COMMENT`, `COMMENT_REACTION`, `FRIEND_REQUEST`, `FRIEND_ACCEPTED`). |
+| `entityId` | String | ID của thực thể liên quan (ví dụ: `postId`, `friendshipId`). |
+| `content` | String | Nội dung văn bản hiển thị thông báo. |
+| `isRead` | Boolean | Trạng thái đã đọc hay chưa. Mặc định `false`. |
+| `createdAt` | Instant (ISODate) | Thời điểm tạo thông báo. |
+
+---
+
 ## ⚡ 4. Redis — Chiến lược sử dụng (Cache, Security & Realtime)
 
-Redis được sử dụng với **5 mục đích rõ ràng**, đã được triển khai và kiểm chứng:
+Redis được sử dụng với **6 mục đích rõ ràng**, đã được triển khai và kiểm chứng:
 
-### Phạm vi sử dụng Redis (Cập nhật Phase 4.5)
+### Phạm vi sử dụng Redis (Cập nhật Phase 6.1)
 | Mục đích | Key Pattern | Kiểu dữ liệu | TTL | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | **Presence Online/Offline** | `presence:<userId>` | String (`"ONLINE"`) | 35s | Heartbeat mechanism, tự động expire khi mất kết nối |
 | **Typing Indicator** | `typing:<convId>:<userId>` | String (`"1"`) | 4s | **(Sprint 4.4)** Self-healing: đóng tab/mất mạng thì key tự hết hạn, không kẹt "đang nhập". Đồng bộ pattern Presence |
 | **Pub/Sub Chat** | `chat.room.<roomId>` | Pub/Sub Channel | N/A | Đồng bộ WebSocket đa server. Event types: `NEW_MESSAGE`, `DELIVERED`, `SEEN`, `TYPING`, `REACTION`, `UPDATE` |
 | **JWT Blacklist** (Logout) | `blacklist:<jwtId>` | String (`"revoked"`) | Bằng thời gian hết hạn còn lại của Access Token | Sử dụng `jwtId` (UUID) thay vì toàn bộ token để tiết kiệm RAM |
-| **Cache Unread Count** | `unread:<conversationId>:<userId>` | String (Counter) | 7 ngày (7 days) | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
+| **Cache Unread Count** (Chat) | `unread:<conversationId>:<userId>` | String (Counter) | 7 ngày (7 days) | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
+| **Cache Unread Count** (Notif) | `notif:unread:<userId>` | String (Counter) | 1 ngày (24h) | **(Sprint 5.1)** Lưu số lượng thông báo chưa đọc của user, tự động invalid khi nhận notif mới hoặc mark read |
 | **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) | Phase 6 (chưa triển khai) |
 | **Cache Newsfeed** | `feed:user:<userId>` | List | 1800s (30 phút) | Phase 6 (chưa triển khai) |
 

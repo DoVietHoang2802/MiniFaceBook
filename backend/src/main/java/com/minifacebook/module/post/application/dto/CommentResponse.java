@@ -19,4 +19,5 @@ public class CommentResponse {
     private Instant createdAt;
     private Map<String, Integer> reactionCounts;
     private String myReaction;
+    private Boolean deleted;
 }

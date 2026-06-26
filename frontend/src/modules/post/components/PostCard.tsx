@@ -6,7 +6,7 @@ import { postService } from '../services/postService';
 import { sseService } from '../../core/services/sseService';
 import { REACTION_ICONS } from './reactionConfig';
 import ReactionPicker from './ReactionPicker';
-import CommentSection from './CommentSection';
+import PostDetailModal from './PostDetailModal';
 import ReactionsModal from './ReactionsModal';
 
 interface PostCardProps {
@@ -27,7 +27,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
   const [localPost, setLocalPost] = useState(post);
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   const deletePostMutation = useMutation({
@@ -53,13 +53,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   }, [post]);
 
   React.useEffect(() => {
-    // SSE: subscribe to post updates
+    // SSE: subscribe to post updates via shared global stream
     const unsubscribe = sseService.subscribe<{
       postId: string;
       reactCount: number;
       commentCount: number;
       reactionsCount: Record<string, number>;
-    }>(`/api/events/post?postIds=${post.id}`, (evt) => {
+    }>('/api/events/post', (evt) => {
       if (evt.postId === post.id) {
         setLocalPost((prev) => ({
           ...prev,
@@ -237,7 +237,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             <div className="flex items-center gap-3">
               {localPost.commentCount > 0 && (
                 <button
-                  onClick={() => setShowComments(!showComments)}
+                  onClick={() => setIsDetailModalOpen(true)}
                   className="hover:underline cursor-pointer"
                 >
                   {localPost.commentCount} bình luận
@@ -248,18 +248,18 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           </div>
         )}
 
-        <div
-          className="flex items-center justify-between border-t border-slate-100 pt-1.5 mt-1 gap-1 relative"
-          onMouseEnter={() => setIsHoveringReaction(true)}
-          onMouseLeave={() => setIsHoveringReaction(false)}
-        >
-          {isHoveringReaction && (
-            <div className="absolute bottom-full left-0 z-50 pb-2">
-              <ReactionPicker onSelect={handleReact} />
-            </div>
-          )}
+        <div className="flex items-center justify-between border-t border-slate-100 pt-1.5 mt-1 gap-1">
+          <div
+            className="flex-1 flex justify-center relative"
+            onMouseEnter={() => setIsHoveringReaction(true)}
+            onMouseLeave={() => setIsHoveringReaction(false)}
+          >
+            {isHoveringReaction && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pb-2">
+                <ReactionPicker onSelect={handleReact} />
+              </div>
+            )}
 
-          <div className="flex-1 flex justify-center">
             <button
               onClick={() => handleReact(localPost.myReactionType || 'LIKE')}
               className={`flex items-center space-x-2 p-2 w-full rounded-xl transition-all cursor-pointer justify-center ${localPost.myReactionType && REACTION_ICONS[localPost.myReactionType] ? `${REACTION_ICONS[localPost.myReactionType].color} ${REACTION_ICONS[localPost.myReactionType].bgColor} font-bold` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
@@ -277,7 +277,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           </div>
 
           <button
-            onClick={() => setShowComments(!showComments)}
+            onClick={() => setIsDetailModalOpen(true)}
             className="flex items-center space-x-2 p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center"
           >
             <MessageCircle className="h-4.5 w-4.5" />
@@ -294,12 +294,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           <ReactionsModal postId={localPost.id} onClose={() => setShowReactionsModal(false)} />
         )}
 
-        {showComments && (
-          <CommentSection 
-            postId={localPost.id} 
-            postAuthorId={localPost.authorId}
-            currentUser={currentUser} 
-            onCommentCountChange={adjustCommentCount} 
+        {isDetailModalOpen && (
+          <PostDetailModal
+            post={localPost}
+            currentUser={currentUser}
+            onClose={() => setIsDetailModalOpen(false)}
+            onCommentCountChange={adjustCommentCount}
           />
         )}
       </div>

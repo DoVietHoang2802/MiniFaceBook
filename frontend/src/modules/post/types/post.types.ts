@@ -1,4 +1,4 @@
-﻿export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
+export type ReactionType = 'LIKE' | 'LOVE' | 'HAHA' | 'WOW' | 'SAD' | 'ANGRY';
 
 export interface PostResponse {
   id: string;
@@ -26,6 +26,7 @@ export interface CommentResponse {
   createdAt: string;
   reactionCounts: Record<string, number>;
   myReaction: ReactionType | null;
+  deleted?: boolean;
 }
 
 export interface ReactionRequest {

@@ -223,3 +223,10 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
     *   **Paste Support:** Cho phép người dùng dán (Paste) trực tiếp mã 6 số từ Clipboard. Trình duyệt tự phân tách 6 chữ số và điền đầy vào 6 ô tương ứng.
 *   **Bảo mật:** Chỉ chấp nhận nhập chữ số (`0-9`), chặn các ký tự chữ cái hoặc ký tự đặc biệt ngay khi gõ.
 *   **Timer & Resend:** Hiển thị bộ đếm ngược 60 giây và chỉ cho phép click gửi lại mã OTP sau khi bộ đếm đã về 0.
+
+### 6.7. Facebook-Style Split-Pane Modal & Hover Scoping UX (Sprint 6.1)
+*   **Facebook-Style Split-Pane Modal:** Khi bấm vào phần bình luận của bài viết, hiển thị Modal 2 cột (Trái: Nội dung hình ảnh/carousel hoặc khung chữ tím khói trích dẫn `bg-[#F4F0FD]` thương hiệu Hizo; Phải: Danh sách bình luận cuộn độc lập và thanh nhập liệu).
+*   **Mờ nền (Backdrop Blur):** Áp dụng hiệu ứng mờ nền nhã nhặn `backdrop-blur-[6px] bg-slate-950/50` thay vì các màu xanh dương/xám quá đậm che khuất tầm mắt người dùng.
+*   **Reaction Hover Scoping (Khoanh vùng kích hoạt Hover cảm xúc):** Cấu hình sự kiện `onMouseEnter` / `onMouseLeave` của bảng tương tác biểu cảm nằm gói gọn duy nhất trong nút Like (Thích). Rê chuột qua các nút lân cận như Bình luận (Comment) hay Chia sẻ (Share) tuyệt đối không được kích hoạt bảng Reaction Picker.
+*   **A11y cho Slide & Modal:** Mọi nút đóng Modal, nút điều hướng Slide trước/sau bắt buộc phải có thuộc tính `title` và `aria-label` tương ứng để phục vụ các công cụ đọc màn hình.
+

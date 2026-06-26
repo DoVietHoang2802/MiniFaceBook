@@ -1,9 +1,41 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 12/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 PHASE 5 NOTIFICATION HOÀN THÀNH 100% + 🔒 CHAT QUALITY HARDENING (REVIEW 1 & 2) HOÀN THÀNH + 🔑 FORGOT PASSWORD OTP 6 SỐ & REDIS CACHE HOÀN THÀNH + 🎨 AUTHENTICATION UI REFACTOR & A11Y COMPLIANT + 🇻🇳 VIỆT HÓA TOÀN DIỆN GIAO DIỆN CHÍNH & KHẮC PHỤC CONTRAST SCREEN. Tổng tiến độ **~88%**. Chat module đã được gia cố thêm rollback Optimistic UI và bộ unit test 13/13 cho edit/delete message.
+## 📅 Cập nhật ngày: 26/06/2026
+## 🏁 Trạng thái hiện tại: 🎉 PHASE 6 POST DETAIL SPLIT-PANE MODAL HOÀN THÀNH + 🚀 REAL-TIME SSE RESOURCE OPTIMIZATION HOÀN THÀNH + 🔒 REACTION HOVER SCOPING UX FIX HOÀN THÀNH + ♿ ACCESSIBILITY BUILD COMPLIANT (100% PASS). Tổng tiến độ **~92%**.
 
-> ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 3 (cũ là Realtime Chat) nay là **Social Graph & Friends**; Chat dời xuống Phase 4; bổ sung Phase 5 (Notification System & Security Flows). Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (26/06/2026 - MODAL REDESIGN & SSE & UX FIXES & COMMENT DELETION)
+
+### Công việc đã thực hiện:
+
+1. **Split-Pane Post Detail Modal (Facebook-style Viewer):**
+   * Thay vì hiển thị bình luận ngay dưới bài viết ở trang chủ gây giật khung hình, khi nhấn "Bình luận", hệ thống mở một Modal chia đôi màn hình (Split-pane) hiện đại.
+   * **Bài viết có ảnh:** Cột trái hiển thị ảnh rộng căn giữa với nền đen, hỗ trợ chuyển slide ảnh mượt mà. Cột phải là bình luận và thông tin tác giả.
+   * **Bài viết không ảnh:** Cột trái hiển thị khung màu tím khói thanh lịch thương hiệu Hizo (`bg-[#F4F0FD]`), chữ trích dẫn tím sẫm (`text-[#3F2E60]`) kèm ký tự trích dẫn nghệ thuật (`“`/`”`). Cột phải là bình luận.
+   * **Responsive:** Cột trang trí bên trái tự động ẩn trên thiết bị di động (`hidden md:flex`) để tối ưu hóa diện tích hiển thị.
+   * **Độ mờ nền (Backdrop Blur):** Tinh chỉnh độ mờ nền vừa phải (`backdrop-blur-[6px] bg-slate-950/50`) giúp nhìn nhẹ nhàng bố cục trang chủ bên dưới.
+
+2. **Gia cố & Tối ưu hóa Real-time SSE:**
+   * Khắc phục lỗi trình duyệt bị giới hạn kết nối (SSE Connection Limit) khi mở nhiều bài viết. Tích hợp cơ chế đăng ký SSE linh hoạt trên Backend và tối ưu hóa việc quản lý luồng ngầm trên Frontend.
+
+3. **Sửa lỗi lọt sự kiện Hover cảm xúc (Reaction Scoping UX Fix):**
+   * Di chuyển sự kiện `onMouseEnter`/`onMouseLeave` của bảng chọn cảm xúc ra khỏi khung chứa lớn. Bây giờ chỉ khi rê chuột trực tiếp vào **nút "Thích" (Like)** thì bảng chọn cảm xúc mới hiển thị, không bị hiện nhầm khi rê chuột qua nút "Bình luận" hay "Chia sẻ". Sửa đồng bộ ở cả `PostCard.tsx` và `PostDetailModal.tsx`.
+
+4. **Xóa bình luận Realtime qua SSE:**
+   * Triển khai sự kiện truyền thông tin xóa bình luận realtime qua SSE. Khi một bình luận bị xóa, Backend sẽ phát sự kiện kèm cờ `deleted: true`. Client bắt được sự kiện này sẽ tự động loại bỏ bình luận khỏi cache dữ liệu hiển thị (React Query) của bài viết tương ứng mà không cần tải lại toàn trang.
+
+5. **Khắc phục hoàn toàn lỗi Accessibility (A11y):**
+   * Bổ sung đầy đủ các thuộc tính `title` và `aria-label` cho tất cả các nút đóng modal (`X`), nút điều hướng ảnh, giúp giải quyết triệt để cảnh báo khả năng tiếp cận và đảm bảo dự án build thành công 100% không lỗi lầm.
+
+### Files chính:
+- `frontend/src/modules/post/components/PostDetailModal.tsx`
+- `frontend/src/modules/post/components/PostCard.tsx`
+- `frontend/src/modules/post/components/CommentSection.tsx`
+- `backend/src/main/java/com/minifacebook/module/post/application/service/CommentService.java`
+- `docs/session/SESSION_HANDOFF.md`
 
 ---
 
