@@ -136,6 +136,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           <div className="relative">
             <button 
               onClick={() => setShowMenu(!showMenu)}
+              title="Tùy chọn bài viết"
               className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg p-1.5 transition cursor-pointer"
             >
               <MoreHorizontal className="h-5 w-5" />
@@ -189,7 +190,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
               return (
                 <div key={idx} className={itemClasses}>
-                  <img src={url} alt="Post image" className="absolute inset-0 h-full w-full object-cover hover:scale-102 transition duration-500 cursor-pointer" style={{ position: localPost.imageUrls!.length === 1 ? 'relative' : 'absolute' }} />
+                  <img 
+                    src={url} 
+                    alt="Post image" 
+                    className={`inset-0 h-full w-full object-cover hover:scale-102 transition duration-500 cursor-pointer ${localPost.imageUrls!.length === 1 ? 'relative' : 'absolute'}`} 
+                  />
 
                   {isLast && remainingCount > 0 && (
                     <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center cursor-pointer hover:bg-slate-900/60 transition backdrop-blur-sm">
@@ -213,8 +218,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
                   {topReactionTypes.map((type, idx) => (
                     <span
                       key={type}
-                      className="h-5 w-5 rounded-full bg-white border border-white flex items-center justify-center text-[13px] leading-none shadow-sm"
-                      style={{ marginLeft: idx === 0 ? 0 : '-6px', zIndex: 10 - idx }}
+                      className={`h-5 w-5 rounded-full bg-white border border-white flex items-center justify-center text-[13px] leading-none shadow-sm ${
+                        idx === 0 ? 'ml-0' : '-ml-1.5'
+                      } ${
+                        idx === 0 ? 'z-[10]' : idx === 1 ? 'z-[9]' : 'z-[8]'
+                      }`}
                     >
                       {REACTION_ICONS[type]?.emoji || '👍'}
                     </span>
