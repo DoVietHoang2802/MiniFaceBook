@@ -303,7 +303,7 @@
     - [x] Viết **Integration Test** bằng MockMvc + Testcontainers. ✅
 - [ ] **Sprint 6.3: CI/CD Pipeline**
     - [x] Viết **E2E Test** bằng Playwright cho các luồng chính. ✅
-    - [ ] Thiết lập **GitHub Actions** tự động Build & Test khi push code.
+    - [x] Thiết lập **GitHub Actions** tự động Build & Test khi push code. ✅
     - [ ] Cấu hình **SonarQube** để kiểm tra code quality (optional).
 - [ ] **Sprint 6.4: Production Deployment**
     - [ ] Deploy Backend lên **Render** hoặc **Railway**.

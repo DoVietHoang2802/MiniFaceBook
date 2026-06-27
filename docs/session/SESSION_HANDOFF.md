@@ -1,35 +1,33 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 27/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.3 - PART 1 HOÀN THÀNH (Playwright E2E Testing, Dependency Fixes, Null-Safety Audit). Tổng tiến độ **~92%**.
+## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.3 HOÀN THÀNH 🏆 (Playwright E2E Testing & GitHub Actions CI Pipeline). Tổng tiến độ **~94%**.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
 
 ---
 
-## 📋 TÓM TẮT PHIÊN LÀM VIỆC (27/06/2026 - PLAYWRIGHT E2E TESTING & BUG FIXES)
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (27/06/2026 - SPRINT 6.3 - PART 2: GITHUB ACTIONS SETUP)
 
 ### Công việc đã thực hiện:
 
-1. **Playwright E2E Testing**:
-   * Triển khai bộ ba test E2E quan trọng nhất:
-     * `auth.spec.ts`: Đăng ký, Đăng nhập, và Đăng xuất với xử lý dynamic username/email bằng timestamp (`Date.now()`).
-     * `feed.spec.ts`: Đăng bài viết mới, bày tỏ cảm xúc (Reaction), và bình luận (Comment) thời gian thực.
-     * `chat.spec.ts`: Đăng ký 2 tài khoản ngẫu nhiên, kết bạn, tạo cuộc hội thoại, và gửi tin nhắn chat thời gian thực.
-   * Giải quyết race condition trong luồng chat khi tạo cuộc hội thoại trùng lặp nhờ cơ chế catch-and-retry.
-   * Kết quả chạy test E2E hoàn chỉnh thành công trên cả Chromium, Firefox, và WebKit.
+1. **Thiết lập GitHub Actions Workflow**:
+   * Tạo tệp cấu hình `.github/workflows/ci.yml` tại thư mục gốc.
+   * Thiết lập môi trường chạy bao gồm JDK 21 (Temurin) và Node.js (20) kèm cơ chế cache Maven và npm dependencies.
+   * Cấu hình khởi chạy tự động cụm dịch vụ MongoDB Replica Set (rs0), Redis, và Mailpit thông qua `docker-compose up -d`.
+   * Thêm bước Healthcheck chờ MongoDB khởi động hoàn toàn và replica set hoạt động trước khi chạy test.
+   * Cấu hình chạy toàn bộ Unit/Integration Tests của Backend (`mvn clean test`).
+   * Cấu hình chạy ngầm Backend server (`mvn spring-boot:run`) và loop healthcheck port 8080.
+   * Cấu hình cài đặt frontend dependencies, playwright browsers và chạy E2E Playwright Tests.
+   * Hỗ trợ lưu trữ báo cáo kết quả kiểm thử (Playwright HTML report) lên Artifacts của GitHub Action khi build thất bại.
 
-2. **Gia cố Mã nguồn & Build**:
-   * Cấu hình dự án loại bỏ các tệp tin kết quả test E2E (`playwright-report/`, `test-results/`) khỏi Git qua `.gitignore`.
-   * Cài đặt `@types/node` để khắc phục lỗi phân tích kiểu biên dịch của `playwright.config.ts`.
-   * Loại bỏ các warning an toàn kiểu Null (`@SuppressWarnings("null")` / `@SuppressWarnings("unchecked")`) và import thừa trong test backend.
+2. **Cập nhật Lộ trình & Nhật ký tiến độ**:
+   * Đồng bộ và đánh dấu hoàn thành mục thiết lập GitHub Actions trong `ROADMAP.md` và `PROGRESS.md`.
 
 ### Files chính:
-- `frontend/e2e/auth.spec.ts`
-- `frontend/e2e/feed.spec.ts`
-- `frontend/e2e/chat.spec.ts`
-- `frontend/playwright.config.ts`
-- `.gitignore`
+- `.github/workflows/ci.yml`
+- `docs/planning/ROADMAP.md`
+- `docs/planning/PROGRESS.md`
 - `docs/session/SESSION_HANDOFF.md`
 
 ---

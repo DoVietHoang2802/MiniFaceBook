@@ -665,6 +665,11 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Null Type Safety Warnings]** Giải quyết triệt để cảnh báo an toàn kiểu Null của trình biên dịch Java bằng cách áp dụng `@SuppressWarnings("null")` và `@SuppressWarnings("unchecked")` lên các lớp Service và Test tương ứng.
   - [x] **[Verification]** Chạy `mvn compile` kiểm tra, dự án build thành công hoàn hảo (Exit code: 0). Đồng bộ trạng thái hoàn thành các mục E2E trong `ROADMAP.md`.
 
+- **Nhật ký phiên làm việc (27/06/2026 - Sprint 6.3 - Part 2: GitHub Actions Setup):**
+  - [x] **[CI/CD Configuration]** Thiết lập thành công tệp tin cấu hình GitHub Actions `.github/workflows/ci.yml`. Cấu hình tự động checkout mã nguồn, thiết lập môi trường JDK 21 (Temurin) và Node.js (20), tự động khởi chạy cụm dịch vụ MongoDB Replica Set (rs0) và Redis thông qua `docker-compose up -d`.
+  - [x] **[Pipeline Automation]** Định nghĩa các step kiểm tra độ tin cậy và sức khỏe dịch vụ, tự động build & chạy toàn bộ Unit/Integration Tests của Backend, chạy ngầm server Spring Boot Backend và chạy E2E Playwright Tests của Frontend.
+  - [x] **[Roadmap Update]** Đồng bộ trạng thái hoàn thành cho hạng mục "Thiết lập GitHub Actions tự động Build & Test khi push code" trong `ROADMAP.md`.
+
 
 
 
