@@ -738,4 +738,37 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Engineered a robust End-to-End (E2E) testing suite using Playwright to validate critical user flows (Authentication, Newsfeed, Real-time Chat) across multiple modern browsers. Resolved concurrent database race conditions in chat initialization and eliminated compilation warning messages by applying Java Null-Safety annotations and configuring TypeScript node types.*
 
+---
+
+### 🛡️ Highlight 47: Thiết lập Pipeline CI/CD Tự động hóa với GitHub Actions, Docker-Compose & Health Check Dịch vụ
+*   **Situation (Bối cảnh):** Mặc dù các bộ kiểm thử unit, integration, và E2E đã hoàn thành, việc chạy test thủ công trên môi trường cục bộ của nhà phát triển dễ dẫn đến tình trạng "chạy tốt trên máy tôi nhưng lỗi trên server". Hệ thống cần có một quy trình tích hợp liên tục (CI) tự động hóa hoàn toàn để kiểm thử mỗi khi có thay đổi mã nguồn được đẩy lên GitHub.
+*   **Task (Nhiệm vụ):** Thiết lập cấu hình GitHub Actions Workflow tự động build, kiểm tra chất lượng code và chạy toàn bộ suite test từ backend đến frontend, sử dụng các dịch vụ thật (MongoDB, Redis, Mailpit) chạy trong Docker.
+*   **Action (Hành động):**
+    *   **Thiết lập Workflow `.github/workflows/ci.yml`**: Tự động kích hoạt khi có sự kiện push hoặc pull request lên nhánh `main`.
+    *   **Orchestrate Dịch vụ Kiểm thử với Docker-compose**: Khởi chạy các container MongoDB (ở chế độ Replica Set `rs0` để hỗ trợ transactions), Redis và Mailpit.
+    *   **Triển khai Kịch bản Kiểm tra Sức khỏe (Health Check)**: Viết script Bash để ping và đợi MongoDB replica set sẵn sàng hoạt động (`rs.status()`), tránh tình trạng test backend chạy trước khi DB khởi động xong gây lỗi kết nối.
+    *   **Tích hợp Chạy Test Backend & Server chạy ngầm**: Build và chạy test backend bằng Maven, sau đó khởi chạy backend server dưới dạng background process để cung cấp API cho frontend chạy test Playwright E2E.
+    *   **Lưu trữ Báo cáo HTML Playwright**: Cấu hình lưu trữ và tải lên artifacts báo cáo HTML của Playwright khi có bất kỳ kiểm thử E2E nào bị thất bại để hỗ trợ debug.
+*   **Result (Kết quả):**
+    *   Pipeline CI/CD hoạt động ổn định, tự động xác thực chất lượng mã nguồn trên mỗi lần đẩy code.
+    *   Phát hiện và chặn đứng mọi lỗi hồi quy trước khi mã nguồn được merge vào nhánh chính.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Designed and established a fully automated GitHub Actions CI pipeline orchestrated with Docker Compose to spin up MongoDB Replica Set, Redis, and Mailpit services. Implemented robust bash health checks to ensure DB readiness, running comprehensive Maven unit/integration tests and headless Playwright E2E suites with automated artifact report uploads on failures.*
+
+---
+
+### 🎨 Highlight 48: Đồng bộ Điều hướng Trang Cá nhân Toàn cục & Khắc phục Lỗi Kẹt Khởi tạo Cuộc trò chuyện Rỗng (Sprint 6.3 - Part 3)
+*   **Situation (Bối cảnh):** Trải nghiệm người dùng (UX) bị gián đoạn do thiếu liên kết điều hướng nhanh: nhấp vào ảnh đại diện hoặc tên của tác giả trong các bình luận hay trong khung trò chuyện không chuyển hướng người dùng đến trang cá nhân của họ. Đồng thời, một lỗi nghiêm trọng xảy ra khi người dùng mới chưa có bất kỳ cuộc hội thoại nào nhấp vào nút "Nhắn tin" từ trang bạn bè; giao diện chat bị treo hoàn toàn do danh sách cuộc trò chuyện rỗng (`conversations.length === 0`), làm gián đoạn trải nghiệm kết nối.
+*   **Task (Nhiệm vụ):** Triển khai liên kết điều hướng động sang trang cá nhân trên toàn bộ các component bình luận và thanh tiêu đề chat, đồng thời sửa đổi cơ chế tải danh sách cuộc trò chuyện để hỗ trợ khởi tạo cuộc hội thoại trống một cách mượt mà và chính xác.
+*   **Action (Hành động):**
+    *   **Đồng bộ Hóa Điều hướng Trang Cá nhân (Profile Navigations)**: Nhúng logic chuyển hướng `/profile/:userId` sử dụng `useNavigate` từ `react-router-dom` vào avatar và tên tác giả trong `CommentSection.tsx`, cũng như thanh tiêu đề cuộc trò chuyện và nút hành động "Trang cá nhân" trong bảng điều khiển chi tiết của `ChatPage.tsx`.
+    *   **Khắc phục Lỗi Kẹt Chat trống (Empty Chat Sync Fix)**: Tái cấu trúc logic trong `ChatPage.tsx` bằng cách giới thiệu cờ trạng thái `hasLoadedConvs` để theo dõi tiến trình tải danh sách từ API một cách chính xác. Khi danh sách cuộc trò chuyện rỗng, hệ thống sẽ bỏ qua việc tự động chọn hội thoại đầu tiên nhưng vẫn cho phép tạo và hiển thị hội thoại mới ngay khi nhận được tín hiệu từ danh sách bạn bè mà không bị kẹt ở trạng thái loading vô hạn.
+    *   **Kiểm thử E2E Playwright**: Chạy và xác thực toàn bộ kịch bản kiểm thử E2E trên 3 trình duyệt lớn để đảm bảo luồng khởi tạo chat và điều hướng trang cá nhân hoạt động chính xác 100%.
+*   **Result (Kết quả):**
+    *   Trải nghiệm điều hướng mạng xã hội liền mạch và tự nhiên hơn.
+    *   Khắc phục triệt để lỗi kẹt giao diện chat đối với người dùng mới chưa có hội thoại, đảm bảo độ tin cậy tuyệt đối của ứng dụng.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Integrated global profile navigations across comments and chat headers to redirect users to personal profiles. Resolved a critical frontend dead-lock in the real-time chat module for new users without pre-existing threads by implementing a load-state tracking flag (`hasLoadedConvs`), securing seamless initial conversation routing.*
+
+
 
