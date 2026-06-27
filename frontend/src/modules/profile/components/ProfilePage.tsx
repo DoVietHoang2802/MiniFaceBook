@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Camera, 
   BookOpen, 
@@ -10,12 +11,15 @@ import {
   User as UserIcon, 
   Mail, 
   Calendar, 
-  UploadCloud 
+  UploadCloud,
+  MessageSquare
 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { profileService } from '../services/profileService';
 import type { UserProfileResponse } from '../services/profileService';
 import { authService } from '../../auth/services/authService';
+import type { UserResponse } from '../../auth/services/authService';
+import { useAuth } from '../../../core/auth/AuthContext';
 
 // Định nghĩa Zod Schema cho Client-side Validation (Bảo mật Zero-Trust)
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // Mở rộng lên 20MB để thuật toán nén tự xử lý
@@ -32,13 +36,24 @@ const bioSchema = z.string()
   .max(255, 'Tiểu sử không được vượt quá 255 ký tự');
 
 interface ProfilePageProps {
-  initialUser: UserProfileResponse;
-  onLogout: () => void;
+  initialUser?: UserProfileResponse | UserResponse | null;
+  onLogout?: () => void;
 }
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
-  const [user, setUser] = useState<UserProfileResponse>(initialUser);
-  const [bio, setBio] = useState(initialUser.bio || '');
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const { userId } = useParams<{ userId?: string }>();
+  const isOwnProfile = !userId || userId === auth.user?.id;
+  const activeLogout = onLogout || auth.logout;
+
+  const [user, setUser] = useState<UserProfileResponse | UserResponse | null>(
+    isOwnProfile ? (initialUser || auth.user) : null
+  );
+  const [bio, setBio] = useState(
+    isOwnProfile ? (initialUser?.bio || auth.user?.bio || '') : ''
+  );
+  const [isLoading, setIsLoading] = useState(!isOwnProfile);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isSavingBio, setIsSavingBio] = useState(false);
   
@@ -52,11 +67,28 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync state khi initialUser thay đổi (fix lỗi logout → login lại)
+  // Sync state khi activeUser thay đổi hoặc khi userId thay đổi (để load profile mới)
   useEffect(() => {
-    setUser(initialUser);
-    setBio(initialUser.bio || '');
-  }, [initialUser]);
+    if (isOwnProfile) {
+      const u = initialUser || auth.user;
+      setUser(u);
+      setBio(u?.bio || '');
+      setIsLoading(false);
+    } else if (userId) {
+      setIsLoading(true);
+      profileService.getProfileById(userId)
+        .then((res) => {
+          setUser(res.data);
+          setBio(res.data.bio || '');
+        })
+        .catch(() => {
+          setErrorMessage('Không tải được thông tin người dùng.');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [userId, isOwnProfile, auth.user, initialUser]);
 
   // Tự động tắt thông báo sau 4 giây
   useEffect(() => {
@@ -185,15 +217,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const handleLogoutClick = async () => {
     try {
       await authService.logout();
-      onLogout();
+      if (activeLogout) activeLogout();
     } catch (err) {
-      onLogout(); // Fallback nếu có lỗi mạng
+      if (activeLogout) activeLogout(); // Fallback nếu có lỗi mạng
     }
   };
 
   // Trình bày định dạng ngày tháng sang trọng
-  const formatJoinedDate = (dateStr: string) => {
+  const formatJoinedDate = (dateStr?: string) => {
     try {
+      if (!dateStr) return 'Thành viên MiniFaceBook';
       const date = new Date(dateStr);
       return `Thành viên từ ngày ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     } catch (e) {
@@ -201,16 +234,26 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     }
   };
 
+  // Guard: Trạng thái đang tải dữ liệu
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto px-4 py-20 flex flex-col items-center justify-center text-center animate-fade-in-up">
+        <Loader2 className="h-10 w-10 text-violet-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-medium">Đang tải thông tin trang cá nhân...</p>
+      </div>
+    );
+  }
+
   // Guard: Nếu chưa có dữ liệu user (vd: phiên hết hạn, API trả 401), tránh crash khi
   // truy cập user.email.split(...). Hiển thị trạng thái loading và đăng xuất an toàn.
   if (!user || !user.email) {
     return (
       <div className="w-full max-w-4xl mx-auto px-4 py-20 flex flex-col items-center justify-center text-center animate-fade-in-up">
-        <Loader2 className="h-10 w-10 text-violet-500 animate-spin mb-4" />
-        <p className="text-slate-500 font-medium">Đang tải thông tin tài khoản...</p>
+        <AlertTriangle className="h-10 w-10 text-rose-500 mb-4 animate-pulse" />
+        <p className="text-slate-500 font-medium">Không thể tìm thấy thông tin tài khoản hoặc trang cá nhân không tồn tại.</p>
         <button
           onClick={handleLogoutClick}
-          className="mt-6 px-4 py-2.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5"
+          className="mt-6 px-4 py-2.5 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5 cursor-pointer shadow-sm"
         >
           <LogOut className="h-4 w-4" />
           <span>Đăng nhập lại</span>
@@ -243,14 +286,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         {/* Banner trang trí Gradient thanh lịch */}
         <div className="h-44 w-full bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-blue-600/20 relative">
           <div className="absolute inset-0 bg-white/20"></div>
-          {/* Nút Đăng xuất ở góc banner */}
-          <button
-            onClick={handleLogoutClick}
-            className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm shadow-sm"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Đăng xuất</span>
-          </button>
+          {/* Nút Đăng xuất hoặc Nhắn tin ở góc banner */}
+          {isOwnProfile ? (
+            <button
+              onClick={handleLogoutClick}
+              className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm shadow-sm"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Đăng xuất</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(`/chats/${user.id}`)}
+              className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-violet-50 border border-slate-200 hover:border-violet-300 text-xs font-bold text-slate-600 hover:text-violet-600 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm shadow-sm"
+            >
+              <MessageSquare className="h-4 w-4 text-violet-500" />
+              <span>Nhắn tin</span>
+            </button>
+          )}
         </div>
 
         {/* Thông tin hồ sơ & Tải ảnh đại diện */}
@@ -285,7 +338,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 )}
 
                 {/* Hover Trigger overlay */}
-                {!isUploadingAvatar && (
+                {!isUploadingAvatar && isOwnProfile && (
                   <button
                     onClick={triggerFileInput}
                     className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white cursor-pointer"
@@ -310,7 +363,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
             {/* Thông tin văn bản User */}
             <div className="text-center md:text-left mt-6 md:mt-0 flex-grow">
               <h2 className="text-3xl font-black text-slate-800 tracking-tight font-outfit mb-1">
-                {user.email.split('@')[0]}
+                {(user as any).name || user.email.split('@')[0]}
               </h2>
               <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-sm text-slate-500 mt-2 font-medium">
                 <span className="flex items-center space-x-1">
@@ -330,7 +383,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-t border-slate-200 pt-8">
             
             {/* Cột trái: Cập nhật Tiểu sử (Bio) với Focus Glassmorphic Glow */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className={`${isOwnProfile ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-6`}>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
@@ -406,36 +459,38 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
             </div>
 
             {/* Cột phải: Vùng kéo thả hình ảnh Drag-and-Drop nâng cao */}
-            <div className="lg:col-span-5 space-y-3">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
-                <UploadCloud className="h-5 w-5 text-violet-500" />
-                <span>Kéo & Thả ảnh đại diện</span>
-              </h3>
+            {isOwnProfile && (
+              <div className="lg:col-span-5 space-y-3">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                  <UploadCloud className="h-5 w-5 text-violet-500" />
+                  <span>Kéo & Thả ảnh đại diện</span>
+                </h3>
 
-              {/* Vùng Drag and Drop */}
-              <div 
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={triggerFileInput}
-                className={`w-full p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
-                  dragActive 
-                    ? 'border-violet-500 bg-violet-50 scale-[1.02] shadow-[0_0_20px_rgba(124,58,237,0.1)]' 
-                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-50'
-                }`}
-              >
-                <div className={`p-4 rounded-full bg-white border border-slate-200 mb-4 transition-transform duration-300 ${dragActive ? 'scale-110 rotate-12 text-violet-500' : 'text-slate-400'}`}>
-                  <UploadCloud className="h-8 w-8" />
+                {/* Vùng Drag and Drop */}
+                <div 
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={triggerFileInput}
+                  className={`w-full p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
+                    dragActive 
+                      ? 'border-violet-500 bg-violet-50 scale-[1.02] shadow-[0_0_20px_rgba(124,58,237,0.1)]' 
+                      : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className={`p-4 rounded-full bg-white border border-slate-200 mb-4 transition-transform duration-300 ${dragActive ? 'scale-110 rotate-12 text-violet-500' : 'text-slate-400'}`}>
+                    <UploadCloud className="h-8 w-8" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-600">
+                    {dragActive ? "Thả tệp tin vào đây" : "Thả ảnh vào đây hoặc nhấp để chọn"}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2 font-medium">
+                    Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB.
+                  </p>
                 </div>
-                <p className="text-sm font-bold text-slate-600">
-                  {dragActive ? "Thả tệp tin vào đây" : "Thả ảnh vào đây hoặc nhấp để chọn"}
-                </p>
-                <p className="text-xs text-slate-400 mt-2 font-medium">
-                  Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB.
-                </p>
               </div>
-            </div>
+            )}
 
           </div>
 

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { registerSchema } from '../schemas/authSchema';
 import { authService } from '../services/authService';
+import { useToast } from '../../../core/toast/ToastContext';
+import { useNavigate, Link } from 'react-router-dom';
 
-interface RegisterFormProps {
-  onToggleForm: () => void;
-}
+const RegisterForm: React.FC = () => {
+  const { triggerToast } = useToast();
+  const navigate = useNavigate();
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,7 +94,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
       setConfirmPassword('');
       setAuthError(null);
       setErrors({});
-      onToggleForm();
+      triggerToast('Đăng ký thành công! Vui lòng kiểm tra email kích hoạt.');
+      navigate('/login');
     } catch (err: any) {
       // Phân biệt Network Error vs API Error
       if (!err.response) {
@@ -257,13 +259,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleForm }) => {
       {/* Liên kết sang Form đăng nhập */}
       <div className="mt-6 sm:mt-8 text-center text-sm text-slate-500">
         Đã có tài khoản?{' '}
-        <button
-          onClick={onToggleForm}
+        <Link
+          to="/login"
           className="font-bold text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
-          disabled={isLoading}
         >
           Đăng nhập ngay
-        </button>
+        </Link>
       </div>
     </div>
   );

@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,6 +67,24 @@ public class UserController {
         ApiResponse.<UserResponse>builder()
             .status(HttpStatus.OK.value())
             .message("Avatar uploaded successfully")
+            .data(response)
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
+  /** Lấy thông tin cá nhân của một người dùng theo ID. */
+  @GetMapping("/{userId}")
+  @Operation(
+      summary = "Lấy thông tin cá nhân theo ID",
+      description = "Trả về thông tin chi tiết hồ sơ người dùng tương ứng với ID chỉ định.")
+  public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable String userId) {
+    UserResponse response = authService.getUserById(userId);
+
+    ApiResponse<UserResponse> apiResponse =
+        ApiResponse.<UserResponse>builder()
+            .status(HttpStatus.OK.value())
+            .message("Get user profile successfully")
             .data(response)
             .build();
 

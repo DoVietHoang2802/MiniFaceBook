@@ -9,6 +9,8 @@ export interface UserResponse {
   verified: boolean;
   avatar?: string;
   bio?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ApiResponse<T> {

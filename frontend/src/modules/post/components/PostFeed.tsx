@@ -4,12 +4,15 @@ import { postService } from '../services/postService';
 import type { PostResponse } from '../types/post.types';
 import CreatePostCard from './CreatePostCard';
 import PostCard from './PostCard';
+import { useAuth } from '../../../core/auth/AuthContext';
 
 interface PostFeedProps {
-  currentUser: any;
+  currentUser?: any;
 }
 
-const PostFeed: React.FC<PostFeedProps> = ({ currentUser }) => {
+const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => {
+  const { user: contextUser } = useAuth();
+  const currentUser = propCurrentUser || contextUser;
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);

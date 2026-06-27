@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Share2, MoreHorizontal, Clock, ThumbsUp, Trash2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import type { PostResponse, ReactionType } from '../types/post.types';
@@ -16,6 +17,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted }) => {
+  const navigate = useNavigate();
   const formatTime = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
@@ -115,7 +117,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     <div className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm mb-6 transition-all duration-300 hover:shadow-md animate-fade-in-up">
       <div className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
+          <div 
+            onClick={() => navigate(`/profile/${localPost.authorId}`)}
+            className="flex items-center space-x-3 cursor-pointer group/author"
+          >
             <div className="h-10 w-10 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shadow-sm shrink-0">
               {localPost.authorAvatar ? (
                 <img src={localPost.authorAvatar} alt={localPost.authorName} className="h-full w-full object-cover" />
@@ -126,7 +131,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
               )}
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800 leading-tight">{localPost.authorName || 'Người dùng ẩn danh'}</h3>
+              <h3 className="text-sm font-bold text-slate-800 leading-tight group-hover/author:text-violet-600 transition-colors">{localPost.authorName || 'Người dùng ẩn danh'}</h3>
               <div className="flex items-center text-[10px] text-slate-400 font-semibold space-x-1 mt-0.5">
                 <Clock className="h-3 w-3 text-slate-400" />
                 <span>{formatTime(localPost.createdAt)}</span>

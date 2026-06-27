@@ -15,7 +15,7 @@ test.describe('Feed and Post Interactions Flow', () => {
 
     // 1. Đăng ký & Kích hoạt tài khoản người dùng mới
     await page.goto('/');
-    await page.click('button:has-text("Đăng ký miễn phí")');
+    await page.click('a:has-text("Đăng ký miễn phí")');
     await page.fill('#register-name', name);
     await page.fill('#register-email', email);
     await page.fill('#register-password', password);

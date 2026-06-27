@@ -228,6 +228,34 @@ public class AuthService {
     return response;
   }
 
+  /** Lấy thông tin tài khoản người dùng theo ID. */
+  public UserResponse getUserById(String id) {
+    String cacheKey = "user:profile:id:" + id;
+    try {
+      String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+      if (cachedJson != null) {
+        log.debug("Cache hit for user profile of ID: {}", id);
+        return objectMapper.readValue(cachedJson, UserResponse.class);
+      }
+    } catch (Exception e) {
+      log.warn("Failed to read user profile cache for ID: {}", id, e);
+    }
+
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    UserResponse response = authMapper.toUserResponse(user);
+
+    try {
+      String json = objectMapper.writeValueAsString(response);
+      redisTemplate.opsForValue().set(cacheKey, json, 24, TimeUnit.HOURS);
+      log.debug("Cached user profile for ID: {}", id);
+    } catch (Exception e) {
+      log.error("Failed to cache user profile for ID: {}", id, e);
+    }
+
+    return response;
+  }
+
   /** Cập nhật thông tin Trang cá nhân (avatar, bio). */
   public UserResponse updateProfile(String email, UpdateProfileRequest request) {
     User user = userRepository.findByEmail(email)

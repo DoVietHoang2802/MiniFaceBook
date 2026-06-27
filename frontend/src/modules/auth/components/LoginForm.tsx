@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { loginSchema } from '../schemas/authSchema';
 import { authService } from '../services/authService';
+import { useAuth } from '../../../core/auth/AuthContext';
+import { useToast } from '../../../core/toast/ToastContext';
+import { useNavigate, Link } from 'react-router-dom';
 
-interface LoginFormProps {
-  onToggleForm: () => void;
-  onLoginSuccess: (user: any) => void;
-  onForgotPassword: () => void;
-}
+const LoginForm: React.FC = () => {
+  const { setUser } = useAuth();
+  const { triggerToast } = useToast();
+  const navigate = useNavigate();
 
-const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess, onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +42,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess, onF
       const response = await authService.login({ email, password });
       // Response structure: { status, message, data: UserResponse }
       const loggedInUser = response.data;
-      onLoginSuccess(loggedInUser);
+      setUser(loggedInUser);
+      triggerToast('Đăng nhập thành công!');
+      navigate('/');
     } catch (err: any) {
       // Phân biệt Network Error vs API Error (chuẩn Facebook/Discord)
       if (!err.response) {
@@ -101,16 +104,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess, onF
             <label htmlFor="login-password" className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500">
               Mật khẩu
             </label>
-            <a
-              href="#forgot"
+            <Link
+              to="/forgot-password"
               className="text-[10px] sm:text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline"
-              onClick={(e) => {
-                e.preventDefault();
-                onForgotPassword();
-              }}
             >
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
 
           <div className="relative">
@@ -188,13 +187,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onToggleForm, onLoginSuccess, onF
       {/* Liên kết sang Form đăng ký */}
       <div className="mt-6 sm:mt-8 text-center text-sm text-slate-500">
         Chưa có tài khoản?{' '}
-        <button
-          onClick={onToggleForm}
+        <Link
+          to="/register"
           className="font-bold text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
-          disabled={isLoading}
         >
           Đăng ký miễn phí
-        </button>
+        </Link>
       </div>
     </div>
   );

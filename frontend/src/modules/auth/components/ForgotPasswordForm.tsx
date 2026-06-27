@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ArrowLeft, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
 import { authService } from '../services/authService';
 import { forgotPasswordSchema, verifyOtpSchema, resetPasswordSchema } from '../schemas/authSchema';
+import { useToast } from '../../../core/toast/ToastContext';
+import { useNavigate } from 'react-router-dom';
 
-interface ForgotPasswordFormProps {
-  onBackToLogin: () => void;
-  triggerToast: (msg: string) => void;
-}
+const ForgotPasswordForm: React.FC = () => {
+  const { triggerToast } = useToast();
+  const navigate = useNavigate();
 
-const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, triggerToast }) => {
   const [step, setStep] = useState<'EMAIL' | 'OTP' | 'PASSWORD'>('EMAIL');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(''));
@@ -190,7 +190,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
       await authService.resetPassword(resetToken, newPassword);
       triggerToast('Đặt lại mật khẩu thành công! Hãy đăng nhập lại.');
       setTimeout(() => {
-        onBackToLogin();
+        navigate('/login');
       }, 2000);
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Token đổi mật khẩu hết hiệu lực. Vui lòng thử lại từ đầu.';
@@ -226,7 +226,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackToLogin, 
               setOtp(new Array(6).fill(''));
               setFormError(null);
             } else {
-              onBackToLogin();
+              navigate('/login');
             }
           }}
           className="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-slate-700 transition-colors mb-6 cursor-pointer"

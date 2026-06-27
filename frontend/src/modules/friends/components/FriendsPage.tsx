@@ -6,11 +6,13 @@ import type {
   UserSearchResponse,
   RelationshipStatus,
 } from '../types/friend.types';
+import { useToast } from '../../../core/toast/ToastContext';
+import { useNavigate } from 'react-router-dom';
 
 type TabKey = 'search' | 'friends' | 'pending' | 'sent';
 
 interface FriendsPageProps {
-  triggerToast: (msg: string) => void;
+  triggerToast?: (msg: string) => void;
   onStartChat?: (userId: string) => void;
 }
 
@@ -21,7 +23,15 @@ interface FriendsPageProps {
  * - Lời mời: lời mời đến chờ duyệt (accept/reject).
  * - Đã gửi: lời mời mình đã gửi (thu hồi).
  */
-export default function FriendsPage({ triggerToast, onStartChat }: FriendsPageProps) {
+export default function FriendsPage({ triggerToast: propTriggerToast, onStartChat: propOnStartChat }: FriendsPageProps) {
+  const { triggerToast: contextTriggerToast } = useToast();
+  const navigate = useNavigate();
+  
+  const triggerToast = propTriggerToast || contextTriggerToast;
+  const onStartChat = propOnStartChat || ((userId: string) => {
+    navigate(`/chats/${userId}`);
+  });
+
   const [activeTab, setActiveTab] = useState<TabKey>('search');
 
   // Search state
@@ -344,10 +354,13 @@ export default function FriendsPage({ triggerToast, onStartChat }: FriendsPagePr
           <div className="space-y-2">
             {searchResults.map((u) => (
               <div key={u.userId} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all">
-                <div className="flex items-center space-x-3 overflow-hidden">
+                <div 
+                  onClick={() => navigate(`/profile/${u.userId}`)}
+                  className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+                >
                   <Avatar name={u.name} avatar={u.avatar} />
                   <div className="text-left overflow-hidden">
-                    <h4 className="font-bold text-slate-800 text-sm truncate">{u.name}</h4>
+                    <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{u.name}</h4>
                     <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || u.email}</p>
                   </div>
                 </div>
@@ -381,10 +394,13 @@ export default function FriendsPage({ triggerToast, onStartChat }: FriendsPagePr
                 const busy = busyIds.has(item.friendshipId);
                 return (
                   <div key={item.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all">
-                    <div className="flex items-center space-x-3 overflow-hidden">
+                    <div 
+                      onClick={() => navigate(`/profile/${item.userId}`)}
+                      className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+                    >
                       <Avatar name={item.name} avatar={item.avatar} />
                       <div className="text-left overflow-hidden">
-                        <h4 className="font-bold text-slate-800 text-sm truncate">{item.name}</h4>
+                        <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{item.name}</h4>
                         <p className="text-slate-400 text-xs truncate mt-0.5">{item.bio || item.email}</p>
                       </div>
                     </div>

@@ -37,7 +37,7 @@ test.describe('Real-time Chat Flow', () => {
 
     // --- Đăng ký & Kích hoạt User A ---
     await pageA.goto('/');
-    await pageA.click('button:has-text("Đăng ký miễn phí")');
+    await pageA.click('a:has-text("Đăng ký miễn phí")');
     await pageA.fill('#register-name', userAName);
     await pageA.fill('#register-email', userAEmail);
     await pageA.fill('#register-password', password);
@@ -72,7 +72,7 @@ test.describe('Real-time Chat Flow', () => {
 
     // --- Đăng ký & Kích hoạt User B ---
     await pageB.goto('/');
-    await pageB.click('button:has-text("Đăng ký miễn phí")');
+    await pageB.click('a:has-text("Đăng ký miễn phí")');
     await pageB.fill('#register-name', userBName);
     await pageB.fill('#register-email', userBEmail);
     await pageB.fill('#register-password', password);

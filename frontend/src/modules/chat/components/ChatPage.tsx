@@ -41,10 +41,13 @@ import type {
   MessageReactionEvent,
   MessageUpdateEvent
 } from '../types/chat.types';
+import { useAuth } from '../../../core/auth/AuthContext';
+import { useToast } from '../../../core/toast/ToastContext';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 interface ChatPageProps {
-  currentUser: { id: string; email: string; name?: string; avatar?: string };
-  triggerToast: (msg: string) => void;
+  currentUser?: { id: string; email: string; name?: string; avatar?: string } | null;
+  triggerToast?: (msg: string) => void;
   initialRecipientId?: string | null;
   onClearInitialRecipient?: () => void;
 }
@@ -53,11 +56,29 @@ interface ChatPageProps {
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡'];
 
 export default function ChatPage({
-  currentUser,
-  triggerToast,
-  initialRecipientId,
-  onClearInitialRecipient
+  currentUser: propCurrentUser,
+  triggerToast: propTriggerToast,
+  initialRecipientId: propInitialRecipientId,
+  onClearInitialRecipient: propOnClearInitialRecipient
 }: ChatPageProps) {
+  const { user: contextUser } = useAuth();
+  const { triggerToast: contextTriggerToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentUser = (propCurrentUser || contextUser) as { id: string; email: string; name?: string; avatar?: string };
+  const triggerToast = propTriggerToast || contextTriggerToast;
+  const { recipientId: paramRecipientId } = useParams<{ recipientId?: string }>();
+  
+  // Lấy initialRecipientId từ url param, prop hoặc từ location state
+  const initialRecipientId = paramRecipientId || propInitialRecipientId || location.state?.recipientId || null;
+  
+  const onClearInitialRecipient = propOnClearInitialRecipient || (() => {
+    // Clear state trong location nếu có để tránh lặp lại
+    if (location.state?.recipientId) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  });
 
   const [conversations, setConversations] = useState<ConversationResponse[]>([]);
   const [activeConversation, setActiveConversation] = useState<ConversationResponse | null>(null);
@@ -79,6 +100,7 @@ export default function ChatPage({
 
   // Loading states
   const [isLoadingConvs, setIsLoadingConvs] = useState(false);
+  const [hasLoadedConvs, setHasLoadedConvs] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
@@ -166,6 +188,7 @@ export default function ChatPage({
     try {
       const data = await chatService.getConversations(0, 100);
       setConversations(data.content);
+      setHasLoadedConvs(true);
 
       // Nếu có selectId, chọn hội thoại đó làm active
       if (selectId) {
@@ -208,25 +231,41 @@ export default function ChatPage({
     return () => clearInterval(interval);
   }, [conversations, currentUser.id]);
 
-  // 3. Xử lý logic chuyển hướng từ "Nhắn tin" ở FriendsPage
+  // 3. Đồng bộ URL parameter (initialRecipientId) sang activeConversation hoặc tạo mới nếu chưa tồn tại
   useEffect(() => {
-    if (initialRecipientId && !isCreatingRef.current) {
-      isCreatingRef.current = true;
-      const startChatWithFriend = async () => {
-        try {
-          const newConv = await chatService.createConversation(initialRecipientId);
-          await loadConversations(newConv.id);
-        } catch {
-          triggerToast('Không thể mở cuộc trò chuyện với người bạn này.');
-          isCreatingRef.current = false;
-        } finally {
-          // Luôn clear để không gọi lại liên tục khi fail
-          if (onClearInitialRecipient) onClearInitialRecipient();
-        }
-      };
-      startChatWithFriend();
+    if (!initialRecipientId || !hasLoadedConvs) {
+      return;
     }
-  }, [initialRecipientId, loadConversations, onClearInitialRecipient, triggerToast]);
+
+    const found = conversations.find((c) =>
+      c.participants.some((p) => p.id === initialRecipientId)
+    );
+
+    if (found) {
+      if (activeConversation?.id !== found.id) {
+        setActiveConversation(found);
+      }
+      if (onClearInitialRecipient) onClearInitialRecipient();
+    } else {
+      // Nếu chưa có hội thoại trong list hiện tại, tiến hành tạo mới/lấy từ DB
+      if (!isCreatingRef.current) {
+        isCreatingRef.current = true;
+        const startChatWithFriend = async () => {
+          try {
+            const newConv = await chatService.createConversation(initialRecipientId);
+            await loadConversations(newConv.id);
+          } catch {
+            triggerToast('Không thể mở cuộc trò chuyện với người bạn này.');
+            navigate('/chats');
+          } finally {
+            isCreatingRef.current = false;
+            if (onClearInitialRecipient) onClearInitialRecipient();
+          }
+        };
+        startChatWithFriend();
+      }
+    }
+  }, [initialRecipientId, hasLoadedConvs, conversations, activeConversation, loadConversations, triggerToast, navigate, onClearInitialRecipient]);
 
   // 4. Đăng ký các kênh WebSocket để nhận tin nhắn và status realtime
   useEffect(() => {
@@ -876,7 +915,7 @@ export default function ChatPage({
       if (!exists) {
         setConversations(prev => [newConv, ...prev]);
       }
-      setActiveConversation(newConv);
+      navigate(`/chats/${friendId}`);
     } catch {
       triggerToast('Không tạo được cuộc hội thoại mới.');
     }
@@ -943,6 +982,14 @@ export default function ChatPage({
   const isActivePartnerOnline = activePartner ? onlineUserIds.has(activePartner.id) : false;
   // Người kia có đang gõ trong cuộc trò chuyện đang mở không (Sprint 4.4)
   const isActivePartnerTyping = activeConversation ? Boolean(typingByConv[activeConversation.id]) : false;
+
+  if (!currentUser) {
+    return (
+      <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-24px)] items-center justify-center">
+        <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-24px)] animate-fade-in-up">
@@ -1085,7 +1132,7 @@ export default function ChatPage({
               return (
                 <div
                   key={conv.id}
-                  onClick={() => setActiveConversation(conv)}
+                  onClick={() => navigate(`/chats/${partner.id}`)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all hover:bg-slate-50 ${isSelected
                       ? 'bg-violet-50/60 border border-violet-200/50'
                       : 'border border-transparent'
@@ -1180,31 +1227,36 @@ export default function ChatPage({
                 >
                   <ArrowLeft className="h-4 w-4 text-slate-600" />
                 </button>
-                <div className="relative shrink-0">
-                  <div className="h-9 w-9 rounded-full border border-slate-200 overflow-hidden bg-slate-100">
-                    {activePartner?.avatar ? (
-                      <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-sm bg-slate-50">
-                        {activePartner?.name.charAt(0).toUpperCase()}
-                      </div>
+                <div 
+                  onClick={() => activePartner && navigate(`/profile/${activePartner.id}`)}
+                  className="flex items-center gap-3 min-w-0 cursor-pointer group/header"
+                >
+                  <div className="relative shrink-0">
+                    <div className="h-9 w-9 rounded-full border border-slate-200 overflow-hidden bg-slate-100 group-hover/header:border-violet-300 transition">
+                      {activePartner?.avatar ? (
+                        <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-500 font-bold text-sm bg-slate-50">
+                          {activePartner?.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    {isActivePartnerOnline && (
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-2 border-white rounded-full bg-emerald-500"></span>
                     )}
                   </div>
-                  {isActivePartnerOnline && (
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-2 border-white rounded-full bg-emerald-500"></span>
-                  )}
-                </div>
-                <div className="text-left min-w-0">
-                  <h4 className="text-sm font-bold text-slate-800 truncate">{activePartner?.name}</h4>
-                  <span className="text-xs font-medium text-slate-400">
-                    {isActivePartnerTyping ? (
-                      <span className="text-violet-600 font-semibold">Đang nhập...</span>
-                    ) : isActivePartnerOnline ? (
-                      <span className="text-emerald-600 font-semibold">Online</span>
-                    ) : (
-                      'Ngoại tuyến'
-                    )}
-                  </span>
+                  <div className="text-left min-w-0">
+                    <h4 className="text-sm font-bold text-slate-800 truncate group-hover/header:text-violet-600 transition-colors">{activePartner?.name}</h4>
+                    <span className="text-xs font-medium text-slate-400">
+                      {isActivePartnerTyping ? (
+                        <span className="text-violet-600 font-semibold">Đang nhập...</span>
+                      ) : isActivePartnerOnline ? (
+                        <span className="text-emerald-600 font-semibold">Online</span>
+                      ) : (
+                        'Ngoại tuyến'
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
@@ -1683,7 +1735,11 @@ export default function ChatPage({
 
             {/* Action buttons */}
             <div className="flex items-center gap-6 mt-5">
-              <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Xem Profile">
+              <button 
+                onClick={() => activePartner && navigate(`/profile/${activePartner.id}`)}
+                className="flex flex-col items-center gap-1.5 group cursor-pointer" 
+                title="Xem Profile"
+              >
                 <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
                   <User className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
                 </div>

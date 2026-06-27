@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, Loader2, MoreHorizontal, Send, Smile, Trash2 } from 'lucide-react';
 import { postService } from '../services/postService';
@@ -17,6 +18,7 @@ interface CommentSectionProps {
 }
 
 const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, currentUser, onCommentCountChange }) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -372,7 +374,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
 
             return (
               <div key={comment.id} className="flex gap-2 group animate-fade-in-up">
-                <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5">
+                <div 
+                  onClick={() => navigate(`/profile/${comment.authorId}`)}
+                  className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer hover:opacity-85 transition-opacity shadow-sm"
+                >
                   {comment.authorAvatar ? (
                     <img src={comment.authorAvatar} alt={comment.authorName} className="h-full w-full object-cover" />
                   ) : (
@@ -386,7 +391,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                   <div className="flex items-start gap-2">
                     <div className="max-w-[90%] min-w-0">
                       <div className="bg-slate-100/80 px-3.5 py-2 rounded-2xl break-words">
-                        <span className="font-bold text-slate-800 text-[0.85rem] block leading-tight mb-0.5">
+                        <span 
+                          onClick={() => navigate(`/profile/${comment.authorId}`)}
+                          className="font-bold text-slate-800 text-[0.85rem] block leading-tight mb-0.5 cursor-pointer hover:text-violet-600 transition-colors"
+                        >
                           {comment.authorName}
                         </span>
                         <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">

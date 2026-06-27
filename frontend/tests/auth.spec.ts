@@ -10,7 +10,7 @@ test.describe('Authentication Flow', () => {
     await page.goto('/');
 
     // 2. Chuyển sang form Đăng ký tài khoản
-    await page.click('button:has-text("Đăng ký miễn phí")');
+    await page.click('a:has-text("Đăng ký miễn phí")');
     await expect(page.locator('h2')).toHaveText('Tạo tài khoản mới');
 
     // 3. Điền thông tin Đăng ký

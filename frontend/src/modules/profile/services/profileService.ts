@@ -35,4 +35,10 @@ export const profileService = {
     });
     return response.data;
   },
+
+  // Lấy thông tin hồ sơ của người dùng theo ID
+  getProfileById: async (userId: string): Promise<ApiResponse<UserProfileResponse>> => {
+    const response = await axiosClient.get<ApiResponse<UserProfileResponse>>(`/user/${userId}`);
+    return response.data;
+  },
 };
