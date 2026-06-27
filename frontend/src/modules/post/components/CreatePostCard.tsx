@@ -128,7 +128,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={`Bạn đang nghĩ gì thế, ${currentUser?.fullName?.split(' ')[0] || 'Viet'}?`}
+            placeholder={`Bạn đang nghĩ gì thế, ${currentUser?.name?.split(' ')[0] || 'Viet'}?`}
             className="w-full bg-transparent text-slate-800 placeholder-slate-400 resize-none outline-none text-sm min-h-[50px] focus:min-h-[90px] transition-all duration-300 font-medium"
             disabled={isSubmitting}
           />

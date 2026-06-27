@@ -50,3 +50,7 @@ coverage/
 *.bak
 *.tmp
 *.temp
+
+# ===== PLAYWRIGHT =====
+playwright-report/
+test-results/

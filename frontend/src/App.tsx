@@ -313,7 +313,7 @@ function App() {
                       )}
                     </div>
                     <div className="text-left overflow-hidden hidden lg:block w-[140px]">
-                      <h4 className="font-bold text-slate-800 text-xs truncate leading-snug">{user.fullName || 'User'}</h4>
+                      <h4 className="font-bold text-slate-800 text-xs truncate leading-snug">{user.name || 'User'}</h4>
                       <p className="text-slate-400 text-[10px] truncate mt-0.5">{user.email}</p>
                     </div>
                   </div>

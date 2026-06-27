@@ -43,7 +43,7 @@ import type {
 } from '../types/chat.types';
 
 interface ChatPageProps {
-  currentUser: { id: string; email: string; fullName?: string; avatar?: string };
+  currentUser: { id: string; email: string; name?: string; avatar?: string };
   triggerToast: (msg: string) => void;
   initialRecipientId?: string | null;
   onClearInitialRecipient?: () => void;
@@ -96,9 +96,11 @@ export default function ChatPage({
   const [friendSearchText, setFriendSearchText] = useState('');
 
   // Refs for tracking closures and scrolling
+  // Refs for tracking closures and scrolling
   const activeConversationRef = useRef<ConversationResponse | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isCreatingRef = useRef(false);
 
   // Refs cho Typing Indicator (Sprint 4.4)
   const typingThrottleRef = useRef<number | null>(null);      // throttle gửi event "đang gõ"
@@ -208,13 +210,15 @@ export default function ChatPage({
 
   // 3. Xử lý logic chuyển hướng từ "Nhắn tin" ở FriendsPage
   useEffect(() => {
-    if (initialRecipientId) {
+    if (initialRecipientId && !isCreatingRef.current) {
+      isCreatingRef.current = true;
       const startChatWithFriend = async () => {
         try {
           const newConv = await chatService.createConversation(initialRecipientId);
           await loadConversations(newConv.id);
         } catch {
           triggerToast('Không thể mở cuộc trò chuyện với người bạn này.');
+          isCreatingRef.current = false;
         } finally {
           // Luôn clear để không gọi lại liên tục khi fail
           if (onClearInitialRecipient) onClearInitialRecipient();
@@ -619,7 +623,7 @@ export default function ChatPage({
     const optimistic: MessageResponse = {
       id: tempId,
       conversationId: convId,
-      sender: { id: currentUser.id, name: currentUser.fullName || 'Tôi', avatar: currentUser.avatar },
+      sender: { id: currentUser.id, name: currentUser.name || 'Tôi', avatar: currentUser.avatar },
       content: attachedContent || '',
       type: 'IMAGE',
       mediaUrl: localPreview,
@@ -789,7 +793,7 @@ export default function ChatPage({
       conversationId: activeConversation.id,
       sender: {
         id: currentUser.id,
-        name: currentUser.fullName || 'Tôi',
+        name: currentUser.name || 'Tôi',
         avatar: currentUser.avatar
       },
       content: contentToSend,
