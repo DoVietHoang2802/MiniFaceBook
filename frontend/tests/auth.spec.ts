@@ -1,12 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
-  // Sinh email ngẫu nhiên cho mỗi lượt chạy test để tránh trùng lặp
-  const email = `e2etest-${Date.now()}@example.com`;
-  const name = 'Playwright Test User';
-  const password = 'Password123';
-
   test('should register, verify via Mailpit, login and logout successfully', async ({ page, request }) => {
+    // Sinh email ngẫu nhiên cho mỗi lượt chạy test để tránh trùng lặp
+    const email = `e2etest-${Date.now()}@example.com`;
+    const name = 'Playwright Test User';
+    const password = 'Password123';
     // 1. Đi tới trang đăng nhập mặc định
     await page.goto('/');
 

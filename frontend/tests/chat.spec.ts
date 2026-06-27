@@ -1,16 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Real-time Chat Flow', () => {
-  const userAEmail = `chata-${Date.now()}@example.com`;
-  const userAName = `Chat User A ${Date.now()}`;
-  
-  const userBEmail = `chatb-${Date.now()}@example.com`;
-  const userBName = `Chat User B ${Date.now()}`;
-  
-  const password = 'Password123!';
-  const messageText = `Hi User B, this is a real-time message at ${Date.now()}`;
-
   test('should exchange real-time chat messages between two users successfully', async ({ browser, request }) => {
+    const userAEmail = `chata-${Date.now()}@example.com`;
+    const userAName = `Chat User A ${Date.now()}`;
+    
+    const userBEmail = `chatb-${Date.now()}@example.com`;
+    const userBName = `Chat User B ${Date.now()}`;
+    
+    const password = 'Password123!';
+    const messageText = `Hi User B, this is a real-time message at ${Date.now()}`;
+
     // 1. Khởi tạo Context và Page cho User A
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
@@ -128,6 +128,8 @@ test.describe('Real-time Chat Flow', () => {
     await connectBtn.click();
     await expect(searchRow.locator('button:has-text("Thu hồi")')).toBeVisible();
 
+    // Chờ 1 giây để đảm bảo DB cập nhật xong trạng thái lời mời đã gửi
+    await pageB.waitForTimeout(1000);
     // User B vào tab Bạn bè -> Lời mời kết bạn để chấp nhận
     await pageB.click('button:has-text("Bạn bè")');
     await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
@@ -140,6 +142,8 @@ test.describe('Real-time Chat Flow', () => {
     await expect(acceptBtn).not.toBeVisible();
 
     // --- Gửi tin nhắn Chats realtime ---
+    // Chờ 1 giây để đảm bảo DB cập nhật xong trạng thái kết bạn
+    await pageA.waitForTimeout(1000);
     // User A chuyển sang sub-tab bạn bè để click Nhắn tin
     await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
     
@@ -168,7 +172,7 @@ test.describe('Real-time Chat Flow', () => {
     await userAChatItem.click();
 
     // Xác thực tin nhắn hiển thị đúng nội dung bên khung chat User B
-    const messageContainerB = pageB.locator(`text=${messageText}`);
+    const messageContainerB = pageB.locator('div.relative.z-10').filter({ hasText: messageText });
     await expect(messageContainerB).toBeVisible();
 
     // Cleanup contexts

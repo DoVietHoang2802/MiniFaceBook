@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Feed and Post Interactions Flow', () => {
-  const email = `feedtest-${Date.now()}@example.com`;
-  const name = 'Feed Tester';
-  const password = 'Password123!';
-  const postContent = `Hello, this is a Playwright E2E post at ${Date.now()}`;
-  const commentContent = `This is an E2E comment! ${Date.now()}`;
-
   test('should create, like, comment, and delete a post successfully', async ({ page, request }) => {
+    const email = `feedtest-${Date.now()}@example.com`;
+    const name = 'Feed Tester';
+    const password = 'Password123!';
+    const postContent = `Hello, this is a Playwright E2E post at ${Date.now()}`;
+    const commentContent = `This is an E2E comment! ${Date.now()}`;
     // Tự động đồng ý hộp thoại confirm khi xóa bài viết
     page.on('dialog', async (dialog) => {
       expect(dialog.message()).toContain('Bạn có chắc chắn muốn xóa bài viết này không?');
@@ -61,6 +60,7 @@ test.describe('Feed and Post Interactions Flow', () => {
 
     // Đợi trang Dashboard/Feed hiển thị
     await expect(page.locator('aside').first()).toBeVisible();
+    await page.waitForTimeout(1000);
 
     // 2. Tạo bài viết mới
     const postInput = page.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
