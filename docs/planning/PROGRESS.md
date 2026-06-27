@@ -657,6 +657,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Chạy bộ test suite tự động backend (`mvn test`) đạt kết quả **34/34 tests PASS** thành công 100%, đảm bảo chất lượng và độ vững chắc tối đa.
   - [x] Cập nhật dấu tích hoàn thành (x) cho toàn bộ hạng mục Sprint 6.2 trong `ROADMAP.md`.
 
+- **Nhật ký phiên làm việc (27/06/2026 - Sprint 6.3 - Part 1: E2E Playwright & Bug Fixes):**
+  - [x] **[Playwright E2E Testing]** Viết và ổn định 3 bộ test E2E (`auth.spec.ts`, `feed.spec.ts`, `chat.spec.ts`). Cải tiến test chat đa trình duyệt, giải quyết race condition tạo cuộc hội thoại trùng và sử dụng dynamic username (`Date.now()`).
+  - [x] **[Git Configuration]** Cập nhật `.gitignore` để loại bỏ các tệp tin tạm (artifacts) từ Playwright (`playwright-report/`, `test-results/`), giúp giữ sạch repo.
+  - [x] **[Dependency Fixes]** Khắc phục lỗi biên dịch `playwright.config.ts` bằng cách cài đặt `@types/node` vào `devDependencies` của frontend.
+  - [x] **[Backend Quality Cleanup]** Loại bỏ import tĩnh thừa `ArgumentMatchers.any` trong `AuthServiceTest.java`. 
+  - [x] **[Null Type Safety Warnings]** Giải quyết triệt để cảnh báo an toàn kiểu Null của trình biên dịch Java bằng cách áp dụng `@SuppressWarnings("null")` và `@SuppressWarnings("unchecked")` lên các lớp Service và Test tương ứng.
+  - [x] **[Verification]** Chạy `mvn compile` kiểm tra, dự án build thành công hoàn hảo (Exit code: 0). Đồng bộ trạng thái hoàn thành các mục E2E trong `ROADMAP.md`.
+
 
 
 

@@ -289,20 +289,20 @@
 ## 🛠️ PHASE 6: NAVIGATION, PERFORMANCE & TESTING ⏳
 *Mục tiêu: Cải tiến UI/UX chi tiết, tối ưu hóa hiệu năng, viết test và tích hợp CI/CD.*
 
-- [ ] **Sprint 6.1: Split-Pane Post Detail Modal & Reaction Scoping UX Fix** ✅
+- [x] **Sprint 6.1: Split-Pane Post Detail Modal & Reaction Scoping UX Fix** ✅
     - [x] Thiết kế **PostDetailModal** hiển thị chi tiết bài viết dạng 2 cột (Split-pane) giống Facebook.
     - [x] Tích hợp nền tím khói thương hiệu Hizo (`bg-[#F4F0FD]`) cho bài viết không có ảnh (Option 1).
     - [x] Khắc phục triệt để giới hạn kết nối SSE giúp quản lý luồng ngầm mượt mà.
     - [x] Cố định sự kiện hover cảm xúc chỉ ở nút "Thích", tránh hiển thị nhầm khi di chuột qua "Bình luận" hay "Chia sẻ".
     - [x] Sửa toàn bộ lỗi Accessibility và đạt trạng thái build thành công.
-- [ ] **Sprint 6.2: Optimization & Quality Audit** ✅
+- [x] **Sprint 6.2: Optimization & Quality Audit** ✅
     - [x] Áp dụng **Soft Delete** cho tin nhắn (Sprint 4.5) và bài viết (Phase 2). ✅
     - [x] **Redis Caching** cho dữ liệu tĩnh (user profile, friend list). ✅
     - [x] Viết **Unit Test** bằng JUnit 5 (coverage > 70%). ✅
         - *Đã có bước đệm:* Module Chat đã được hardening thêm test cho edit/delete message và rollback Optimistic UI ngày 12/06/2026.
     - [x] Viết **Integration Test** bằng MockMvc + Testcontainers. ✅
 - [ ] **Sprint 6.3: CI/CD Pipeline**
-    - [ ] Viết **E2E Test** bằng Playwright cho các luồng chính.
+    - [x] Viết **E2E Test** bằng Playwright cho các luồng chính. ✅
     - [ ] Thiết lập **GitHub Actions** tự động Build & Test khi push code.
     - [ ] Cấu hình **SonarQube** để kiểm tra code quality (optional).
 - [ ] **Sprint 6.4: Production Deployment**
@@ -351,10 +351,10 @@
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
 | 5 | Notification System | ✅ HOÀN THÀNH | 100% (Tích hợp SSE & đồng bộ Realtime) |
-| 6 | Navigation & Performance | 🟡 ĐANG THỰC HIỆN | 40% (Hoàn thành Sprint 6.1, 6.2) |
+| 6 | Navigation & Performance | 🟡 ĐANG THỰC HIỆN | 60% (Hoàn thành Sprint 6.1, 6.2, 6.3-Part 1) |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~90%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 đang triển khai)
+**Tổng tiến độ: ~92%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 đang triển khai)
 
 ---
 

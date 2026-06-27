@@ -1,5 +1,5 @@
 # 🧠 AI DEVELOPMENT GUIDELINES - MINIFACEBOOK (THE ARCHITECT'S HANDBOOK)
-> **Last Updated:** May 2026 | **Version:** 2.0
+> **Last Updated:** June 2026 | **Version:** 2.1
 
 > [!IMPORTANT]
 > Tài liệu này là "Kim chỉ nam" duy nhất và tối cao. Mọi hành động lập trình, thiết kế hệ thống và giao tiếp của AI đều phải soi chiếu qua bộ quy tắc này. Kỷ cương là nền tảng của sự ổn định.
@@ -20,19 +20,21 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 - **Core:** Java 21 (Virtual Threads ready) + Spring Boot 3.3.
 - **Architecture:** Modular Monolith trên 1 VPS (Modular Clean Architecture — đảm bảo tính độc lập giữa các Module).
 - **Persistence:** 
-    - **MongoDB:** Lưu trữ dữ liệu chính (Post, Profile, Comment, Friendship). Port: 27018.
-    - **Redis:** 3 use case đã chốt (nguyên tắc: không dùng dao mổ trâu giết gà):
+    - **MongoDB:** Lưu trữ dữ liệu chính (Post, Profile, Comment, Friendship, Message, Conversation, Notification). Port: 27018. MongoDB chạy dưới chế độ **Replica Set (`rs0`)** để hỗ trợ giao dịch multi-document `@Transactional`.
+    - **Redis:** 5 use case đã chốt (nguyên tắc: không dùng dao mổ trâu giết gà):
         1. **Presence Online/Offline** (Phase 4.1) — TTL-based, tự động expire khi mất kết nối.
         2. **JWT Blacklist / Access Token** (Phase 4.1) — Nâng cấp từ MongoDB `revoked` flag → Redis TTL. Logic nghiệp vụ giữ nguyên, chỉ đổi nơi lưu.
         3. **Unread Count** (Phase 4.3) — Đếm tin chưa đọc `unread:<convId>:<userId>`, TTL 7 ngày, reset khi seen.
-        4. **Typing Indicator** (Phase 4.4) — `typing:<convId>:<userId>` TTL 4s, self-healing khi đóng tab.
-        5. **Cache** (Phase 6.1) — Cache `user:profile`, `friend:list`, `feed:user` để giảm tải MongoDB.
+        4. **Typing Indicator** (Phase 4.4) — `typing:<convId>:<userId>` TTL 4s, self-healing khi đóng tab/mất mạng.
+        5. **Cache Unread Count (Notif)** (Phase 5.1) — `notif:unread:<userId>` TTL 24h, tự động invalid khi nhận notif mới hoặc mark read.
     - **Rate Limiting:** Giữ **Bucket4j in-memory** (`ConcurrentHashMap`). Không nâng cấp lên Redis vì 1 server là đủ.
-    - **Redis Pub/Sub:** ✅ **Đã triển khai (Phase 4.1/4.3)** — channel `chat.room.<convId>` đồng bộ event chat đa server (NEW_MESSAGE, DELIVERED, SEEN, TYPING, REACTION, UPDATE). Scale-ready cho multi-instance; với 1 server overhead không đáng kể (~0.5ms/message).
+    - **Redis Pub/Sub:** Channel `chat.room.<convId>` đồng bộ event chat đa server (NEW_MESSAGE, DELIVERED, SEEN, TYPING, REACTION, UPDATE) và Pub/Sub đồng bộ comment realtime đa máy chủ.
 - **Security:** OAuth2 Resource Server (JWT) + Refresh Token Rotation + RBAC + Bcrypt.
-- **Communication:** Spring WebSocket (STOMP) cho Realtime Chat.
+- **Communication:**
+    - **Spring WebSocket (STOMP):** Dành riêng cho Realtime Chat hai chiều (Chat, Typing, Message Reactions, Edit/Delete).
+    - **Server-Sent Events (SSE):** Dành cho cập nhật thời gian thực một chiều (Post counts, New Comments, Notifications) giúp giải quyết triệt để giới hạn kết nối của trình duyệt (Browser connection limits - gom kết nối và filter ở client).
 - **Async Tasks:** Spring `@Async` + `@EnableAsync` cho tác vụ nền (gửi mail, xử lý ảnh).
-- **Quality Tools:** ArchUnit, Checkstyle (Google), Spotless, Sentry, Bucket4j.
+- **Quality & Testing Tools:** ArchUnit, Checkstyle (Google), Spotless, Sentry, Bucket4j, JUnit 5 + MockMvc (Integration Testing), **Playwright** (E2E Testing).
     - *Quy chuẩn ArchUnit Bootstrapping:* Luôn thiết lập `.withOptionalLayers(true)` để tránh lỗi build giả trên các thư mục trống ở các Phase đầu.
     - *Quy chuẩn Global Infrastructure:* Định nghĩa rõ và cho phép `GlobalInfrastructure` (`com.minifacebook.infrastructure..`) gọi xuống `Shared` DTOs để thống nhất API trả về (không vi phạm ranh giới Clean Architecture).
 - **Load Testing:** K6 — bắt buộc chạy trước mỗi lần deploy lên Production.
@@ -77,6 +79,20 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 - **File Upload Limits & Guard:** 
   - Cấu hình server Tomcat giới hạn tải lên tối đa là **5MB** cho mỗi file và **25MB** tổng request (qua `spring.servlet.multipart` trong `application.yml`) để tránh lỗi ngắt kết nối Tomcat `ERR_CONNECTION_RESET`.
   - Luôn đi kèm bộ lọc kích thước file phía máy khách (Client-side Size Guard) ở Frontend để cảnh báo sớm cho người dùng và chặn đứng file >5MB trước khi truyền mạng.
+- **Soft Delete Cascading (Xóa Mềm Thác):**
+  - Khi xóa mềm bài viết (`Post`), phải đảm bảo các liên kết đi kèm như `Comment` và các phản hồi (`Reaction`) liên quan cũng được cập nhật trạng thái xóa mềm để đảm bảo tính toàn vẹn dữ liệu.
+  - Khi thu hồi tin nhắn chat (`Message`), cập nhật cờ `deleted = true` và xóa thông tin nhạy cảm (`content = null`, `mediaUrl = null`) nhưng giữ lại tài liệu để phục vụ kiểm tra/lịch sử (Zalo/Facebook style).
+- **Redis Caching & Eviction:**
+  - Triển khai cơ chế cache cho dữ liệu tĩnh/đọc nhiều như Profile người dùng, danh sách bạn bè với TTL hợp lý (vd: 1 giờ).
+  - Phải thực hiện xóa cache (Cache Eviction) tương ứng khi có cập nhật dữ liệu để tránh dữ liệu bị cũ (stale data).
+- **TypeScript Strict Mode & ES2022 Target:**
+  - Luôn bật `"strict": true` và thiết lập target, lib về `ES2022` trong các tệp cấu hình TypeScript (`tsconfig.node.json`, `tsconfig.app.json`) để ngăn chặn lỗi kiểu (type-safety) âm thầm.
+- **Accessibility (A11y) & Screen Reader Support:**
+  - Mọi thẻ `<input type="file" className="hidden">` (dùng cho upload ảnh, avatar) bắt buộc phải có thuộc tính `title` hoặc nhãn `aria-label` mô tả rõ mục đích.
+  - Form inputs phải luôn liên kết thuộc tính `htmlFor` của `<label>` với `id` tương ứng của `<input>`.
+  - Hệ thống các ô vuông OTP (6-Digit OTP Verification) cần được thiết kế với đầy đủ thuộc tính `aria-label`, `title`, `placeholder="-"` hỗ trợ đầy đủ các thiết bị đọc màn hình.
+- **Phân tách mã lỗi đăng nhập (INVALID_CREDENTIALS):**
+  - Khi người dùng nhập sai mật khẩu, backend phải ném ra mã lỗi `INVALID_CREDENTIALS` (1028) cụ thể thay vì mã `UNAUTHENTICATED` (1006) để frontend thông báo chính xác "Email hoặc mật khẩu không chính xác".
 
 ---
 

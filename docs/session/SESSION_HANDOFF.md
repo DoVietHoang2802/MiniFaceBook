@@ -1,9 +1,36 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 27/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.2 HOÀN THÀNH (MockMvc Integration Tests, Redis Cache & Soft Delete Audit). Tổng tiến độ **~90%**.
+## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.3 - PART 1 HOÀN THÀNH (Playwright E2E Testing, Dependency Fixes, Null-Safety Audit). Tổng tiến độ **~92%**.
 
-> ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (27/06/2026 - PLAYWRIGHT E2E TESTING & BUG FIXES)
+
+### Công việc đã thực hiện:
+
+1. **Playwright E2E Testing**:
+   * Triển khai bộ ba test E2E quan trọng nhất:
+     * `auth.spec.ts`: Đăng ký, Đăng nhập, và Đăng xuất với xử lý dynamic username/email bằng timestamp (`Date.now()`).
+     * `feed.spec.ts`: Đăng bài viết mới, bày tỏ cảm xúc (Reaction), và bình luận (Comment) thời gian thực.
+     * `chat.spec.ts`: Đăng ký 2 tài khoản ngẫu nhiên, kết bạn, tạo cuộc hội thoại, và gửi tin nhắn chat thời gian thực.
+   * Giải quyết race condition trong luồng chat khi tạo cuộc hội thoại trùng lặp nhờ cơ chế catch-and-retry.
+   * Kết quả chạy test E2E hoàn chỉnh thành công trên cả Chromium, Firefox, và WebKit.
+
+2. **Gia cố Mã nguồn & Build**:
+   * Cấu hình dự án loại bỏ các tệp tin kết quả test E2E (`playwright-report/`, `test-results/`) khỏi Git qua `.gitignore`.
+   * Cài đặt `@types/node` để khắc phục lỗi phân tích kiểu biên dịch của `playwright.config.ts`.
+   * Loại bỏ các warning an toàn kiểu Null (`@SuppressWarnings("null")` / `@SuppressWarnings("unchecked")`) và import thừa trong test backend.
+
+### Files chính:
+- `frontend/e2e/auth.spec.ts`
+- `frontend/e2e/feed.spec.ts`
+- `frontend/e2e/chat.spec.ts`
+- `frontend/playwright.config.ts`
+- `.gitignore`
+- `docs/session/SESSION_HANDOFF.md`
 
 ---
 

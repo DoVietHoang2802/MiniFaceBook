@@ -163,3 +163,19 @@ public class CleanArchitectureTest {
 *   **Vòng đời Bài viết (`PostIntegrationTest.java`):** Kiểm thử luồng tuần tự tạo bài viết -> tương tác cảm xúc -> thêm bình luận -> xóa mềm bài viết/bình luận.
 *   **Vòng đời Tin nhắn (`MessageIntegrationTest.java`):** Kiểm thử luồng gửi tin nhắn -> đánh dấu delivered -> sửa tin nhắn -> thu hồi tin nhắn.
 
+---
+
+## 🎭 7. Quy chuẩn Kiểm thử E2E (End-to-End Playwright Testing)
+
+Để đảm bảo toàn bộ hệ thống (giao diện React + REST APIs + WebSockets + Redis) phối hợp ăn khớp trên các trình duyệt thực tế, dự án sử dụng **Playwright** cho các kịch bản kiểm thử E2E.
+
+### A. Nguyên tắc Thiết kế Test E2E
+*   **Không phụ thuộc dữ liệu tĩnh:** Sử dụng dynamic username/email bằng timestamp (`Date.now()`) để chạy song song và tránh xung đột dữ liệu giữa các lần chạy test.
+*   **Cô lập kịch bản:** Mỗi file test spec (ví dụ: `auth.spec.ts`, `feed.spec.ts`, `chat.spec.ts`) hoạt động độc lập, tự động đăng ký và login trước khi thực hiện hành động nghiệp vụ.
+*   **Wait for Network & Socket:** Khi kiểm thử tính năng thời gian thực (real-time chat, typing), sử dụng `page.waitForTimeout` hoặc chờ đợi các tín hiệu UI phản hồi thay vì assert ngay lập tức để tránh lỗi bất đồng bộ.
+
+### B. Cấu trúc Thư mục Test
+*   Các kịch bản E2E được đặt trong `frontend/e2e/`.
+*   Cấu hình Playwright được định nghĩa tại `frontend/playwright.config.ts`.
+*   Tránh commit các thư mục kết quả test (`playwright-report/`, `test-results/`) bằng cách cập nhật chúng vào `.gitignore`.
+

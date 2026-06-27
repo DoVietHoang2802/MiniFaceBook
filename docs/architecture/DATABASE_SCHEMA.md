@@ -240,7 +240,8 @@ Redis được sử dụng với **6 mục đích rõ ràng**, đã được tri
 | **JWT Blacklist** (Logout) | `blacklist:<jwtId>` | String (`"revoked"`) | Bằng thời gian hết hạn còn lại của Access Token | Sử dụng `jwtId` (UUID) thay vì toàn bộ token để tiết kiệm RAM |
 | **Cache Unread Count** (Chat) | `unread:<conversationId>:<userId>` | String (Counter) | 7 ngày (7 days) | Lưu số lượng tin nhắn chưa đọc của từng user trong hội thoại, tự động xóa khi seen |
 | **Cache Unread Count** (Notif) | `notif:unread:<userId>` | String (Counter) | 1 ngày (24h) | **(Sprint 5.1)** Lưu số lượng thông báo chưa đọc của user, tự động invalid khi nhận notif mới hoặc mark read |
-| **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) | Phase 6 (chưa triển khai) |
+| **Cache Profile** người dùng | `user:profile:<userId>` | Hash | 3600s (1 giờ) | **(Sprint 6.2)** Cache UserProfile để giảm tải đọc từ MongoDB, evict khi update profile |
+| **Cache Friend List** bạn bè | `friend:list:<userId>` | List | 3600s (1 giờ) | **(Sprint 6.2)** Cache Friendship list để tăng tốc render, evict khi thay đổi quan hệ kết bạn |
 | **Cache Newsfeed** | `feed:user:<userId>` | List | 1800s (30 phút) | Phase 6 (chưa triển khai) |
 
 > **Lưu ý quan trọng:**

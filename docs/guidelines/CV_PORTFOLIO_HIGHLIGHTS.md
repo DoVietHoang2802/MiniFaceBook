@@ -721,4 +721,21 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Established a comprehensive integration testing framework in Spring Boot using MockMvc, developing full-lifecycle integration tests for posts and real-time chat modules. Validated soft-delete cascading logic and Redis caching behavior under transaction-rollback isolated conditions, achieving 100% pass rate across 34 test cases.*
 
+---
+
+### 🎭 Highlight 46: Thiết Lập Hệ Thống Kiểm Thử End-to-End Với Playwright & Dọn Dẹp Build Warning Toàn Diện (Sprint 6.3 - Part 1)
+*   **Situation (Bối cảnh):** Kiểm thử tích hợp backend (Integration Tests) đảm bảo logic hoạt động tốt, nhưng không thể xác minh hành vi tương tác trên giao diện người dùng thực tế (UI, kết nối WebSockets, Server-Sent Events, và hành vi DOM) giữa nhiều người dùng và nhiều trình duyệt khác nhau. Bên cạnh đó, việc tích hợp kiểm thử E2E dễ phát sinh xung đột kiểu biên dịch TypeScript, cảnh báo biên dịch backend (Null-safety warnings), và làm bẩn kho lưu trữ Git bằng các tệp tin tạm sinh ra khi chạy test.
+*   **Task (Nhiệm vụ):** Thiết lập hệ thống kiểm thử End-to-End (E2E) tự động bằng Playwright cho các luồng nghiệp vụ cốt lõi, giải quyết triệt để các race condition và lỗi biên dịch kiểu, dọn dẹp các cảnh báo an toàn Null của Java, và bảo vệ sự sạch sẽ của repo Git.
+*   **Action (Hành động):**
+    *   **Viết kịch bản E2E tự động:** Hiện thực hóa 3 kịch bản E2E spec: `auth.spec.ts` (kiểm thử đăng ký, đăng nhập, đăng xuất với dynamic username để chạy song song), `feed.spec.ts` (kiểm thử đăng bài, bình luận và reaction thời gian thực), và `chat.spec.ts` (kiểm thử đăng ký 2 tài khoản, kết bạn, tạo cuộc hội thoại và gửi tin nhắn chat realtime).
+    *   **Khắc phục race condition:** Triển khai cơ chế catch-and-retry cho lỗi trùng lặp hội thoại `DuplicateKeyException` trên backend để đảm bảo luồng chat E2E không bị sập khi hai tài khoản bắt đầu nhắn tin đồng thời.
+    *   **Dọn dẹp Git & Config:** Cập nhật `.gitignore` để loại bỏ các thư mục sinh ra bởi Playwright (`playwright-report/`, `test-results/`). Thêm `@types/node` vào `devDependencies` để sửa lỗi biên dịch `playwright.config.ts`.
+    *   **Java Null-Safety Cleanup:** Áp dụng các annotation an toàn kiểu `@SuppressWarnings("null")` và `@SuppressWarnings("unchecked")` để triệt tiêu toàn bộ cảnh báo biên dịch của Java Compiler.
+*   **Result (Kết quả):**
+    *   Hệ thống chạy test E2E thành công 100% trên cả 3 trình duyệt (Chromium, Firefox, WebKit).
+    *   Triệt tiêu hoàn toàn các Java compiler warnings và TypeScript compile errors, giúp dự án build sạch hoàn hảo.
+    *   Kho lưu trữ Git được giữ gọn gàng, sạch sẽ, không bị lẫn tệp tin tạm.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Engineered a robust End-to-End (E2E) testing suite using Playwright to validate critical user flows (Authentication, Newsfeed, Real-time Chat) across multiple modern browsers. Resolved concurrent database race conditions in chat initialization and eliminated compilation warning messages by applying Java Null-Safety annotations and configuring TypeScript node types.*
+
 
