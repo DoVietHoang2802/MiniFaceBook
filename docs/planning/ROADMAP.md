@@ -351,10 +351,10 @@
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
 | 5 | Notification System | ✅ HOÀN THÀNH | 100% (Tích hợp SSE & đồng bộ Realtime) |
-| 6 | Navigation & Performance | 🟡 ĐANG THỰC HIỆN | 60% (Hoàn thành Sprint 6.1, 6.2, 6.3-Part 1) |
+| 6 | Navigation & Performance | 🟡 ĐANG THỰC HIỆN | 80% (Hoàn thành Sprint 6.1, 6.2, 6.3) |
 | 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~92%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 đang triển khai)
+**Tổng tiến độ: ~95%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 đang triển khai)
 
 ---
 
@@ -444,6 +444,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.3 | Jun 2026 | **Profile Navigations & Empty Chat Bug — HOÀN THÀNH Sprint 6.3 & Cải tiến Giao diện 🎉**: Nhấp vào avatar hoặc tên của tác giả trong phần bình luận (`CommentSection.tsx`) hoặc bạn chat ở thanh tiêu đề/nút hành động Profile của cuộc trò chuyện (`ChatPage.tsx`) sẽ điều hướng sang trang cá nhân. Sửa đổi cờ theo dõi tải danh sách hội thoại `hasLoadedConvs` để khắc phục triệt để lỗi bị kẹt giao diện chat đối với người dùng chưa có cuộc hội thoại nào. Chạy Playwright E2E vượt qua 9/9 tests. |
 | 4.2 | Jun 2026 | **Split-Pane Post Detail Modal & Reaction Scoping UX Fix — HOÀN THÀNH Sprint 6.1 🎉**: Thiết kế giao diện Modal bình luận dạng 2 cột (Split-pane) kiểu Facebook. Đồng bộ hiển thị khung màu tím khói thương hiệu Hizo cho bài viết không có ảnh (Option 1) và hiển thị ảnh chi tiết bên trái. Scope lại hover reaction chỉ hiển thị ở nút "Thích", tránh kích hoạt nhầm khi di chuột qua "Bình luận" hay "Chia sẻ" ở cả `PostCard` và `PostDetailModal`. Khắc phục lỗi giới hạn kết nối SSE, tối ưu tài nguyên. Sửa lỗi Accessibility và build hoàn hảo 100% không lỗi. |
 | 4.1 | Jun 2026 | **Quality Hardening & Linter Fixes — HOÀN THÀNH 🎉**: Khắc phục các cảnh báo biên dịch và linter ở cả Frontend và Backend. Bật `"forceConsistentCasingInFileNames": true` để đồng bộ hóa. Sửa các cảnh báo Accessibility (A11y) của các nút chức năng bằng thuộc tính `title`. Loại bỏ hoàn toàn inline styles trong `CommentSection.tsx` và `ChatPage.tsx` sang Tailwind CSS classes. Dọn dẹp các import thừa ở Backend (`NotificationService.java`, `PostRealtimeBroadcaster.java`, v.v.). Cập nhật `RateLimitingFilter.java` sang API `Bandwidth.builder()` mới. Sửa lỗi type safety (Raw types/Unchecked casts/Unboxing) trong `GlobalExceptionHandler.java`, `MessageServiceTest.java`, và `FriendshipService.java`. |
 | 4.0 | Jun 2026 | **SSE Migration for Post Feed, Comments & Notifications — HOÀN THÀNH Task 2 🎉**: Di chuyển hoàn toàn hạ tầng cập nhật số đếm Post, Thông báo (Notifications) và Bình luận mới (Comments) từ WebSocket sang Server-Sent Events (SSE) giúp tối ưu hiệu năng và khả năng mở rộng. Sửa lỗi đường dẫn SSE Frontend gọi thiếu `/api`. Tối ưu hóa UI Bình luận: đảo ngược thứ tự Optimistic Update từ append (dưới cùng) thành prepend (trên đầu) đồng bộ với sắp xếp `createdAt DESC` của Backend, đem lại trải nghiệm đăng bình luận tức thì không giật lag. Backend controllers sửa lỗi định danh `@AuthenticationPrincipal` sang Jwt tránh lỗi 500. |

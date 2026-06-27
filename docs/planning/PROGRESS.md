@@ -670,6 +670,13 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Pipeline Automation]** Định nghĩa các step kiểm tra độ tin cậy và sức khỏe dịch vụ, tự động build & chạy toàn bộ Unit/Integration Tests của Backend, chạy ngầm server Spring Boot Backend và chạy E2E Playwright Tests của Frontend.
   - [x] **[Roadmap Update]** Đồng bộ trạng thái hoàn thành cho hạng mục "Thiết lập GitHub Actions tự động Build & Test khi push code" trong `ROADMAP.md`.
 
+- **Nhật ký phiên làm việc (27/06/2026 - Sprint 6.3 - Part 3: Profile Navigations & Empty Chat Synchronization):**
+  - [x] **[Profile Navigations]** Cho phép người dùng nhấp vào avatar/tên tác giả bình luận trong `CommentSection.tsx` để truy cập `/profile/:userId`.
+  - [x] **[Chat Header Navigations]** Tích hợp sự kiện click điều hướng sang trang cá nhân của bạn chat khi nhấp vào tên/avatar ở thanh tiêu đề chat và nút hành động "Profile" ở khung chi tiết bên phải.
+  - [x] **[Empty Chat Synchronization Bug]** Giải quyết triệt để lỗi người dùng mới (chưa có cuộc hội thoại nào) bị kẹt khi nhấp "Nhắn tin" từ danh sách bạn bè do danh sách rỗng (`conversations.length === 0`). Thêm cờ `hasLoadedConvs` để theo dõi và bảo đảm quá trình khởi tạo cuộc trò chuyện diễn ra chính xác.
+  - [x] **[E2E & Build Verification]** Chạy `npm run build` và kiểm thử toàn diện bằng Playwright E2E (`npx playwright test`). Kết quả: 9/9 tests passed thành công 100% trên cả 3 trình duyệt Chromium, Firefox, Webkit.
+
+
 
 
 
