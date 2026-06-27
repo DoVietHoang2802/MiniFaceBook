@@ -648,5 +648,15 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Cập nhật phía client `CommentSection.tsx` để bắt sự kiện xóa bình luận, lọc cache và trừ số lượng đếm bình luận tức thời.
   - [x] Gia cố kiểm thử tự động `CommentServiceTest.java` để xác thực phân quyền xóa bình luận.
 
+- **Nhật ký phiên làm việc (27/06/2026 - Sprint 6.2 hoàn thành 🏆):**
+  - [x] Rà soát và kiểm chứng tính năng **Soft Delete** cho bài viết (Phase 2) và tin nhắn (Sprint 4.5) đã được triển khai hoàn chỉnh cả ở tầng Service và Database.
+  - [x] Rà soát và kiểm chứng tính năng **Redis Caching** cho Profile người dùng (AuthService) và danh sách bạn bè (FriendshipService) đã hoạt động ổn định.
+  - [x] Viết và tích hợp thành công **MockMvc Integration Tests**:
+    - `PostIntegrationTest.java`: Kiểm thử tích hợp toàn bộ vòng đời của Bài viết bao gồm tạo bài viết, bày tỏ cảm xúc (Reaction), thêm bình luận (Comment), xóa mềm bình luận và xóa mềm bài viết.
+    - `MessageIntegrationTest.java`: Kiểm thử tích hợp luồng chat bao gồm gửi tin nhắn, đánh dấu đã nhận (delivered), chỉnh sửa tin nhắn (edit), và thu hồi/xóa tin nhắn (soft delete).
+  - [x] Chạy bộ test suite tự động backend (`mvn test`) đạt kết quả **34/34 tests PASS** thành công 100%, đảm bảo chất lượng và độ vững chắc tối đa.
+  - [x] Cập nhật dấu tích hoàn thành (x) cho toàn bộ hạng mục Sprint 6.2 trong `ROADMAP.md`.
+
+
 
 

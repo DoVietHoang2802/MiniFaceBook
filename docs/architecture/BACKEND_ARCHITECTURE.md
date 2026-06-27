@@ -147,3 +147,19 @@ public class CleanArchitectureTest {
 }
 ```
 *   **Hiệu quả:** Bất kỳ pull request nào chứa dòng code vi phạm quy tắc kiến trúc sẽ ngay lập tức làm sập bản build thử nghiệm tại Local/CI-CD, bảo vệ dự án khỏi nợ kỹ thuật (Tech Debt) vĩnh viễn.
+
+---
+
+## 🧪 6. Quy chuẩn Kiểm thử Tích hợp (Integration Testing Standards)
+
+Để đảm bảo các API hoạt động chính xác từ đầu đến cuối và không bị lỗi hồi quy, hệ thống sử dụng **MockMvc** kết hợp với cơ sở dữ liệu và cache thực tế (hoặc nhúng).
+
+### A. Nguyên lý Thiết kế Kiểm thử Tích hợp
+*   **Base Class Chung (`BaseIntegrationTest`):** Tất cả các lớp test tích hợp đều kế thừa từ một lớp cơ sở để khởi tạo ngữ cảnh Spring Boot (`@SpringBootTest`), cấu hình cổng ngẫu nhiên (`webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT`) và tái sử dụng các bean cấu hình.
+*   **MockMvc:** Sử dụng để giả lập các request HTTP gửi đến các Rest Controllers, giúp kiểm thử toàn bộ vòng đời của request qua các tầng (Presentation -> Application -> Domain -> Infrastructure).
+*   **Cô lập Dữ liệu:** Đảm bảo dọn dẹp cơ sở dữ liệu MongoDB và Redis sau mỗi ca test để các ca test độc lập và không ảnh hưởng lẫn nhau.
+
+### B. Mẫu Thiết kế Kiểm thử (Ví dụ Post & Message Lifecycle)
+*   **Vòng đời Bài viết (`PostIntegrationTest.java`):** Kiểm thử luồng tuần tự tạo bài viết -> tương tác cảm xúc -> thêm bình luận -> xóa mềm bài viết/bình luận.
+*   **Vòng đời Tin nhắn (`MessageIntegrationTest.java`):** Kiểm thử luồng gửi tin nhắn -> đánh dấu delivered -> sửa tin nhắn -> thu hồi tin nhắn.
+

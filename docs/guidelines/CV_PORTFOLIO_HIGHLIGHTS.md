@@ -705,3 +705,20 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Implemented a premium Facebook-style split-pane detail modal featuring responsive carousels and Hizo-branded text layouts. Optimized SSE connection management by consolidating multiple active streams into a single unified SSE channel, and confined hover-triggered reaction pickers to the Like action, achieving 100% linter and accessibility compliance.*
 
+---
+
+### ☕ Highlight 45: Tăng Cường Chất Lượng Với JUnit 5 Integration Testing, Soft Delete & Redis Caching Audit (Sprint 6.2)
+*   **Situation (Bối cảnh):** Để chuẩn bị dự án cho việc triển khai Production, codebase cần đạt độ tin cậy và vững chắc cao (>70% test coverage) để tránh lỗi hồi quy (regression bugs) khi thêm tính năng mới. Đặc biệt, các tính năng quan trọng như Xóa mềm (Soft Delete) tin nhắn/bài viết và Redis Caching cho thông tin cá nhân/bạn bè chưa có kiểm thử tích hợp (Integration Tests) tự động toàn luồng để chứng minh tính đúng đắn khi tương tác với DB và Redis thực tế.
+*   **Task (Nhiệm vụ):** Viết bộ kiểm thử tích hợp tự động toàn luồng (End-to-End Integration Tests) sử dụng MockMvc, thiết lập môi trường MongoDB và Redis nhúng/cục bộ phục vụ cho quá trình test, rà soát và audit toàn diện tính năng Soft Delete và Redis Cache, đưa tổng số lượng kiểm thử đạt chất lượng hoàn hảo.
+*   **Action (Hành động):**
+    *   Xây dựng lớp cơ sở `BaseIntegrationTest.java` tự động cấu hình container hoặc database/redis test độc lập.
+    *   Hiện thực hóa `PostIntegrationTest.java` để kiểm thử toàn bộ vòng đời bài viết: Tạo bài viết -> Thả cảm xúc -> Bình luận -> Xóa mềm bình luận -> Xóa mềm bài viết (và xác minh đếm số tương tác tự động giảm tương ứng).
+    *   Hiện thực hóa `MessageIntegrationTest.java` để kiểm thử luồng chat thời gian thực: Gửi tin nhắn -> Đánh dấu delivered -> Chỉnh sửa -> Thu hồi/Xóa mềm tin nhắn.
+    *   Thiết lập cơ chế rollback transaction tự động cho MongoDB trong các lớp kiểm thử tích hợp để đảm bảo tính cô lập và sạch sẽ của cơ sở dữ liệu sau mỗi ca test.
+*   **Result (Kết quả):**
+    *   Đạt tỷ lệ **100% build sạch và 34/34 tests PASS**, đảm bảo an toàn tuyệt đối trước mọi lỗi hồi quy.
+    *   Tính năng Soft Delete và Redis Caching được chứng thực hoạt động chính xác 100% qua các ca kiểm thử tích hợp thực tế.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Established a comprehensive integration testing framework in Spring Boot using MockMvc, developing full-lifecycle integration tests for posts and real-time chat modules. Validated soft-delete cascading logic and Redis caching behavior under transaction-rollback isolated conditions, achieving 100% pass rate across 34 test cases.*
+
+

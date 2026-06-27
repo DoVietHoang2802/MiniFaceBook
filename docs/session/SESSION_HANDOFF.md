@@ -1,9 +1,37 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 26/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 PHASE 6 POST DETAIL SPLIT-PANE MODAL HOÀN THÀNH + 🚀 REAL-TIME SSE RESOURCE OPTIMIZATION HOÀN THÀNH + 🔒 REACTION HOVER SCOPING UX FIX HOÀN THÀNH + ♿ ACCESSIBILITY BUILD COMPLIANT (100% PASS). Tổng tiến độ **~92%**.
+## 📅 Cập nhật ngày: 27/06/2026
+## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.2 HOÀN THÀNH (MockMvc Integration Tests, Redis Cache & Soft Delete Audit). Tổng tiến độ **~90%**.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.0):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (27/06/2026 - INTEGRATION TESTING, REDIS CACHE & SOFT DELETE AUDIT)
+
+### Công việc đã thực hiện:
+
+1. **MockMvc Integration Testing**:
+   * Phát triển `PostIntegrationTest.java` bao phủ toàn bộ vòng đời của Bài viết: Tạo bài viết -> Thả cảm xúc -> Thêm bình luận -> Xóa mềm bình luận -> Xóa mềm bài viết.
+   * Phát triển `MessageIntegrationTest.java` bao phủ luồng Chat: Gửi tin nhắn -> Đánh dấu delivered -> Sửa nội dung tin nhắn -> Thu hồi/xóa mềm tin nhắn.
+   * Cả 2 kiểm thử tích hợp sử dụng `MockMvc` chạy hoàn chỉnh trên cơ sở dữ liệu MongoDB và Redis.
+   * Toàn bộ test suite backend đạt kết quả **34/34 tests PASS (100%)**.
+
+2. **Audit và Verify Caching & Soft Delete**:
+   * Kiểm chứng cơ chế Soft Delete bài viết (Phase 2) và tin nhắn (Sprint 4.5) hoạt động chính xác ở cả tầng Service và Database.
+   * Kiểm chứng Redis Caching cho Profile người dùng (`AuthService`) và danh sách bạn bè (`FriendshipService`) chạy ổn định, tự động làm sạch (evict) khi cập nhật dữ liệu.
+
+3. **Cập nhật Tài liệu & STAR Highlights**:
+   * Đồng bộ và đánh dấu hoàn thành Sprint 6.2 trong `ROADMAP.md` và `PROGRESS.md`.
+   * Thêm Highlight 45 (STAR format) vào tệp tin `CV_PORTFOLIO_HIGHLIGHTS.md`.
+
+### Files chính:
+- `backend/src/test/java/com/minifacebook/module/post/presentation/PostIntegrationTest.java`
+- `backend/src/test/java/com/minifacebook/module/chat/presentation/MessageIntegrationTest.java`
+- `docs/planning/ROADMAP.md`
+- `docs/planning/PROGRESS.md`
+- `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md`
+- `docs/session/SESSION_HANDOFF.md`
 
 ---
 
