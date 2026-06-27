@@ -40,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class MessageService {
 
   private final MessageRepository messageRepository;

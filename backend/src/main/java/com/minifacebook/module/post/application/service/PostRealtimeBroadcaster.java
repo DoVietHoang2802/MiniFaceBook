@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class PostRealtimeBroadcaster {
 
   private final SimpMessagingTemplate messagingTemplate;
