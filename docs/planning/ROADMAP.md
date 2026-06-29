@@ -301,10 +301,10 @@
     - [x] Viết **Unit Test** bằng JUnit 5 (coverage > 70%). ✅
         - *Đã có bước đệm:* Module Chat đã được hardening thêm test cho edit/delete message và rollback Optimistic UI ngày 12/06/2026.
     - [x] Viết **Integration Test** bằng MockMvc + Testcontainers. ✅
-- [ ] **Sprint 6.3: CI/CD Pipeline**
+- [x] **Sprint 6.3: CI/CD Pipeline** ✅ *(3/3 HOÀN THÀNH)*
     - [x] Viết **E2E Test** bằng Playwright cho các luồng chính. ✅
     - [x] Thiết lập **GitHub Actions** tự động Build & Test khi push code. ✅
-    - [ ] Cấu hình **SonarQube** để kiểm tra code quality (optional).
+    - [x] Cấu hình **SonarQube/SonarCloud** để kiểm tra code quality. ✅
 - [ ] **Sprint 6.4: Production Deployment**
     - [ ] Deploy Backend lên **Render** hoặc **Railway**.
     - [ ] Deploy Frontend lên **Vercel** hoặc **Netlify**.

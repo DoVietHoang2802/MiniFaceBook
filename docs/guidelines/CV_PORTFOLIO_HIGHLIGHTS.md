@@ -770,5 +770,18 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Integrated global profile navigations across comments and chat headers to redirect users to personal profiles. Resolved a critical frontend dead-lock in the real-time chat module for new users without pre-existing threads by implementing a load-state tracking flag (`hasLoadedConvs`), securing seamless initial conversation routing.*
 
+### 🎨 Highlight 49: Tích hợp Pipeline Kiểm định Chất lượng Tự động SonarCloud & Khắc phục Xung đột Trình Biên dịch IDE (Sprint 6.3 - Part 4)
+*   **Situation (Bối cảnh):** Dự án monorepo đòi hỏi quy trình tự động hóa kiểm thử và kiểm định chất lượng mã nguồn chuyên nghiệp trước khi tích hợp vào nhánh chính. Đồng thời, do đặc thù sử dụng các công cụ sinh mã nguồn tự động ở cả 2 đầu (Lombok và MapStruct trong Spring Boot), trình biên dịch nội bộ của VS Code (Eclipse JDT LS) thường xuyên báo lỗi import đỏ giả lập do xung đột thứ tự xử lý Annotation Processing, gây nhiễu loạn trong quá trình phát triển của lập trình viên.
+*   **Task (Nhiệm vụ):** Thiết lập pipeline CI/CD tích hợp quét mã nguồn tĩnh (SonarCloud) và đo lường độ bao phủ (Code Coverage) cho cả hai tầng Backend và Frontend. Đồng thời, cấu hình đồng bộ hóa trình biên dịch của dự án Java trên môi trường phát triển (IDE) để loại bỏ hoàn toàn các lỗi biên dịch giả lập.
+*   **Action (Hành động):**
+    *   **Tích hợp SonarCloud Quality Gate**: Định nghĩa file cấu hình `sonar-project.properties` cho monorepo, loại trừ các thư mục sinh tự động và DTOs. Tích hợp step quét mã nguồn `SonarCloud Scan` vào quy trình GitHub Actions (`ci.yml` và `sonar-quality-gate.yml`) sử dụng token bí mật `SONAR_TOKEN`.
+    *   **Cấu hình Đo lường Code Coverage**: Tích hợp plugin `jacoco-maven-plugin` để đo coverage cho mã nguồn Java (Backend) và Vitest coverage provider (`v8`) để đo coverage cho mã nguồn TypeScript (Frontend).
+    *   **Khắc phục Xung đột Trình Biên dịch IDE (Lombok & MapStruct)**: Cấu hình bổ sung `lombok-mapstruct-binding` vào thẻ `annotationProcessorPaths` trong `backend/pom.xml` nhằm thiết lập thứ tự xử lý chính xác (Lombok sinh code trước, MapStruct sinh mapper sau), giải quyết triệt để lỗi mất gói/lớp giả lập trên VS Code.
+*   **Result (Kết quả):**
+    *   Quá trình kiểm soát chất lượng mã nguồn được tự động hóa 100% khi push code lên GitHub với các báo cáo trực quan về Bugs, Vulnerabilities, Code Smells, Duplications, và Coverage từ SonarCloud.
+    *   Loại bỏ hoàn toàn các lỗi đỏ giả lập trong VS Code Java Language Server, tăng tốc độ phát triển và cải thiện trải nghiệm lập trình.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Established a fully automated Quality Gate CI pipeline on GitHub Actions using SonarCloud, integrated with JaCoCo and Vitest V8 to audit code coverage, bugs, and vulnerabilities. Resolved complex IDE compiler annotation processing race conditions by incorporating the `lombok-mapstruct-binding` bridge, eliminating spurious compilation warnings.*
+
 
 

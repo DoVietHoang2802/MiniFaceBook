@@ -1,9 +1,31 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 27/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.3 HOÀN THÀNH 🏆 (E2E Testing, CI/CD Pipeline, Profile Navigations, and Empty Chat Bug Fix). Tổng tiến độ **~95%**.
+## 📅 Cập nhật ngày: 29/06/2026
+## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.3 HOÀN THÀNH 🏆 (CI/CD Pipeline & SonarCloud Quality Gate Integration). Tổng tiến độ **~96%**.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (29/06/2026 - SPRINT 6.3 - PART 4: SONARCLOUD QUALITY GATE INTEGRATION & LINTER FIX)
+
+### Công việc đã thực hiện:
+
+1. **Tích hợp SonarCloud & Quality Gate**:
+   * Cấu hình dự án `sonar-project.properties` cho Monorepo.
+   * Xây dựng workflow `.github/workflows/sonar-quality-gate.yml` và tích hợp bước chạy `sonar-scanner` tự động trong `.github/workflows/ci.yml`.
+   * Cấu hình test coverage với **JaCoCo** cho Backend và **Vitest (V8)** cho Frontend.
+
+2. **Khắc phục lỗi VS Code Linter (Lombok & MapStruct)**:
+   * Bổ sung `lombok-mapstruct-binding` trong `backend/pom.xml` để đảm bảo thứ tự biên dịch chính xác của Lombok và MapStruct trên IDE Java Language Server, xóa bỏ toàn bộ lỗi đỏ giả lập.
+
+### Files chính:
+- `sonar-project.properties`
+- `.github/workflows/sonar-quality-gate.yml`
+- `.github/workflows/ci.yml`
+- `backend/pom.xml`
+- `frontend/package.json`
+- `frontend/vite.config.ts`
 
 ---
 

@@ -676,6 +676,13 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Empty Chat Synchronization Bug]** Giải quyết triệt để lỗi người dùng mới (chưa có cuộc hội thoại nào) bị kẹt khi nhấp "Nhắn tin" từ danh sách bạn bè do danh sách rỗng (`conversations.length === 0`). Thêm cờ `hasLoadedConvs` để theo dõi và bảo đảm quá trình khởi tạo cuộc trò chuyện diễn ra chính xác.
   - [x] **[E2E & Build Verification]** Chạy `npm run build` và kiểm thử toàn diện bằng Playwright E2E (`npx playwright test`). Kết quả: 9/9 tests passed thành công 100% trên cả 3 trình duyệt Chromium, Firefox, Webkit.
 
+- **Nhật ký phiên làm việc (29/06/2026 - Sprint 6.3 - Part 4: SonarCloud Code Quality Scan Integration):**
+  - [x] **[SonarCloud Configuration]** Tạo file `sonar-project.properties` cấu hình scope quét mã nguồn, loại trừ các files tự động sinh bởi MapStruct (mappers), DTOs, và các thư mục build.
+  - [x] **[GitHub Actions Integration]** Thêm workflow `.github/workflows/sonar-quality-gate.yml` và tích hợp bước chạy `sonar-scanner` tự động trong file `.github/workflows/ci.yml` sau khi chạy tests.
+  - [x] **[Backend Coverage (JaCoCo)]** Tích hợp `jacoco-maven-plugin` vào `backend/pom.xml` phục vụ xuất báo cáo kiểm thử code coverage.
+  - [x] **[Frontend Coverage (Vitest)]** Cài đặt cấu hình và dependencies cho Vitest coverage (sử dụng provider `v8`) để thu thập và xuất báo cáo coverage cho TypeScript.
+  - [x] **[VS Code Linter Fix]** Bổ sung `lombok-mapstruct-binding` vào `backend/pom.xml` giúp giải quyết triệt để xung đột thứ tự biên dịch giữa Lombok và MapStruct trên trình biên dịch của VS Code (JDT LS), loại bỏ hoàn toàn các lỗi đỏ import giả lập.
+
 
 
 
