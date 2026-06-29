@@ -112,3 +112,10 @@ jobs:
             -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # 14. SonarCloud Quality Gate Check
+      - name: SonarCloud Quality Gate Check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        timeout-minutes: 5
