@@ -103,10 +103,11 @@ jobs:
           curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
           unzip sonar-scanner.zip -d $HOME
           cd backend && mvn clean test jacoco:report
+          cd ..
           
           $HOME/sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
-            -Dsonar.projectKey=minifacebook_minifacebook \
-            -Dsonar.organization=minifacebook \
+            -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook \
+            -Dsonar.organization=doviethoang2802 \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
