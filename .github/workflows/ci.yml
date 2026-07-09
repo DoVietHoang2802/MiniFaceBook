@@ -14,6 +14,8 @@ jobs:
       # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # 2. Setup Java Environment (JDK 21)
       - name: Set up JDK 21
@@ -95,6 +97,19 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 30
+
+      # 12.5. Verify Sonar Token Presence
+      - name: Verify Sonar Token Presence
+        if: always()
+        env:
+          MY_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "$MY_SONAR_TOKEN" ]; then
+            echo "::error::SONAR_TOKEN is empty! Please check your GitHub repository secrets."
+            exit 1
+          else
+            echo "SONAR_TOKEN is present (length: ${#MY_SONAR_TOKEN} characters)."
+          fi
 
       # 13. SonarCloud Code Quality Scan
       - name: SonarCloud Scan
