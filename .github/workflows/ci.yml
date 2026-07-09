@@ -101,14 +101,14 @@ jobs:
       # 12.5. Verify Sonar Token Presence
       - name: Verify Sonar Token Presence
         if: always()
-        env:
-          MY_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          if [ -z "$MY_SONAR_TOKEN" ]; then
+          CLEANED_TOKEN=$(echo "${{ secrets.SONAR_TOKEN }}" | xargs)
+          if [ -z "$CLEANED_TOKEN" ]; then
             echo "::error::SONAR_TOKEN is empty! Please check your GitHub repository secrets."
             exit 1
           else
-            echo "SONAR_TOKEN is present (length: ${#MY_SONAR_TOKEN} characters)."
+            echo "SONAR_TOKEN is present (length: ${#CLEANED_TOKEN} characters)."
+            echo "SONAR_TOKEN=$CLEANED_TOKEN" >> $GITHUB_ENV
           fi
 
       # 13. SonarCloud Code Quality Scan
@@ -120,18 +120,11 @@ jobs:
           cd backend && mvn clean test jacoco:report
           cd ..
           
-          $HOME/sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
-            -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook \
-            -Dsonar.organization=doviethoang2802 \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          $HOME/sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook -Dsonar.organization=doviethoang2802 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="${{ env.SONAR_TOKEN }}" -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
 
       # 14. SonarCloud Quality Gate Check
       - name: SonarCloud Quality Gate Check
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
         timeout-minutes: 5
