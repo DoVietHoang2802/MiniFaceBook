@@ -7,6 +7,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Lớp bọc phản hồi API tiêu chuẩn của hệ thống (Standard API Response Wrapper).
+ * Bọc tất cả dữ liệu trả về cho Client để đồng bộ cấu trúc phản hồi.
+ *
+ * @param <T> Kiểu dữ liệu của phần thân phản hồi (body)
+ */
 @Data
 @Builder
 @NoArgsConstructor
