@@ -31,7 +31,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.minifacebook.module.auth.application.dto.ChangePasswordRequest;
 
 /** Service xử lý các nghiệp vụ xác thực tài khoản (Đăng ký, Đăng nhập, Xác thực, Refresh). */
 @Service
@@ -273,6 +275,7 @@ public class AuthService {
 
     try {
       redisTemplate.delete("user:profile:email:" + email);
+      redisTemplate.delete("user:profile:id:" + user.getId());
       log.debug("Evicted profile cache for: {}", email);
     } catch (Exception e) {
       log.error("Failed to evict profile cache for: {}", email, e);
@@ -294,6 +297,7 @@ public class AuthService {
 
     try {
       redisTemplate.delete("user:profile:email:" + email);
+      redisTemplate.delete("user:profile:id:" + user.getId());
       log.debug("Evicted profile cache for: {}", email);
     } catch (Exception e) {
       log.error("Failed to evict profile cache for: {}", email, e);
@@ -374,6 +378,24 @@ public class AuthService {
     refreshTokenRepository.deleteByEmail(email);
 
     log.info("Password reset and sessions revoked successfully for user: {}", email);
+  }
+
+  /** Đổi mật khẩu tài khoản người dùng đang đăng nhập. */
+  @Transactional
+  public void changePassword(String email, ChangePasswordRequest request) {
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+      throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+    }
+
+    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+    userRepository.save(user);
+
+    // Thu hồi toàn bộ Refresh Token của user (Đăng xuất khỏi mọi thiết bị khác)
+    refreshTokenRepository.deleteByEmail(email);
+    log.info("Password changed and sessions revoked successfully for user: {}", email);
   }
 }
 

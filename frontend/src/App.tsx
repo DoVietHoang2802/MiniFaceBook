@@ -12,6 +12,7 @@ import PostFeed from './modules/post/components/PostFeed';
 import FriendsPage from './modules/friends/components/FriendsPage';
 import ChatPage from './modules/chat/components/ChatPage';
 import ProfilePage from './modules/profile/components/ProfilePage';
+import SettingsPage from './modules/profile/components/SettingsPage';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
                 <Route path="/friends" element={<FriendsPage />} />
                 <Route path="/chats/:recipientId?" element={<ChatPage />} />
                 <Route path="/profile/:userId?" element={<ProfilePage />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Route>
             </Route>
 

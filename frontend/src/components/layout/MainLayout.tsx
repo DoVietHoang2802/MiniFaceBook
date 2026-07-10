@@ -130,6 +130,7 @@ export const MainLayout: React.FC = () => {
     else if (tabId === 'profile') navigate('/profile');
     else if (tabId === 'friends') navigate('/friends');
     else if (tabId === 'chats') navigate('/chats');
+    else if (tabId === 'settings') navigate('/settings');
     else triggerToast(`Tính năng này sẽ ra mắt ở Phase tiếp theo!`);
   };
 
@@ -210,7 +211,7 @@ export const MainLayout: React.FC = () => {
                 <div className="absolute bottom-[76px] left-0 w-full bg-white border border-slate-200 rounded-xl p-2 shadow-xl z-20 animate-fade-in-up">
                   <button 
                     onClick={() => {
-                      triggerToast("Đang mở trang cài đặt tài khoản...");
+                      navigate('/settings');
                       setShowProfilePopover(false);
                     }}
                     className="w-full flex items-center space-x-2 px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"

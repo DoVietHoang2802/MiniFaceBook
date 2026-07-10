@@ -13,6 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import com.minifacebook.module.auth.application.dto.ChangePasswordRequest;
+import com.minifacebook.shared.exception.AppException;
+import com.minifacebook.shared.exception.ErrorCode;
 
 import java.util.Optional;
 
@@ -96,5 +99,42 @@ public class AuthIntegrationTest extends BaseIntegrationTest {
         UserResponse response2 = authService.getCurrentUser(email);
         assertEquals("Integration Bio", response2.getBio());
         assertTrue(redisTemplate.hasKey(cacheKey));
+    }
+
+    @Test
+    void testChangePasswordFlow() {
+        // Register & Verify
+        RegisterRequest registerRequest = RegisterRequest.builder()
+                .email(email)
+                .password("SecurePassword123")
+                .name("Integration User")
+                .build();
+        authService.register(registerRequest);
+        User user = userRepository.findByEmail(email).orElseThrow();
+        authService.verify(user.getVerificationToken());
+
+        // 1. Change password with incorrect old password -> should fail
+        ChangePasswordRequest wrongOldRequest = ChangePasswordRequest.builder()
+                .oldPassword("WrongPassword123")
+                .newPassword("NewPassword123")
+                .build();
+        AppException exception = assertThrows(AppException.class, () -> {
+            authService.changePassword(email, wrongOldRequest);
+        });
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, exception.getErrorCode());
+
+        // 2. Change password successfully
+        ChangePasswordRequest correctRequest = ChangePasswordRequest.builder()
+                .oldPassword("SecurePassword123")
+                .newPassword("NewPassword123")
+                .build();
+        assertDoesNotThrow(() -> authService.changePassword(email, correctRequest));
+
+        // 3. Verify user password was changed (can change it again with NewPassword123)
+        ChangePasswordRequest changeAgainRequest = ChangePasswordRequest.builder()
+                .oldPassword("NewPassword123")
+                .newPassword("AnotherPassword123")
+                .build();
+        assertDoesNotThrow(() -> authService.changePassword(email, changeAgainRequest));
     }
 }

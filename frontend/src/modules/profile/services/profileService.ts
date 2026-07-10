@@ -41,4 +41,10 @@ export const profileService = {
     const response = await axiosClient.get<ApiResponse<UserProfileResponse>>(`/user/${userId}`);
     return response.data;
   },
+
+  // Đổi mật khẩu tài khoản
+  changePassword: async (data: { oldPassword?: string; newPassword?: string }): Promise<ApiResponse<void>> => {
+    const response = await axiosClient.put<ApiResponse<void>>('/user/change-password', data);
+    return response.data;
+  },
 };

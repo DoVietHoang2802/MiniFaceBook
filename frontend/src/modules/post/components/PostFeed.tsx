@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { postService } from '../services/postService';
 import type { PostResponse } from '../types/post.types';
@@ -18,6 +18,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => 
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
   const fetchPosts = async (pageNum: number) => {
     try {
@@ -44,6 +45,32 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => 
   useEffect(() => {
     fetchPosts(0);
   }, []);
+
+  useEffect(() => {
+    if (!hasMore || isFetchingMore || isLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchPosts(nextPage);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerRef.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isFetchingMore, isLoading, page]);
 
   const handlePostCreated = (newPost: PostResponse) => {
     setPosts((prev) => [newPost, ...prev]);
@@ -78,25 +105,15 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => 
           ))}
           
           {hasMore && (
-            <div className="flex justify-center pt-4 pb-10">
-              <button
-                onClick={() => {
-                  const nextPage = page + 1;
-                  setPage(nextPage);
-                  fetchPosts(nextPage);
-                }}
-                disabled={isFetchingMore}
-                className="px-6 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600 shadow-sm transition-colors flex items-center space-x-2 cursor-pointer"
-              >
-                {isFetchingMore ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
-                    <span>Đang tải thêm...</span>
-                  </>
-                ) : (
-                  <span>Tải thêm bài viết</span>
-                )}
-              </button>
+            <div ref={observerRef} className="flex justify-center pt-6 pb-12">
+              <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
+              <span className="ml-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Đang tải thêm bài viết...</span>
+            </div>
+          )}
+          
+          {!hasMore && posts.length > 0 && (
+            <div className="text-center pt-6 pb-12 text-slate-400 text-xs font-bold uppercase tracking-wider">
+              ✨ Bạn đã xem hết bài viết
             </div>
           )}
         </div>

@@ -83,6 +83,14 @@ public enum ErrorCode {
   RESET_TOKEN_REQUIRED(1025, "Thiếu mã xác thực đổi mật khẩu", HttpStatus.BAD_REQUEST),
   OTP_REQUIRED(1026, "Vui lòng nhập mã OTP", HttpStatus.BAD_REQUEST),
   OTP_INVALID_SIZE(1027, "Mã OTP phải có đúng 6 chữ số", HttpStatus.BAD_REQUEST),
+
+  // ===== POST (Phase 6 - Sprint 6.1) =====
+  POST_NOT_FOUND(5001, "Không tìm thấy bài viết", HttpStatus.NOT_FOUND),
+  COMMENT_NOT_FOUND(5002, "Không tìm thấy bình luận", HttpStatus.NOT_FOUND),
+  POST_UNAUTHORIZED(
+      5003,
+      "Bạn không có quyền thực hiện hành động này đối với bài viết này",
+      HttpStatus.FORBIDDEN),
   ;
 
 

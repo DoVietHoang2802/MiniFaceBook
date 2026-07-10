@@ -2,6 +2,8 @@ package com.minifacebook.module.post.application.service;
 
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
+import com.minifacebook.shared.exception.AppException;
+import com.minifacebook.shared.exception.ErrorCode;
 import com.minifacebook.module.post.application.dto.CreatePostRequest;
 import com.minifacebook.module.post.application.dto.PostResponse;
 import com.minifacebook.module.post.domain.entity.Post;
@@ -32,7 +34,7 @@ public class PostService {
 
     public PostResponse createPost(String email, CreatePostRequest request) {
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         
         List<String> imageUrls = new ArrayList<>();
         if (request.getImages() != null && !request.getImages().isEmpty()) {
@@ -53,21 +55,22 @@ public class PostService {
     }
 
     public Page<PostResponse> getNewsFeed(String email, Pageable pageable) {
-        User currentUser = userRepository.findByEmail(email).orElseThrow();
+        User currentUser = userRepository.findByEmail(email)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Page<Post> posts = postRepository.findAllOrderByCreatedAtDesc(pageable);
         return posts.map(post -> mapToResponse(post, currentUser.getId()));
     }
 
     public void deletePost(String email, String postId) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isDeleted())
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
 
         if (!post.getAuthorId().equals(user.getId())) {
-            throw new RuntimeException("You do not have permission to delete this post");
+            throw new AppException(ErrorCode.POST_UNAUTHORIZED);
         }
 
         // Soft delete post

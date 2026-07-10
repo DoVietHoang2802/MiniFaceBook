@@ -2,6 +2,8 @@ package com.minifacebook.module.post.application.service;
 
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
+import com.minifacebook.shared.exception.AppException;
+import com.minifacebook.shared.exception.ErrorCode;
 import com.minifacebook.module.post.application.dto.ReactionRequest;
 import com.minifacebook.module.post.application.dto.ReactionUserResponse;
 import com.minifacebook.module.post.domain.entity.Post;
@@ -33,11 +35,11 @@ public class ReactionService {
 
     public void reactToPost(String email, String postId, ReactionRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isDeleted())
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
                 
         Optional<Reaction> existingReactionOpt = reactionRepository.findByPostIdAndUserId(postId, user.getId());
         

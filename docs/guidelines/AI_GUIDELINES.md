@@ -107,6 +107,23 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 
 ---
 
+## 🧪 5C. LUẬT PHÁP BẮT BUỘC VIẾT TEST TỰ ĐỘNG (MANDATORY AUTOMATED TESTING LAW)
+Để đảm bảo chất lượng phần mềm và tránh lỗi hồi quy (regression), dự án MiniFaceBook thiết lập luật bắt buộc kiểm thử tự động như sau:
+
+1. **Yêu cầu đối với Backend (Java):**
+   - Mọi API endpoint mới hoặc chỉnh sửa logic quan trọng đều phải có **JUnit 5 Integration Test** đi kèm (kế thừa `BaseIntegrationTest`).
+   - Các test case phải bao gồm cả luồng thành công (Positive - 200/201 OK) và luồng thất bại biên (Negative - 400 Bad Request, 401 Unauthenticated, 403 Forbidden, 404 Not Found) kèm theo việc kiểm tra đúng mã lỗi `AppException` ném ra.
+   - Kiểm thử việc thay đổi dữ liệu trong Database và việc xóa cache Redis tương ứng.
+
+2. **Yêu cầu đối với Frontend (Playwright E2E):**
+   - Mọi tính năng giao diện mới hoặc luồng tương tác người dùng mới đều phải có **Playwright E2E Test** nằm trong thư mục `frontend/tests/`.
+   - Test case E2E phải giả lập được luồng điền form, kiểm tra validation phía client, click button, xử lý bất đồng bộ (Loading spinner, API response), và điều hướng route.
+
+3. **Kỷ luật kiểm thử trước khi bàn giao:**
+   - Trước khi đề xuất nghiệm thu hoặc đẩy Git, AI bắt buộc phải tự động chạy toàn bộ test suite cục bộ (`mvn clean test` cho backend và `npx playwright test` cho frontend) để đảm bảo không phá hỏng các tính năng cũ.
+
+---
+
 ## 📊 6. QUY CHUẨN BÁO CÁO TIẾN ĐỘ (PROGRESS REPORT STANDARDS)
 Khi USER hỏi về tiến độ dự án, tech stack hoặc thành tựu, AI **BẮT BUỘC** phải:
 1. Đọc file `docs/guidelines/AI_REPORT_COMMANDS.md` để nắm format chuẩn.

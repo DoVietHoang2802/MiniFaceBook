@@ -2,6 +2,8 @@ package com.minifacebook.module.post.application.service;
 
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
+import com.minifacebook.shared.exception.AppException;
+import com.minifacebook.shared.exception.ErrorCode;
 import com.minifacebook.module.post.application.dto.CommentRequest;
 import com.minifacebook.module.post.application.dto.CommentResponse;
 import com.minifacebook.module.post.application.dto.ReactionRequest;
@@ -44,11 +46,11 @@ public class CommentService {
 
     public CommentResponse addComment(String email, String postId, CommentRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.isDeleted())
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
 
         String imageUrl = null;
         if (request.getImage() != null && !request.getImage().isEmpty()) {
@@ -86,10 +88,10 @@ public class CommentService {
 
     public void reactToComment(String email, String commentId, ReactionRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
 
         Optional<CommentReaction> existingReactionOpt = commentReactionRepository.findByCommentIdAndUserId(commentId, user.getId());
 
@@ -222,20 +224,20 @@ public class CommentService {
 
     public void deleteComment(String email, String commentId) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Comment comment = commentRepository.findById(commentId)
                 .filter(c -> !c.isDeleted())
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
 
         Post post = postRepository.findById(comment.getPostId())
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
 
         boolean isCommentOwner = Objects.equals(comment.getAuthorId(), user.getId());
         boolean isPostOwner = Objects.equals(post.getAuthorId(), user.getId());
 
         if (!isCommentOwner && !isPostOwner) {
-            throw new RuntimeException("You do not have permission to delete this comment");
+            throw new AppException(ErrorCode.POST_UNAUTHORIZED);
         }
 
         comment.setDeleted(true);

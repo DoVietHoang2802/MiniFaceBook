@@ -2,6 +2,7 @@ package com.minifacebook.module.auth.presentation;
 
 import com.minifacebook.module.auth.application.dto.UpdateProfileRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
+import com.minifacebook.module.auth.application.dto.ChangePasswordRequest;
 import com.minifacebook.module.auth.application.service.AuthService;
 import com.minifacebook.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +49,25 @@ public class UserController {
             .status(HttpStatus.OK.value())
             .message("Profile updated successfully")
             .data(response)
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
+  /** Đổi mật khẩu tài khoản. */
+  @PutMapping("/change-password")
+  @Operation(
+      summary = "Đổi mật khẩu tài khoản",
+      description = "Cho phép người dùng đã đăng nhập đổi mật khẩu.")
+  public ResponseEntity<ApiResponse<Void>> changePassword(
+      @Valid @RequestBody ChangePasswordRequest request) {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    authService.changePassword(email, request);
+
+    ApiResponse<Void> apiResponse =
+        ApiResponse.<Void>builder()
+            .status(HttpStatus.OK.value())
+            .message("Password changed successfully")
             .build();
 
     return ResponseEntity.ok(apiResponse);

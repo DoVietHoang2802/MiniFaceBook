@@ -149,4 +149,44 @@ public class PostIntegrationTest extends BaseIntegrationTest {
         assertTrue(deletedPostFromDb.get().isDeleted());
         assertNotNull(deletedPostFromDb.get().getDeletedAt());
     }
+
+    @Test
+    void testPostErrorScenarios() throws Exception {
+        // 1. Delete non-existent post -> Expect 404 and ErrorCode 5001
+        MvcResult deletePostResult = mockMvc.perform(delete("/posts/000000000000000000000000")
+                        .with(jwt().jwt(builder -> builder.subject(email))))
+                .andExpect(status().isNotFound())
+                .andReturn();
+        var postErrorResponse = objectMapper.readTree(deletePostResult.getResponse().getContentAsString());
+        assertEquals(5001, postErrorResponse.get("status").asInt());
+
+        // 2. Delete non-existent comment -> Expect 404 and ErrorCode 5002
+        MvcResult deleteCommentResult = mockMvc.perform(delete("/posts/comments/000000000000000000000000")
+                        .with(jwt().jwt(builder -> builder.subject(email))))
+                .andExpect(status().isNotFound())
+                .andReturn();
+        var commentErrorResponse = objectMapper.readTree(deleteCommentResult.getResponse().getContentAsString());
+        assertEquals(5002, commentErrorResponse.get("status").asInt());
+
+        // 3. Delete other user's post -> Expect 403 and ErrorCode 5003
+        User otherUser = User.builder()
+                .email("other@example.com")
+                .name("Other User")
+                .verified(true)
+                .build();
+        otherUser = userRepository.save(otherUser);
+
+        Post post = Post.builder()
+                .authorId(otherUser.getId())
+                .content("Other user's post")
+                .build();
+        post = postRepository.save(post);
+
+        MvcResult deleteUnauthorizedResult = mockMvc.perform(delete("/posts/" + post.getId())
+                        .with(jwt().jwt(builder -> builder.subject(email))))
+                .andExpect(status().isForbidden())
+                .andReturn();
+        var unauthorizedErrorResponse = objectMapper.readTree(deleteUnauthorizedResult.getResponse().getContentAsString());
+        assertEquals(5003, unauthorizedErrorResponse.get("status").asInt());
+    }
 }

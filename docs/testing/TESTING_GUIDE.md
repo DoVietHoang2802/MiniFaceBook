@@ -136,9 +136,64 @@ mvn test -Dtest=ArchitectureTest
 
 ---
 
-## 🛠️ 5. Lệnh hữu ích khác
-- **Dọn dẹp code style:** `mvn spotless:apply`
-- **Kiểm tra lỗi tiềm ẩn:** `mvn checkstyle:check`
+## 🛠️ 5. Hệ thống Kiểm thử Tự động & Chất lượng Code (Automated Tests & Quality Gates)
+
+Để đảm bảo dự án luôn ổn định và code đạt chuẩn chất lượng cao nhất, dự án áp dụng hệ thống kiểm soát chất lượng nhiều lớp:
+
+### 5.1. Backend Integration Tests (JUnit 5 + MockMvc)
+*   **Mô tả:** Test tích hợp các API Endpoints, kiểm thử logic nghiệp vụ tầng Service, tích hợp DB MongoDB và cache Redis thực tế.
+*   **Cách chạy toàn bộ:**
+    ```bash
+    cd backend
+    mvn clean test
+    ```
+
+### 5.2. ArchUnit (Kiểm thử Kiến trúc)
+*   **Mô tả:** Kiểm tra tự động tính tuân thủ của mã nguồn với mô hình **Clean Architecture / Modular Monolith**.
+*   **Cách chạy:**
+    ```bash
+    cd backend
+    mvn test -Dtest=ArchitectureTest
+    ```
+
+### 5.3. Checkstyle & Spotless (Định dạng & Tiêu chuẩn Code)
+*   **Mô tả:** Quét lỗi trình bày code theo chuẩn Google Java Style và tự động định dạng code sạch sẽ.
+*   **Cách chạy:**
+    *   Quét lỗi Style: `mvn checkstyle:check`
+    *   Tự động sửa lỗi/format code: `mvn spotless:apply`
+
+### 5.4. Frontend E2E Tests (Playwright)
+*   **Mô tả:** Kiểm thử tự động trên trình duyệt thật (Chrome/Firefox/Webkit), giả lập toàn bộ tương tác của người dùng và tích hợp với Mailpit.
+*   **Cách chạy:**
+    ```bash
+    cd frontend
+    npx playwright test
+    ```
+
+### 5.5. Static Analysis & Type Safety (ESLint & TypeScript)
+*   **Mô tả:** Quét cú pháp React/JavaScript và đảm bảo an toàn kiểu dữ liệu (Type-safety) ở Frontend để phòng tránh các lỗi runtime.
+*   **Cách chạy:**
+    ```bash
+    cd frontend
+    npm run build
+    ```
+
+### 5.6. Quét lỗ hổng bảo mật & Nợ kỹ thuật (SonarCloud)
+*   **Mô tả:** Phân tích mã nguồn tĩnh để phát hiện Bug tiềm ẩn, Code Smell, mã trùng lặp và các lỗ hổng bảo mật.
+*   **Cách chạy local:** Cần có CLI `sonar-scanner` và cấu hình token:
+    ```bash
+    sonar-scanner -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook -Dsonar.organization=doviethoang2802 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="YOUR_SONAR_TOKEN"
+    ```
+
+### 5.7. CI/CD Pipeline (GitHub Actions)
+*   **Mô tả:** Mọi thay đổi khi push hoặc tạo Pull Request lên nhánh `main` và `develop` sẽ kích hoạt tự động workflow tại `.github/workflows/ci.yml`.
+*   **Các bước CI tự động:**
+    1. Khởi chạy Docker Compose (MongoDB, Redis, Mailpit) trên máy ảo.
+    2. Build & chạy JUnit Tests Backend.
+    3. Run Backend ở background.
+    4. Install Frontend deps & Playwright browsers.
+    5. Chạy Playwright E2E Tests.
+    6. Quét chất lượng mã nguồn bằng SonarCloud và kiểm tra Sonar Quality Gate.
 
 ---
 
@@ -150,3 +205,4 @@ mvn test -Dtest=ArchitectureTest
 |:-----:|----------------|----------|
 | Phase 3 | **[PHASE_3_FRIENDS_TESTING.md](./PHASE_3_FRIENDS_TESTING.md)** | Friend Request, Friend List, Search |
 | Phase 4 | **[PHASE_4_CHAT_TESTING.md](./PHASE_4_CHAT_TESTING.md)** | WebSocket, Presence, Chat CRUD, Status (SENT/DELIVERED/SEEN), Typing, Reactions, Reply, Media, Edit/Delete, Infinite Scroll (4.1→4.5) |
+| Phase 6 | **[PHASE_6_IMPROVEMENTS_TESTING.md](./PHASE_6_IMPROVEMENTS_TESTING.md)** | Infinite Scroll Feed, Change Password page, AppException alignment, Redis Cache profile sync |
