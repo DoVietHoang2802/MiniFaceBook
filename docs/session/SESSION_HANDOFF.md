@@ -26,12 +26,19 @@
    - Chuyển đổi các Exception của Post, Comment, Reaction sang AppException với ErrorCode và mã lỗi JSON chuẩn.
    - Thêm các bộ test integration (Backend JUnit 5) và E2E (Frontend Playwright) để kiểm chứng tự động toàn bộ luồng hoạt động.
 
+5. **Vá lỗi kiểm thử trên CI/CD**:
+   - Khắc phục lỗi bất khớp thông điệp lỗi tiếng Anh vs tiếng Việt trong `PostServiceTest` và `CommentServiceTest` bằng cách sử dụng `ErrorCode.POST_UNAUTHORIZED.getMessage()`.
+   - Khắc phục lỗi `DuplicateKeyException` trong `PostIntegrationTest.testPostErrorScenarios` bằng cách dọn dẹp email `other@example.com` vào `setUp()`.
+   - Cập nhật tài liệu `ROADMAP.md` phản ánh chính xác trạng thái hoàn thành của Sprint 6.4.
+
 ### Files chính:
 - `frontend/src/modules/post/components/PostFeed.tsx`
 - `frontend/src/modules/profile/components/SettingsPage.tsx`
 - `backend/src/main/java/com/minifacebook/module/auth/application/service/AuthService.java`
 - `backend/src/main/java/com/minifacebook/module/post/application/service/PostService.java`
-- `backend/src/test/java/com/minifacebook/module/auth/presentation/AuthIntegrationTest.java`
+- `backend/src/test/java/com/minifacebook/module/post/application/service/PostServiceTest.java`
+- `backend/src/test/java/com/minifacebook/module/post/application/service/CommentServiceTest.java`
+- `backend/src/test/java/com/minifacebook/module/post/presentation/PostIntegrationTest.java`
 - `frontend/tests/settings.spec.ts`
 
 ---

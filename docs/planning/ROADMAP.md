@@ -417,25 +417,25 @@
   - Cần config thêm STOMP relay endpoint
 - **Kết luận:** Ưu tiên THẤP - chỉ làm Phase 7 khi thực sự cần. Redis Pub/Sub hiện tại đủ tốt cho dự án demo/portfolio.
 
-### 🟡 #3: Đồng bộ `AppException` cho Post module (CHƯA LÀM)
+### ✅ #3: Đồng bộ `AppException` cho Post module (ĐÃ HOÀN THÀNH 09/07)
 - **Vấn đề:** `PostService`/`ReactionService`/`CommentService` dùng `RuntimeException` thô → rơi vào handler 9999 (HTTP 500), message tiếng Anh xấu.
-- **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND` (vùng 3xxx) vào `ErrorCode`.
+- **Giải pháp:** Đổi sang `AppException(ErrorCode...)`. Bổ sung mã `POST_NOT_FOUND`, `COMMENT_NOT_FOUND`, `POST_UNAUTHORIZED` vào `ErrorCode`.
 
-### 🔴 #8: Infinite Scroll cho News Feed (ĐỀ XUẤT CẢI TIẾN)
+### ✅ #8: Infinite Scroll cho News Feed (ĐÃ HOÀN THÀNH 09/07)
 - **Vấn đề:** Hiện tại News Feed đang load các bài viết theo phân trang tĩnh hoặc load cứng, chưa mang lại trải nghiệm cuộn liền mạch như các mạng xã hội hiện đại.
-- **Giải pháp:** Tích hợp logic scroll listener phía Frontend, phát hiện khi người dùng cuộn đến gần cuối trang thì tự động gọi API lấy trang tiếp theo và nối vào danh sách hiện tại.
+- **Giải pháp:** Tích hợp logic scroll listener phía Frontend sử dụng `IntersectionObserver`, phát hiện khi người dùng cuộn đến gần cuối trang thì tự động gọi API lấy trang tiếp theo và nối vào danh sách hiện tại.
 
-### 🔴 #9: Dọn dẹp Checkstyle Java Warnings (ĐỀ XUẤT CẢI TIẾN)
+### ✅ #9: Dọn dẹp Checkstyle Java Warnings (ĐÃ HOÀN THÀNH 22/06)
 - **Vấn đề:** Codebase Backend còn tồn tại một số cảnh báo Checkstyle (thụt lề, thiếu Javadoc, wildcard import) gây mất điểm chất lượng khi quét kiểm thử tự động.
 - **Giải pháp:** Rà soát và sửa đổi code Java để tuân thủ 100% quy tắc Google Java Style được định nghĩa trong cấu hình Checkstyle của dự án.
 
-### 🔴 #10: Redis Caching cho User Profile và Friend List (ĐỀ XUẤT CẢI TIẾN)
+### ✅ #10: Redis Caching cho User Profile và Friend List (ĐÃ HOÀN THÀNH 09/07)
 - **Vấn đề:** Các dữ liệu thông tin cá nhân và danh sách bạn bè được truy vấn liên tục từ MongoDB khi tải trang chủ hoặc chat, gây overhead không cần thiết.
-- **Giải pháp:** Triển khai cơ chế cache (Read-through/Write-through) lên Redis với thời gian TTL phù hợp để tăng tốc độ phản hồi API.
+- **Giải pháp:** Triển khai cơ chế cache (Read-through/Write-through) lên Redis với thời gian TTL phù hợp để tăng tốc độ phản hồi API, đồng thời đảm bảo cơ chế thu hồi (eviction) đồng bộ cho cả ID và Email khi thay đổi thông tin.
 
-### 🔴 #11: Trang Cài đặt tài khoản (Account/Settings Page) (ĐỀ XUẤT CẢI TIẾN)
+### ✅ #11: Trang Cài đặt tài khoản (Account/Settings Page) (ĐÃ HOÀN THÀNH 09/07)
 - **Vấn đề:** Chưa có màn hình quản trị tài khoản để người dùng tự đổi mật khẩu (khi đang đăng nhập) hoặc thiết lập các tùy chọn nhận thông báo.
-- **Giải pháp:** Xây dựng màn hình Settings trong Frontend và tích hợp các API tương ứng ở Backend.
+- **Giải pháp:** Xây dựng màn hình Settings trong Frontend và tích hợp các API thay đổi mật khẩu an toàn, tự động thu hồi token (Token Eviction) và đưa vào blacklist của Redis.
 
 ---
 
@@ -444,6 +444,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.4 | Jul 2026 | **Infinite Scroll, Settings Page, Redis Profile Cache Sync & AppException Alignment — HOÀN THÀNH Sprint 6.4 🎉**: Tích hợp cuộn vô hạn cho News Feed bằng `IntersectionObserver`, hoàn thành trang Cài đặt đổi mật khẩu và thu hồi token, vá lỗi đồng bộ cache Redis User Profile cho cả ID/Email, đồng thời chuẩn hóa lỗi Post/Comment module thành `AppException`. Vượt qua 36/36 tests JUnit 5. |
 | 4.3 | Jun 2026 | **Profile Navigations & Empty Chat Bug — HOÀN THÀNH Sprint 6.3 & Cải tiến Giao diện 🎉**: Nhấp vào avatar hoặc tên của tác giả trong phần bình luận (`CommentSection.tsx`) hoặc bạn chat ở thanh tiêu đề/nút hành động Profile của cuộc trò chuyện (`ChatPage.tsx`) sẽ điều hướng sang trang cá nhân. Sửa đổi cờ theo dõi tải danh sách hội thoại `hasLoadedConvs` để khắc phục triệt để lỗi bị kẹt giao diện chat đối với người dùng chưa có cuộc hội thoại nào. Chạy Playwright E2E vượt qua 9/9 tests. |
 | 4.2 | Jun 2026 | **Split-Pane Post Detail Modal & Reaction Scoping UX Fix — HOÀN THÀNH Sprint 6.1 🎉**: Thiết kế giao diện Modal bình luận dạng 2 cột (Split-pane) kiểu Facebook. Đồng bộ hiển thị khung màu tím khói thương hiệu Hizo cho bài viết không có ảnh (Option 1) và hiển thị ảnh chi tiết bên trái. Scope lại hover reaction chỉ hiển thị ở nút "Thích", tránh kích hoạt nhầm khi di chuột qua "Bình luận" hay "Chia sẻ" ở cả `PostCard` và `PostDetailModal`. Khắc phục lỗi giới hạn kết nối SSE, tối ưu tài nguyên. Sửa lỗi Accessibility và build hoàn hảo 100% không lỗi. |
 | 4.1 | Jun 2026 | **Quality Hardening & Linter Fixes — HOÀN THÀNH 🎉**: Khắc phục các cảnh báo biên dịch và linter ở cả Frontend và Backend. Bật `"forceConsistentCasingInFileNames": true` để đồng bộ hóa. Sửa các cảnh báo Accessibility (A11y) của các nút chức năng bằng thuộc tính `title`. Loại bỏ hoàn toàn inline styles trong `CommentSection.tsx` và `ChatPage.tsx` sang Tailwind CSS classes. Dọn dẹp các import thừa ở Backend (`NotificationService.java`, `PostRealtimeBroadcaster.java`, v.v.). Cập nhật `RateLimitingFilter.java` sang API `Bandwidth.builder()` mới. Sửa lỗi type safety (Raw types/Unchecked casts/Unboxing) trong `GlobalExceptionHandler.java`, `MessageServiceTest.java`, và `FriendshipService.java`. |
