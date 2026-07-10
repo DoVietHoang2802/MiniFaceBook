@@ -65,6 +65,7 @@ public class PostIntegrationTest extends BaseIntegrationTest {
         mongoCommentRepository.deleteAll();
         mongoPostRepository.deleteAll();
         mongoUserRepository.findByEmail(email).ifPresent(mongoUserRepository::delete);
+        mongoUserRepository.findByEmail("other@example.com").ifPresent(mongoUserRepository::delete);
 
         testUser = User.builder()
                 .email(email)

@@ -6,6 +6,7 @@ import com.minifacebook.module.post.domain.entity.Comment;
 import com.minifacebook.module.post.domain.entity.Post;
 import com.minifacebook.module.post.domain.repository.CommentRepository;
 import com.minifacebook.module.post.domain.repository.PostRepository;
+import com.minifacebook.shared.exception.ErrorCode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -79,7 +80,7 @@ public class PostServiceTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             postService.deletePost(email, postId);
         });
-        assertEquals("You do not have permission to delete this post", exception.getMessage());
+        assertEquals(ErrorCode.POST_UNAUTHORIZED.getMessage(), exception.getMessage());
         assertFalse(post.isDeleted());
         verify(postRepository, never()).save(any());
         verify(commentRepository, never()).saveAll(any());
