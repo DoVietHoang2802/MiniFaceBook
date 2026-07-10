@@ -122,6 +122,12 @@ Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ
 3. **Kỷ luật kiểm thử trước khi bàn giao:**
    - Trước khi đề xuất nghiệm thu hoặc đẩy Git, AI bắt buộc phải tự động chạy toàn bộ test suite cục bộ (`mvn clean test` cho backend và `npx playwright test` cho frontend) để đảm bảo không phá hỏng các tính năng cũ.
 
+4. **Hệ thống Quality Gates tĩnh (Static Quality Gates):**
+   - **ArchUnit (Kiểm thử cấu trúc):** AI phải chạy kiểm thử kiến trúc để đảm bảo tính phân lớp không bị phá vỡ (Domain độc lập với Infrastructure/Presentation). Lệnh chạy: `mvn test -Dtest=ArchitectureTest`.
+   - **Checkstyle & Spotless (Code Style):** Trước khi commit, AI phải chạy `mvn checkstyle:check` và sửa định dạng tự động bằng `mvn spotless:apply` để đảm bảo code Java tuân thủ Google Style.
+   - **TypeScript & ESLint (Type Safety):** Trước khi bàn giao frontend, AI phải chạy `npm run build` để kiểm tra lỗi biên dịch TypeScript và ESLint.
+   - **SonarQube / SonarCloud (Chất lượng code & Bảo mật):** Đảm bảo mã nguồn không vi phạm các quy tắc Sonar Quality Gate (không có lỗ hổng bảo mật nghiêm trọng, không trùng lặp code lớn).
+
 ---
 
 ## 📊 6. QUY CHUẨN BÁO CÁO TIẾN ĐỘ (PROGRESS REPORT STANDARDS)
