@@ -1,9 +1,38 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 29/06/2026
-## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.3 HOÀN THÀNH 🏆 (CI/CD Pipeline & SonarCloud Quality Gate Integration). Tổng tiến độ **~96%**.
+## 📅 Cập nhật ngày: 10/07/2026
+## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.4 HOÀN THÀNH 🏆 (Infinite Scroll, Settings Page, Redis Profile Cache Sync & AppException Alignment). Tổng tiến độ **~98%**.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (10/07/2026 - SPRINT 6.4: INFINITE SCROLL, SETTINGS PAGE & CACHING ENHANCEMENTS)
+
+### Công việc đã thực hiện:
+
+1. **Cuộn vô hạn (Infinite Scroll)**:
+   - Chuyển đổi nút "Xem thêm" cũ ở News Feed sang cơ chế cuộn trang tự động bằng `IntersectionObserver`.
+   - Frontend tự nhận diện vị trí cuộn và load tiếp các trang bài viết, Backend hỗ trợ phân trang hiệu quả.
+
+2. **Trang Cài đặt & Đổi mật khẩu (Settings & Change Password)**:
+   - Tạo mới trang Settings tại `/settings` để người dùng đổi mật khẩu với giao diện mượt mà, validate trường thông tin đầy đủ.
+   - Khi đổi mật khẩu thành công, hệ thống tự động thu hồi (evict) toàn bộ session và token cũ trong DB lẫn Redis và đăng xuất người dùng để bảo mật.
+
+3. **Vá lỗi Redis Cache Sync**:
+   - Khắc phục lỗi cache stale khi cập nhật Profile/Avatar bằng cách xóa cache đồng thời cả hai key `user:profile:id:<userId>` và `user:profile:email:<email>`.
+
+4. **Đồng bộ AppException & JUnit 5 / Playwright Test**:
+   - Chuyển đổi các Exception của Post, Comment, Reaction sang AppException với ErrorCode và mã lỗi JSON chuẩn.
+   - Thêm các bộ test integration (Backend JUnit 5) và E2E (Frontend Playwright) để kiểm chứng tự động toàn bộ luồng hoạt động.
+
+### Files chính:
+- `frontend/src/modules/post/components/PostFeed.tsx`
+- `frontend/src/modules/profile/components/SettingsPage.tsx`
+- `backend/src/main/java/com/minifacebook/module/auth/application/service/AuthService.java`
+- `backend/src/main/java/com/minifacebook/module/post/application/service/PostService.java`
+- `backend/src/test/java/com/minifacebook/module/auth/presentation/AuthIntegrationTest.java`
+- `frontend/tests/settings.spec.ts`
 
 ---
 

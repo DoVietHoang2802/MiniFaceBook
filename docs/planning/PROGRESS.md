@@ -683,6 +683,14 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Frontend Coverage (Vitest)]** Cài đặt cấu hình và dependencies cho Vitest coverage (sử dụng provider `v8`) để thu thập và xuất báo cáo coverage cho TypeScript.
   - [x] **[VS Code Linter Fix]** Bổ sung `lombok-mapstruct-binding` vào `backend/pom.xml` giúp giải quyết triệt để xung đột thứ tự biên dịch giữa Lombok và MapStruct trên trình biên dịch của VS Code (JDT LS), loại bỏ hoàn toàn các lỗi đỏ import giả lập.
 
+- **Nhật ký phiên làm việc (09/07/2026 - Sprint 6.4: Infinite Scroll, Settings Page & Caching Enhancements):**
+  - [x] **[Infinite Scroll]** Thay đổi hoàn toàn nút "Xem thêm" cũ ở trang chủ thành cơ chế cuộn trang vô hạn. Frontend tự nhận diện vị trí cuộn để load thêm bài viết, Backend hỗ trợ phân trang chuẩn chỉ.
+  - [x] **[Settings Page]** Tạo mới trang Cài đặt tài khoản tại `/settings` cho phép đổi mật khẩu với giao diện mượt mà và validate lỗi tức thời.
+  - [x] **[Token Eviction]** Tích hợp tính năng tự động đăng xuất toàn diện sau khi đổi mật khẩu thành công. Backend thu hồi tất cả các token phiên cũ trong Redis và Database, Frontend dọn dẹp cookie và đẩy về trang đăng nhập.
+  - [x] **[Redis Cache Eviction]** Vá lỗi đồng bộ cache user profile. Đảm bảo giải phóng đồng thời cả cache theo Email và ID khi thông tin profile hoặc avatar có thay đổi.
+  - [x] **[AppException Alignment]** Đồng bộ các lỗi ném ra của Post, Comment, Reaction sang AppException với mã lỗi JSON chuẩn.
+  - [x] **[Integration & E2E Testing]** Viết JUnit 5 Integration Test ở Backend và Playwright E2E Test ở Frontend chạy kiểm thử tự động thành công 100%.
+
 
 
 

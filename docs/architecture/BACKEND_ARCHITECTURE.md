@@ -175,7 +175,7 @@ public class CleanArchitectureTest {
 *   **Wait for Network & Socket:** Khi kiểm thử tính năng thời gian thực (real-time chat, typing), sử dụng `page.waitForTimeout` hoặc chờ đợi các tín hiệu UI phản hồi thay vì assert ngay lập tức để tránh lỗi bất đồng bộ.
 
 ### B. Cấu trúc Thư mục Test
-*   Các kịch bản E2E được đặt trong `frontend/e2e/`.
+*   Các kịch bản E2E được đặt trong `frontend/tests/`.
 *   Cấu hình Playwright được định nghĩa tại `frontend/playwright.config.ts`.
 *   Tránh commit các thư mục kết quả test (`playwright-report/`, `test-results/`) bằng cách cập nhật chúng vào `.gitignore`.
 

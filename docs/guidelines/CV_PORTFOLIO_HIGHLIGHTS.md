@@ -783,5 +783,23 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Established a fully automated Quality Gate CI pipeline on GitHub Actions using SonarCloud, integrated with JaCoCo and Vitest V8 to audit code coverage, bugs, and vulnerabilities. Resolved complex IDE compiler annotation processing race conditions by incorporating the `lombok-mapstruct-binding` bridge, eliminating spurious compilation warnings.*
 
+---
+
+### 🛡️ Highlight 50: Triển khai Trải nghiệm Cuộn Vô Hạn, Trang Settings Đổi Mật Khẩu Bảo Mật, Vá Lỗi Đồng Bộ Cache Redis và Chuẩn Hóa AppException (Sprint 6.4)
+*   **Situation (Bối cảnh):** News Feed của ứng dụng monorepo sử dụng phân trang tĩnh (tải thêm bằng nút click) gây cản trở trải nghiệm liền mạch của người dùng. Hệ thống cũng thiếu một trang Cài đặt tài khoản (Settings) để người dùng đổi mật khẩu trực tiếp một cách an toàn. Về mặt backend, cơ chế xóa cache Redis của Profile người dùng bị stale do không giải phóng đồng bộ cả hai key (Email và ID), và các module Bài viết/Bình luận vẫn ném ra lỗi runtime thô dẫn đến mã lỗi HTTP 500 mơ hồ.
+*   **Task (Nhiệm vụ):** Thiết lập cơ chế Cuộn vô hạn (Infinite Scroll) ở trang News Feed, xây dựng trang Cài đặt Đổi mật khẩu bảo mật (Settings Page) tích hợp tự động thu hồi token (Token Eviction), vá lỗi đồng bộ cache Redis của user profile, và chuẩn hóa toàn bộ mã lỗi module bài viết/bình luận sang AppException.
+*   **Action (Hành động):**
+    *   **Infinite Scroll:** Triển khai `IntersectionObserver` ở frontend kết hợp với phân trang `Pageable` của Spring Data MongoDB ở backend để tự động tải các trang bài viết mới khi cuộn đến cuối trang, tạo hiệu ứng mượt mà.
+    *   **Settings & Token Eviction:** Xây dựng `SettingsPage.tsx` với logic validation mật khẩu nghiêm ngặt. Khi đổi mật khẩu thành công, backend thực hiện thu hồi tất cả Refresh Token liên quan trong DB và đưa JWT ID tương ứng vào Redis Blacklist, ép buộc frontend xóa cookie và tự động logout.
+    *   **Redis Cache & AppException Alignment:** Vá lỗi đồng bộ cache user profile bằng cách xóa đồng thời cả 2 key cache theo ID (`user:profile:id:<userId>`) và theo Email (`user:profile:email:<email>`). Đồng bộ hóa các lỗi ném ra của Post, Comment, Reaction sang AppException với mã lỗi JSON chuẩn.
+    *   **Kiểm thử tự động:** Viết JUnit 5 Integration Test (`AuthIntegrationTest`, `PostIntegrationTest`) để kiểm thử tích hợp backend và Playwright E2E Test (`settings.spec.ts`) để kiểm thử toàn diện luồng thay đổi mật khẩu từ client đến server.
+*   **Result (Kết quả):**
+    *   Trải nghiệm News Feed và quản lý tài khoản của người dùng đạt chuẩn premium và bảo mật tối đa.
+    *   Loại bỏ hoàn toàn lỗi dữ liệu stale ở profile cache.
+    *   100% test suites (JUnit 5 + Playwright E2E) vượt qua thành công, đảm bảo tính vững chắc của codebase.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Engineered an Infinite Scroll experience using IntersectionObserver and Spring Data pagination. Built a secure Settings & Change Password flow featuring auto-logout via Redis JWT blacklist and Mongo token eviction. Resolved user profile cache desynchronization, standardized exception codes into AppExceptions, and verified the entire integration via JUnit 5 and Playwright.*
+
+
 
 

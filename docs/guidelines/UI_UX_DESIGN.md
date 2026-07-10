@@ -230,3 +230,8 @@ Tuyệt đối không sử dụng icon vector tĩnh (Lucide) cho hệ thống Re
 *   **Reaction Hover Scoping (Khoanh vùng kích hoạt Hover cảm xúc):** Cấu hình sự kiện `onMouseEnter` / `onMouseLeave` của bảng tương tác biểu cảm nằm gói gọn duy nhất trong nút Like (Thích). Rê chuột qua các nút lân cận như Bình luận (Comment) hay Chia sẻ (Share) tuyệt đối không được kích hoạt bảng Reaction Picker.
 *   **A11y cho Slide & Modal:** Mọi nút đóng Modal, nút điều hướng Slide trước/sau bắt buộc phải có thuộc tính `title` và `aria-label` tương ứng để phục vụ các công cụ đọc màn hình.
 
+### 6.8. Infinite Scroll & Settings Page UI/UX (Sprint 6.4)
+*   **News Feed Infinite Scroll:** Bảng tin hiển thị mượt mà liên tục, loại bỏ hoàn toàn nút bấm "Xem thêm". Khi người dùng cuộn đến đáy trang, hiển thị loading spinner tròn xoay nhẹ (`animate-spin`) và tải trang tiếp theo ngầm, đồng thời lưu giữ vị trí cuộn màn hình để tránh hiện tượng nhảy (jump) giật cục của trang web.
+*   **Settings Page & Password Validation:** Trang cài đặt được bố trí khoa học, tinh khiết theo Slate Light. Cung cấp các ô nhập mật khẩu với chức năng ẩn/hiện mật khẩu rõ ràng, các thông báo lỗi kiểm duyệt (mật khẩu quá ngắn, nhập lại không khớp) phải xuất hiện ngay bên dưới ô nhập dạng text đỏ nhạt (`text-rose-500 text-xs mt-1`). Nút cập nhật có biểu tượng loading khi đang xử lý API.
+
+

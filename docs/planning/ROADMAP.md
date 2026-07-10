@@ -366,15 +366,15 @@
 |:-:|----------|------|:-------:|:----------:|---------|
 | 1 | MongoDB Replica Set + `MongoTransactionManager` | Hạ tầng | 🔴 Cao | ✅ Đã xong | Hoàn thành 30/05 |
 | 2 | `findAllByIds` chống N+1 Query | Hiệu năng | 🟡 TB | ✅ Đã xong | Hoàn thành 30/05 |
-| 3 | Đồng bộ `AppException` cho Post module | Chuẩn hóa | 🟡 TB | 🔴 Chưa làm | Gom 1 lần |
+| 3 | Đồng bộ `AppException` cho Post module | Chuẩn hóa | 🟡 TB | ✅ Đã xong | Hoàn thành 09/07 |
 | 4 | `isSentByMe` trong FriendshipResponse | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (Sprint 3.2) |
 | 5 | Thêm field `displayName` cho User | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 30/05 (dùng field `name`, Sprint 3.3) |
 | 6 | Tối ưu phân trang Search (aggregation pipeline) | Hiệu năng | 🟢 Thấp | 🔴 Chưa làm | Khi scale > 1000 users |
 | 7 | StompBrokerRelay (RabbitMQ) cho scale lớn | Hạ tầng | 🟢 Thấp | 🔴 Chưa làm | Phase 7 (> 10 servers) |
-| 8 | Infinite Scroll cho News Feed | Logic/UX | 🟡 TB | 🔴 Chưa làm | Phase 6 |
+| 8 | Infinite Scroll cho News Feed | Logic/UX | 🟡 TB | ✅ Đã xong | Hoàn thành 09/07 |
 | 9 | Dọn dẹp Checkstyle Java Warnings | Chuẩn hóa | 🟢 Thấp | ✅ Đã xong | Hoàn thành 22/06 |
-| 10 | Redis Caching cho User Profile và Friend List | Hiệu năng | 🟡 TB | 🔴 Chưa làm | Phase 6 |
-| 11 | Trang Cài đặt tài khoản (Account/Settings Page) | Logic/UX | 🟢 Thấp | 🔴 Chưa làm | Phase 6 |
+| 10 | Redis Caching cho User Profile và Friend List | Hiệu năng | 🟡 TB | ✅ Đã xong | Hoàn thành 09/07 |
+| 11 | Trang Cài đặt tài khoản (Account/Settings Page) | Logic/UX | 🟢 Thấp | ✅ Đã xong | Hoàn thành 09/07 |
 
 
 ### ✅ #1: MongoDB Replica Set + TransactionManager (ĐÃ HOÀN THÀNH 30/05)
