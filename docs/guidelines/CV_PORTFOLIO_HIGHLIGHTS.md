@@ -802,4 +802,20 @@
 
 
 
+---
+
+### 🎨 Highlight 51: Tối ưu UX ChatPage, ProfilePage Sidebar Hiển Thị Dữ Liệu Thật và Viết Bộ E2E Tests Toàn Diện (Sprint 6.5)
+*   **Situation (Bối cảnh):** Giao diện ChatPage có 2 phần tử UI thừa (nút tìm kiếm tròn và nút Tùy chọn hội thoại trong header) gây nhiễu trải nghiệm và tốn diện tích màn hình. Đồng thời, sidebar trang cá nhân (ProfilePage) không hiển thị đúng dữ liệu thật từ DB: tên người dùng, nghề nghiệp, thành phố — thay vào đó bị bỏ trống hoặc hiển thị dữ liệu ảo. Bộ kiểm thử Playwright E2E chỉ bao phủ luồng chat cũ, chưa có test cho ProfilePage và các thay đổi mới.
+*   **Task (Nhiệm vụ):** (1) Dọn dẹp ChatPage UI — xóa các phần tử thừa theo yêu cầu người dùng; (2) Chuẩn hóa sidebar ProfilePage hiển thị dữ liệu thật (tên, công việc, thành phố, ảnh tối đa 6 tấm + "Xem tất cả", 3 đề xuất bạn bè); (3) Viết đầy đủ Playwright E2E tests cho các luồng mới/đã thay đổi.
+*   **Action (Hành động):**
+    *   **ChatPage Cleanup:** Xác định và xóa component nút tìm kiếm tròn (`Search` icon button) và nút tùy chọn hội thoại (`SlidersHorizontal` button) khỏi header ChatPage, giữ nguyên các chức năng khác.
+    *   **ProfilePage Sidebar:** Đảm bảo sidebar "Giới thiệu" đọc đúng các field `name`, `work`, `city`, `hometown` từ state user. Khu vực "Hình ảnh" giữ nguyên label và nút "Xem tất cả" dù trống — hiện text thông báo thân thiện thay vì xóa section. "Bạn bè" hiển thị dạng grid tối đa 6 avatar với tên thật.
+    *   **E2E Test Coverage:** Viết mới `profile.spec.ts` gồm 6 test cases (hiển thị tên thật, lưu/hiển thị work+city trong sidebar, kiểm tra Photos box, Friends box 6 bạn, điều hướng tab, xem profile người khác). Cập nhật `chat.spec.ts` gồm 6 test cases (không có search/options button, gửi/nhận tin, typing indicator, infinite scroll, xóa thu hồi tin nhắn).
+    *   **Update Full Protocol:** Thực thi giao thức "Update Full" đồng bộ 7 file tài liệu kiến trúc (DATABASE_SCHEMA.md, PROGRESS.md, ROADMAP.md, SESSION_HANDOFF.md, CV_PORTFOLIO_HIGHLIGHTS.md, UI_UX_DESIGN.md, README.md).
+*   **Result (Kết quả):**
+    *   UI ChatPage gọn gàng hơn, tập trung vào luồng nhắn tin cốt lõi.
+    *   ProfilePage sidebar hiển thị 100% dữ liệu thật, không còn placeholder ảo.
+    *   Tổng bộ Playwright E2E tăng lên **11 file tests / 15+ test cases** bao phủ toàn bộ luồng chính của ứng dụng.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Performed precision UI cleanup on ChatPage (removed redundant header elements) and enhanced ProfilePage sidebar to render authentic user data (name, occupation, city, photo grid, friend suggestions). Expanded the Playwright E2E suite to 15+ test cases covering profile, chat, feed, settings, and notification flows — ensuring zero regression across all feature updates.*
 

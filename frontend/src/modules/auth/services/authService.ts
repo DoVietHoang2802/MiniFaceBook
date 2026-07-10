@@ -9,6 +9,10 @@ export interface UserResponse {
   verified: boolean;
   avatar?: string;
   bio?: string;
+  city?: string;
+  hometown?: string;
+  work?: string;
+  relationship?: string;
   createdAt?: string;
   updatedAt?: string;
 }

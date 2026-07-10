@@ -12,7 +12,17 @@ import {
   Mail, 
   Calendar, 
   UploadCloud,
-  MessageSquare
+  MessageSquare,
+  Users,
+  MapPin,
+  Briefcase,
+  Heart,
+  Home,
+  UserPlus,
+  UserMinus,
+  UserCheck,
+  UserX,
+  Clock
 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { profileService } from '../services/profileService';
@@ -20,6 +30,14 @@ import type { UserProfileResponse } from '../services/profileService';
 import { authService } from '../../auth/services/authService';
 import type { UserResponse } from '../../auth/services/authService';
 import { useAuth } from '../../../core/auth/AuthContext';
+
+// Import elements for Facebook layout
+import { postService } from '../../post/services/postService';
+import PostCard from '../../post/components/PostCard';
+import CreatePostCard from '../../post/components/CreatePostCard';
+import type { PostResponse } from '../../post/types/post.types';
+import { friendService } from '../../friends/services/friendService';
+import type { FriendshipResponse } from '../../friends/types/friend.types';
 
 // Định nghĩa Zod Schema cho Client-side Validation (Bảo mật Zero-Trust)
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // Mở rộng lên 20MB để thuật toán nén tự xử lý
@@ -34,6 +52,95 @@ const avatarFileSchema = z.instanceof(File)
 
 const bioSchema = z.string()
   .max(255, 'Tiểu sử không được vượt quá 255 ký tự');
+
+const VIETNAM_CITIES = [
+  "An Giang", "Bà Rịa - Vũng Tàu", "Bạc Liêu", "Bắc Giang", "Bắc Kạn", "Bắc Ninh",
+  "Bến Tre", "Bình Dương", "Bình Định", "Bình Phước", "Bình Thuận", "Cà Mau",
+  "Cao Bằng", "Cần Thơ", "Đà Nẵng", "Đắk Lắk", "Đắk Nông", "Điện Biên", "Đồng Nai",
+  "Đồng Tháp", "Gia Lai", "Hà Giang", "Hà Nam", "Hà Nội", "Hà Tĩnh", "Hải Dương",
+  "Hải Phòng", "Hậu Giang", "Hòa Bình", "Hồ Chí Minh", "Hưng Yên", "Khánh Hòa",
+  "Kiên Giang", "Kon Tum", "Lai Châu", "Lạng Sơn", "Lào Cai", "Lâm Đồng", "Long An",
+  "Nam Định", "Nghệ An", "Ninh Bình", "Ninh Thuận", "Phú Thọ", "Phú Yên", "Quảng Bình",
+  "Quảng Nam", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sóc Trăng", "Sơn La", "Tây Ninh",
+  "Thái Bình", "Thái Nguyên", "Thanh Hóa", "Thừa Thiên Huế", "Tiền Giang", "Trà Vinh",
+  "Tuyên Quang", "Vĩnh Long", "Vĩnh Phúc", "Yên Bái"
+];
+
+interface CitySearchSelectProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}
+
+const CitySearchSelect: React.FC<CitySearchSelectProps> = ({ label, value, onChange, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCities = VIETNAM_CITIES.filter(city => 
+    city.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-1.5 relative" ref={containerRef}>
+      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</label>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-white hover:border-slate-300 transition-all cursor-pointer flex justify-between items-center"
+      >
+        <span className={value ? "text-slate-700 font-extrabold" : "text-slate-400"}>
+          {value || placeholder || "Chọn tỉnh/thành phố"}
+        </span>
+        <span className="text-slate-400 text-[10px]">▼</span>
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-slate-100">
+            <input 
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm tỉnh/thành..."
+              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs outline-none focus:border-violet-500"
+              autoFocus
+            />
+          </div>
+          <div className="overflow-y-auto flex-1 max-h-40">
+            {filteredCities.length > 0 ? (
+              filteredCities.map((city) => (
+                <div 
+                  key={city}
+                  onClick={() => {
+                    onChange(city);
+                    setIsOpen(false);
+                    setSearchTerm('');
+                  }}
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-violet-50 hover:text-violet-600 transition-colors ${value === city ? 'bg-violet-50 text-violet-600 font-bold' : 'text-slate-600'}`}
+                >
+                  {city}
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-xs text-slate-400 text-center italic">Không tìm thấy kết quả</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface ProfilePageProps {
   initialUser?: UserProfileResponse | UserResponse | null;
@@ -65,7 +172,180 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Trạng thái thông tin chi tiết cá nhân (Lives in, Hometown, Work, Relationship)
+  const [city, setCity] = useState('');
+  const [hometown, setHometown] = useState('');
+  const [work, setWork] = useState('');
+  const [relationship, setRelationship] = useState('');
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Facebook layout tab navigation, user posts and friends states
+  const [activeTab, setActiveTab] = useState<'posts' | 'about' | 'friends'>('posts');
+  const [posts, setPosts] = useState<PostResponse[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [friendsList, setFriendsList] = useState<FriendshipResponse[]>([]);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
+
+  // Trạng thái quan hệ bạn bè (khi xem profile người khác)
+  const [relationshipStatus, setRelationshipStatus] = useState<'NONE' | 'FRIEND' | 'PENDING_SENT' | 'PENDING_RECEIVED'>('NONE');
+  const [friendshipId, setFriendshipId] = useState<string | null>(null);
+  const [isLoadingRelationship, setIsLoadingRelationship] = useState(false);
+
+  const checkRelationship = async () => {
+    if (isOwnProfile || !userId) return;
+    setIsLoadingRelationship(true);
+    try {
+      const [friends, sent, pending] = await Promise.all([
+        friendService.getFriends(),
+        friendService.getSentRequests(),
+        friendService.getPendingRequests()
+      ]);
+
+      const friendRel = friends.find(f => f.userId === userId);
+      if (friendRel) {
+        setRelationshipStatus('FRIEND');
+        setFriendshipId(friendRel.friendshipId);
+        return;
+      }
+
+      const sentRel = sent.find(s => s.userId === userId);
+      if (sentRel) {
+        setRelationshipStatus('PENDING_SENT');
+        setFriendshipId(sentRel.friendshipId);
+        return;
+      }
+
+      const pendingRel = pending.find(p => p.userId === userId);
+      if (pendingRel) {
+        setRelationshipStatus('PENDING_RECEIVED');
+        setFriendshipId(pendingRel.friendshipId);
+        return;
+      }
+
+      setRelationshipStatus('NONE');
+      setFriendshipId(null);
+    } catch (err) {
+      console.error("Error loading relationship status:", err);
+    } finally {
+      setIsLoadingRelationship(false);
+    }
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!userId) return;
+    setIsLoadingRelationship(true);
+    try {
+      const friendship = await friendService.sendRequest(userId);
+      setRelationshipStatus('PENDING_SENT');
+      setFriendshipId(friendship.friendshipId);
+      setSuccessMessage('Đã gửi lời mời kết bạn!');
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || 'Không thể gửi lời mời kết bạn.');
+    } finally {
+      setIsLoadingRelationship(false);
+    }
+  };
+
+  const handleCancelFriendRequest = async () => {
+    if (!friendshipId) return;
+    setIsLoadingRelationship(true);
+    try {
+      await friendService.cancelRequest(friendshipId);
+      setRelationshipStatus('NONE');
+      setFriendshipId(null);
+      setSuccessMessage('Đã hủy yêu cầu kết bạn.');
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || 'Không thể hủy yêu cầu kết bạn.');
+    } finally {
+      setIsLoadingRelationship(false);
+    }
+  };
+
+  const handleAcceptFriendRequest = async () => {
+    if (!friendshipId) return;
+    setIsLoadingRelationship(true);
+    try {
+      await friendService.acceptRequest(friendshipId);
+      setRelationshipStatus('FRIEND');
+      setSuccessMessage('Các bạn đã trở thành bạn bè!');
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || 'Không thể chấp nhận lời mời.');
+    } finally {
+      setIsLoadingRelationship(false);
+    }
+  };
+
+  const handleRejectFriendRequest = async () => {
+    if (!friendshipId) return;
+    setIsLoadingRelationship(true);
+    try {
+      await friendService.rejectRequest(friendshipId);
+      setRelationshipStatus('NONE');
+      setFriendshipId(null);
+      setSuccessMessage('Đã xóa lời mời kết bạn.');
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || 'Không thể từ chối lời mời.');
+    } finally {
+      setIsLoadingRelationship(false);
+    }
+  };
+
+  const handleUnfriend = async () => {
+    if (!userId) return;
+    if (!window.confirm("Bạn có chắc chắn muốn hủy kết bạn?")) return;
+    setIsLoadingRelationship(true);
+    try {
+      await friendService.unfriend(userId);
+      setRelationshipStatus('NONE');
+      setFriendshipId(null);
+      setSuccessMessage('Đã hủy kết bạn.');
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || 'Không thể hủy kết bạn.');
+    } finally {
+      setIsLoadingRelationship(false);
+    }
+  };
+
+  const fetchUserPosts = async () => {
+    if (!user?.id) return;
+    setIsLoadingPosts(true);
+    try {
+      const response = await postService.getNewsFeed(0, 50); // Get first 50 posts
+      if (response && response.data && response.data.content) {
+        const userPosts = response.data.content.filter((p: PostResponse) => p.authorId === user.id);
+        setPosts(userPosts);
+      }
+    } catch (err) {
+      console.error('Error fetching user posts:', err);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  };
+
+  const fetchFriends = async () => {
+    setIsLoadingFriends(true);
+    try {
+      const data = await friendService.getFriends();
+      setFriendsList(data || []);
+    } catch (err) {
+      console.error('Error fetching friends:', err);
+    } finally {
+      setIsLoadingFriends(false);
+    }
+  };
+
+  const handlePostCreated = (newPost: PostResponse) => {
+    setPosts((prev) => [newPost, ...prev]);
+    setSuccessMessage('Đăng bài viết thành công!');
+  };
+
+  const handlePostDeleted = (deletedPostId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== deletedPostId));
+    setSuccessMessage('Đã xóa bài viết thành công.');
+  };
 
   // Sync state khi activeUser thay đổi hoặc khi userId thay đổi (để load profile mới)
   useEffect(() => {
@@ -73,6 +353,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
       const u = initialUser || auth.user;
       setUser(u);
       setBio(u?.bio || '');
+      setCity((u as any)?.city || '');
+      setHometown((u as any)?.hometown || '');
+      setWork((u as any)?.work || '');
+      setRelationship((u as any)?.relationship || '');
       setIsLoading(false);
     } else if (userId) {
       setIsLoading(true);
@@ -80,6 +364,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         .then((res) => {
           setUser(res.data);
           setBio(res.data.bio || '');
+          setCity(res.data.city || '');
+          setHometown(res.data.hometown || '');
+          setWork(res.data.work || '');
+          setRelationship(res.data.relationship || '');
+          checkRelationship();
         })
         .catch(() => {
           setErrorMessage('Không tải được thông tin người dùng.');
@@ -89,6 +378,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         });
     }
   }, [userId, isOwnProfile, auth.user, initialUser]);
+
+  // Pre-load data on user id load
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserPosts();
+      fetchFriends();
+    }
+  }, [user?.id]);
 
   // Tự động tắt thông báo sau 4 giây
   useEffect(() => {
@@ -210,6 +507,32 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     }
   };
 
+  const handleSaveDetails = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsSavingDetails(true);
+
+    try {
+      const response = await profileService.updateProfile({
+        city: city || '',
+        hometown: hometown || '',
+        work: work || '',
+        relationship: relationship || ''
+      });
+      setUser(response.data);
+      if (isOwnProfile && auth.setUser) {
+        auth.setUser(response.data as any);
+      }
+      setIsEditingDetails(false);
+      setSuccessMessage('Cập nhật chi tiết cá nhân thành công!');
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Không thể cập nhật chi tiết cá nhân.';
+      setErrorMessage(errorMsg);
+    } finally {
+      setIsSavingDetails(false);
+    }
+  };
+
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
@@ -263,7 +586,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8 animate-fade-in-up">
+    <div className="w-full max-w-5xl mx-auto px-0 py-2 animate-fade-in-up">
       {/* Khối Thông báo Hệ thống (Toasts) */}
       <div className="fixed top-5 right-5 z-50 space-y-3 max-w-md w-full pointer-events-none">
         {successMessage && (
@@ -280,120 +603,552 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         )}
       </div>
 
-      {/* Main Glassmorphic Profile Card */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all duration-500">
+      {/* Facebook-style Cover Photo */}
+      <div className="relative h-56 sm:h-72 md:h-80 w-full rounded-t-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 overflow-hidden shadow-sm group">
+        <div className="absolute inset-0 bg-slate-900/10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
         
-        {/* Banner trang trí Gradient thanh lịch */}
-        <div className="h-44 w-full bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-blue-600/20 relative">
-          <div className="absolute inset-0 bg-white/20"></div>
-          {/* Nút Đăng xuất hoặc Nhắn tin ở góc banner */}
-          {isOwnProfile ? (
-            <button
-              onClick={handleLogoutClick}
-              className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-xs font-bold text-slate-600 hover:text-rose-500 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm shadow-sm"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Đăng xuất</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => navigate(`/chats/${user.id}`)}
-              className="absolute top-6 right-6 px-4 py-2.5 rounded-xl bg-white/80 hover:bg-violet-50 border border-slate-200 hover:border-violet-300 text-xs font-bold text-slate-600 hover:text-violet-600 transition-all duration-300 flex items-center space-x-1.5 hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-sm shadow-sm"
-            >
-              <MessageSquare className="h-4 w-4 text-violet-500" />
-              <span>Nhắn tin</span>
-            </button>
-          )}
-        </div>
+        {isOwnProfile && (
+          <button 
+            onClick={() => setSuccessMessage("Tính năng tải ảnh bìa riêng sẽ được cập nhật sớm!")}
+            className="absolute bottom-4 right-4 flex items-center space-x-2 px-3.5 py-2 bg-black/60 hover:bg-black/80 text-white rounded-xl text-[11px] font-bold transition backdrop-blur-sm cursor-pointer shadow-md"
+          >
+            <Camera className="h-4 w-4" />
+            <span>Chỉnh sửa ảnh bìa</span>
+          </button>
+        )}
+      </div>
 
-        {/* Thông tin hồ sơ & Tải ảnh đại diện */}
-        <div className="px-6 sm:px-10 pb-10 relative">
+      {/* Facebook-style Profile Info Bar */}
+      <div className="w-full bg-white rounded-b-2xl border border-t-0 border-slate-200 px-6 sm:px-8 pb-4 shadow-sm mb-6">
+        <div className="flex flex-col md:flex-row md:items-end -mt-20 md:-mt-14 md:space-x-6 mb-4 text-center md:text-left">
           
-          {/* Layout Avatar và Header */}
-          <div className="flex flex-col md:flex-row md:items-end -mt-20 md:space-x-8 mb-8">
-            
-            {/* Avatar Container với Ripple Pulse Animation */}
-            <div className="relative group mx-auto md:mx-0">
-              {/* Vòng tròn hiệu ứng lấp lánh (Avatar Ripple Pulse) */}
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 blur-sm opacity-50 group-hover:opacity-100 transition duration-500 group-hover:scale-105 animate-pulse"></div>
-              
-              {/* Hình ảnh chính */}
-              <div className="h-36 w-36 rounded-full border-4 border-white overflow-hidden bg-slate-100 relative shadow-md flex items-center justify-center">
-                {user.avatar ? (
-                  <img 
-                    src={user.avatar} 
-                    alt="Avatar" 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                ) : (
-                  <UserIcon className="h-16 w-16 text-slate-400" />
-                )}
+          {/* Large Overlapping Avatar */}
+          <div className="relative group mx-auto md:mx-0 shrink-0">
+            <div className="h-36 w-36 rounded-full border-4 border-white overflow-hidden bg-slate-100 relative shadow-md flex items-center justify-center">
+              {user.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt="Avatar" 
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <UserIcon className="h-16 w-16 text-slate-400" />
+              )}
 
-                {/* Loading Overlay khi đang upload */}
-                {isUploadingAvatar && (
-                  <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
-                    <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
-                    <span className="text-[10px] text-violet-600 mt-1 font-bold">Tải lên...</span>
-                  </div>
-                )}
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-violet-500 animate-spin" />
+                  <span className="text-[9px] text-violet-600 mt-1 font-bold">Đang tải...</span>
+                </div>
+              )}
 
-                {/* Hover Trigger overlay */}
-                {!isUploadingAvatar && isOwnProfile && (
-                  <button
-                    onClick={triggerFileInput}
-                    className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white cursor-pointer"
-                  >
-                    <Camera className="h-6 w-6 text-blue-400 animate-bounce" />
-                    <span className="text-[10px] uppercase font-black tracking-widest mt-1">Thay ảnh</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Input tệp ẩn */}
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                accept="image/*" 
-                className="hidden" 
-                title="Chọn hình ảnh làm ảnh đại diện" 
-              />
+              {!isUploadingAvatar && isOwnProfile && (
+                <button
+                  onClick={triggerFileInput}
+                  className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white cursor-pointer"
+                >
+                  <Camera className="h-5 w-5 text-white" />
+                  <span className="text-[9px] uppercase font-black tracking-widest mt-1">Thay ảnh</span>
+                </button>
+              )}
             </div>
 
-            {/* Thông tin văn bản User */}
-            <div className="text-center md:text-left mt-6 md:mt-0 flex-grow">
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight font-outfit mb-1">
-                {(user as any).name || user.email.split('@')[0]}
-              </h2>
-              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-sm text-slate-500 mt-2 font-medium">
-                <span className="flex items-center space-x-1">
-                  <Mail className="h-4 w-4 text-violet-400" />
-                  <span>{user.email}</span>
-                </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                <span className="flex items-center space-x-1">
-                  <Calendar className="h-4 w-4 text-indigo-400" />
-                  <span>{formatJoinedDate(user.createdAt)}</span>
-                </span>
-              </div>
-            </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
           </div>
 
-          {/* Grid Layout 2 Cột chi tiết */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start border-t border-slate-200 pt-8">
+          {/* User Name & Bio Summary */}
+          <div className="flex-grow mt-4 md:mt-0 md:pb-2">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight font-outfit mb-1.5">
+              {(user as any).name || user.email.split('@')[0]}
+            </h1>
+            <p className="text-slate-500 text-xs font-semibold max-w-lg mx-auto md:mx-0">
+              {user.bio || "Chưa thiết lập tiểu sử cá nhân."}
+            </p>
+          </div>
+
+          {/* Header Action Buttons */}
+          <div className="flex justify-center items-center gap-2 mt-4 md:mt-0 md:pb-2 shrink-0">
+            {isOwnProfile ? (
+              <>
+                <button
+                  onClick={() => {
+                    setActiveTab('about');
+                    setIsEditingBio(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[11px] font-black text-slate-700 transition cursor-pointer shadow-sm"
+                >
+                  Chỉnh sửa tiểu sử
+                </button>
+                <button
+                  onClick={handleLogoutClick}
+                  className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-100 hover:bg-rose-100 text-[11px] font-black text-rose-600 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>Đăng xuất</span>
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                {/* Nút Kết Bạn / Bạn Bè dựa trên relationshipStatus */}
+                {isLoadingRelationship ? (
+                  <button className="px-4 py-2.5 rounded-xl bg-slate-100 text-[11px] font-black text-slate-500 flex items-center gap-1.5 cursor-not-allowed" disabled>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Đang xử lý...</span>
+                  </button>
+                ) : relationshipStatus === 'NONE' ? (
+                  <button
+                    onClick={handleSendFriendRequest}
+                    className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-black transition flex items-center gap-1.5 shadow-md shadow-violet-500/10 cursor-pointer"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span>Thêm bạn bè</span>
+                  </button>
+                ) : relationshipStatus === 'PENDING_SENT' ? (
+                  <button
+                    onClick={handleCancelFriendRequest}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Clock className="h-4 w-4 text-amber-500 animate-pulse" />
+                    <span>Đã gửi lời mời (Hủy)</span>
+                  </button>
+                ) : relationshipStatus === 'PENDING_RECEIVED' ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleAcceptFriendRequest}
+                      className="px-3.5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-black transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <UserCheck className="h-4 w-4" />
+                      <span>Xác nhận</span>
+                    </button>
+                    <button
+                      onClick={handleRejectFriendRequest}
+                      className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <UserX className="h-4 w-4 text-rose-500" />
+                      <span>Xóa</span>
+                    </button>
+                  </div>
+                ) : (
+                  // FRIEND status
+                  <button
+                    onClick={handleUnfriend}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border border-transparent hover:border-rose-100"
+                  >
+                    <UserCheck className="h-4 w-4 text-emerald-500" />
+                    <span>Bạn bè (Hủy kết bạn)</span>
+                  </button>
+                )}
+
+                {/* Nút Nhắn Tin luôn hiển thị bên cạnh */}
+                <button
+                  onClick={() => navigate(`/chats/${user.id}`)}
+                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <MessageSquare className="h-4 w-4 text-violet-600" />
+                  <span>Nhắn tin</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tab Selectors */}
+        <div className="flex items-center space-x-6 border-t border-slate-100 pt-3 mt-4 overflow-x-auto scrollbar-none">
+          {(['posts', 'about', 'friends'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-2.5 text-xs font-black relative transition-colors cursor-pointer whitespace-nowrap ${
+                activeTab === tab ? "text-violet-600 font-black" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {tab === 'posts' ? 'Bài viết' : tab === 'about' ? 'Giới thiệu' : 'Bạn bè'}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Tab Content Grid */}
+      <div className="min-h-[550px]">
+        {/* TAB 1: POSTS & FEED (Facebook Double Column) */}
+        {activeTab === 'posts' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2 animate-fade-in-up">
             
-            {/* Cột trái: Cập nhật Tiểu sử (Bio) với Focus Glassmorphic Glow */}
-            <div className={`${isOwnProfile ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-6`}>
-              <div className="space-y-3">
+            {/* Left Column Sidebar (Intro, Photos, Friends Quick view) */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Intro Box */}
+              <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+                <h3 className="text-sm font-black text-slate-800">Giới thiệu</h3>
+                <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
+                  {user.bio ? (
+                    <p className="text-center italic text-slate-500 pb-3 border-b border-slate-100 font-medium">
+                      "{user.bio}"
+                    </p>
+                  ) : (
+                    isOwnProfile && (
+                      <button 
+                        onClick={() => {
+                          setActiveTab('about');
+                          setIsEditingBio(true);
+                        }}
+                        className="w-full py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer"
+                      >
+                        Thêm tiểu sử giới thiệu
+                      </button>
+                    )
+                  )}
+
+                  {user.city && (
+                    <div className="flex items-center space-x-3 text-slate-600">
+                      <Home className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                      <span>Sống tại <span className="font-extrabold">{user.city}</span></span>
+                    </div>
+                  )}
+
+                  {user.hometown && (
+                    <div className="flex items-center space-x-3 text-slate-600">
+                      <MapPin className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                      <span>Đến từ <span className="font-extrabold">{user.hometown}</span></span>
+                    </div>
+                  )}
+
+                  {user.work && (
+                    <div className="flex items-center space-x-3 text-slate-600">
+                      <Briefcase className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                      <span className="truncate">Công việc: <span className="font-extrabold">{user.work}</span></span>
+                    </div>
+                  )}
+
+                  {user.relationship && user.relationship !== 'Không rõ' && (
+                    <div className="flex items-center space-x-3 text-slate-600">
+                      <Heart className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+                      <span>Tình trạng: <span className="font-extrabold">{user.relationship}</span></span>
+                    </div>
+                  )}
+
+                  {!user.city && !user.hometown && !user.work && (!user.relationship || user.relationship === 'Không rõ') && (
+                    <p className="text-slate-400 text-xs italic text-center py-2">Chưa cập nhật thông tin chi tiết.</p>
+                  )}
+
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('about');
+                        setIsEditingDetails(true);
+                      }}
+                      className="w-full py-2 mt-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-xl transition cursor-pointer"
+                    >
+                      Chỉnh sửa chi tiết
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Photos Gallery Box */}
+              <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
-                    <BookOpen className="h-5 w-5 text-violet-500" />
-                    <span>Tiểu sử cá nhân</span>
+                  <h3 className="text-sm font-black text-slate-800">Hình ảnh</h3>
+                  <button 
+                    onClick={() => setSuccessMessage("Bạn có thể xem đầy đủ ảnh ở các bài viết bên phải!")} 
+                    className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                  >
+                    Xem tất cả
+                  </button>
+                </div>
+                {posts.flatMap(p => p.imageUrls || []).length > 0 ? (
+                  <div className="grid grid-cols-3 gap-1 rounded-xl overflow-hidden">
+                    {posts.flatMap(p => p.imageUrls || []).slice(0, 9).map((url, idx) => (
+                      <div key={idx} className="aspect-square relative group overflow-hidden bg-slate-100">
+                        <img 
+                          src={url} 
+                          alt="Gallery item" 
+                          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition duration-300 cursor-pointer" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-400 italic">Chưa có hình ảnh đăng tải.</p>
+                )}
+              </div>
+
+              {/* Friends Box */}
+              <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800">Bạn bè</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{friendsList.length} người bạn</p>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('friends')}
+                    className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                  >
+                    Xem tất cả bạn bè
+                  </button>
+                </div>
+                {friendsList.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {friendsList.slice(0, 6).map((friend) => (
+                      <div 
+                        key={friend.friendshipId}
+                        onClick={() => navigate(`/profile/${friend.userId}`)}
+                        className="cursor-pointer group flex flex-col text-center"
+                      >
+                        <div className="aspect-square w-full rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
+                          {friend.avatar ? (
+                            <img src={friend.avatar} alt={friend.name || friend.email} className="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-slate-400 font-black bg-slate-50 text-xs">
+                              {(friend.name || friend.email || 'U').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-black text-slate-700 truncate mt-1.5 group-hover:text-violet-600 transition">
+                          {friend.name || friend.email.split('@')[0]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-400 italic">Chưa có bạn bè nào.</p>
+                )}
+              </div>
+
+            </div>
+
+            {/* Right Column: Feed and Creator */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Post Creation (if own profile) */}
+              {isOwnProfile && (
+                <CreatePostCard 
+                  onPostCreated={handlePostCreated} 
+                  currentUser={auth.user} 
+                />
+              )}
+
+              {/* Feed List */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-black text-slate-800 px-1">Bài viết cá nhân</h3>
+                
+                {isLoadingPosts ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400 bg-white border border-slate-200 rounded-2xl">
+                    <Loader2 className="h-6 w-6 text-violet-500 animate-spin mb-3" />
+                    <p className="text-[11px] font-semibold">Đang tải bài viết...</p>
+                  </div>
+                ) : posts.length > 0 ? (
+                  posts.map((post) => (
+                    <PostCard 
+                      key={post.id} 
+                      post={post} 
+                      currentUser={auth.user} 
+                      onPostDeleted={handlePostDeleted} 
+                    />
+                  ))
+                ) : (
+                  <div className="p-12 rounded-2xl border border-slate-200 bg-white text-center text-slate-400">
+                    <BookOpen className="h-8 w-8 mx-auto mb-3 opacity-40" />
+                    <p className="text-xs font-semibold">Chưa đăng tải bài viết nào.</p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: ABOUT / DETAIL */}
+        {activeTab === 'about' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2 animate-fade-in-up">
+            
+            {/* Account Details Box */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Contact Info */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-5">
+                <h3 className="text-base font-black text-slate-800 flex items-center space-x-2">
+                  <UserIcon className="h-5 w-5 text-violet-500" />
+                  <span>Thông tin liên hệ & Tài khoản</span>
+                </h3>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên hiển thị</span>
+                    <span className="text-xs font-extrabold text-slate-700">{(user as any).name || user.email.split('@')[0]}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Địa chỉ Email</span>
+                    <span className="text-xs font-extrabold text-slate-700">{user.email}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ngày đăng ký</span>
+                    <span className="text-xs font-extrabold text-slate-700">{formatJoinedDate(user.createdAt)}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quyền hạn hệ thống</span>
+                    <div className="flex gap-1">
+                      {user.roles?.map((role) => (
+                        <span key={role} className="px-2 py-0.5 bg-violet-50 text-violet-600 text-[9px] font-black rounded uppercase tracking-wider">
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Info Card (Lives in, Hometown, Work, Relationship) */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-5">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-base font-black text-slate-800 flex items-center space-x-2">
+                    <Home className="h-5 w-5 text-violet-500" />
+                    <span>Chi tiết cá nhân</span>
                   </h3>
-                  {!isEditingBio && (
+                  {!isEditingDetails && isOwnProfile && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCity((user as any).city || '');
+                        setHometown((user as any).hometown || '');
+                        setWork((user as any).work || '');
+                        setRelationship((user as any).relationship || '');
+                        setIsEditingDetails(true);
+                      }}
+                      className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                    >
+                      Chỉnh sửa
+                    </button>
+                  )}
+                </div>
+
+                {isEditingDetails ? (
+                  <div className="space-y-4">
+                    <CitySearchSelect
+                      label="Tỉnh/Thành phố hiện tại"
+                      value={city}
+                      onChange={setCity}
+                      placeholder="Chọn tỉnh/thành phố hiện tại"
+                    />
+
+                    <CitySearchSelect
+                      label="Quê quán"
+                      value={hometown}
+                      onChange={setHometown}
+                      placeholder="Chọn quê quán"
+                    />
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Công việc</label>
+                      <input
+                        type="text"
+                        value={work}
+                        onChange={(e) => setWork(e.target.value)}
+                        placeholder="Ví dụ: App Developer tại Vidimi"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tình trạng quan hệ</label>
+                      <select
+                        value={relationship || 'Không rõ'}
+                        onChange={(e) => setRelationship(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none bg-white transition-all cursor-pointer"
+                      >
+                        <option value="Hẹn hò">Hẹn hò</option>
+                        <option value="Độc thân">Độc thân</option>
+                        <option value="Không rõ">Không rõ (Không hiển thị)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex space-x-2 justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsEditingDetails(false);
+                        }}
+                        className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition cursor-pointer"
+                        disabled={isSavingDetails}
+                      >
+                        Huỷ bỏ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); handleSaveDetails(); }}
+                        className="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-xs font-bold text-white flex items-center space-x-1.5 cursor-pointer"
+                        disabled={isSavingDetails}
+                      >
+                        {isSavingDetails ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <span>Đang lưu...</span>
+                          </>
+                        ) : (
+                          <span>Lưu thay đổi</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><Home className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Tỉnh/Thành phố hiện tại</span>
+                      <span className={`text-xs font-extrabold ${user.city ? "text-slate-700" : "text-slate-400 italic"}`}>
+                        {user.city || "Chưa thiết lập"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><MapPin className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Quê quán</span>
+                      <span className={`text-xs font-extrabold ${user.hometown ? "text-slate-700" : "text-slate-400 italic"}`}>
+                        {user.hometown || "Chưa thiết lập"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><Briefcase className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Công việc</span>
+                      <span className={`text-xs font-extrabold ${user.work ? "text-slate-700" : "text-slate-400 italic"}`}>
+                        {user.work || "Chưa thiết lập"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><Heart className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Tình trạng quan hệ</span>
+                      <span className={`text-xs font-extrabold ${(user.relationship && user.relationship !== 'Không rõ') ? "text-slate-700" : "text-slate-400 italic"}`}>
+                        {(user.relationship && user.relationship !== 'Không rõ') ? user.relationship : "Chưa thiết lập hoặc ẩn"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bio Edit Section */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-base font-black text-slate-800 flex items-center space-x-2">
+                    <BookOpen className="h-5 w-5 text-violet-500" />
+                    <span>Tiểu sử giới thiệu</span>
+                  </h3>
+                  {!isEditingBio && isOwnProfile && (
                     <button
                       onClick={() => setIsEditingBio(true)}
-                      className="text-xs font-bold text-[hsl(var(--primary))] hover:underline cursor-pointer"
+                      className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
                     >
                       Chỉnh sửa
                     </button>
@@ -402,22 +1157,21 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
                 {isEditingBio ? (
                   <div className="space-y-3">
-                    {/* Ô nhập liệu với Focus Glassmorphic Glow */}
                     <div className="relative">
                       <textarea
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
-                        placeholder="Hãy chia sẻ đôi chút về bản thân bạn..."
-                        className="w-full h-32 p-4 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none text-sm leading-relaxed transition-all"
+                        placeholder="Hãy viết gì đó giới thiệu về bản thân bạn..."
+                        className="w-full h-28 p-4 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none text-xs leading-relaxed transition-all font-medium"
                         maxLength={255}
                         disabled={isSavingBio}
                       />
-                      <span className="absolute bottom-3 right-3 text-xs font-bold text-slate-600">
+                      <span className="absolute bottom-3 right-3 text-[10px] font-black text-slate-500">
                         {bio.length}/255
                       </span>
                     </div>
 
-                    <div className="flex space-x-3 justify-end">
+                    <div className="flex space-x-2 justify-end">
                       <button
                         onClick={() => {
                           setBio(user.bio || '');
@@ -430,7 +1184,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                       </button>
                       <button
                         onClick={handleSaveBio}
-                        className="px-5 py-2 rounded-lg bg-[hsl(var(--primary))] hover-lift text-xs font-bold text-white flex items-center space-x-1.5 cursor-pointer"
+                        className="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-xs font-bold text-white flex items-center space-x-1.5 cursor-pointer"
                         disabled={isSavingBio}
                       >
                         {isSavingBio ? (
@@ -439,63 +1193,146 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                             <span>Đang lưu...</span>
                           </>
                         ) : (
-                          <span>Lưu tiểu sử</span>
+                          <span>Lưu thay đổi</span>
                         )}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 min-h-24 flex items-center justify-center text-center">
+                  <div className="p-5 rounded-xl border border-slate-100 bg-slate-50/50 min-h-20 flex items-center justify-center text-center">
                     {user.bio ? (
-                      <p className="text-slate-600 text-sm leading-relaxed text-left w-full whitespace-pre-wrap">
+                      <p className="text-slate-600 text-xs leading-relaxed text-left w-full whitespace-pre-wrap font-semibold">
                         {user.bio}
                       </p>
                     ) : (
-                      <span className="text-slate-400 text-sm italic">Chưa cấu hình tiểu sử cá nhân. Hãy chia sẻ gì đó với mọi người!</span>
+                      <span className="text-slate-400 text-xs italic">Chưa thiết lập tiểu sử cá nhân. Hãy chia sẻ đôi chút về bạn!</span>
                     )}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Cột phải: Vùng kéo thả hình ảnh Drag-and-Drop nâng cao */}
-            {isOwnProfile && (
-              <div className="lg:col-span-5 space-y-3">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center space-x-2">
-                  <UploadCloud className="h-5 w-5 text-violet-500" />
-                  <span>Kéo & Thả ảnh đại diện</span>
-                </h3>
+            {/* Drag & Drop Avatar (Own profile only) */}
+            <div className="lg:col-span-5 space-y-6">
+              {isOwnProfile && (
+                <>
+                  {/* Upload box */}
+                  <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center space-x-2">
+                      <UploadCloud className="h-5 w-5 text-violet-500" />
+                      <span>Kéo thả ảnh đại diện</span>
+                    </h3>
 
-                {/* Vùng Drag and Drop */}
-                <div 
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={triggerFileInput}
-                  className={`w-full p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
-                    dragActive 
-                      ? 'border-violet-500 bg-violet-50 scale-[1.02] shadow-[0_0_20px_rgba(124,58,237,0.1)]' 
-                      : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className={`p-4 rounded-full bg-white border border-slate-200 mb-4 transition-transform duration-300 ${dragActive ? 'scale-110 rotate-12 text-violet-500' : 'text-slate-400'}`}>
-                    <UploadCloud className="h-8 w-8" />
+                    <div 
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
+                      onClick={triggerFileInput}
+                      className={`w-full p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
+                        dragActive 
+                          ? 'border-violet-500 bg-violet-50 scale-[1.01] shadow-md shadow-violet-500/5' 
+                          : 'border-slate-200 hover:border-slate-350 bg-slate-50/50 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className={`p-3.5 rounded-full bg-white border border-slate-200 mb-3.5 transition duration-305 ${dragActive ? 'scale-110 text-violet-500' : 'text-slate-400'}`}>
+                        <UploadCloud className="h-6 w-6" />
+                      </div>
+                      <p className="text-[11px] font-bold text-slate-600">
+                        {dragActive ? "Thả ảnh vào đây!" : "Thả ảnh vào hoặc click để chọn"}
+                      </p>
+                      <p className="text-[9px] text-slate-400 mt-1 font-semibold">
+                        Chấp nhận JPG, PNG, WEBP lên đến 20MB.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm font-bold text-slate-600">
-                    {dragActive ? "Thả tệp tin vào đây" : "Thả ảnh vào đây hoặc nhấp để chọn"}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-2 font-medium">
-                    Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB.
-                  </p>
-                </div>
-              </div>
-            )}
+
+                  {/* Security settings link */}
+                  <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center space-x-2">
+                      <svg className="h-5 w-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <span>Bảo mật & Mật khẩu</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-semibold">Cập nhật mật khẩu thường xuyên giúp bảo vệ tài khoản tốt hơn.</p>
+                    <button
+                      onClick={() => navigate('/settings')}
+                      className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-extrabold rounded-xl transition cursor-pointer shadow-md shadow-violet-500/10"
+                    >
+                      Đổi mật khẩu tài khoản
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
           </div>
+        )}
 
-        </div>
+        {/* TAB 3: FRIENDS LIST */}
+        {activeTab === 'friends' && (
+          <div className="mt-2 space-y-4 animate-fade-in-up">
+            <div className="flex justify-between items-center pb-3.5 border-b border-slate-200">
+              <div>
+                <h3 className="text-lg font-black text-slate-800">Tất cả bạn bè</h3>
+                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Danh sách liên kết bạn bè của tài khoản</p>
+              </div>
+              <span className="px-3 py-1 bg-violet-100 text-violet-600 text-xs font-black rounded-full">
+                {friendsList.length} người bạn
+              </span>
+            </div>
+
+            {isLoadingFriends ? (
+              <div className="flex items-center justify-center py-12 text-slate-400">
+                <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+              </div>
+            ) : friendsList.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {friendsList.map((friend) => (
+                  <div 
+                    key={friend.friendshipId}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow transition duration-300"
+                  >
+                    <div 
+                      onClick={() => navigate(`/profile/${friend.userId}`)}
+                      className="flex items-center space-x-3 cursor-pointer group"
+                    >
+                      <div className="h-12 w-12 rounded-full overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
+                        {friend.avatar ? (
+                          <img src={friend.avatar} alt={friend.name || friend.email} className="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-slate-400 font-black bg-slate-50 text-xs">
+                            {(friend.name || friend.email || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="overflow-hidden">
+                        <h4 className="font-extrabold text-slate-850 text-xs group-hover:text-violet-600 transition truncate">{friend.name || friend.email.split('@')[0]}</h4>
+                        <p className="text-[10px] text-slate-400 truncate max-w-[200px] mt-0.5 font-semibold">{friend.bio || friend.email}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => navigate(`/chats/${friend.userId}`)}
+                      className="px-3.5 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-600 text-[11px] font-black transition cursor-pointer flex items-center gap-1 shrink-0"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <span>Nhắn tin</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl bg-white">
+                <UserIcon className="h-8 w-8 mx-auto mb-3 opacity-30" />
+                <p className="text-xs font-semibold">Chưa có người bạn nào trong danh sách.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
     </div>
   );
 };

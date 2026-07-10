@@ -21,4 +21,12 @@ public class UpdateProfileRequest {
 
   @Size(max = 255, message = "Bio must be at most 255 characters")
   private String bio;
+
+  private String city;
+
+  private String hometown;
+
+  private String work;
+
+  private String relationship;
 }

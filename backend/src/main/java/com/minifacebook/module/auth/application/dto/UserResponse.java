@@ -24,6 +24,10 @@ public class UserResponse {
   private String email;
   private String avatar;
   private String bio;
+  private String city;
+  private String hometown;
+  private String work;
+  private String relationship;
   private Set<Role> roles;
   private Instant createdAt;
   private Instant updatedAt;

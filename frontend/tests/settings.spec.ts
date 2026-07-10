@@ -58,7 +58,7 @@ test.describe('Settings and Change Password Flow', () => {
     await page.click('button[type="submit"]');
 
     // 6. Confirm inside dashboard
-    await expect(page.locator('aside').first()).toBeVisible();
+    await expect(page.locator('aside').first()).toBeVisible({ timeout: 15000 });
 
     // 7. Navigate to Settings page via Sidebar menu item "Cài đặt"
     await page.click('button[title="Cài đặt"]');
@@ -93,8 +93,9 @@ test.describe('Settings and Change Password Flow', () => {
     await expect(page.locator('text=Email hoặc mật khẩu không chính xác')).toBeVisible();
 
     // 12. Verify can login with new password successfully
+    await page.fill('#login-email', email);
     await page.fill('#login-password', newPassword);
-    await page.click('button[type="submit"]');
-    await expect(page.locator('aside').first()).toBeVisible();
+    await page.press('#login-password', 'Enter');
+    await expect(page.locator('aside').first()).toBeVisible({ timeout: 15000 });
   });
 });

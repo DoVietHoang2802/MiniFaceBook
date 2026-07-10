@@ -305,36 +305,55 @@
     - [x] Viết **E2E Test** bằng Playwright cho các luồng chính. ✅
     - [x] Thiết lập **GitHub Actions** tự động Build & Test khi push code. ✅
     - [x] Cấu hình **SonarQube/SonarCloud** để kiểm tra code quality. ✅
-- [ ] **Sprint 6.4: Production Deployment**
-    - [ ] Deploy Backend lên **Render** hoặc **Railway**.
-    - [ ] Deploy Frontend lên **Vercel** hoặc **Netlify**.
-    - [ ] Cấu hình **Environment Variables** cho production.
-    - [ ] Setup **Custom Domain** và **SSL Certificate**.
-- [ ] **Sprint 6.5: Monitoring & Observability**
-    - [ ] Tích hợp **Sentry** để theo dõi lỗi Realtime (Backend + Frontend).
-    - [ ] **K6 Load Testing**: Kiểm tra sức chịu tải trước go-live.
+- [x] **Sprint 6.4: Infinite Scroll, Settings Page & Cache Alignment** ✅
+    - [x] Triển khai **Infinite Scroll** cho News Feed bằng `IntersectionObserver`.
+    - [x] Xây dựng trang Cài đặt tài khoản (`/settings`) đổi mật khẩu bảo mật.
+    - [x] Thiết lập **Token Eviction** (đăng xuất mọi phiên và đưa access token vào blacklist).
+    - [x] Tối ưu và vá lỗi giải phóng cache Redis User Profile đồng thời cho ID & Email.
+    - [x] Đồng bộ **AppException** cho Post/Comment/Reaction module.
+- [ ] **Sprint 6.5: Monitoring, Observability & UI Refinements** ⏳
+    - [x] **UI Refinements (ChatPage):** Xóa nút tìm kiếm tròn và nút "Tùy chọn hội thoại" trong header chat để đơn giản hóa UI.
+    - [x] **ProfilePage Sidebar (Real Data):** Hiển thị dữ liệu thật: tên người dùng, công việc, thành phố, ảnh (tối đa 6 tấm kèm See All), đề xuất bạn bè (thực tế).
+    - [x] **Playwright E2E Test Coverage:** Viết mới `profile.spec.ts` (6 tests) và cập nhật `chat.spec.ts` (6 tests) bao phủ toàn diện các thay đổi.
+    - [ ] Tích hợp **Spring Boot Actuator** cấu hình `/actuator/health` giám sát hệ thống.
+    - [ ] Tích hợp **Sentry** theo dõi và bắt lỗi runtime thời gian thực (Backend + Frontend).
+    - [ ] **K6 Load Testing**: Kiểm tra sức chịu tải của API trước khi go-live.
         - *Target:* 100 concurrent users, response time < 500ms.
-    - [ ] Setup **Health Check Endpoints** (`/actuator/health`).
 
 ---
 
-## 🚀 PHASE 7: EXTENDED FEATURES ⏳
+## 🚀 PHASE 7: PRODUCTION DEPLOYMENT ⏳
+*Mục tiêu: Đưa ứng dụng chạy chính thức trên internet.*
+
+- [ ] **Sprint 7.1: Infrastructure Preparation**
+    - [ ] Cấu hình biến môi trường (`Environment Variables`) cho Backend và Frontend.
+    - [ ] Thiết lập file cấu hình CORS cho các tên miền production.
+- [ ] **Sprint 7.2: Cloud Deployment**
+    - [ ] Deploy Spring Boot Backend lên **Render** hoặc **Railway**.
+    - [ ] Deploy React Frontend lên **Vercel** hoặc **Netlify**.
+- [ ] **Sprint 7.3: Domain & Security Setup**
+    - [ ] Cấu hình **Custom Domain** và tích hợp **SSL Certificate (HTTPS)**.
+    - [ ] Kiểm tra tích hợp kết nối bảo mật giữa Frontend (Vercel) và Backend (Render).
+
+---
+
+## 💎 PHASE 8: EXTENDED FEATURES ⏳
 *Mục tiêu: Đưa dự án lên tầm cao mới với các tính năng mở rộng.*
 
-- [ ] **Sprint 7.1: Group Chat**
+- [ ] **Sprint 8.1: Group Chat**
     - [ ] Thiết kế **Group Entity** với RBAC (Admin/Member).
     - [ ] API CRUD Group (Create, Update, Delete, Add/Remove members).
     - [ ] Group notifications và mentions (@all, @username).
     - [ ] Giao diện Group Chat với member list sidebar.
-- [ ] **Sprint 7.2: Rich Media & Stories**
+- [ ] **Sprint 8.2: Rich Media & Stories**
     - [ ] Hỗ trợ **Video Upload** cho bài viết (Cloudinary video).
     - [ ] Tính năng **Stories** (tin tức 24h tự động xóa).
     - [ ] Giao diện Stories carousel trên đầu newsfeed.
-- [ ] **Sprint 7.3: Voice/Video Call (Research)**
+- [ ] **Sprint 8.3: Voice/Video Call (Research)**
     - [ ] Nghiên cứu tích hợp **WebRTC** cho cuộc gọi realtime.
     - [ ] Signaling server với WebSocket.
     - [ ] TURN/STUN server configuration.
-- [ ] **Sprint 7.4: AI-Assisted Features (Trend 2026)**
+- [ ] **Sprint 8.4: AI-Assisted Features (Trend 2026)**
     - [ ] Tích hợp **Google Gemini API** để tóm tắt hội thoại dài.
     - [ ] **AI Sentiment Analysis**: Phân tích cảm xúc tin nhắn/bài viết.
     - [ ] **Smart Reply Suggestions**: Gợi ý câu trả lời nhanh.
@@ -351,10 +370,11 @@
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
 | 5 | Notification System | ✅ HOÀN THÀNH | 100% (Tích hợp SSE & đồng bộ Realtime) |
-| 6 | Navigation & Performance | 🟡 ĐANG THỰC HIỆN | 80% (Hoàn thành Sprint 6.1, 6.2, 6.3) |
-| 7 | Extended Features | ⏳ Chưa bắt đầu | 0% |
+| 6 | Navigation, Performance & Testing | 🟡 ĐANG THỰC HIỆN | 85% (Hoàn thành Sprint 6.1→6.4 + 6.5 UI) |
+| 7 | Production Deployment | ⏳ Chưa bắt đầu | 0% |
+| 8 | Extended Features | ⏳ Chưa bắt đầu | 0% |
 
-**Tổng tiến độ: ~95%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 đang triển khai)
+**Tổng tiến độ: ~98%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 gần hoàn tất)
 
 ---
 
@@ -444,6 +464,7 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.5 | Jul 2026 | **UI Refinements, ProfilePage Real Data & Full E2E Test Coverage — Sprint 6.5 Đang thực hiện 🛠️**: Xóa nút search tròn và nút Tùy chọn hội thoại trong ChatPage header. Cập nhật sidebar trang cá nhân hiển thị dữ liệu thật (tên, công việc, thành phố, ảnh, bạn bè). Viết mới `profile.spec.ts` (6 tests) và cập nhật `chat.spec.ts` (6 tests Playwright E2E). Thực thi "Update Full" đồng bộ 7 file tài liệu kiến trúc. |
 | 4.4 | Jul 2026 | **Infinite Scroll, Settings Page, Redis Profile Cache Sync & AppException Alignment — HOÀN THÀNH Sprint 6.4 🎉**: Tích hợp cuộn vô hạn cho News Feed bằng `IntersectionObserver`, hoàn thành trang Cài đặt đổi mật khẩu và thu hồi token, vá lỗi đồng bộ cache Redis User Profile cho cả ID/Email, đồng thời chuẩn hóa lỗi Post/Comment module thành `AppException`. Vượt qua 36/36 tests JUnit 5. |
 | 4.3 | Jun 2026 | **Profile Navigations & Empty Chat Bug — HOÀN THÀNH Sprint 6.3 & Cải tiến Giao diện 🎉**: Nhấp vào avatar hoặc tên của tác giả trong phần bình luận (`CommentSection.tsx`) hoặc bạn chat ở thanh tiêu đề/nút hành động Profile của cuộc trò chuyện (`ChatPage.tsx`) sẽ điều hướng sang trang cá nhân. Sửa đổi cờ theo dõi tải danh sách hội thoại `hasLoadedConvs` để khắc phục triệt để lỗi bị kẹt giao diện chat đối với người dùng chưa có cuộc hội thoại nào. Chạy Playwright E2E vượt qua 9/9 tests. |
 | 4.2 | Jun 2026 | **Split-Pane Post Detail Modal & Reaction Scoping UX Fix — HOÀN THÀNH Sprint 6.1 🎉**: Thiết kế giao diện Modal bình luận dạng 2 cột (Split-pane) kiểu Facebook. Đồng bộ hiển thị khung màu tím khói thương hiệu Hizo cho bài viết không có ảnh (Option 1) và hiển thị ảnh chi tiết bên trái. Scope lại hover reaction chỉ hiển thị ở nút "Thích", tránh kích hoạt nhầm khi di chuột qua "Bình luận" hay "Chia sẻ" ở cả `PostCard` và `PostDetailModal`. Khắc phục lỗi giới hạn kết nối SSE, tối ưu tài nguyên. Sửa lỗi Accessibility và build hoàn hảo 100% không lỗi. |

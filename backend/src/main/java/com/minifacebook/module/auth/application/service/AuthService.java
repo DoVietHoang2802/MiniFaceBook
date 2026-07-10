@@ -269,6 +269,18 @@ public class AuthService {
     if (request.getBio() != null) {
       user.setBio(request.getBio());
     }
+    if (request.getCity() != null) {
+      user.setCity(request.getCity());
+    }
+    if (request.getHometown() != null) {
+      user.setHometown(request.getHometown());
+    }
+    if (request.getWork() != null) {
+      user.setWork(request.getWork());
+    }
+    if (request.getRelationship() != null) {
+      user.setRelationship(request.getRelationship());
+    }
 
     User savedUser = userRepository.save(user);
     log.info("User profile updated successfully for: {}", email);

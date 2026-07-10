@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Loader2, MoreHorizontal, Send, Smile, Trash2 } from 'lucide-react';
+import { Camera, Loader2, MoreHorizontal, Send, Smile, Trash2, ChevronDown } from 'lucide-react';
 import { postService } from '../services/postService';
 import type { CommentResponse, ReactionType, CommentReactionEvent } from '../types/post.types';
 import { webSocketService } from '../../chat/services/webSocketService';
@@ -35,6 +35,32 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
   });
 
   const comments = data?.data?.content || [];
+
+  const [sortType, setSortType] = useState<'all' | 'relevant' | 'newest'>('all');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  const getSortedComments = () => {
+    const commentsCopy = [...comments];
+    if (sortType === 'relevant') {
+      // Phù hợp nhất: theo tổng số reactions giảm dần, sau đó theo ngày giảm dần
+      return commentsCopy.sort((a, b) => {
+        const aReacts = Object.values(a.reactionCounts || {}).reduce((sum, count) => sum + count, 0);
+        const bReacts = Object.values(b.reactionCounts || {}).reduce((sum, count) => sum + count, 0);
+        if (bReacts !== aReacts) {
+          return bReacts - aReacts;
+        }
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    } else if (sortType === 'newest') {
+      // Mới nhất: theo ngày giảm dần
+      return commentsCopy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } else {
+      // Tất cả bình luận: mặc định API (createdAt desc)
+      return commentsCopy;
+    }
+  };
+
+  const sortedComments = getSortedComments();
 
   // WebSocket subscription cho comment reactions realtime
   useEffect(() => {
@@ -309,6 +335,64 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
 
   return (
     <div className="pt-3 mt-1 border-t border-slate-100 animate-fade-in-up">
+      {/* Sort Selector Dropdown */}
+      <div className="relative mb-4">
+        <button
+          onClick={() => setShowSortDropdown(!showSortDropdown)}
+          className="flex items-center space-x-1 text-slate-500 hover:text-slate-800 text-xs font-bold transition cursor-pointer select-none"
+        >
+          <span>
+            {sortType === 'all'
+              ? 'Tất cả bình luận'
+              : sortType === 'relevant'
+              ? 'Phù hợp nhất'
+              : 'Mới nhất'}
+          </span>
+          <ChevronDown className="h-3.5 w-3.5" />
+        </button>
+
+        {showSortDropdown && (
+          <div
+            className="absolute left-0 top-full mt-1.5 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 animate-fade-in"
+            onMouseLeave={() => setShowSortDropdown(false)}
+          >
+            {[
+              {
+                id: 'all',
+                title: 'Tất cả bình luận',
+                desc: 'Hiển thị tất cả bình luận, bao gồm cả nội dung có thể là spam.',
+              },
+              {
+                id: 'relevant',
+                title: 'Phù hợp nhất',
+                desc: 'Hiển thị bình luận của bạn bè và những bình luận có nhiều lượt tương tác nhất trước tiên.',
+              },
+              {
+                id: 'newest',
+                title: 'Mới nhất',
+                desc: 'Hiển thị tất cả bình luận, mới nhất trước tiên.',
+              },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => {
+                  setSortType(opt.id as any);
+                  setShowSortDropdown(false);
+                }}
+                className={`w-full text-left p-3 rounded-xl transition-all cursor-pointer ${
+                  sortType === opt.id ? 'bg-slate-50' : 'hover:bg-slate-50/50'
+                }`}
+              >
+                <h4 className="text-xs font-bold text-slate-800">{opt.title}</h4>
+                <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                  {opt.desc}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="flex items-start gap-2 mb-4">
         <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5">
           {currentUser?.avatar ? (
@@ -367,7 +451,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
         </div>
       ) : (
         <div className="space-y-3">
-          {comments.map((comment: CommentResponse) => {
+          {sortedComments.map((comment: CommentResponse) => {
             const topReactionTypes = getTopReactionTypes(comment.reactionCounts || {});
             const reactionTotal = Object.values(comment.reactionCounts || {}).reduce((sum, count) => sum + count, 0);
             const activeReaction = comment.myReaction ? REACTION_ICONS[comment.myReaction] : null;

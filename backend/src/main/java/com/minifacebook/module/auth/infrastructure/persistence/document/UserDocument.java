@@ -33,6 +33,14 @@ public class UserDocument extends BaseEntity {
 
   private String bio;
 
+  private String city;
+
+  private String hometown;
+
+  private String work;
+
+  private String relationship;
+
   private Set<Role> roles;
 
   private boolean verified;

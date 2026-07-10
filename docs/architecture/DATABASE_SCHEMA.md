@@ -21,6 +21,11 @@ Lưu trữ thông tin hồ sơ người dùng và trạng thái tài khoản.
 | `name` | String | Họ và tên hiển thị, bắt buộc (2-50 ký tự). **(Index thường - phục vụ tìm kiếm Sprint 3.3)** |
 | `password` | String | Mật khẩu băm Bcrypt, bắt buộc. |
 | `avatar` | String | URL ảnh đại diện (Lưu trên Cloudinary). Mặc định null. |
+| `bio` | String | Tiểu sử ngắn (tối đa 255 ký tự). Nullable. |
+| `city` | String | **(Sprint 6.5 UI)** Tỉnh/Thành phố hiện tại đang sống. Nullable. |
+| `hometown` | String | **(Sprint 6.5 UI)** Quê quán. Nullable. |
+| `work` | String | **(Sprint 6.5 UI)** Nghề nghiệp / Nơi làm việc. Nullable. |
+| `relationship` | String | **(Sprint 6.5 UI)** Tình trạng quan hệ (`Độc thân`, `Hẹn hò`, `Không rõ`). Nullable. |
 | `roles` | Array (String) | Danh sách vai trò: `["USER"]`, `["ADMIN"]`. |
 | `verified` | Boolean | Trạng thái kích hoạt tài khoản qua email. Mặc định `false`. |
 | `verificationToken`| String | Token dùng để gửi email xác thực tài khoản qua Resend. |
@@ -229,7 +234,7 @@ Lưu trữ thông báo trong hệ thống gửi đến người dùng.
 
 ## ⚡ 4. Redis — Chiến lược sử dụng (Cache, Security & Realtime)
 
-Redis được sử dụng với **6 mục đích rõ ràng**, đã được triển khai và kiểm chứng:
+Redis được sử dụng với **8 mục đích rõ ràng**, đã được triển khai và kiểm chứng:
 
 ### Phạm vi sử dụng Redis (Cập nhật Phase 6.1)
 | Mục đích | Key Pattern | Kiểu dữ liệu | TTL | Ghi chú |

@@ -24,6 +24,10 @@ public class User {
   private String password;
   private String avatar;
   private String bio;
+  private String city;
+  private String hometown;
+  private String work;
+  private String relationship;
   private Set<Role> roles;
   private boolean verified;
   private String verificationToken;

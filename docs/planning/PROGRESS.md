@@ -691,6 +691,19 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[AppException Alignment]** Đồng bộ các lỗi ném ra của Post, Comment, Reaction sang AppException với mã lỗi JSON chuẩn.
   - [x] **[Integration & E2E Testing]** Viết JUnit 5 Integration Test ở Backend và Playwright E2E Test ở Frontend chạy kiểm thử tự động thành công 100%.
 
+- **Nhật ký phiên làm việc (10/07/2026 - Sprint 6.5: UI Refinements & Playwright Test Coverage):**
+  - [x] **[ChatPage Refactoring]** Xóa nút tìm kiếm tròn (round search button) trong khung chat header vì không cần thiết và gây nhiễu giao diện.
+  - [x] **[ChatPage Refactoring]** Xóa nút "Tùy chọn hội thoại" (conversation options/SlidersHorizontal button) trong header chat để đơn giản hóa UI.
+  - [x] **[ProfilePage Sidebar - Real Data]** Cập nhật sidebar trang cá nhân hiển thị đúng dữ liệu thật: tên người dùng, công việc (`work`), địa chỉ sống (`city`), quê quán (`hometown`). Không hiển thị placeholder ảo.
+  - [x] **[ProfilePage Sidebar - Photos]** Khu vực "Hình ảnh" giữ nguyên label + nút "Xem tất cả" dù không có ảnh — hiện thông báo "Chưa có hình ảnh đăng tải" thay vì xóa label.
+  - [x] **[ProfilePage Sidebar - Friends]** Hiển thị tối đa 6 bạn bè dạng avatar grid, nút "Xem tất cả bạn bè" điều hướng đến tab Bạn bè.
+  - [x] **[Playwright E2E - profile.spec.ts]** Viết mới file `frontend/tests/profile.spec.ts` với 6 test cases bao phủ: hiển thị tên thật, lưu và hiển thị work/city sidebar, kiểm tra Photos box, Friends box với 6 bạn, điều hướng tab, xem profile người khác.
+  - [x] **[Playwright E2E - chat.spec.ts]** Cập nhật lại `frontend/tests/chat.spec.ts` với 6 test cases toàn diện: không có search/options button, gửi/nhận tin nhắn, typing indicator, infinite scroll, xóa tin nhắn.
+  - [x] **[Update Full - Docs Sync]** Thực thi giao thức "Update Full" (9.7): đồng bộ 7 file tài liệu kiến trúc (DATABASE_SCHEMA, PROGRESS, ROADMAP, SESSION_HANDOFF, CV_PORTFOLIO_HIGHLIGHTS, UI_UX_DESIGN, README).
+
+
+
+
 
 
 

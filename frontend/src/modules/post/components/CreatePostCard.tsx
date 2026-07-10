@@ -128,8 +128,8 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={`Bạn đang nghĩ gì thế, ${currentUser?.name?.split(' ')[0] || 'Viet'}?`}
-            className="w-full bg-transparent text-slate-800 placeholder-slate-400 resize-none outline-none text-sm min-h-[50px] focus:min-h-[90px] transition-all duration-300 font-medium"
+            placeholder={`Bạn đang nghĩ gì thế?`}
+            className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-100/80 focus:border-violet-500/30 focus:ring-4 focus:ring-violet-500/5 rounded-2xl px-4 py-3 text-slate-800 placeholder-slate-400 resize-none outline-none text-sm min-h-[48px] focus:min-h-[80px] transition-all duration-300 font-medium shadow-inner"
             disabled={isSubmitting}
           />
           
@@ -203,7 +203,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                 <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span>Bình chọn</span>
+                <span>Thăm dò</span>
               </button>
             </div>
             

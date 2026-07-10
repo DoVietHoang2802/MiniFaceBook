@@ -59,7 +59,7 @@ test.describe('Feed and Post Interactions Flow', () => {
     await page.click('button[type="submit"]');
 
     // Đợi trang Dashboard/Feed hiển thị
-    await expect(page.locator('aside').first()).toBeVisible();
+    await expect(page.locator('aside').first()).toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(1000);
 
     // 2. Tạo bài viết mới
@@ -156,7 +156,17 @@ test.describe('Feed and Post Interactions Flow', () => {
     await page.fill('#login-email', email);
     await page.fill('#login-password', password);
     await page.click('button[type="submit"]');
-    await expect(page.locator('aside').first()).toBeVisible();
+    await expect(page.locator('aside').first()).toBeVisible({ timeout: 15000 });
+
+    // Tạo 1 bài viết để feed không trống
+    const postInput = page.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
+    await expect(postInput).toBeVisible();
+    await postInput.fill('Bài viết test cuộn trang');
+    await page.click('button:has-text("Đăng bài")');
+
+    // Đợi bài viết xuất hiện trên Feed
+    const postCard = page.locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white').filter({ hasText: 'Bài viết test cuộn trang' });
+    await expect(postCard).toBeVisible();
 
     // Cuộn xuống cuối trang để kích hoạt load thêm bài viết
     await page.evaluate(() => (window as any).scrollTo(0, (document as any).body.scrollHeight));

@@ -56,6 +56,23 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
       return next;
     });
 
+  // Track exiting items for smooth fade-out collapse animation
+  const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
+  const markExiting = (id: string) => {
+    setExitingIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  };
+  const removeExiting = (id: string) => {
+    setExitingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
   // ===== Search với debounce 300ms =====
   const runSearch = useCallback((q: string) => {
     if (!q.trim()) {
@@ -175,8 +192,12 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
     setBusy(item.friendshipId, true);
     try {
       await friendService.acceptRequest(item.friendshipId);
-      setPending((prev) => prev.filter((p) => p.friendshipId !== item.friendshipId));
+      markExiting(item.friendshipId);
       triggerToast(`Đã chấp nhận kết bạn với ${item.name}!`);
+      setTimeout(() => {
+        setPending((prev) => prev.filter((p) => p.friendshipId !== item.friendshipId));
+        removeExiting(item.friendshipId);
+      }, 300);
     } catch {
       triggerToast('Chấp nhận thất bại.');
     } finally {
@@ -188,8 +209,12 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
     setBusy(item.friendshipId, true);
     try {
       await friendService.rejectRequest(item.friendshipId);
-      setPending((prev) => prev.filter((p) => p.friendshipId !== item.friendshipId));
+      markExiting(item.friendshipId);
       triggerToast('Đã từ chối lời mời.');
+      setTimeout(() => {
+        setPending((prev) => prev.filter((p) => p.friendshipId !== item.friendshipId));
+        removeExiting(item.friendshipId);
+      }, 300);
     } catch {
       triggerToast('Từ chối thất bại.');
     } finally {
@@ -201,8 +226,12 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
     setBusy(item.friendshipId, true);
     try {
       await friendService.cancelRequest(item.friendshipId);
-      setSent((prev) => prev.filter((p) => p.friendshipId !== item.friendshipId));
+      markExiting(item.friendshipId);
       triggerToast('Đã thu hồi lời mời.');
+      setTimeout(() => {
+        setSent((prev) => prev.filter((p) => p.friendshipId !== item.friendshipId));
+        removeExiting(item.friendshipId);
+      }, 300);
     } catch {
       triggerToast('Thu hồi thất bại.');
     } finally {
@@ -214,8 +243,12 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
     setBusy(item.friendshipId, true);
     try {
       await friendService.unfriend(item.userId);
-      setFriends((prev) => prev.filter((p) => p.userId !== item.userId));
+      markExiting(item.friendshipId);
       triggerToast(`Đã hủy kết bạn với ${item.name}.`);
+      setTimeout(() => {
+        setFriends((prev) => prev.filter((p) => p.userId !== item.userId));
+        removeExiting(item.friendshipId);
+      }, 300);
     } catch {
       triggerToast('Hủy kết bạn thất bại.');
     } finally {
@@ -294,7 +327,7 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
   ];
 
   return (
-    <div className="w-full animate-fade-in-up">
+    <div className="w-full">
       {/* Tabs */}
       <div className="flex items-center gap-2 mb-5 border-b border-slate-200 pb-1 overflow-x-auto">
         {tabs.map((t) => {
@@ -321,124 +354,135 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
         })}
       </div>
 
-      {/* TAB: SEARCH */}
-      {activeTab === 'search' && (
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              autoFocus
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Nhập tên người bạn muốn tìm..."
-              className="w-full pl-10 pr-10 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-sm text-slate-700 transition-all shadow-sm"
-            />
-            {isSearching && <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 animate-spin" />}
-          </div>
-
-          {!keyword.trim() && (
-            <div className="text-center py-12 text-slate-400">
-              <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">Nhập tên để tìm kiếm bạn bè</p>
+      {/* Tab Content with mount animation */}
+      <div key={activeTab} className="animate-fade-in-up">
+        {/* TAB: SEARCH */}
+        {activeTab === 'search' && (
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                autoFocus
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="Nhập tên người bạn muốn tìm..."
+                className="w-full pl-10 pr-10 py-3 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-sm text-slate-700 transition-all shadow-sm"
+              />
+              {isSearching && <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 animate-spin" />}
             </div>
-          )}
 
-          {keyword.trim() && !isSearching && searchResults.length === 0 && (
-            <div className="text-center py-12 text-slate-400">
-              <UserX className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">Không tìm thấy ai với tên "{keyword}"</p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {searchResults.map((u) => (
-              <div key={u.userId} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all">
-                <div 
-                  onClick={() => navigate(`/profile/${u.userId}`)}
-                  className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
-                >
-                  <Avatar name={u.name} avatar={u.avatar} />
-                  <div className="text-left overflow-hidden">
-                    <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{u.name}</h4>
-                    <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || u.email}</p>
-                  </div>
-                </div>
-                <SearchActionButton user={u} />
+            {!keyword.trim() && (
+              <div className="text-center py-12 text-slate-400">
+                <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm font-medium">Nhập tên để tìm kiếm bạn bè</p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
 
-      {/* TAB: LISTS (friends / pending / sent) */}
-      {activeTab !== 'search' && (
-        <div className="space-y-2">
-          {isLoadingList ? (
-            <div className="flex items-center justify-center py-12 text-slate-400">
-              <Loader2 className="h-6 w-6 animate-spin" />
+            {keyword.trim() && !isSearching && searchResults.length === 0 && (
+              <div className="text-center py-12 text-slate-400">
+                <UserX className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm font-medium">Không tìm thấy ai với tên "{keyword}"</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {searchResults.map((u) => (
+                <div key={u.userId} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all">
+                  <div 
+                    onClick={() => navigate(`/profile/${u.userId}`)}
+                    className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+                  >
+                    <Avatar name={u.name} avatar={u.avatar} />
+                    <div className="text-left overflow-hidden">
+                      <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{u.name}</h4>
+                      <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || u.email}</p>
+                    </div>
+                  </div>
+                  <SearchActionButton user={u} />
+                </div>
+              ))}
             </div>
-          ) : (
-            <>
-              {activeTab === 'friends' && friends.length === 0 && (
-                <EmptyState icon={Users} text="Bạn chưa có người bạn nào. Hãy tìm kiếm và kết bạn nhé!" />
-              )}
-              {activeTab === 'pending' && pending.length === 0 && (
-                <EmptyState icon={UserPlus} text="Không có lời mời kết bạn nào đang chờ." />
-              )}
-              {activeTab === 'sent' && sent.length === 0 && (
-                <EmptyState icon={Clock} text="Bạn chưa gửi lời mời kết bạn nào." />
-              )}
+          </div>
+        )}
 
-              {(activeTab === 'friends' ? friends : activeTab === 'pending' ? pending : sent).map((item) => {
-                const busy = busyIds.has(item.friendshipId);
-                return (
-                  <div key={item.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all">
+        {/* TAB: LISTS (friends / pending / sent) */}
+        {activeTab !== 'search' && (
+          <div className="w-full">
+            {isLoadingList ? (
+              <div className="flex items-center justify-center py-12 text-slate-400">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {activeTab === 'friends' && friends.length === 0 && (
+                  <EmptyState icon={Users} text="Bạn chưa có người bạn nào. Hãy tìm kiếm và kết bạn nhé!" />
+                )}
+                {activeTab === 'pending' && pending.length === 0 && (
+                  <EmptyState icon={UserPlus} text="Không có lời mời kết bạn nào đang chờ." />
+                )}
+                {activeTab === 'sent' && sent.length === 0 && (
+                  <EmptyState icon={Clock} text="Bạn chưa gửi lời mời kết bạn nào." />
+                )}
+
+                {(activeTab === 'friends' ? friends : activeTab === 'pending' ? pending : sent).map((item) => {
+                  const busy = busyIds.has(item.friendshipId);
+                  const exiting = exitingIds.has(item.friendshipId);
+                  return (
                     <div 
-                      onClick={() => navigate(`/profile/${item.userId}`)}
-                      className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+                      key={item.friendshipId} 
+                      className={`flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all duration-300 ${
+                        exiting 
+                          ? 'opacity-0 scale-95 max-h-0 py-0 mb-0 border-0 overflow-hidden shadow-none pointer-events-none' 
+                          : 'opacity-100 scale-100 max-h-[100px] mb-2'
+                      }`}
                     >
-                      <Avatar name={item.name} avatar={item.avatar} />
-                      <div className="text-left overflow-hidden">
-                        <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{item.name}</h4>
-                        <p className="text-slate-400 text-xs truncate mt-0.5">{item.bio || item.email}</p>
+                      <div 
+                        onClick={() => navigate(`/profile/${item.userId}`)}
+                        className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+                      >
+                        <Avatar name={item.name} avatar={item.avatar} />
+                        <div className="text-left overflow-hidden">
+                          <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{item.name}</h4>
+                          <p className="text-slate-400 text-xs truncate mt-0.5">{item.bio || item.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {busy ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+                        ) : activeTab === 'friends' ? (
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => onStartChat?.(item.userId)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-violet-600 text-white hover:bg-violet-500 transition cursor-pointer flex items-center shadow-sm">
+                              Nhắn tin
+                            </button>
+                            <button onClick={() => handleUnfriend(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-rose-600 border border-rose-100 hover:bg-rose-50 transition cursor-pointer flex items-center">
+                              <UserX className="h-3.5 w-3.5 mr-1" /> Hủy kết bạn
+                            </button>
+                          </div>
+                        ) : activeTab === 'pending' ? (
+                          <>
+                            <button onClick={() => handleAcceptInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer flex items-center shadow-sm">
+                              <UserCheck className="h-3.5 w-3.5 mr-1" /> Chấp nhận
+                            </button>
+                            <button onClick={() => handleRejectInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition cursor-pointer flex items-center">
+                              <UserX className="h-3.5 w-3.5 mr-1" /> Từ chối
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={() => handleCancelInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition cursor-pointer flex items-center">
+                            <Clock className="h-3.5 w-3.5 mr-1" /> Thu hồi
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {busy ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
-                      ) : activeTab === 'friends' ? (
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => onStartChat?.(item.userId)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-violet-600 text-white hover:bg-violet-500 transition cursor-pointer flex items-center shadow-sm">
-                            Nhắn tin
-                          </button>
-                          <button onClick={() => handleUnfriend(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-rose-600 border border-rose-100 hover:bg-rose-50 transition cursor-pointer flex items-center">
-                            <UserX className="h-3.5 w-3.5 mr-1" /> Hủy kết bạn
-                          </button>
-                        </div>
-                      ) : activeTab === 'pending' ? (
-                        <>
-                          <button onClick={() => handleAcceptInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer flex items-center shadow-sm">
-                            <UserCheck className="h-3.5 w-3.5 mr-1" /> Chấp nhận
-                          </button>
-                          <button onClick={() => handleRejectInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition cursor-pointer flex items-center">
-                            <UserX className="h-3.5 w-3.5 mr-1" /> Từ chối
-                          </button>
-                        </>
-                      ) : (
-                        <button onClick={() => handleCancelInList(item)} className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition cursor-pointer flex items-center">
-                          <Clock className="h-3.5 w-3.5 mr-1" /> Thu hồi
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
-      )}
+                  );
+                })}
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

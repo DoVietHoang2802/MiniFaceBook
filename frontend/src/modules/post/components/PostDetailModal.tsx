@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Clock, ThumbsUp, MessageCircle, Share2 } from 'lucide-react';
 import type { PostResponse, ReactionType } from '../types/post.types';
 import { REACTION_ICONS } from './reactionConfig';
 import ReactionPicker from './ReactionPicker';
 import CommentSection from './CommentSection';
+import ReactionsModal from './ReactionsModal';
 import { postService } from '../services/postService';
 import { useMutation } from '@tanstack/react-query';
 
@@ -13,6 +14,7 @@ interface PostDetailModalProps {
   currentUser: any;
   onClose: () => void;
   onCommentCountChange?: (delta: number) => void;
+  onPostUpdate?: (updatedPost: PostResponse) => void;
 }
 
 const PostDetailModal: React.FC<PostDetailModalProps> = ({
@@ -20,10 +22,28 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   currentUser,
   onClose,
   onCommentCountChange,
+  onPostUpdate,
 }) => {
   const [localPost, setLocalPost] = useState(post);
+
+  useEffect(() => {
+    onPostUpdate?.(localPost);
+  }, [localPost, onPostUpdate]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      const openModals = document.querySelectorAll('.fixed.inset-0');
+      if (openModals.length <= 1) {
+        document.body.style.overflow = '';
+      }
+    };
+  }, []);
+
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
+  const [showReactionsModal, setShowReactionsModal] = useState(false);
 
   const formatTime = (dateStr: string) => {
     try {
@@ -39,11 +59,26 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
     onMutate: async (type) => {
       const previousPost = { ...localPost };
       const isRemoving = localPost.myReactionType === type;
-      setLocalPost((prev) => ({
-        ...prev,
-        myReactionType: isRemoving ? null : type,
-        reactCount: isRemoving ? prev.reactCount - 1 : (prev.myReactionType ? prev.reactCount : prev.reactCount + 1),
-      }));
+      setLocalPost((prev) => {
+        const newReactionsCount = { ...(prev.reactionsCount || {}) };
+        
+        if (prev.myReactionType) {
+          const prevCount = newReactionsCount[prev.myReactionType] || 0;
+          newReactionsCount[prev.myReactionType] = Math.max(0, prevCount - 1);
+        }
+
+        if (!isRemoving) {
+          const newCount = newReactionsCount[type] || 0;
+          newReactionsCount[type] = newCount + 1;
+        }
+
+        return {
+          ...prev,
+          myReactionType: isRemoving ? null : type,
+          reactCount: isRemoving ? prev.reactCount - 1 : (prev.myReactionType ? prev.reactCount : prev.reactCount + 1),
+          reactionsCount: newReactionsCount,
+        };
+      });
       return { previousPost };
     },
     onError: (_err, _newTodo, context: any) => {
@@ -59,6 +94,12 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   };
 
   const hasImages = localPost.imageUrls && localPost.imageUrls.length > 0;
+
+  const topReactionTypes = Object.entries(localPost.reactionsCount || {})
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type]) => type as ReactionType)
+    .slice(0, 3);
 
   const nextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -194,10 +235,10 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
             </button>
           </div>
 
-          {/* Scrollable details and comments container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+          {/* Pinned Post Info & Actions (Non-scrollable, overflow visible) */}
+          <div className="p-4 pb-2 border-b border-slate-100 shrink-0 space-y-3 bg-white z-10">
             {localPost.content && (
-              <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-medium pb-2">
+              <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-medium pb-1">
                 {localPost.content}
               </p>
             )}
@@ -206,14 +247,26 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
             {(localPost.reactCount > 0 || localPost.commentCount > 0) && (
               <div className="flex items-center justify-between py-2 border-y border-slate-100 text-[11px] text-slate-500 font-medium">
                 {localPost.reactCount > 0 ? (
-                  <span className="flex items-center gap-1">
-                    <span className="h-4.5 w-4.5 rounded-full bg-white border border-white flex items-center justify-center text-[11px] leading-none shadow-sm">
-                      {localPost.myReactionType
-                        ? REACTION_ICONS[localPost.myReactionType]?.emoji || '👍'
-                        : '👍'}
-                    </span>
+                  <button
+                    onClick={() => setShowReactionsModal(true)}
+                    className="flex items-center gap-1.5 hover:underline cursor-pointer"
+                  >
+                    <div className="flex items-center">
+                      {topReactionTypes.map((type, idx) => (
+                        <span
+                          key={type}
+                          className={`h-4.5 w-4.5 rounded-full bg-white border border-white flex items-center justify-center text-[11px] leading-none shadow-sm ${
+                            idx === 0 ? 'ml-0' : '-ml-1.5'
+                          } ${
+                            idx === 0 ? 'z-[10]' : idx === 1 ? 'z-[9]' : 'z-[8]'
+                          }`}
+                        >
+                          {REACTION_ICONS[type]?.emoji || '👍'}
+                        </span>
+                      ))}
+                    </div>
                     <span>{localPost.reactCount}</span>
-                  </span>
+                  </button>
                 ) : (
                   <span />
                 )}
@@ -227,7 +280,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
             )}
 
             {/* Actions panel */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mt-1 gap-1">
+            <div className="flex items-center justify-between gap-1 pt-1">
               <div
                 className="relative"
                 onMouseEnter={() => setIsHoveringReaction(true)}
@@ -254,7 +307,11 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                   ) : (
                     <ThumbsUp className="h-3.5 w-3.5" />
                   )}
-                  <span className="text-[11px] font-bold">Thích</span>
+                  <span className="text-[11px] font-bold">
+                    {localPost.myReactionType && REACTION_ICONS[localPost.myReactionType]
+                      ? REACTION_ICONS[localPost.myReactionType].label
+                      : 'Thích'}
+                  </span>
                 </button>
               </div>
 
@@ -268,7 +325,10 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                 <span className="text-[11px] font-bold">Chia sẻ</span>
               </button>
             </div>
+          </div>
 
+          {/* Scrollable comments container */}
+          <div className="flex-1 overflow-y-auto p-4 min-h-0">
             {/* Comments list integration */}
             <CommentSection
               postId={localPost.id}
@@ -285,6 +345,12 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
           </div>
         </div>
       </div>
+      {showReactionsModal && (
+        <ReactionsModal
+          postId={localPost.id}
+          onClose={() => setShowReactionsModal(false)}
+        />
+      )}
     </div>
   );
 

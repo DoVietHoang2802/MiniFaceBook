@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './core/auth/AuthContext';
 import { ToastProvider } from './core/toast/ToastContext';
 import GuestRoute from './components/layout/GuestRoute';
@@ -14,11 +15,22 @@ import ChatPage from './modules/chat/components/ChatPage';
 import ProfilePage from './modules/profile/components/ProfilePage';
 import SettingsPage from './modules/profile/components/SettingsPage';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* Guest routes (chỉ dành cho khách chưa đăng nhập) */}
             <Route element={<GuestRoute />}>

@@ -18,6 +18,9 @@ import {
   Smile,
   Image as ImageIcon,
   Mic,
+  Camera,
+  ThumbsUp,
+  Gift,
   UserPlus,
   User,
   BellOff,
@@ -27,12 +30,16 @@ import {
   Reply,
   CornerDownRight,
   Pencil,
-  Trash2
+  Trash2,
+  Info
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
 import { friendService } from '../../friends/services/friendService';
 import { webSocketService } from '../services/webSocketService';
+import { profileService } from '../../profile/services/profileService';
+import type { UserProfileResponse } from '../../profile/services/profileService';
+import type { FriendSuggestionResponse } from '../../friends/types/friend.types';
 import type {
   ConversationResponse,
   MessageResponse,
@@ -44,6 +51,37 @@ import type {
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useToast } from '../../../core/toast/ToastContext';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
+const EMOJI_CATEGORIES = [
+  {
+    name: 'Smileys',
+    icon: '😀',
+    emojis: [
+      '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤔','🫣','🤭','🫢','🫡','🤫','🫠','🤥','😶','😐','😑','😬','😴','🤢','🤮','🤧','🥴','😵','🤠','🥳','🥸'
+    ]
+  },
+  {
+    name: 'Hands',
+    icon: '👍',
+    emojis: [
+      '👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🫶','🤲','🤝','🙏','💪','🦾','✍️','💅','🤳','🧠'
+    ]
+  },
+  {
+    name: 'Hearts',
+    icon: '❤️',
+    emojis: [
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝','💟','💌','💤','💢','💥','💫','✨'
+    ]
+  },
+  {
+    name: 'Food/Fun',
+    icon: '🍔',
+    emojis: [
+      '☕','🍺','🍻','🍷','🍹','🥤','🍔','🍟','🍕','🌭','🥪','🌮','🌯','🍿','🎂','🍰','🧁','🍬','🍫','🍩','🍪','🍓','🍎','🍉','🍌','🥑','⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🏓','🎮','🕹️','🎲','🎨','🎬','🎤','🎧'
+    ]
+  }
+];
 
 interface ChatPageProps {
   currentUser?: { id: string; email: string; name?: string; avatar?: string } | null;
@@ -85,6 +123,12 @@ export default function ChatPage({
   const [messages, setMessages] = useState<MessageResponse[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<String>>(new Set());
 
+  // Lấy thông tin partner của cuộc trò chuyện hiện tại
+  const activePartner = activeConversation?.participants.find(p => p.id !== currentUser?.id);
+  const [showProfilePanel, setShowProfilePanel] = useState(() => {
+    return typeof window !== 'undefined' ? window.innerWidth >= 1024 : true;
+  });
+
   // Typing indicator: map conversationId -> tên người đang gõ (Sprint 4.4)
   const [typingByConv, setTypingByConv] = useState<Record<string, string>>({});
 
@@ -108,6 +152,25 @@ export default function ChatPage({
   const [searchText, setSearchText] = useState('');
   const [messageInput, setMessageInput] = useState('');
 
+  // Emoji Picker states and ref
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
+  const emojiPickerRef = useRef<HTMLDivElement | null>(null);
+
+
+  // Click outside to close Emoji Picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Filter cho danh sách hội thoại (All / Unread / Groups / Requests)
   const [conversationFilter, setConversationFilter] = useState<'all' | 'unread' | 'groups' | 'requests'>('all');
 
@@ -116,6 +179,13 @@ export default function ChatPage({
   const [friendsList, setFriendsList] = useState<any[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
   const [friendSearchText, setFriendSearchText] = useState('');
+
+  // States cho Profile Panel bên phải (Cột 3)
+  const [partnerProfile, setPartnerProfile] = useState<UserProfileResponse | null>(null);
+  const [suggestedFriends, setSuggestedFriends] = useState<FriendSuggestionResponse[]>([]);
+  const [showAllMediaModal, setShowAllMediaModal] = useState(false);
+  const [showAllFilesModal, setShowAllFilesModal] = useState(false);
+  const [showAllSuggestionsModal, setShowAllSuggestionsModal] = useState(false);
 
   // Refs for tracking closures and scrolling
   // Refs for tracking closures and scrolling
@@ -493,6 +563,33 @@ export default function ChatPage({
     loadMessages();
   }, [activeConversation, currentUser.id, triggerToast]);
 
+  // Tải thông tin Profile chi tiết và Gợi ý kết bạn khi mở hội thoại mới
+  useEffect(() => {
+    if (!activePartner) {
+      setPartnerProfile(null);
+      setSuggestedFriends([]);
+      return;
+    }
+
+    // Tải profile chi tiết của partner
+    profileService.getProfileById(activePartner.id)
+      .then((res) => {
+        setPartnerProfile(res.data);
+      })
+      .catch(() => {
+        setPartnerProfile(null);
+      });
+
+    // Tải danh sách gợi ý bạn bè
+    friendService.getSuggestions(10)
+      .then((list) => {
+        setSuggestedFriends(list);
+      })
+      .catch(() => {
+        setSuggestedFriends([]);
+      });
+  }, [activePartner]);
+
   // Tải tin nhắn cũ hơn khi cuộn lên đầu (Sprint 4.5 đợt 2 - Infinite Scroll)
   const loadOlderMessages = useCallback(async () => {
     const conv = activeConversationRef.current;
@@ -797,7 +894,7 @@ export default function ChatPage({
   };
 
   // 6. Gửi tin nhắn mới (Optimistic UI)
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, customContent?: string) => {
     if (e) e.preventDefault();
     if (!activeConversation) return;
 
@@ -810,20 +907,21 @@ export default function ChatPage({
     // Dừng phát typing ngay khi gửi tin
     emitStopTyping();
 
-    const hasText = messageInput.trim().length > 0;
+    const textToUse = customContent !== undefined ? customContent : messageInput;
+    const hasText = textToUse.trim().length > 0;
     const hasImages = pendingImages.length > 0;
     if (!hasText && !hasImages) return;
 
     // Gửi ảnh trong tray trước (nếu có) kèm theo chữ làm Caption
     if (hasImages) {
-      const contentToSend = messageInput.trim();
-      setMessageInput('');
+      const contentToSend = textToUse.trim();
+      if (customContent === undefined) setMessageInput('');
       await flushPendingImages(contentToSend);
       return; // Xong luôn, không gửi thêm tin TEXT riêng biệt nữa!
     }
 
-    const contentToSend = messageInput.trim();
-    setMessageInput('');
+    const contentToSend = textToUse.trim();
+    if (customContent === undefined) setMessageInput('');
     setIsSending(true);
 
     const tempId = `temp-${Date.now()}`;
@@ -961,7 +1059,10 @@ export default function ChatPage({
   // Filter conversations based on search text + tab filter
   const filteredConversations = conversations.filter(c => {
     const partner = c.participants.find(p => p.id !== currentUser.id);
-    const matchSearch = partner?.name.toLowerCase().includes(searchText.toLowerCase());
+    const searchLower = searchText.toLowerCase();
+    const matchName = partner?.name.toLowerCase().includes(searchLower);
+    const matchLastMsg = c.lastMessage?.contentPreview?.toLowerCase().includes(searchLower);
+    const matchSearch = matchName || matchLastMsg;
     if (!matchSearch) return false;
 
     if (conversationFilter === 'unread') return c.unreadCount > 0;
@@ -977,22 +1078,30 @@ export default function ChatPage({
     f.name?.toLowerCase().includes(friendSearchText.toLowerCase())
   );
 
-  // Lấy thông tin partner của cuộc trò chuyện hiện tại
-  const activePartner = activeConversation?.participants.find(p => p.id !== currentUser.id);
   const isActivePartnerOnline = activePartner ? onlineUserIds.has(activePartner.id) : false;
   // Người kia có đang gõ trong cuộc trò chuyện đang mở không (Sprint 4.4)
   const isActivePartnerTyping = activeConversation ? Boolean(typingByConv[activeConversation.id]) : false;
 
+  // Lọc danh sách ảnh & tệp đã chia sẻ từ tin nhắn hiện có (không ảo)
+  const sharedImages = messages.filter(m => !m.deleted && m.type === 'IMAGE' && m.mediaUrl);
+  const sharedFiles = messages.filter(m => !m.deleted && m.type === 'FILE' && m.mediaUrl);
+
+  const getFileDetails = (url: string) => {
+    const name = url.substring(url.lastIndexOf('/') + 1) || 'File';
+    const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
+    return { name, ext };
+  };
+
   if (!currentUser) {
     return (
-      <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-24px)] items-center justify-center">
+      <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-full items-center justify-center">
         <Loader2 className="h-8 w-8 text-violet-500 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-[calc(100vh-24px)] animate-fade-in-up">
+    <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-full animate-fade-in-up">
 
       {/* ========================================================== */}
       {/* CỘT 1: DANH SÁCH CUỘC TRÒ CHUYỆN                           */}
@@ -1260,17 +1369,33 @@ export default function ChatPage({
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tìm kiếm">
-                  <Search className="h-4 w-4" />
-                </button>
-                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi thoại">
+
+                <button 
+                  onClick={() => triggerToast("Tính năng cuộc gọi thoại đang được phát triển!")}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" 
+                  title="Gọi thoại"
+                >
                   <Phone className="h-4 w-4" />
                 </button>
-                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Gọi video">
+                <button 
+                  onClick={() => triggerToast("Tính năng cuộc gọi video đang được phát triển!")}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" 
+                  title="Gọi video"
+                >
                   <Video className="h-4 w-4" />
                 </button>
-                <button className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" title="Tùy chọn">
-                  <MoreVertical className="h-4 w-4" />
+
+                <button 
+                  type="button"
+                  onClick={() => setShowProfilePanel(!showProfilePanel)}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center transition cursor-pointer ${
+                    showProfilePanel 
+                      ? 'text-violet-600 bg-violet-50 hover:bg-violet-100' 
+                      : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                  }`} 
+                  title={showProfilePanel ? "Ẩn thông tin" : "Hiện thông tin"}
+                >
+                  <Info className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -1636,14 +1761,23 @@ export default function ChatPage({
               onSubmit={handleSendMessage}
               className="px-3 py-2.5 border-t border-slate-200 bg-white flex items-center gap-2 z-10"
             >
+              {/* Messenger Left Toolbar */}
               <div className="flex items-center gap-0.5 shrink-0">
-                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer" title="Thêm">
+                <button 
+                  type="button" 
+                  onClick={() => triggerToast("Tính năng đính kèm tệp đang được phát triển!")}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer" 
+                  title="Thêm"
+                >
                   <Plus className="h-4.5 w-4.5" />
                 </button>
-                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Emoji">
-                  <Smile className="h-4.5 w-4.5" />
-                </button>
-                <button type="button" onClick={() => imageInputRef.current?.click()} className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer" title="Gửi ảnh">
+
+                <button 
+                  type="button" 
+                  onClick={() => imageInputRef.current?.click()} 
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer" 
+                  title="Chọn ảnh tải lên"
+                >
                   <ImageIcon className="h-4.5 w-4.5" />
                 </button>
                 <input
@@ -1656,35 +1790,107 @@ export default function ChatPage({
                   title="Chọn ảnh tải lên"
                   aria-label="Chọn ảnh tải lên"
                 />
-                <button type="button" className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition cursor-pointer" title="Mic">
+                <button 
+                  type="button" 
+                  onClick={() => triggerToast("Tính năng ghi âm giọng nói đang được phát triển!")}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer" 
+                  title="Gửi tin nhắn thoại"
+                >
                   <Mic className="h-4.5 w-4.5" />
                 </button>
               </div>
-              <input
-                type="text"
-                value={messageInput}
-                onChange={(e) => {
-                  setMessageInput(e.target.value);
-                  if (e.target.value.trim()) {
-                    emitTyping();
-                  } else {
-                    emitStopTyping();
-                  }
-                }}
-                placeholder={`Message ${activePartner?.name || ''}...`}
-                className="flex-grow px-4 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-sm text-slate-700 transition-all font-medium"
-              />
-              <button
-                type="submit"
-                disabled={(!messageInput.trim() && pendingImages.length === 0) || isSending}
-                className="h-9 w-9 bg-violet-600 text-white rounded-full hover:bg-violet-500 disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
-              >
-                {isSending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
+
+              {/* Text Input Wrapper (with inline Emoji button & Picker popup) */}
+              <div className="flex-grow relative flex items-center" ref={emojiPickerRef}>
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full right-0 mb-3 w-72 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    {/* Header: Tabs */}
+                    <div className="flex items-center justify-around border-b border-slate-100 bg-slate-50/50 p-2">
+                      {EMOJI_CATEGORIES.map((cat, idx) => (
+                        <button
+                          key={cat.name}
+                          type="button"
+                          onClick={() => setActiveEmojiCategory(idx)}
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
+                            activeEmojiCategory === idx ? 'bg-white shadow-sm scale-110' : 'hover:bg-slate-100 opacity-60 hover:opacity-100'
+                          }`}
+                          title={cat.name}
+                        >
+                          {cat.icon}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Emoji Grid */}
+                    <div className="p-3 h-52 overflow-y-auto scrollbar-thin grid grid-cols-6 gap-2 justify-items-center">
+                      {EMOJI_CATEGORIES[activeEmojiCategory].emojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setMessageInput((prev) => prev + emoji)}
+                          className="h-8 w-8 text-xl flex items-center justify-center hover:bg-slate-100 rounded-lg transition active:scale-90 cursor-pointer"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Footer */}
+                    <div className="px-3 py-1.5 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-400 font-bold text-center">
+                      {EMOJI_CATEGORIES[activeEmojiCategory].name}
+                    </div>
+                  </div>
                 )}
-              </button>
+
+                <input
+                  type="text"
+                  value={messageInput}
+                  onChange={(e) => {
+                    setMessageInput(e.target.value);
+                    if (e.target.value.trim()) {
+                      emitTyping();
+                    } else {
+                      emitStopTyping();
+                    }
+                  }}
+                  placeholder="Aa"
+                  className="w-full pl-4 pr-10 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-sm text-slate-700 transition-all font-medium"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className={`absolute right-2 h-7 w-7 rounded-full flex items-center justify-center transition cursor-pointer ${
+                    showEmojiPicker ? 'text-violet-600 bg-violet-100' : 'text-slate-400 hover:bg-slate-200/50 hover:text-violet-600'
+                  }`}
+                  title="Biểu tượng cảm xúc"
+                >
+                  <Smile className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              {/* Right Action Button (Send or Quick Like) */}
+              {(!messageInput.trim() && pendingImages.length === 0) ? (
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage(undefined, "👍")}
+                  className="h-9 w-9 text-violet-600 rounded-full hover:bg-slate-100 transition shrink-0 cursor-pointer flex items-center justify-center"
+                  title="Gửi nút Like nhanh"
+                >
+                  <ThumbsUp className="h-5 w-5 fill-current" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSending}
+                  className="h-9 w-9 bg-violet-600 text-white rounded-full hover:bg-violet-500 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
+                >
+                  {isSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </button>
+              )}
             </form>
           </>
         ) : (
@@ -1702,129 +1908,190 @@ export default function ChatPage({
       {/* CỘT 3: PROFILE PANEL (chỉ hiện khi có active conversation) */}
       {/* ========================================================== */}
       {activeConversation && activePartner && (
-        <div className="w-[260px] border-l border-slate-200 flex flex-col h-full bg-white shrink-0 overflow-y-auto hidden xl:flex">
-          {/* Profile Header */}
-          <div className="flex flex-col items-center pt-8 pb-5 px-5">
-            {/* Avatar lớn */}
-            <div className="relative mb-4">
-              <div className="h-24 w-24 rounded-full border-3 border-slate-200 overflow-hidden bg-slate-100 shadow-md">
-                {activePartner.avatar ? (
-                  <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-3xl bg-gradient-to-br from-violet-50 to-slate-50">
-                    {activePartner.name.charAt(0).toUpperCase()}
-                  </div>
+        <div 
+          className={`border-l border-slate-200 flex-col h-full bg-white shrink-0 overflow-y-auto overflow-x-hidden transition-all duration-300 ease-in-out z-40 fixed right-0 top-14 h-[calc(100vh-56px)] shadow-2xl lg:relative lg:top-0 lg:h-full lg:shadow-none flex ${
+            showProfilePanel 
+              ? 'w-[260px] opacity-100 translate-x-0' 
+              : 'w-0 opacity-0 !border-l-0 pointer-events-none translate-x-full lg:translate-x-0'
+          }`}
+        >
+          <div className="w-[260px] flex flex-col shrink-0 relative">
+            {/* Close button for mobile/tablet */}
+            <button 
+              type="button"
+              onClick={() => setShowProfilePanel(false)}
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer lg:hidden"
+              title="Đóng thông tin"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {/* Profile Header */}
+            <div className="flex flex-col items-center pt-8 pb-5 px-5">
+              {/* Avatar lớn */}
+              <div className="relative mb-4">
+                <div className="h-24 w-24 rounded-full border-3 border-slate-200 overflow-hidden bg-slate-100 shadow-md">
+                  {activePartner.avatar ? (
+                    <img src={activePartner.avatar} alt={activePartner.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-3xl bg-gradient-to-br from-violet-50 to-slate-50">
+                      {activePartner.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                {isActivePartnerOnline && (
+                  <span className="absolute bottom-1 right-1 h-5 w-5 border-3 border-white rounded-full bg-emerald-500"></span>
                 )}
               </div>
-              {isActivePartnerOnline && (
-                <span className="absolute bottom-1 right-1 h-5 w-5 border-3 border-white rounded-full bg-emerald-500"></span>
+
+              {/* Tên + star */}
+              <div className="flex items-center gap-1.5 mb-1">
+                <h3 className="text-base font-black text-slate-800">{activePartner.name}</h3>
+                <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+              </div>
+
+              {/* Job / Work (ẩn nếu không có dữ liệu thực tế) */}
+              {partnerProfile?.work ? (
+                <p className="text-xs text-slate-500 font-medium text-center px-4">{partnerProfile.work}</p>
+              ) : null}
+
+              {/* Hometown / City (ẩn nếu không có dữ liệu thực tế) */}
+              {(partnerProfile?.hometown || partnerProfile?.city) ? (
+                <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1 justify-center">
+                  <span>📍</span> {[partnerProfile.city, partnerProfile.hometown].filter(Boolean).join(', ')}
+                </p>
+              ) : null}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-6 mt-5">
+                <button 
+                  onClick={() => activePartner && navigate(`/profile/${activePartner.id}`)}
+                  className="flex flex-col items-center gap-1.5 group cursor-pointer" 
+                  title="Xem Profile"
+                >
+                  <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
+                    <User className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">Profile</span>
+                </button>
+                <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Tắt thông báo">
+                  <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
+                    <BellOff className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">Mute</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Shared Media Section */}
+            <div className="px-5 pt-4 pb-4 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-black text-slate-700">Shared media</h4>
+                <button 
+                  onClick={() => setShowAllMediaModal(true)}
+                  className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer"
+                >
+                  See all
+                </button>
+              </div>
+              {sharedImages.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {sharedImages.slice(0, 6).map((msg) => (
+                    <div 
+                      key={msg.id} 
+                      onClick={() => msg.mediaUrl && window.open(msg.mediaUrl, '_blank')}
+                      className="aspect-square rounded-xl bg-slate-100 overflow-hidden cursor-pointer hover:opacity-85 transition border border-slate-200/40"
+                    >
+                      <img src={msg.mediaUrl} alt="Shared" className="h-full w-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-400 italic">Chưa chia sẻ hình ảnh nào</p>
               )}
             </div>
 
-            {/* Tên + star */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <h3 className="text-base font-black text-slate-800">{activePartner.name}</h3>
-              <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            </div>
-
-            {/* Bio / Role placeholder */}
-            <p className="text-xs text-slate-500 font-medium">UX Designer at Hizo</p>
-            <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
-              <span>📍</span> Ho Chi Minh City, Vietnam
-            </p>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-6 mt-5">
-              <button 
-                onClick={() => activePartner && navigate(`/profile/${activePartner.id}`)}
-                className="flex flex-col items-center gap-1.5 group cursor-pointer" 
-                title="Xem Profile"
-              >
-                <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
-                  <User className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">Profile</span>
-              </button>
-              <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Tắt thông báo">
-                <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
-                  <BellOff className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">Mute</span>
-              </button>
-              <button className="flex flex-col items-center gap-1.5 group cursor-pointer" title="Thêm tùy chọn">
-                <div className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-violet-50 group-hover:border-violet-300 transition">
-                  <MoreHorizontal className="h-4.5 w-4.5 text-slate-500 group-hover:text-violet-600" />
-                </div>
-                <span className="text-[10px] font-semibold text-slate-500 group-hover:text-violet-600">More</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Shared Media */}
-          <div className="px-5 pt-4 pb-4 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-black text-slate-700">Shared media</h4>
-              <button className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer">See all</button>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="aspect-square rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden cursor-pointer hover:opacity-80 transition">
-                  <div className="h-full w-full flex items-center justify-center">
-                    <ImageIcon className="h-5 w-5 text-slate-300" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Shared Files */}
-          <div className="px-5 pt-3 pb-4 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-black text-slate-700">Shared files</h4>
-              <button className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer">See all</button>
-            </div>
-            <div className="space-y-2.5">
-              {[
-                { name: 'Hizo_Project_Proposal.pdf', size: '2.4 MB', type: 'PDF' },
-                { name: 'Design_System_Update.fig', size: '18.6 MB', type: 'Figma' },
-                { name: 'Timeline_Project_Hizo.xlsx', size: '24.1 KB', type: 'Excel' },
-              ].map((file, idx) => (
-                <div key={idx} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition group">
-                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${file.type === 'PDF' ? 'bg-rose-50 text-rose-500' :
-                      file.type === 'Figma' ? 'bg-purple-50 text-purple-500' :
-                        'bg-emerald-50 text-emerald-500'
-                    }`}>
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-grow">
-                    <p className="text-[11px] font-bold text-slate-700 truncate group-hover:text-violet-600 transition">{file.name}</p>
-                    <p className="text-[10px] text-slate-400">{file.size} • {file.type}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Mutual Friends */}
-          <div className="px-5 pt-3 pb-5 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-black text-slate-700">Mutual friends</h4>
-              <button className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer">See all</button>
-            </div>
-            <div className="flex items-center">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 -ml-2 first:ml-0 cursor-pointer hover:z-10 hover:scale-110 transition shadow-sm"
+            {/* Shared Files Section */}
+            <div className="px-5 pt-3 pb-4 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-black text-slate-700">Shared files</h4>
+                <button 
+                  onClick={() => setShowAllFilesModal(true)}
+                  className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer"
                 >
-                  <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-[10px] bg-gradient-to-br from-violet-50 to-slate-100">
-                    {String.fromCharCode(65 + i)}
-                  </div>
-                </div>
-              ))}
-              <div className="h-9 w-9 rounded-full border-2 border-white bg-violet-50 -ml-2 flex items-center justify-center cursor-pointer hover:bg-violet-100 transition shadow-sm">
-                <span className="text-[10px] font-black text-violet-600">+12</span>
+                  See all
+                </button>
               </div>
+              {sharedFiles.length > 0 ? (
+                <div className="space-y-2.5">
+                  {sharedFiles.slice(0, 3).map((msg) => {
+                    const { name, ext } = getFileDetails(msg.mediaUrl || '');
+                    return (
+                      <div 
+                        key={msg.id} 
+                        onClick={() => msg.mediaUrl && window.open(msg.mediaUrl, '_blank')}
+                        className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition group"
+                      >
+                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                          ext === 'PDF' ? 'bg-rose-50 text-rose-500' :
+                          ext === 'ZIP' || ext === 'RAR' ? 'bg-amber-50 text-amber-500' :
+                          'bg-blue-50 text-blue-500'
+                        }`}>
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-grow text-left">
+                          <p className="text-[11px] font-bold text-slate-700 truncate group-hover:text-violet-600 transition">{name}</p>
+                          <p className="text-[10px] text-slate-400">{ext}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-400 italic">Chưa chia sẻ tài liệu nào</p>
+              )}
+            </div>
+
+            {/* Mutual Friends (Suggested Friends) Section */}
+            <div className="px-5 pt-3 pb-5 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-black text-slate-700">Mutual friends</h4>
+                <button 
+                  onClick={() => setShowAllSuggestionsModal(true)}
+                  className="text-[11px] font-bold text-violet-600 hover:text-violet-700 cursor-pointer"
+                >
+                  See all
+                </button>
+              </div>
+              {suggestedFriends.length > 0 ? (
+                <div className="flex items-center">
+                  {suggestedFriends.slice(0, 3).map((friend) => (
+                    <div
+                      key={friend.userId}
+                      onClick={() => navigate(`/profile/${friend.userId}`)}
+                      className="h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 -ml-2 first:ml-0 cursor-pointer hover:z-10 hover:scale-110 transition shadow-sm"
+                      title={friend.name}
+                    >
+                      {friend.avatar ? (
+                        <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-[10px] bg-gradient-to-br from-violet-50 to-slate-100">
+                          {friend.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {suggestedFriends.length > 3 && (
+                    <div 
+                      onClick={() => setShowAllSuggestionsModal(true)}
+                      className="h-9 w-9 rounded-full border-2 border-white bg-violet-50 -ml-2 flex items-center justify-center cursor-pointer hover:bg-violet-100 transition shadow-sm"
+                    >
+                      <span className="text-[10px] font-black text-violet-600">+{suggestedFriends.length - 3}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-400 italic">Không có gợi ý bạn bè nào</p>
+              )}
             </div>
           </div>
         </div>
@@ -1832,7 +2099,7 @@ export default function ChatPage({
 
       {/* MODAL TẠO CHAT MỚI */}
       {showNewChatModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-fade-in">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[500px] animate-fade-in-up">
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
@@ -1894,6 +2161,121 @@ export default function ChatPage({
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XEM TẤT CẢ SHARED MEDIA */}
+      {showAllMediaModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] animate-fade-in-up animate-duration-200">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+              <span className="font-outfit font-black text-slate-800 text-sm">Tất cả ảnh đã chia sẻ ({sharedImages.length})</span>
+              <button
+                onClick={() => setShowAllMediaModal(false)}
+                title="Đóng"
+                className="p-1.5 rounded-lg hover:bg-slate-200 transition text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-grow overflow-y-auto p-4 grid grid-cols-3 gap-3">
+              {sharedImages.map((msg) => (
+                <div 
+                  key={msg.id} 
+                  onClick={() => msg.mediaUrl && window.open(msg.mediaUrl, '_blank')}
+                  className="aspect-square rounded-xl bg-slate-100 overflow-hidden cursor-pointer hover:opacity-80 transition border border-slate-200/50 shadow-sm"
+                >
+                  <img src={msg.mediaUrl} alt="Shared" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XEM TẤT CẢ SHARED FILES */}
+      {showAllFilesModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-fade-in-up animate-duration-200">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+              <span className="font-outfit font-black text-slate-800 text-sm">Tất cả tệp đã chia sẻ ({sharedFiles.length})</span>
+              <button
+                onClick={() => setShowAllFilesModal(false)}
+                title="Đóng"
+                className="p-1.5 rounded-lg hover:bg-slate-200 transition text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-grow overflow-y-auto p-3 space-y-2">
+              {sharedFiles.map((msg) => {
+                const { name, ext } = getFileDetails(msg.mediaUrl || '');
+                return (
+                  <div 
+                    key={msg.id} 
+                    onClick={() => msg.mediaUrl && window.open(msg.mediaUrl, '_blank')}
+                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition group border border-transparent hover:border-slate-100"
+                  >
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
+                      ext === 'PDF' ? 'bg-rose-50 text-rose-500' :
+                      ext === 'ZIP' || ext === 'RAR' ? 'bg-amber-50 text-amber-500' :
+                      'bg-blue-50 text-blue-500'
+                    }`}>
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-grow text-left">
+                      <p className="text-xs font-bold text-slate-700 truncate group-hover:text-violet-600 transition">{name}</p>
+                      <p className="text-[10px] text-slate-400">{ext}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XEM TẤT CẢ GỢI Ý BẠN BÈ */}
+      {showAllSuggestionsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-fade-in-up animate-duration-200">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+              <span className="font-outfit font-black text-slate-800 text-sm">Gợi ý kết bạn ({suggestedFriends.length})</span>
+              <button
+                onClick={() => setShowAllSuggestionsModal(false)}
+                title="Đóng"
+                className="p-1.5 rounded-lg hover:bg-slate-200 transition text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-grow overflow-y-auto p-3 space-y-2">
+              {suggestedFriends.map((friend) => (
+                <div 
+                  key={friend.userId} 
+                  onClick={() => {
+                    setShowAllSuggestionsModal(false);
+                    navigate(`/profile/${friend.userId}`);
+                  }}
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition group border border-transparent hover:border-slate-100"
+                >
+                  <div className="h-10 w-10 rounded-full border overflow-hidden bg-slate-100 shrink-0">
+                    {friend.avatar ? (
+                      <img src={friend.avatar} alt={friend.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold bg-slate-50">
+                        {friend.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-grow text-left">
+                    <p className="text-xs font-bold text-slate-700 truncate group-hover:text-violet-600 transition">{friend.name}</p>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.mutualFriendsCount} bạn chung</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

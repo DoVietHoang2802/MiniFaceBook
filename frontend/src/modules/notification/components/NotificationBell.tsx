@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Bell, Heart, MessageCircle, UserPlus, UserCheck, CheckCheck } from 'lucide-react';
 import type { NotificationResponse, NotificationType } from '../types/notification.types';
 
@@ -11,6 +11,8 @@ interface NotificationBellProps {
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onNavigate: (n: NotificationResponse) => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 /** Icon + màu theo loại thông báo. */
@@ -48,30 +50,33 @@ export default function NotificationBell({
   onMarkAsRead,
   onMarkAllAsRead,
   onNavigate,
+  isOpen,
+  onOpenChange,
 }: NotificationBellProps) {
-  const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   // Đóng dropdown khi click ra ngoài.
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as HTMLElement;
+      if (target.closest('#sidebar-notifications-btn')) return;
+      if (ref.current && !ref.current.contains(e.target as Node)) onOpenChange(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [isOpen, onOpenChange]);
 
   const toggle = () => {
-    const next = !open;
-    setOpen(next);
+    const next = !isOpen;
+    onOpenChange(next);
     if (next && !loaded) onOpen(); // lazy-load lần đầu mở
   };
 
   const handleClick = (n: NotificationResponse) => {
     if (!n.isRead) onMarkAsRead(n.id);
     onNavigate(n);
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
@@ -89,7 +94,7 @@ export default function NotificationBell({
         )}
       </button>
 
-      {open && (
+      {isOpen && (
         <div className="absolute right-0 mt-2 w-[360px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 animate-fade-in-up overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">

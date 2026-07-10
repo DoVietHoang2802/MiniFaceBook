@@ -74,18 +74,13 @@ public class ConversationService {
     User recipient = userRepository.findById(recipientId)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-    // Xác thực mối quan hệ bạn bè (chỉ cho phép khi status = ACCEPTED)
-    Friendship friendship = friendshipRepository.findBetweenUsers(currentUserId, recipientId)
-        .orElseThrow(() -> {
-          log.error("Friendship NOT FOUND between {} and {}", currentUserId, recipientId);
-          return new AppException(ErrorCode.NOT_FRIENDS);
-        });
-
-    if (friendship.getStatus() == FriendshipStatus.BLOCKED) {
-      throw new AppException(ErrorCode.USER_BLOCKED);
-    }
-    if (friendship.getStatus() != FriendshipStatus.ACCEPTED) {
-      throw new AppException(ErrorCode.NOT_FRIENDS);
+    // Kiểm tra chặn nếu tồn tại quan hệ bạn bè
+    Optional<Friendship> friendshipOpt = friendshipRepository.findBetweenUsers(currentUserId, recipientId);
+    if (friendshipOpt.isPresent()) {
+      Friendship friendship = friendshipOpt.get();
+      if (friendship.getStatus() == FriendshipStatus.BLOCKED) {
+        throw new AppException(ErrorCode.USER_BLOCKED);
+      }
     }
 
     // Sắp xếp participantIds tăng dần để đảm bảo unique/idempotent

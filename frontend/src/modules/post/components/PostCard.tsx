@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Share2, MoreHorizontal, Clock, ThumbsUp, Trash2 } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, ThumbsUp, Trash2, Globe, EyeOff } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import type { PostResponse, ReactionType } from '../types/post.types';
 import { postService } from '../services/postService';
@@ -21,7 +21,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   const formatTime = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} lúc ${hours}:${minutes}`;
     } catch {
       return 'Vừa xong';
     }
@@ -31,6 +36,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
 
   const deletePostMutation = useMutation({
     mutationFn: () => postService.deletePost(localPost.id),
@@ -79,11 +85,26 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     onMutate: async (type) => {
       const previousPost = { ...localPost };
       const isRemoving = localPost.myReactionType === type;
-      setLocalPost(prev => ({
-        ...prev,
-        myReactionType: isRemoving ? null : type,
-        reactCount: isRemoving ? prev.reactCount - 1 : (prev.myReactionType ? prev.reactCount : prev.reactCount + 1),
-      }));
+      setLocalPost(prev => {
+        const newReactionsCount = { ...(prev.reactionsCount || {}) };
+        
+        if (prev.myReactionType) {
+          const prevCount = newReactionsCount[prev.myReactionType] || 0;
+          newReactionsCount[prev.myReactionType] = Math.max(0, prevCount - 1);
+        }
+
+        if (!isRemoving) {
+          const newCount = newReactionsCount[type] || 0;
+          newReactionsCount[type] = newCount + 1;
+        }
+
+        return {
+          ...prev,
+          myReactionType: isRemoving ? null : type,
+          reactCount: isRemoving ? prev.reactCount - 1 : (prev.myReactionType ? prev.reactCount : prev.reactCount + 1),
+          reactionsCount: newReactionsCount,
+        };
+      });
       return { previousPost };
     },
     onError: (_err, _newTodo, context: any) => {
@@ -113,6 +134,23 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     .map(([type]) => type as ReactionType)
     .slice(0, 3);
 
+  if (isHidden) {
+    return (
+      <div className="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm mb-6 flex items-center justify-between animate-fade-in-up">
+        <div className="flex items-center space-x-3 text-slate-500 text-xs font-semibold">
+          <EyeOff className="h-4.5 w-4.5 text-slate-400 shrink-0" />
+          <span>Bài viết này đã được ẩn khỏi bảng tin của bạn.</span>
+        </div>
+        <button
+          onClick={() => setIsHidden(false)}
+          className="text-xs font-black text-violet-600 hover:text-violet-500 hover:underline transition cursor-pointer"
+        >
+          Hoàn tác
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm mb-6 transition-all duration-300 hover:shadow-md animate-fade-in-up">
       <div className="p-5">
@@ -132,9 +170,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-800 leading-tight group-hover/author:text-violet-600 transition-colors">{localPost.authorName || 'Người dùng ẩn danh'}</h3>
-              <div className="flex items-center text-[10px] text-slate-400 font-semibold space-x-1 mt-0.5">
-                <Clock className="h-3 w-3 text-slate-400" />
+              <div className="flex items-center text-[10px] text-slate-400 font-semibold space-x-1.5 mt-0.5">
                 <span>{formatTime(localPost.createdAt)}</span>
+                <span>•</span>
+                <Globe className="h-3.5 w-3.5 text-slate-400" />
               </div>
             </div>
           </div>
@@ -163,9 +202,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
                     <span>Xóa bài viết</span>
                   </button>
                 ) : (
-                  <div className="px-3 py-2 text-slate-400 text-xs font-semibold">
-                    Không có quyền quản trị
-                  </div>
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setIsHidden(true);
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                  >
+                    <EyeOff className="h-4 w-4 text-slate-400" />
+                    <span>Ẩn bài viết</span>
+                  </button>
                 )}
               </div>
             )}
@@ -305,6 +351,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             currentUser={currentUser}
             onClose={() => setIsDetailModalOpen(false)}
             onCommentCountChange={adjustCommentCount}
+            onPostUpdate={setLocalPost}
           />
         )}
       </div>

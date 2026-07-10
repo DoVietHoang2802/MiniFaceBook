@@ -96,7 +96,7 @@ public class ConversationServiceTest {
   }
 
   @Test
-  void getOrCreateConversation_ShouldThrowException_WhenNotFriends() {
+  void getOrCreateConversation_ShouldReturnConversation_WhenNoFriendshipExists() {
     ConversationCreateRequest req = new ConversationCreateRequest(friend.getId());
 
     when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
@@ -104,9 +104,17 @@ public class ConversationServiceTest {
     
     when(friendshipRepository.findBetweenUsers(me.getId(), friend.getId())).thenReturn(Optional.empty());
 
-    AppException ex = assertThrows(AppException.class, () -> 
-        conversationService.getOrCreateConversation(me.getEmail(), req));
+    List<String> sortedIds = List.of(me.getId(), friend.getId());
+    Conversation conversation = Conversation.builder()
+        .id("conv_stranger")
+        .participantIds(sortedIds)
+        .build();
 
-    assertEquals(ErrorCode.NOT_FRIENDS, ex.getErrorCode());
+    when(conversationRepository.findByParticipantIds(sortedIds)).thenReturn(Optional.of(conversation));
+
+    ConversationResponse res = conversationService.getOrCreateConversation(me.getEmail(), req);
+
+    assertNotNull(res);
+    assertEquals("conv_stranger", res.getId());
   }
 }

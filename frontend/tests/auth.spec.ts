@@ -68,8 +68,9 @@ test.describe('Authentication Flow', () => {
     await expect(page.locator('aside').first()).toContainText('Trang cá nhân');
 
     // 8. Đăng xuất tài khoản
-    // Click vào phần Profile Widget ở dưới góc trái (chứa email của user) để bật popover
-    await page.click(`text=${email}`);
+    // Click vào phần Profile Widget ở header (chứa name của user) để bật popover
+    const profilePill = page.locator('header div:has-text("' + name + '")').last();
+    await profilePill.click();
     // Click nút Đăng xuất trong popover
     await page.click('button:has-text("Đăng xuất")');
 

@@ -108,4 +108,43 @@ public class AuthServiceTest {
         assertEquals("New Bio", actualResponse.getBio());
         verify(redisTemplate, times(1)).delete(cacheKey);
     }
+
+    @Test
+    void updateProfile_WithDetails_UpdatesAndEvictsCache() {
+        // Arrange
+        UpdateProfileRequest request = UpdateProfileRequest.builder()
+                .bio("New Bio")
+                .city("HCM")
+                .hometown("TB")
+                .work("Dev")
+                .relationship("dating")
+                .build();
+        User user = User.builder().id("123").email(email).bio("Old Bio").build();
+        
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        
+        UserResponse response = UserResponse.builder()
+                .email(email)
+                .bio("New Bio")
+                .city("HCM")
+                .hometown("TB")
+                .work("Dev")
+                .relationship("dating")
+                .build();
+        when(authMapper.toUserResponse(any(User.class))).thenReturn(response);
+
+        // Act
+        UserResponse actualResponse = authService.updateProfile(email, request);
+
+        // Assert
+        assertNotNull(actualResponse);
+        assertEquals("New Bio", actualResponse.getBio());
+        assertEquals("HCM", actualResponse.getCity());
+        assertEquals("TB", actualResponse.getHometown());
+        assertEquals("Dev", actualResponse.getWork());
+        assertEquals("dating", actualResponse.getRelationship());
+        verify(redisTemplate, times(1)).delete(cacheKey);
+        verify(redisTemplate, times(1)).delete("user:profile:id:123");
+    }
 }

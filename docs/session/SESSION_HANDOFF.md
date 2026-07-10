@@ -1,9 +1,41 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 10/07/2026
-## 🏁 Trạng thái hiện tại: 🎉 SPRINT 6.4 HOÀN THÀNH 🏆 (Infinite Scroll, Settings Page, Redis Profile Cache Sync & AppException Alignment). Tổng tiến độ **~98%**.
+## 🏁 Trạng thái hiện tại: 🔧 SPRINT 6.5 ĐANG THỰC HIỆN (UI Refinements: ChatPage Cleanup + ProfilePage Sidebar Real Data + E2E Test Coverage). Tổng tiến độ **~98%**.
 
 > ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (10/07/2026 - SPRINT 6.5: UI REFINEMENTS, PROFILEPAGE SIDEBAR & E2E TEST COVERAGE)
+
+### Công việc đã thực hiện:
+
+1. **ChatPage UI Cleanup**:
+   - Xóa nút tìm kiếm tròn (standalone search button) trong khung chat header theo yêu cầu người dùng.
+   - Xóa nút "Tùy chọn hội thoại" (SlidersHorizontal icon) trong chat header để đơn giản hóa UI.
+   - Sửa lỗi biến `msgSearchQuery` chưa được khai báo gây crash `ReferenceError`.
+
+2. **ProfilePage Sidebar — Hiển thị Dữ liệu Thật**:
+   - Sidebar "Giới thiệu" đọc đúng field `name`, `work`, `city`, `hometown` từ API/state.
+   - Khu vực "Hình ảnh" giữ nguyên label + nút "Xem tất cả" dù trống — hiển thị "Chưa có hình ảnh đăng tải" thay vì xóa section.
+   - "Bạn bè" hiển thị dạng grid tối đa 6 avatar với tên thật; nút "Xem tất cả bạn bè" điều hướng đến tab Bạn bè.
+
+3. **Playwright E2E Test Coverage (Đầy đủ)**:
+   - **Mới:** `frontend/tests/profile.spec.ts` — 6 test cases: hiển thị tên thật, lưu/hiển thị work+city, Photos box, Friends box (kết bạn rồi kiểm tra), điều hướng tab, xem profile người khác.
+   - **Cập nhật:** `frontend/tests/chat.spec.ts` — 6 test cases: không có search/options button, gửi/nhận tin, typing indicator, infinite scroll, xóa thu hồi tin nhắn.
+
+4. **Update Full Protocol (9.7):**
+   - Đồng bộ 7 file tài liệu: `DATABASE_SCHEMA.md` (thêm trường user mở rộng bio/city/hometown/work/relationship), `PROGRESS.md`, `ROADMAP.md`, `SESSION_HANDOFF.md`, `CV_PORTFOLIO_HIGHLIGHTS.md` (Highlight 51), `README.md`.
+
+### Files chính:
+- `frontend/src/modules/chat/components/ChatPage.tsx`
+- `frontend/src/modules/profile/components/ProfilePage.tsx`
+- `frontend/tests/profile.spec.ts` *(mới)*
+- `frontend/tests/chat.spec.ts` *(cập nhật)*
+- `docs/planning/PROGRESS.md`, `docs/planning/ROADMAP.md`
+- `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md`
+- `docs/architecture/DATABASE_SCHEMA.md`
 
 ---
 

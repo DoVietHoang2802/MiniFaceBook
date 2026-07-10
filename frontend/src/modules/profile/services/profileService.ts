@@ -2,9 +2,14 @@ import axiosClient from '../../../core/api/axiosClient';
 
 export interface UserProfileResponse {
   id: string;
+  name?: string;
   email: string;
   avatar: string | null;
   bio: string | null;
+  city: string | null;
+  hometown: string | null;
+  work: string | null;
+  relationship: string | null;
   roles: string[];
   createdAt: string;
   updatedAt: string;
@@ -18,7 +23,14 @@ export interface ApiResponse<T> {
 
 export const profileService = {
   // Cập nhật thông tin trang cá nhân
-  updateProfile: async (data: { avatar?: string; bio?: string }): Promise<ApiResponse<UserProfileResponse>> => {
+  updateProfile: async (data: { 
+    avatar?: string; 
+    bio?: string;
+    city?: string;
+    hometown?: string;
+    work?: string;
+    relationship?: string;
+  }): Promise<ApiResponse<UserProfileResponse>> => {
     const response = await axiosClient.put<ApiResponse<UserProfileResponse>>('/user/profile', data);
     return response.data;
   },
