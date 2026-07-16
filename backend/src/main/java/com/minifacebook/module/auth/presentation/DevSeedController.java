@@ -201,6 +201,32 @@ public class DevSeedController {
                 }
             }
         }
+
+        // 2.5. Kết bạn với user Đỗ Việt Hoàng (viethoang281202@gmail.com) nếu tồn tại
+        Optional<UserDocument> hoangOpt = userRepository.findByEmail("viethoang281202@gmail.com");
+        if (hoangOpt.isPresent()) {
+            UserDocument hoang = hoangOpt.get();
+            // Kết bạn với 5 user seed đầu tiên để tạo mạng lưới bạn chung
+            for (int k = 0; k < Math.min(5, createdUsers.size()); k++) {
+                UserDocument seedUser = createdUsers.get(k);
+                if (hoang.getId().equals(seedUser.getId())) continue;
+
+                boolean exists = friendshipRepository.findByRequesterIdAndAddresseeId(hoang.getId(), seedUser.getId()).isPresent()
+                        || friendshipRepository.findByRequesterIdAndAddresseeId(seedUser.getId(), hoang.getId()).isPresent();
+
+                if (!exists) {
+                    FriendshipDocument fd = FriendshipDocument.builder()
+                            .requesterId(hoang.getId())
+                            .addresseeId(seedUser.getId())
+                            .status(FriendshipStatus.ACCEPTED)
+                            .createdAt(Instant.now())
+                            .build();
+                    friendshipRepository.save(fd);
+                    friendshipsCreated++;
+                }
+            }
+        }
+
         stats.put("friendships_created", friendshipsCreated);
 
         // 3. Khởi tạo danh sách bài viết
