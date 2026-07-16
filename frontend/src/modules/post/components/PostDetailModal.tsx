@@ -41,6 +41,17 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
     };
   }, []);
 
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
   const [showReactionsModal, setShowReactionsModal] = useState(false);

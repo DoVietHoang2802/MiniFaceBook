@@ -137,7 +137,7 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
     await page.waitForTimeout(300);
 
     // Lưu
-    await page.click('button[type="button"]:has-text("Lưu lại")');
+    await page.click('button[type="button"]:has-text("Lưu thay đổi")');
     await expect(
       page.locator('text=Cập nhật chi tiết cá nhân thành công')
     ).toBeVisible({ timeout: 10000 });

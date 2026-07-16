@@ -19,29 +19,33 @@ async function registerAndLogin(
   await page.click('button[type="submit"]');
 
   let token = '';
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {
     await page.waitForTimeout(1500);
-    const listResponse = await request.get('http://localhost:8025/api/v1/messages');
-    if (listResponse.ok()) {
-      const listData = await listResponse.json();
-      const latestMsg = listData.messages?.find(
-        (msg: any) =>
-          msg.To?.[0]?.Address === email &&
-          msg.Subject.includes('Verify your email')
-      );
-      if (latestMsg) {
-        const detailResponse = await request.get(
-          `http://localhost:8025/api/v1/message/${latestMsg.ID}`
+    try {
+      const listResponse = await request.get('http://localhost:8025/api/v1/messages');
+      if (listResponse.ok()) {
+        const listData = await listResponse.json();
+        const latestMsg = listData.messages?.find(
+          (msg: any) =>
+            msg.To?.[0]?.Address === email &&
+            msg.Subject.includes('Verify your email')
         );
-        if (detailResponse.ok()) {
-          const detailData = await detailResponse.json();
-          const match = detailData.HTML?.match(/token=([a-zA-Z0-9-_.]+)/);
-          if (match && match[1]) {
-            token = match[1];
-            break;
+        if (latestMsg) {
+          const detailResponse = await request.get(
+            `http://localhost:8025/api/v1/message/${latestMsg.ID}`
+          );
+          if (detailResponse.ok()) {
+            const detailData = await detailResponse.json();
+            const match = detailData.HTML?.match(/token=([a-zA-Z0-9-_.]+)/);
+            if (match && match[1]) {
+              token = match[1];
+              break;
+            }
           }
         }
       }
+    } catch (e: any) {
+      console.warn(`Mailpit fetch attempt ${i + 1} failed: ${e.message}. Retrying...`);
     }
   }
   expect(token).not.toBe('');
@@ -67,10 +71,10 @@ async function makeFriends(
   userBEmail: string
 ) {
   // User A tìm và gửi lời mời kết bạn
-  await pageA.click('button:has-text("Bạn bè")');
-  await pageA.waitForTimeout(800);
+  await pageA.click('aside button[title="Bạn bè"]');
+  await expect(pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')).toBeVisible({ timeout: 8000 });
   await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userBName);
-  await pageA.waitForTimeout(1200);
+  
   const searchRowA = pageA
     .locator('div.flex.items-center.justify-between')
     .filter({ hasText: userBEmail });
@@ -79,33 +83,28 @@ async function makeFriends(
   await expect(searchRowA.locator('button:has-text("Thu hồi")')).toBeVisible({ timeout: 8000 });
 
   // User B chấp nhận lời mời
-  await pageB.waitForTimeout(1500);
-  await pageB.click('button:has-text("Bạn bè")');
-  await pageB.waitForTimeout(800);
+  await pageB.click('aside button[title="Bạn bè"]');
+  await expect(pageB.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')).toBeVisible({ timeout: 8000 });
   await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
-  await pageB.waitForTimeout(800);
+  
   const requestRowB = pageB
     .locator('div.flex.items-center.justify-between')
     .filter({ hasText: userAEmail });
   await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({ timeout: 12000 });
   await requestRowB.locator('button:has-text("Chấp nhận")').click();
-  // Chờ DB cập nhật quan hệ kết bạn
-  await pageA.waitForTimeout(2000);
+  
+  // Chờ cho dòng yêu cầu kết bạn biến mất khỏi danh sách của B
+  await expect(requestRowB).not.toBeVisible({ timeout: 8000 });
 }
 
 // ============================================================
 // Helper: Mở chat với User B từ FriendsPage của User A
 // ============================================================
 async function openChatWithFriend(pageA: any, userBEmail: string) {
-  // Reload để đảm bảo friends list cập nhật mới nhất
-  await pageA.reload();
-  await expect(pageA.locator('aside').first()).toBeVisible({ timeout: 20000 });
-
   // Điều hướng sang tab Bạn bè → sub-tab Bạn bè
-  await pageA.click('button:has-text("Bạn bè")');
-  await pageA.waitForTimeout(800);
+  await pageA.click('aside button[title="Bạn bè"]');
+  await expect(pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')).toBeVisible({ timeout: 8000 });
   await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-  await pageA.waitForTimeout(1000);
 
   // Tìm hàng bạn bè theo email và click Nhắn tin
   const friendRow = pageA
@@ -151,7 +150,7 @@ test.describe('Real-time Chat Flow', () => {
       await expect(pageA.locator('text=Bắt đầu gửi tin nhắn chào mừng bạn mới nhé!')).toBeVisible({ timeout: 8000 });
 
       // User B mở trang Trò chuyện
-      await pageB.click('button:has-text("Trò chuyện")');
+      await pageB.click('aside button[title="Trò chuyện"]');
       await expect(pageB.locator('text=Chưa chọn cuộc trò chuyện nào')).toBeVisible({ timeout: 8000 });
 
       // User A gửi tin nhắn
@@ -282,7 +281,8 @@ test.describe('Chat Page - UI After Refactoring', () => {
       const chatInputA = await openChatWithFriend(pageA, userBEmail);
 
       // User B mở chat
-      await pageB.click('button:has-text("Trò chuyện")');
+      await pageB.click('aside button[title="Trò chuyện"]');
+      await expect(pageB.locator('text=Chưa chọn cuộc trò chuyện nào')).toBeVisible({ timeout: 8000 });
 
       // Gửi tin nhắn
       await chatInputA.fill(messageText);
@@ -335,14 +335,19 @@ test.describe('Chat Page - UI After Refactoring', () => {
       await pageA.waitForTimeout(1500);
 
       // User B tìm và mở conversation
-      await pageB.click('button:has-text("Trò chuyện")');
+      await pageB.click('aside button[title="Trò chuyện"]');
       const chatItemB = pageB.locator('div.cursor-pointer').filter({ hasText: 'init' });
       await expect(chatItemB).toBeVisible({ timeout: 12000 });
       await chatItemB.click();
 
+      // Đợi khung chat của B hiện lên (để đảm bảo B đã subscribe socket nhận sự kiện gõ)
+      const chatInputB = pageB.locator('input[placeholder^="Message"], input[placeholder="Aa"]');
+      await expect(chatInputB).toBeVisible({ timeout: 8000 });
+      await pageB.waitForTimeout(1000);
+
       // User A bắt đầu gõ → B thấy "đang nhập"
       await chatInputA.fill('I am typing now...');
-      await expect(pageB.locator('text=đang nhập')).toBeVisible({ timeout: 8000 });
+      await expect(pageB.locator('text=đang nhập').first()).toBeVisible({ timeout: 10000 });
     } finally {
       await contextA.close();
       await contextB.close();

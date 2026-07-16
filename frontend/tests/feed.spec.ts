@@ -171,12 +171,16 @@ test.describe('Feed and Post Interactions Flow', () => {
       .filter({ hasText: 'Bài viết test cuộn trang' }).first();
     await expect(postCard).toBeVisible({ timeout: 10000 });
 
-    // Cuộn xuống cuối trang để kích hoạt load thêm bài viết
-    await page.evaluate(() => (window as any).scrollTo(0, (document as any).body.scrollHeight));
-    await page.waitForTimeout(1000);
-    
-    // Đối với user mới chưa có nhiều bài viết, kết quả sẽ đạt tới cuối trang và hiện thông báo hết bài viết
+    // Cuộn xuống cuối trang bằng phím PageDown nhiều lần để kích hoạt load thêm bài viết
     const endMsg = page.locator('text=Bạn đã xem hết bài viết');
-    await expect(endMsg).toBeVisible();
+    for (let i = 0; i < 15; i++) {
+      await page.keyboard.press('PageDown');
+      await page.waitForTimeout(500);
+      if (await endMsg.isVisible()) {
+        break;
+      }
+    }
+    
+    await expect(endMsg).toBeVisible({ timeout: 12000 });
   });
 });
