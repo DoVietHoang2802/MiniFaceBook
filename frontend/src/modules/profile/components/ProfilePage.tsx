@@ -188,6 +188,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [friendsList, setFriendsList] = useState<FriendshipResponse[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
 
   // Trạng thái quan hệ bạn bè (khi xem profile người khác)
   const [relationshipStatus, setRelationshipStatus] = useState<'NONE' | 'FRIEND' | 'PENDING_SENT' | 'PENDING_RECEIVED'>('NONE');
@@ -1270,67 +1271,134 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
           </div>
         )}
 
-        {/* TAB 3: FRIENDS LIST */}
-        {activeTab === 'friends' && (
-          <div className="mt-2 space-y-4 animate-fade-in-up">
-            <div className="flex justify-between items-center pb-3.5 border-b border-slate-200">
-              <div>
-                <h3 className="text-lg font-black text-slate-800">Tất cả bạn bè</h3>
-                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Danh sách liên kết bạn bè của tài khoản</p>
-              </div>
-              <span className="px-3 py-1 bg-violet-100 text-violet-600 text-xs font-black rounded-full">
-                {friendsList.length} người bạn
-              </span>
-            </div>
+        {/* TAB 3: FRIENDS LIST — Facebook style */}
+        {activeTab === 'friends' && (() => {
+          const filtered = friendsList.filter((f) => {
+            const q = friendSearch.toLowerCase().trim();
+            if (!q) return true;
+            return (
+              (f.name || '').toLowerCase().includes(q) ||
+              (f.email || '').toLowerCase().includes(q)
+            );
+          });
 
-            {isLoadingFriends ? (
-              <div className="flex items-center justify-center py-12 text-slate-400">
-                <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
-              </div>
-            ) : friendsList.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {friendsList.map((friend) => (
-                  <div 
-                    key={friend.friendshipId}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow transition duration-300"
-                  >
-                    <div 
-                      onClick={() => navigate(`/profile/${friend.userId}`)}
-                      className="flex items-center space-x-3 cursor-pointer group"
+          return (
+            <div className="mt-2 animate-fade-in-up">
+
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 mb-6">
+                <div>
+                  <h3 className="text-base font-black text-slate-800">Bạn bè</h3>
+                  <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                    {friendsList.length} người bạn
+                  </p>
+                </div>
+
+                {/* Search bar */}
+                <div className="relative w-full sm:w-72">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={friendSearch}
+                    onChange={(e) => setFriendSearch(e.target.value)}
+                    placeholder="Tìm kiếm bạn bè..."
+                    className="w-full pl-9 pr-4 py-2.5 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all"
+                  />
+                  {friendSearch && (
+                    <button
+                      onClick={() => setFriendSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer"
                     >
-                      <div className="h-12 w-12 rounded-full overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Loading */}
+              {isLoadingFriends ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+                </div>
+
+              ) : filtered.length === 0 && friendSearch ? (
+                /* No search result */
+                <div className="py-16 text-center text-slate-400">
+                  <svg className="h-10 w-10 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="m21 21-4.35-4.35" /></svg>
+                  <p className="text-xs font-semibold">Không tìm thấy &ldquo;{friendSearch}&rdquo;</p>
+                </div>
+
+              ) : friendsList.length === 0 ? (
+                /* Empty state */
+                <div className="py-16 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl bg-white">
+                  <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-xs font-semibold">Chưa có người bạn nào trong danh sách.</p>
+                </div>
+
+              ) : (
+                /* Facebook-style grid */
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {filtered.map((friend) => (
+                    <div
+                      key={friend.friendshipId}
+                      className="group rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden cursor-pointer flex flex-col"
+                    >
+                      {/* Avatar — ảnh vuông lớn giống Facebook */}
+                      <div
+                        className="relative w-full aspect-square overflow-hidden bg-slate-100"
+                        onClick={() => navigate(`/profile/${friend.userId}`)}
+                      >
                         {friend.avatar ? (
-                          <img src={friend.avatar} alt={friend.name || friend.email} className="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
+                          <img
+                            src={friend.avatar}
+                            alt={friend.name || friend.email}
+                            className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                          />
                         ) : (
-                          <div className="h-full w-full flex items-center justify-center text-slate-400 font-black bg-slate-50 text-xs">
-                            {(friend.name || friend.email || 'U').charAt(0).toUpperCase()}
+                          <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-violet-100 to-violet-200">
+                            <span className="text-3xl font-black text-violet-500">
+                              {(friend.name || friend.email || 'U').charAt(0).toUpperCase()}
+                            </span>
                           </div>
                         )}
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-200" />
                       </div>
-                      <div className="overflow-hidden">
-                        <h4 className="font-extrabold text-slate-850 text-xs group-hover:text-violet-600 transition truncate">{friend.name || friend.email.split('@')[0]}</h4>
-                        <p className="text-[10px] text-slate-400 truncate max-w-[200px] mt-0.5 font-semibold">{friend.bio || friend.email}</p>
+
+                      {/* Info + Actions */}
+                      <div className="p-3 flex flex-col gap-2 flex-1">
+                        <div
+                          onClick={() => navigate(`/profile/${friend.userId}`)}
+                          className="hover:text-violet-600 transition cursor-pointer"
+                        >
+                          <p className="text-xs font-black text-slate-800 truncate leading-tight">
+                            {friend.name || friend.email.split('@')[0]}
+                          </p>
+                          {friend.bio && (
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5 font-medium">{friend.bio}</p>
+                          )}
+                        </div>
+
+                        {/* Action button */}
+                        <button
+                          onClick={() => navigate(`/chats/${friend.userId}`)}
+                          className="mt-auto w-full py-1.5 rounded-lg bg-slate-100 hover:bg-violet-600 hover:text-white text-slate-700 text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <MessageSquare className="h-3 w-3 shrink-0" />
+                          <span>Nhắn tin</span>
+                        </button>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => navigate(`/chats/${friend.userId}`)}
-                      className="px-3.5 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-600 text-[11px] font-black transition cursor-pointer flex items-center gap-1 shrink-0"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      <span>Nhắn tin</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl bg-white">
-                <UserIcon className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                <p className="text-xs font-semibold">Chưa có người bạn nào trong danh sách.</p>
-              </div>
-            )}
-          </div>
-        )}
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
     </div>
