@@ -98,9 +98,10 @@ test.describe('Feed and Post Interactions Flow', () => {
     // Xác thực bình luận hiển thị trong danh sách bình luận
     await expect(detailModal.locator(`text=${commentContent}`)).toBeVisible();
 
-    // Đóng modal chi tiết
-    await detailModal.locator('button[title="Đóng"]').click();
-    await expect(detailModal).not.toBeVisible();
+    // Đóng modal chi tiết bằng Escape (tránh lỗi button bị detach khỏi DOM)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+    await expect(detailModal).not.toBeVisible({ timeout: 8000 });
 
     // 5. Xóa bài viết khỏi Feed
     const menuBtn = postCard.locator('button[title="Tùy chọn bài viết"]');
@@ -165,8 +166,10 @@ test.describe('Feed and Post Interactions Flow', () => {
     await page.click('button:has-text("Đăng bài")');
 
     // Đợi bài viết xuất hiện trên Feed
-    const postCard = page.locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white').filter({ hasText: 'Bài viết test cuộn trang' });
-    await expect(postCard).toBeVisible();
+    // Dùng .first() để tránh strict mode violation khi nhiều card cùng class
+    const postCard = page.locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white')
+      .filter({ hasText: 'Bài viết test cuộn trang' }).first();
+    await expect(postCard).toBeVisible({ timeout: 10000 });
 
     // Cuộn xuống cuối trang để kích hoạt load thêm bài viết
     await page.evaluate(() => (window as any).scrollTo(0, (document as any).body.scrollHeight));

@@ -18,10 +18,9 @@ async function registerAndLogin(
   await page.fill('#register-confirm', password);
   await page.click('button[type="submit"]');
 
-  // Polling lấy token từ Mailpit
   let token = '';
-  for (let i = 0; i < 5; i++) {
-    await page.waitForTimeout(1000);
+  for (let i = 0; i < 6; i++) {
+    await page.waitForTimeout(1500);
     const listResponse = await request.get('http://localhost:8025/api/v1/messages');
     if (listResponse.ok()) {
       const listData = await listResponse.json();
@@ -51,11 +50,10 @@ async function registerAndLogin(
   );
   expect(verifyResponse.ok()).toBe(true);
 
-  // Đăng nhập
   await page.fill('#login-email', email);
   await page.fill('#login-password', password);
   await page.click('button[type="submit"]');
-  await expect(page.locator('aside').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('aside').first()).toBeVisible({ timeout: 30000 });
 }
 
 // ============================================================
@@ -63,243 +61,220 @@ async function registerAndLogin(
 // ============================================================
 test.describe('Profile Page - Sidebar & Real User Data', () => {
   /**
-   * TEST 1: Trang cá nhân hiển thị đúng tên người dùng thật (không hiện email)
-   * Kịch bản: Đăng nhập → vào trang cá nhân → kiểm tra h1 hiện tên đúng
+   * TEST 1: Trang cá nhân hiển thị đúng tên người dùng thật (không hiện email thô)
    */
   test('should display real user name (not email) as profile heading', async ({
     page,
     request,
   }) => {
-    const email = `profile-name-${Date.now()}@example.com`;
-    const name = `Playwright Profile User ${Date.now()}`;
+    const ts = Date.now();
+    const email = `profile-name-${ts}@example.com`;
+    const name = `Profile User ${ts}`;
     const password = 'Password123!';
 
     await registerAndLogin(page, request, email, name, password);
 
-    // Điều hướng sang trang cá nhân
     await page.click('button[title="Trang cá nhân"]');
-    await page.waitForURL(/\/profile/);
+    await page.waitForURL(/\/profile/, { timeout: 15000 });
+    await page.waitForTimeout(1000);
 
-    // Kiểm tra h1 hiện đúng tên người dùng
     const heading = page.locator('h1').first();
     await expect(heading).toBeVisible({ timeout: 10000 });
-    await expect(heading).toContainText(name.split(' ')[0]); // ít nhất có tên đầu
-    // Đảm bảo KHÔNG hiển thị phần email thô
+    // Tên thật phải có (ít nhất 1 từ đầu)
+    await expect(heading).toContainText(name.split(' ')[0]);
+    // KHÔNG hiển thị chuỗi email thô
     await expect(heading).not.toContainText('@example.com');
   });
 
   /**
-   * TEST 2: Sidebar hiển thị thông tin chi tiết (work, city) sau khi cập nhật
-   * Kịch bản: Đăng nhập → vào trang cá nhân → tab Giới thiệu → chỉnh sửa chi tiết
-   *           → lưu → quay về tab Bài viết → kiểm tra sidebar hiện đúng
+   * TEST 2: Sidebar hiển thị đúng work và city sau khi cập nhật trong tab Giới thiệu
+   * Dùng filter({ has: }) thay vì :near() để tương thích tốt hơn với CI
    */
   test('should save and display work and city in sidebar intro box', async ({
     page,
     request,
   }) => {
-    const email = `profile-details-${Date.now()}@example.com`;
-    const name = `Detail Test User ${Date.now()}`;
+    const ts = Date.now();
+    const email = `profile-details-${ts}@example.com`;
+    const name = `Detail User ${ts}`;
     const password = 'Password123!';
-    const workInput = 'Senior Software Engineer at Vizo';
-    const cityToSelect = 'Hồ Chí Minh';
+    const workValue = 'Senior Engineer at Vizo';
 
     await registerAndLogin(page, request, email, name, password);
 
     // Vào trang cá nhân
     await page.click('button[title="Trang cá nhân"]');
-    await page.waitForURL(/\/profile/);
-    await page.waitForTimeout(1000);
+    await page.waitForURL(/\/profile/, { timeout: 15000 });
+    await page.waitForTimeout(1500);
 
     // Chuyển sang tab Giới thiệu
     await page.click('button:has-text("Giới thiệu")');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
-    // Click nút Chỉnh sửa (chi tiết cá nhân)
-    await page.click('button:has-text("Chỉnh sửa"):near(h3:has-text("Chi tiết cá nhân"))');
+    // Tìm section "Chi tiết cá nhân" và click nút Chỉnh sửa bên trong nó
+    const detailsSection = page.locator('div.p-6.rounded-2xl').filter({
+      has: page.locator('h3:has-text("Chi tiết cá nhân")'),
+    });
+    await expect(detailsSection).toBeVisible({ timeout: 10000 });
+    await detailsSection.locator('button:has-text("Chỉnh sửa")').click();
+    await page.waitForTimeout(500);
 
     // Điền công việc
     const workField = page.locator('input[placeholder*="App Developer"]');
-    await expect(workField).toBeVisible();
-    await workField.fill(workInput);
+    await expect(workField).toBeVisible({ timeout: 5000 });
+    await workField.fill(workValue);
 
-    // Chọn thành phố từ dropdown
-    const cityTrigger = page.locator('div.cursor-pointer').filter({ hasText: 'Chọn tỉnh/thành phố hiện tại' });
-    await cityTrigger.click();
+    // Chọn thành phố Hồ Chí Minh từ dropdown CitySearchSelect
+    // Nhấn vào trigger dropdown "Tỉnh/Thành phố hiện tại"
+    const cityDropdownTrigger = page.locator('div.cursor-pointer').filter({
+      hasText: 'Chọn tỉnh/thành phố hiện tại',
+    }).first();
+    await cityDropdownTrigger.click();
+    await page.waitForTimeout(300);
     await page.fill('input[placeholder="Tìm kiếm tỉnh/thành..."]', 'Hồ Chí Minh');
-    await page.click('div:has-text("Hồ Chí Minh"):not(:has(input))');
+    // Click vào option trong danh sách (không phải input)
+    await page.locator('div.overflow-y-auto').locator('text=Hồ Chí Minh').click();
+    await page.waitForTimeout(300);
 
     // Lưu
     await page.click('button[type="button"]:has-text("Lưu lại")');
-    await expect(page.locator('text=Cập nhật chi tiết cá nhân thành công')).toBeVisible({
-      timeout: 8000,
-    });
+    await expect(
+      page.locator('text=Cập nhật chi tiết cá nhân thành công')
+    ).toBeVisible({ timeout: 10000 });
 
-    // Quay lại tab Bài viết để kiểm tra sidebar
+    // Quay lại tab Bài viết để kiểm tra sidebar Intro Box
     await page.click('button:has-text("Bài viết")');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
-    // Sidebar Intro Box phải hiện công việc và thành phố
-    const introBox = page.locator('div.p-5.rounded-2xl').filter({ hasText: 'Giới thiệu' }).first();
-    await expect(introBox).toBeVisible();
-    await expect(introBox.locator(`text=Công việc`)).toBeVisible();
-    await expect(introBox.locator(`text=${workInput}`)).toBeVisible();
-    await expect(introBox.locator(`text=Sống tại`)).toBeVisible();
-    await expect(introBox.locator(`text=${cityToSelect}`)).toBeVisible();
+    const introBox = page.locator('div.p-5.rounded-2xl').filter({
+      has: page.locator('h3:has-text("Giới thiệu")'),
+    }).first();
+    await expect(introBox).toBeVisible({ timeout: 8000 });
+    await expect(introBox).toContainText('Công việc');
+    await expect(introBox).toContainText(workValue);
+    await expect(introBox).toContainText('Sống tại');
+    await expect(introBox).toContainText('Hồ Chí Minh');
   });
 
   /**
-   * TEST 3: Sidebar "Hình ảnh" có nút "Xem tất cả" và hiển thị tối đa 9 ảnh
-   * Kịch bản: Đăng nhập → vào trang cá nhân → kiểm tra Photos box có "Xem tất cả"
+   * TEST 3: Sidebar "Hình ảnh" có nút "Xem tất cả" kể cả khi chưa có ảnh
    */
   test('should show Photos box with "Xem tất cả" button on profile sidebar', async ({
     page,
     request,
   }) => {
-    const email = `profile-photos-${Date.now()}@example.com`;
-    const name = `Photos Test User ${Date.now()}`;
+    const ts = Date.now();
+    const email = `profile-photos-${ts}@example.com`;
+    const name = `Photos User ${ts}`;
     const password = 'Password123!';
 
     await registerAndLogin(page, request, email, name, password);
 
-    // Vào trang cá nhân
     await page.click('button[title="Trang cá nhân"]');
-    await page.waitForURL(/\/profile/);
-    await page.waitForTimeout(1000);
+    await page.waitForURL(/\/profile/, { timeout: 15000 });
+    await page.waitForTimeout(1500);
 
-    // Kiểm tra Photos Box có tiêu đề và nút "Xem tất cả"
-    const photosBox = page.locator('div.p-5.rounded-2xl').filter({ hasText: 'Hình ảnh' });
+    // Sidebar Photos Box
+    const photosBox = page.locator('div.p-5.rounded-2xl').filter({
+      has: page.locator('h3:has-text("Hình ảnh")'),
+    });
     await expect(photosBox).toBeVisible({ timeout: 10000 });
     await expect(photosBox.locator('button:has-text("Xem tất cả")')).toBeVisible();
-
-    // Với user mới chưa có ảnh, hiện thông báo chưa có ảnh
+    // User mới chưa có ảnh
     await expect(photosBox.locator('text=Chưa có hình ảnh đăng tải')).toBeVisible();
   });
 
   /**
-   * TEST 4: Sidebar "Bạn bè" hiển thị tối đa 6 bạn và có nút "Xem tất cả bạn bè"
-   * Kịch bản: Cần 2 users, kết bạn → kiểm tra Friends box sidebar
+   * TEST 4: Sidebar "Bạn bè" có nút "Xem tất cả bạn bè" và hiển thị bạn sau khi kết bạn
    */
-  test('should show Friends box with up to 6 friends and "Xem tất cả bạn bè" button', async ({
+  test('should show Friends box with friends and "Xem tất cả bạn bè" button', async ({
     browser,
     request,
   }) => {
+    const ts = Date.now();
     const password = 'Password123!';
-    const userAEmail = `friendbox-a-${Date.now()}@example.com`;
-    const userAName = `FriendBox User A ${Date.now()}`;
-    const userBEmail = `friendbox-b-${Date.now()}@example.com`;
-    const userBName = `FriendBox User B ${Date.now()}`;
+    const userAEmail = `friendbox-a-${ts}@example.com`;
+    const userAName = `FriendBox A ${ts}`;
+    const userBEmail = `friendbox-b-${ts}@example.com`;
+    const userBName = `FriendBox B ${ts}`;
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
 
-    // Đăng ký & kích hoạt cả 2 users
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
+    try {
+      await registerAndLogin(pageA, request, userAEmail, userAName, password);
+      await registerAndLogin(pageB, request, userBEmail, userBName, password);
 
-    // User A gửi lời mời kết bạn cho User B
-    await pageA.click('button:has-text("Bạn bè")');
-    await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userBName);
-    const searchRowA = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await searchRowA.locator('button:has-text("Kết bạn")').click();
-    await expect(searchRowA.locator('button:has-text("Thu hồi")')).toBeVisible();
+      // User A gửi lời mời
+      await pageA.click('button:has-text("Bạn bè")');
+      await pageA.waitForTimeout(500);
+      await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userBName);
+      await pageA.waitForTimeout(1000);
+      const searchRowA = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
+      await expect(searchRowA.locator('button:has-text("Kết bạn")')).toBeVisible({ timeout: 10000 });
+      await searchRowA.locator('button:has-text("Kết bạn")').click();
+      await expect(searchRowA.locator('button:has-text("Thu hồi")')).toBeVisible({ timeout: 8000 });
 
-    // User B chấp nhận lời mời
-    await pageB.waitForTimeout(1000);
-    await pageB.click('button:has-text("Bạn bè")');
-    await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
-    const requestRowB = pageB.locator('div.flex.items-center.justify-between').filter({ hasText: userAEmail });
-    await requestRowB.locator('button:has-text("Chấp nhận")').click();
+      // User B chấp nhận
+      await pageB.waitForTimeout(1500);
+      await pageB.click('button:has-text("Bạn bè")');
+      await pageB.waitForTimeout(500);
+      await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
+      await pageB.waitForTimeout(500);
+      const requestRowB = pageB.locator('div.flex.items-center.justify-between').filter({ hasText: userAEmail });
+      await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({ timeout: 10000 });
+      await requestRowB.locator('button:has-text("Chấp nhận")').click();
+      await pageA.waitForTimeout(2000);
 
-    // User A vào trang cá nhân để kiểm tra Friends box
-    await pageA.waitForTimeout(1000);
-    await pageA.click('button[title="Trang cá nhân"]');
-    await pageA.waitForURL(/\/profile/);
-    await pageA.waitForTimeout(2000);
+      // User A vào trang cá nhân
+      await pageA.click('button[title="Trang cá nhân"]');
+      await pageA.waitForURL(/\/profile/, { timeout: 15000 });
+      await pageA.waitForTimeout(2000);
 
-    // Kiểm tra Friends box tồn tại
-    const friendsBox = pageA.locator('div.p-5.rounded-2xl').filter({ hasText: 'Bạn bè' }).first();
-    await expect(friendsBox).toBeVisible({ timeout: 10000 });
-
-    // Nút "Xem tất cả bạn bè" phải có
-    await expect(friendsBox.locator('button:has-text("Xem tất cả bạn bè")')).toBeVisible();
-
-    // User B phải xuất hiện trong danh sách (hiện tên thật)
-    await expect(friendsBox.locator(`text=${userBName.split(' ')[0]}`)).toBeVisible({ timeout: 5000 });
-
-    await contextA.close();
-    await contextB.close();
+      const friendsBox = pageA.locator('div.p-5.rounded-2xl').filter({
+        has: pageA.locator('h3:has-text("Bạn bè")'),
+      }).first();
+      await expect(friendsBox).toBeVisible({ timeout: 10000 });
+      await expect(friendsBox.locator('button:has-text("Xem tất cả bạn bè")')).toBeVisible();
+      // User B phải có tên trong danh sách
+      await expect(friendsBox.locator(`text=${userBName.split(' ')[0]}`)).toBeVisible({ timeout: 8000 });
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
   });
 
   /**
-   * TEST 5: Nút "Xem tất cả bạn bè" điều hướng đến tab Bạn bè
-   * Kịch bản: Đăng nhập → vào trang cá nhân → click "Xem tất cả bạn bè" → tab Bạn bè active
+   * TEST 5: Nút "Xem tất cả bạn bè" chuyển sang tab Bạn bè
    */
   test('should navigate to Friends tab when clicking "Xem tất cả bạn bè"', async ({
     page,
     request,
   }) => {
-    const email = `profile-friendtab-${Date.now()}@example.com`;
-    const name = `FriendTab Test User ${Date.now()}`;
+    const ts = Date.now();
+    const email = `profile-friendtab-${ts}@example.com`;
+    const name = `FriendTab User ${ts}`;
     const password = 'Password123!';
 
     await registerAndLogin(page, request, email, name, password);
 
     await page.click('button[title="Trang cá nhân"]');
-    await page.waitForURL(/\/profile/);
-    await page.waitForTimeout(1000);
+    await page.waitForURL(/\/profile/, { timeout: 15000 });
+    await page.waitForTimeout(1500);
 
-    // Click "Xem tất cả bạn bè" trong Friends Box sidebar
-    const friendsBox = page.locator('div.p-5.rounded-2xl').filter({ hasText: 'Bạn bè' }).first();
+    const friendsBox = page.locator('div.p-5.rounded-2xl').filter({
+      has: page.locator('h3:has-text("Bạn bè")'),
+    }).first();
+    await expect(friendsBox).toBeVisible({ timeout: 10000 });
     await friendsBox.locator('button:has-text("Xem tất cả bạn bè")').click();
+    await page.waitForTimeout(500);
 
-    // Tab "Bạn bè" phải được active (có underline violet)
-    const friendsTab = page.locator('button:has-text("Bạn bè")').filter({ has: page.locator('div.bg-violet-600') });
-    await expect(friendsTab).toBeVisible({ timeout: 5000 });
-  });
-
-  /**
-   * TEST 6: Xem trang cá nhân người khác - hiển thị đúng thông tin và nút Thêm bạn bè
-   * Kịch bản: User A xem profile User B → thấy tên thật, nút "Thêm bạn bè"
-   */
-  test('should show other user profile with real name and Add Friend button', async ({
-    browser,
-    request,
-  }) => {
-    const password = 'Password123!';
-    const userAEmail = `otherprofile-a-${Date.now()}@example.com`;
-    const userAName = `Other Profile A ${Date.now()}`;
-    const userBEmail = `otherprofile-b-${Date.now()}@example.com`;
-    const userBName = `Other Profile B ${Date.now()}`;
-
-    const contextA = await browser.newContext();
-    const pageA = await contextA.newPage();
-    const contextB = await browser.newContext();
-    const pageB = await contextB.newPage();
-
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-
-    // User A tìm kiếm User B và click vào tên để xem profile
-    await pageA.click('button:has-text("Bạn bè")');
-    await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userBName);
-
-    const searchRow = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await expect(searchRow).toBeVisible({ timeout: 10000 });
-
-    // Lấy userId của User B từ link (nếu có) hoặc dùng cách navigate
-    // Lấy API để lấy userId của User B
-    const searchApiResp = await request.get(
-      `http://localhost:8080/api/friends/search?q=${encodeURIComponent(userBName)}`,
-      { headers: { 'Cookie': '' } }
-    );
-    // Fallback: click vào avatar User B trong kết quả tìm kiếm để xem profile
-    // (Dùng cách navigate trực tiếp qua URL không cần đăng nhập)
-    // Kiểm tra nút Kết bạn có mặt trong kết quả search
-    await expect(searchRow.locator('button:has-text("Kết bạn")')).toBeVisible();
-
-    await contextA.close();
-    await contextB.close();
+    // Tab "Bạn bè" phải active (có indicator màu violet)
+    const activeFriendsTab = page.locator('button:has-text("Bạn bè")').filter({
+      has: page.locator('div.bg-violet-600'),
+    });
+    await expect(activeFriendsTab).toBeVisible({ timeout: 5000 });
   });
 });

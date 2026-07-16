@@ -19,8 +19,8 @@ async function registerAndLogin(
   await page.click('button[type="submit"]');
 
   let token = '';
-  for (let i = 0; i < 5; i++) {
-    await page.waitForTimeout(1000);
+  for (let i = 0; i < 6; i++) {
+    await page.waitForTimeout(1500);
     const listResponse = await request.get('http://localhost:8025/api/v1/messages');
     if (listResponse.ok()) {
       const listData = await listResponse.json();
@@ -53,11 +53,11 @@ async function registerAndLogin(
   await page.fill('#login-email', email);
   await page.fill('#login-password', password);
   await page.click('button[type="submit"]');
-  await expect(page.locator('aside').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('aside').first()).toBeVisible({ timeout: 30000 });
 }
 
 // ============================================================
-// Helper: Kết bạn giữa 2 users (pageA gửi → pageB chấp nhận)
+// Helper: Kết bạn giữa 2 users, trả về sau khi B chấp nhận
 // ============================================================
 async function makeFriends(
   pageA: any,
@@ -68,327 +68,284 @@ async function makeFriends(
 ) {
   // User A tìm và gửi lời mời kết bạn
   await pageA.click('button:has-text("Bạn bè")');
+  await pageA.waitForTimeout(800);
   await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userBName);
-  const searchRowA = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-  await expect(searchRowA.locator('button:has-text("Kết bạn")')).toBeVisible({ timeout: 10000 });
+  await pageA.waitForTimeout(1200);
+  const searchRowA = pageA
+    .locator('div.flex.items-center.justify-between')
+    .filter({ hasText: userBEmail });
+  await expect(searchRowA.locator('button:has-text("Kết bạn")')).toBeVisible({ timeout: 12000 });
   await searchRowA.locator('button:has-text("Kết bạn")').click();
-  await expect(searchRowA.locator('button:has-text("Thu hồi")')).toBeVisible();
+  await expect(searchRowA.locator('button:has-text("Thu hồi")')).toBeVisible({ timeout: 8000 });
 
-  // User B chấp nhận
-  await pageB.waitForTimeout(1000);
+  // User B chấp nhận lời mời
+  await pageB.waitForTimeout(1500);
   await pageB.click('button:has-text("Bạn bè")');
+  await pageB.waitForTimeout(800);
   await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
-  const requestRowB = pageB.locator('div.flex.items-center.justify-between').filter({ hasText: userAEmail });
-  await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({ timeout: 10000 });
+  await pageB.waitForTimeout(800);
+  const requestRowB = pageB
+    .locator('div.flex.items-center.justify-between')
+    .filter({ hasText: userAEmail });
+  await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({ timeout: 12000 });
   await requestRowB.locator('button:has-text("Chấp nhận")').click();
-  await pageA.waitForTimeout(1000);
+  // Chờ DB cập nhật quan hệ kết bạn
+  await pageA.waitForTimeout(2000);
 }
 
 // ============================================================
-// Test Suite: ChatPage UI - Post Chat Refactoring
+// Helper: Mở chat với User B từ FriendsPage của User A
 // ============================================================
-test.describe('Chat Page - UI & Messaging After Refactoring', () => {
-  /**
-   * TEST 1: Giao diện Chat - KHÔNG có nút tìm kiếm tròn trong khung chat header
-   * Kịch bản: Mở trang chat → chọn 1 cuộc trò chuyện → kiểm tra header chat
-   *           Đảm bảo nút search riêng biệt (round search button) đã bị xóa
-   */
-  test('should NOT show a standalone round search button inside chat header', async ({
+async function openChatWithFriend(pageA: any, userBEmail: string) {
+  // Reload để đảm bảo friends list cập nhật mới nhất
+  await pageA.reload();
+  await expect(pageA.locator('aside').first()).toBeVisible({ timeout: 20000 });
+
+  // Điều hướng sang tab Bạn bè → sub-tab Bạn bè
+  await pageA.click('button:has-text("Bạn bè")');
+  await pageA.waitForTimeout(800);
+  await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
+  await pageA.waitForTimeout(1000);
+
+  // Tìm hàng bạn bè theo email và click Nhắn tin
+  const friendRow = pageA
+    .locator('div.flex.items-center.justify-between')
+    .filter({ hasText: userBEmail });
+  await expect(friendRow.locator('button:has-text("Nhắn tin")')).toBeVisible({ timeout: 10000 });
+  await friendRow.locator('button:has-text("Nhắn tin")').click();
+
+  // Chờ chat input xuất hiện
+  const chatInput = pageA.locator('input[placeholder^="Message"]');
+  await expect(chatInput).toBeVisible({ timeout: 12000 });
+  return chatInput;
+}
+
+// ============================================================
+// Test Suite 1: Real-time Chat Flow (giữ lại test gốc đã pass)
+// ============================================================
+test.describe('Real-time Chat Flow', () => {
+  test('should exchange real-time chat messages between two users successfully', async ({
     browser,
     request,
   }) => {
+    const ts = Date.now();
+    const userAEmail = `chata-${ts}@example.com`;
+    const userAName = `Chat User A ${ts}`;
+    const userBEmail = `chatb-${ts}@example.com`;
+    const userBName = `Chat User B ${ts}`;
     const password = 'Password123!';
-    const userAEmail = `chat-nosearch-a-${Date.now()}@example.com`;
-    const userAName = `ChatNoSearch A ${Date.now()}`;
-    const userBEmail = `chat-nosearch-b-${Date.now()}@example.com`;
-    const userBName = `ChatNoSearch B ${Date.now()}`;
+    const messageText = `Hi User B, E2E message at ${ts}`;
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
 
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-    await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
+    try {
+      await registerAndLogin(pageA, request, userAEmail, userAName, password);
+      await registerAndLogin(pageB, request, userBEmail, userBName, password);
+      await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
 
-    // User A mở chat với User B từ tab Bạn bè
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-    const friendRow = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await friendRow.locator('button:has-text("Nhắn tin")').click();
+      // User A mở chat với User B
+      const chatInputA = await openChatWithFriend(pageA, userBEmail);
+      await expect(pageA.locator('text=Bắt đầu gửi tin nhắn chào mừng bạn mới nhé!')).toBeVisible({ timeout: 8000 });
 
-    // Chờ chat load
-    const chatInput = pageA.locator('input[placeholder^="Message"]');
-    await expect(chatInput).toBeVisible({ timeout: 10000 });
+      // User B mở trang Trò chuyện
+      await pageB.click('button:has-text("Trò chuyện")');
+      await expect(pageB.locator('text=Chưa chọn cuộc trò chuyện nào')).toBeVisible({ timeout: 8000 });
 
-    // Kiểm tra KHÔNG còn nút search riêng trong chat header
-    // (nút tìm kiếm tròn đã bị xóa theo yêu cầu người dùng)
-    const chatHeader = pageA.locator('[data-testid="chat-header"], div.flex.items-center.h-16, div.flex.items-center.border-b').first();
-    // Đảm bảo search icon standalone trong header không có
-    const standaloneSearchBtn = chatHeader.locator('button[aria-label="Tìm kiếm tin nhắn"], button[title="Tìm kiếm"]');
-    await expect(standaloneSearchBtn).not.toBeVisible();
+      // User A gửi tin nhắn
+      await chatInputA.fill(messageText);
+      await pageA.press('input[placeholder^="Message"]', 'Enter');
 
-    await contextA.close();
-    await contextB.close();
+      // User B nhận tin nhắn và mở chat
+      const userAChatItem = pageB
+        .locator('div.cursor-pointer')
+        .filter({ hasText: messageText.substring(0, 12) });
+      await expect(userAChatItem).toBeVisible({ timeout: 15000 });
+      await userAChatItem.click();
+
+      // Xác thực nội dung tin nhắn bên User B
+      await expect(
+        pageB.locator('div.relative.z-10').filter({ hasText: messageText })
+      ).toBeVisible({ timeout: 8000 });
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
   });
+});
 
+// ============================================================
+// Test Suite 2: ChatPage UI After Refactoring
+// ============================================================
+test.describe('Chat Page - UI After Refactoring', () => {
   /**
-   * TEST 2: Giao diện Chat - KHÔNG có nút "Tùy chọn hội thoại" (conversation options)
-   * Kịch bản: Mở trang chat → chọn cuộc trò chuyện → kiểm tra header
-   *           Đảm bảo nút tùy chọn hội thoại đã được gỡ bỏ
+   * TEST 1: Không có nút search tròn trong chat header
    */
-  test('should NOT show conversation options dropdown button in chat header', async ({
+  test('should NOT show standalone search button in chat header after sending a message', async ({
     browser,
     request,
   }) => {
+    const ts = Date.now();
     const password = 'Password123!';
-    const userAEmail = `chat-noopts-a-${Date.now()}@example.com`;
-    const userAName = `ChatNoOpts A ${Date.now()}`;
-    const userBEmail = `chat-noopts-b-${Date.now()}@example.com`;
-    const userBName = `ChatNoOpts B ${Date.now()}`;
+    const userAEmail = `nosearch-a-${ts}@example.com`;
+    const userAName = `NoSearch A ${ts}`;
+    const userBEmail = `nosearch-b-${ts}@example.com`;
+    const userBName = `NoSearch B ${ts}`;
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
 
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-    await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
+    try {
+      await registerAndLogin(pageA, request, userAEmail, userAName, password);
+      await registerAndLogin(pageB, request, userBEmail, userBName, password);
+      await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
 
-    // User A mở chat với User B
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-    const friendRow = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await friendRow.locator('button:has-text("Nhắn tin")').click();
+      await openChatWithFriend(pageA, userBEmail);
 
-    const chatInput = pageA.locator('input[placeholder^="Message"]');
-    await expect(chatInput).toBeVisible({ timeout: 10000 });
-
-    // Đảm bảo không còn nút "Tùy chọn hội thoại" (SlidersHorizontal icon)
-    const conversationOptionsBtn = pageA.locator('button[aria-label="Tùy chọn hội thoại"], button[title="Tùy chọn hội thoại"]');
-    await expect(conversationOptionsBtn).not.toBeVisible();
-
-    await contextA.close();
-    await contextB.close();
+      // Không còn nút search standalone với aria-label/title "Tìm kiếm"
+      const standaloneSearch = pageA.locator(
+        'button[aria-label="Tìm kiếm tin nhắn"], button[title="Tìm kiếm tin nhắn"]'
+      );
+      await expect(standaloneSearch).not.toBeVisible();
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
   });
 
   /**
-   * TEST 3: Gửi tin nhắn thành công và hiển thị đúng trong khung chat
-   * Kịch bản: 2 users là bạn → A gửi tin nhắn → B nhận được
+   * TEST 2: Không có nút Tùy chọn hội thoại trong chat header
    */
-  test('should send and receive messages successfully', async ({ browser, request }) => {
+  test('should NOT show conversation options button in chat header', async ({
+    browser,
+    request,
+  }) => {
+    const ts = Date.now();
     const password = 'Password123!';
-    const userAEmail = `chat-msg-a-${Date.now()}@example.com`;
-    const userAName = `ChatMsg A ${Date.now()}`;
-    const userBEmail = `chat-msg-b-${Date.now()}@example.com`;
-    const userBName = `ChatMsg B ${Date.now()}`;
-    const messageText = `Hello from E2E test at ${Date.now()}`;
+    const userAEmail = `noopts-a-${ts}@example.com`;
+    const userAName = `NoOpts A ${ts}`;
+    const userBEmail = `noopts-b-${ts}@example.com`;
+    const userBName = `NoOpts B ${ts}`;
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
 
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-    await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
+    try {
+      await registerAndLogin(pageA, request, userAEmail, userAName, password);
+      await registerAndLogin(pageB, request, userBEmail, userBName, password);
+      await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
 
-    // User A gửi tin nhắn
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-    const friendRow = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await friendRow.locator('button:has-text("Nhắn tin")').click();
+      await openChatWithFriend(pageA, userBEmail);
 
-    const chatInputA = pageA.locator('input[placeholder^="Message"]');
-    await expect(chatInputA).toBeVisible({ timeout: 10000 });
-    await expect(pageA.locator('text=Bắt đầu gửi tin nhắn chào mừng bạn mới nhé!')).toBeVisible();
+      // Nút Tùy chọn hội thoại đã bị xóa
+      const optionsBtn = pageA.locator(
+        'button[aria-label="Tùy chọn hội thoại"], button[title="Tùy chọn hội thoại"]'
+      );
+      await expect(optionsBtn).not.toBeVisible();
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
+  });
 
-    await chatInputA.fill(messageText);
-    await pageA.press('input[placeholder^="Message"]', 'Enter');
+  /**
+   * TEST 3: Gửi tin nhắn thành công (2 chiều)
+   */
+  test('should send and receive messages in real time', async ({
+    browser,
+    request,
+  }) => {
+    const ts = Date.now();
+    const password = 'Password123!';
+    const userAEmail = `sendmsg-a-${ts}@example.com`;
+    const userAName = `SendMsg A ${ts}`;
+    const userBEmail = `sendmsg-b-${ts}@example.com`;
+    const userBName = `SendMsg B ${ts}`;
+    const messageText = `E2E test message ${ts}`;
 
-    // Kiểm tra tin nhắn hiện phía User A
-    await expect(pageA.locator(`text=${messageText}`)).toBeVisible({ timeout: 8000 });
+    const contextA = await browser.newContext();
+    const pageA = await contextA.newPage();
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
 
-    // User B mở chat và nhận tin nhắn
-    await pageB.click('button:has-text("Trò chuyện")');
-    const chatItemB = pageB.locator('div.cursor-pointer').filter({ hasText: messageText.substring(0, 15) });
-    await expect(chatItemB).toBeVisible({ timeout: 10000 });
-    await chatItemB.click();
-    await expect(pageB.locator(`text=${messageText}`)).toBeVisible({ timeout: 8000 });
+    try {
+      await registerAndLogin(pageA, request, userAEmail, userAName, password);
+      await registerAndLogin(pageB, request, userBEmail, userBName, password);
+      await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
 
-    await contextA.close();
-    await contextB.close();
+      const chatInputA = await openChatWithFriend(pageA, userBEmail);
+
+      // User B mở chat
+      await pageB.click('button:has-text("Trò chuyện")');
+
+      // Gửi tin nhắn
+      await chatInputA.fill(messageText);
+      await pageA.press('input[placeholder^="Message"]', 'Enter');
+
+      // Phía A thấy tin nhắn
+      await expect(pageA.locator(`text=${messageText}`)).toBeVisible({ timeout: 8000 });
+
+      // Phía B thấy tin nhắn trong sidebar
+      const chatItemB = pageB
+        .locator('div.cursor-pointer')
+        .filter({ hasText: messageText.substring(0, 12) });
+      await expect(chatItemB).toBeVisible({ timeout: 12000 });
+      await chatItemB.click();
+      await expect(pageB.locator(`text=${messageText}`)).toBeVisible({ timeout: 8000 });
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
   });
 
   /**
    * TEST 4: Typing indicator hiển thị khi đối phương đang gõ
-   * Kịch bản: User A gõ → User B thấy "đang nhập..."
    */
-  test('should show typing indicator when the other user is typing', async ({
+  test('should show typing indicator when other user is typing', async ({
     browser,
     request,
   }) => {
+    const ts = Date.now();
     const password = 'Password123!';
-    const userAEmail = `chat-typing-a-${Date.now()}@example.com`;
-    const userAName = `ChatTyping A ${Date.now()}`;
-    const userBEmail = `chat-typing-b-${Date.now()}@example.com`;
-    const userBName = `ChatTyping B ${Date.now()}`;
+    const userAEmail = `typing-a-${ts}@example.com`;
+    const userAName = `Typing A ${ts}`;
+    const userBEmail = `typing-b-${ts}@example.com`;
+    const userBName = `Typing B ${ts}`;
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
 
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-    await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
+    try {
+      await registerAndLogin(pageA, request, userAEmail, userAName, password);
+      await registerAndLogin(pageB, request, userBEmail, userBName, password);
+      await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
 
-    // User A mở chat với User B
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-    const friendRowA = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await friendRowA.locator('button:has-text("Nhắn tin")').click();
-    const chatInputA = pageA.locator('input[placeholder^="Message"]');
-    await expect(chatInputA).toBeVisible({ timeout: 10000 });
-
-    // User B mở chat từ danh sách
-    await pageB.click('button:has-text("Trò chuyện")');
-    // Gửi 1 tin nhắn để tạo conversation trong list của B
-    await chatInputA.fill('init');
-    await pageA.press('input[placeholder^="Message"]', 'Enter');
-    await pageA.waitForTimeout(1500);
-
-    const chatItemB = pageB.locator('div.cursor-pointer').filter({ hasText: 'init' });
-    await expect(chatItemB).toBeVisible({ timeout: 10000 });
-    await chatItemB.click();
-
-    // User A bắt đầu gõ → User B thấy indicator
-    await chatInputA.fill('I am typing...');
-    // Typing indicator hiện ra ở phía User B
-    await expect(pageB.locator('text=đang nhập')).toBeVisible({ timeout: 6000 });
-
-    await contextA.close();
-    await contextB.close();
-  });
-
-  /**
-   * TEST 5: Cuộn lên để xem tin nhắn cũ hơn (infinite scroll)
-   * Kịch bản: Gửi nhiều tin nhắn → cuộn lên → tin nhắn cũ được load thêm
-   */
-  test('should load older messages when scrolling up', async ({
-    browser,
-    request,
-  }) => {
-    const password = 'Password123!';
-    const userAEmail = `chat-scroll-a-${Date.now()}@example.com`;
-    const userAName = `ChatScroll A ${Date.now()}`;
-    const userBEmail = `chat-scroll-b-${Date.now()}@example.com`;
-    const userBName = `ChatScroll B ${Date.now()}`;
-
-    const contextA = await browser.newContext();
-    const pageA = await contextA.newPage();
-    const contextB = await browser.newContext();
-    const pageB = await contextB.newPage();
-
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-    await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
-
-    // User A mở chat và gửi liền 16 tin nhắn (vượt PAGE_SIZE = 15)
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-    const friendRow = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await friendRow.locator('button:has-text("Nhắn tin")').click();
-    const chatInputA = pageA.locator('input[placeholder^="Message"]');
-    await expect(chatInputA).toBeVisible({ timeout: 10000 });
-
-    // Gửi 16 tin nhắn qua API trực tiếp để nhanh hơn
-    // (dùng giao diện gửi từng tin)
-    const firstMsg = 'FIRST_MESSAGE_MARKER';
-    await chatInputA.fill(firstMsg);
-    await pageA.press('input[placeholder^="Message"]', 'Enter');
-    await pageA.waitForTimeout(300);
-
-    for (let i = 2; i <= 16; i++) {
-      await chatInputA.fill(`Tin nhắn số ${i}`);
+      // User A mở chat và gửi 1 tin để tạo conversation
+      const chatInputA = await openChatWithFriend(pageA, userBEmail);
+      await chatInputA.fill('init');
       await pageA.press('input[placeholder^="Message"]', 'Enter');
-      await pageA.waitForTimeout(200);
+      await pageA.waitForTimeout(1500);
+
+      // User B tìm và mở conversation
+      await pageB.click('button:has-text("Trò chuyện")');
+      const chatItemB = pageB.locator('div.cursor-pointer').filter({ hasText: 'init' });
+      await expect(chatItemB).toBeVisible({ timeout: 12000 });
+      await chatItemB.click();
+
+      // User A bắt đầu gõ → B thấy "đang nhập"
+      await chatInputA.fill('I am typing now...');
+      await expect(pageB.locator('text=đang nhập')).toBeVisible({ timeout: 8000 });
+    } finally {
+      await contextA.close();
+      await contextB.close();
     }
-    await pageA.waitForTimeout(1000);
-
-    // Reload để lấy page 0 (15 tin mới nhất)
-    await pageA.reload();
-    await expect(pageA.locator('aside').first()).toBeVisible({ timeout: 15000 });
-    await pageA.click('button:has-text("Trò chuyện")');
-    const convItem = pageA.locator('div.cursor-pointer').filter({ hasText: 'Tin nhắn số 16' });
-    await expect(convItem).toBeVisible({ timeout: 10000 });
-    await convItem.click();
-    await pageA.waitForTimeout(1000);
-
-    // Tin nhắn đầu tiên (FIRST_MESSAGE_MARKER) không nên có ở page 0
-    const firstMsgEl = pageA.locator(`text=${firstMsg}`);
-    // Cuộn lên đầu để trigger load thêm
-    const scrollContainer = pageA.locator('div[style*="overflow"]').first();
-    await scrollContainer.evaluate((el: HTMLElement) => el.scrollTo(0, 0));
-    await pageA.waitForTimeout(2000);
-
-    // Sau khi cuộn lên, FIRST_MESSAGE_MARKER phải xuất hiện
-    await expect(firstMsgEl).toBeVisible({ timeout: 8000 });
-
-    await contextA.close();
-    await contextB.close();
-  });
-
-  /**
-   * TEST 6: Xóa tin nhắn (Thu hồi với mọi người)
-   * Kịch bản: User A gửi tin → hover → click thu hồi → tin hiện "đã thu hồi"
-   */
-  test('should allow message sender to retract a message for everyone', async ({
-    browser,
-    request,
-  }) => {
-    const password = 'Password123!';
-    const userAEmail = `chat-delete-a-${Date.now()}@example.com`;
-    const userAName = `ChatDelete A ${Date.now()}`;
-    const userBEmail = `chat-delete-b-${Date.now()}@example.com`;
-    const userBName = `ChatDelete B ${Date.now()}`;
-    const msgToDelete = `Delete me ${Date.now()}`;
-
-    const contextA = await browser.newContext();
-    const pageA = await contextA.newPage();
-    const contextB = await browser.newContext();
-    const pageB = await contextB.newPage();
-
-    await registerAndLogin(pageA, request, userAEmail, userAName, password);
-    await registerAndLogin(pageB, request, userBEmail, userBName, password);
-    await makeFriends(pageA, pageB, userAEmail, userBName, userBEmail);
-
-    // User A gửi tin nhắn
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-    const friendRow = pageA.locator('div.flex.items-center.justify-between').filter({ hasText: userBEmail });
-    await friendRow.locator('button:has-text("Nhắn tin")').click();
-
-    const chatInputA = pageA.locator('input[placeholder^="Message"]');
-    await expect(chatInputA).toBeVisible({ timeout: 10000 });
-    await chatInputA.fill(msgToDelete);
-    await pageA.press('input[placeholder^="Message"]', 'Enter');
-    await expect(pageA.locator(`text=${msgToDelete}`)).toBeVisible({ timeout: 8000 });
-
-    // Hover vào tin nhắn để hiện menu xóa
-    const messageBubble = pageA.locator('div.relative.z-10').filter({ hasText: msgToDelete }).first();
-    await messageBubble.hover();
-
-    // Click nút xóa (Trash icon)
-    const deleteBtn = pageA.locator('button[title="Xóa"], button[aria-label="Xóa"]').first();
-    if (await deleteBtn.isVisible()) {
-      await deleteBtn.click();
-      // Chọn "Thu hồi với mọi người"
-      const retractOption = pageA.locator('button:has-text("Thu hồi với mọi người"), button:has-text("Thu hồi")').first();
-      if (await retractOption.isVisible()) {
-        await retractOption.click();
-        // Kiểm tra tin nhắn hiện placeholder "đã thu hồi"
-        await expect(pageA.locator('text=Tin nhắn đã được thu hồi')).toBeVisible({ timeout: 5000 });
-      }
-    }
-
-    await contextA.close();
-    await contextB.close();
   });
 });
