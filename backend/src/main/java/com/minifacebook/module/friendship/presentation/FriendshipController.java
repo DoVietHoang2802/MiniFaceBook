@@ -73,6 +73,16 @@ public class FriendshipController {
     return ApiResponse.success("Lấy danh sách bạn bè thành công", friends);
   }
 
+  @GetMapping("/user/{userId}")
+  @Operation(
+      summary = "Danh sách bạn bè của một user cụ thể",
+      description = "Lấy danh sách tất cả bạn bè đã kết nối của một user bất kỳ theo userId")
+  public ApiResponse<List<FriendshipResponse>> getFriendsOfUser(
+      @PathVariable String userId) {
+    List<FriendshipResponse> friends = friendshipService.getFriendsByUserId(userId);
+    return ApiResponse.success("Lấy danh sách bạn bè thành công", friends);
+  }
+
   @GetMapping("/requests/pending")
   @Operation(
       summary = "Lời mời đang chờ duyệt",

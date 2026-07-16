@@ -5,14 +5,12 @@ import {
   Bell, 
   User, 
   Settings, 
-  Flame, 
   Loader2, 
   LogOut, 
   ChevronDown,
   MessageCircle,
   Users,
   Compass,
-  TrendingUp,
   UserPlus,
   Home,
   X,
@@ -372,27 +370,6 @@ export const MainLayout: React.FC = () => {
               })}
             </nav>
           </div>
-
-          <div className="space-y-4 mt-auto pt-4 border-t border-slate-100">
-            {/* Thống kê nhanh */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm hidden lg:block">
-              <span className="font-bold text-slate-800 text-[11px] font-outfit uppercase tracking-wider block">Thống kê nhanh</span>
-              <div className="space-y-2.5 pt-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-medium">Bài viết</span>
-                  <span className="font-black text-violet-600">98</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-medium">Bạn bè</span>
-                  <span className="font-black text-violet-600">332</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-medium">Lượt thích</span>
-                  <span className="font-black text-violet-600">1.2K</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* Floating Notification Panel */}
@@ -523,52 +500,11 @@ export const MainLayout: React.FC = () => {
           </div>
         </main>
 
-        {/* CỘT PHẢI: TRENDING & PEOPLE YOU MAY KNOW */}
+        {/* CỘT PHẢI: GỢI Ý KẾT BẠN & BẠN ONLINE */}
         <aside className={`hidden lg:flex flex-col w-[300px] xl:w-[340px] shrink-0 sticky top-14 h-[calc(100vh-56px)] justify-between py-3 pl-1 transition-all duration-300 ${(activeTab === 'chats' || activeTab === 'profile' || activeTab === 'settings') ? '!hidden' : ''}`}>
           <div className="space-y-4 overflow-y-auto pr-1 scrollbar-none">
             
-            {/* Widget 1: Trending Topics */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Flame className="h-4 w-4 text-orange-500 fill-orange-500 animate-pulse" />
-                  <span className="font-bold text-slate-800 text-sm font-outfit">Xu hướng</span>
-                </div>
-                <button 
-                  onClick={() => triggerToast("Xem danh mục xu hướng chi tiết...")}
-                  className="text-[11px] font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
-                >
-                  Xem tất cả
-                </button>
-              </div>
-              <div className="space-y-3 pt-1">
-                {[
-                  { tag: '#JavaScript', posts: '12.5K bài viết', growth: '+24%' },
-                  { tag: '#Frontend', posts: '8.7K bài viết', growth: '+18%' },
-                  { tag: '#WebDev', posts: '6.3K bài viết', growth: '+15%' },
-                  { tag: '#UIUX', posts: '4.2K bài viết', growth: '+8%' },
-                  { tag: '#AI', posts: '3.1K bài viết', growth: '+6%' }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between cursor-pointer group">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg border text-orange-500 bg-orange-50 border-orange-100 shrink-0">
-                        <Flame className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="text-left">
-                        <h4 className="font-bold text-slate-700 text-xs group-hover:text-violet-600 transition">{item.tag}</h4>
-                        <p className="text-slate-400 text-[10px]">{item.posts}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-1 text-emerald-500 font-bold text-[11px]">
-                      <TrendingUp className="h-3 w-3" />
-                      <span>{item.growth}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Widget 2: Suggested Friends */}
+            {/* Widget 1: Suggested Friends */}
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">

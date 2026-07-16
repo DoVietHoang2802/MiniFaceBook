@@ -19,6 +19,7 @@ public class FriendshipResponse {
   /** Thông tin user đối phương (không phải user đang đăng nhập). */
   private String userId;
 
+  private String name;
   private String email;
   private String avatar;
   private String bio;

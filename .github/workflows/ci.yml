@@ -48,28 +48,34 @@ jobs:
           done
           echo "MongoDB is healthy!"
 
-      # 6. Build and Test Backend (Runs checkstyle, unit and integration tests)
+      # 6. Build and Test Backend (Runs checkstyle, unit/integration tests, and packages as executable JAR)
       - name: Build and Test Backend
         run: |
           cd backend
-          mvn clean test
+          mvn clean package
 
-      # 7. Start Backend Server in Background for Playwright E2E tests
+      # 7. Start Backend Server in Background from packaged JAR for Playwright E2E tests
       - name: Run Backend Server in Background
         run: |
           cd backend
-          nohup mvn spring-boot:run > backend.log 2>&1 &
+          nohup java -jar target/*.jar > backend.log 2>&1 &
           echo $! > backend.pid
 
-      # 8. Wait for Backend Server to be Ready (port 8080 API docs)
+      # 8. Wait for Backend Server to be Ready (port 8080 API docs) with timeout limit
       - name: Wait for Backend Server Port 8080
         run: |
           echo "Waiting for Backend Server to start..."
-          until curl -s http://localhost:8080/api/docs > /dev/null; do
-            echo "Waiting for API Docs endpoint..."
-            sleep 5
+          for i in {1..40}; do
+            if curl -s http://localhost:8080/api/docs > /dev/null; then
+              echo "Backend Server is up and running!"
+              exit 0
+            fi
+            echo "Waiting for API Docs endpoint (Attempt $i/40)..."
+            sleep 3
           done
-          echo "Backend Server is up and running!"
+          echo "Backend Server failed to start! Printing logs:"
+          cat backend/backend.log
+          exit 1
 
       # 9. Install Frontend Dependencies
       - name: Install Frontend Dependencies

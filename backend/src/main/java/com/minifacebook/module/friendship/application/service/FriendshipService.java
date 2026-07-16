@@ -195,6 +195,14 @@ public class FriendshipService {
     return response;
   }
 
+  @Transactional(readOnly = true)
+  public List<FriendshipResponse> getFriendsByUserId(String userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    List<Friendship> friendships = friendshipRepository.findAcceptedByUserId(user.getId());
+    return mapWithOtherUser(friendships, user.getId());
+  }
+
   /** Lấy danh sách lời mời ĐANG CHỜ user hiện tại duyệt (user là addressee). */
   @Transactional(readOnly = true)
   public List<FriendshipResponse> getPendingRequests(String email) {
@@ -550,6 +558,7 @@ public class FriendshipService {
         .friendshipId(friendship.getId())
         .status(friendship.getStatus())
         .userId(otherUser.getId())
+        .name(otherUser.getName())
         .email(otherUser.getEmail())
         .avatar(otherUser.getAvatar())
         .bio(otherUser.getBio())

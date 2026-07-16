@@ -30,8 +30,9 @@ export const friendService = {
   },
 
   // ===== Sprint 3.2: Lists =====
-  getFriends: async () => {
-    const res = await axiosClient.get<ApiResponse<FriendshipResponse[]>>('/friends');
+  getFriends: async (userId?: string) => {
+    const url = userId ? `/friends/user/${userId}` : '/friends';
+    const res = await axiosClient.get<ApiResponse<FriendshipResponse[]>>(url);
     return res.data.data;
   },
 
