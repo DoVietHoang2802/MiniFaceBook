@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -83,11 +87,21 @@ jobs:
           cd frontend
           npm ci
 
-      # 10. Install Playwright Browsers & dependencies
-      - name: Install Playwright Browsers
+      # 10. Cache Playwright Browsers
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      # 10.5. Install Playwright Chromium only (CI không chạy Firefox/WebKit)
+      - name: Install Playwright Chromium
         run: |
           cd frontend
-          npx playwright install --with-deps
+          npx playwright install --with-deps chromium
 
       # 11. Run Playwright E2E Tests
       - name: Run Playwright E2E Tests
@@ -123,14 +137,12 @@ jobs:
         run: |
           curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
           unzip sonar-scanner.zip -d $HOME
-          cd backend && mvn clean test jacoco:report
-          cd ..
           
-          $HOME/sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook -Dsonar.organization=doviethoang2802 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="${{ env.SONAR_TOKEN }}" -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
+          $HOME/sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook -Dsonar.organization=doviethoang2802 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="${{ secrets.SONAR_TOKEN }}" -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
 
       # 14. SonarCloud Quality Gate Check
       - name: SonarCloud Quality Gate Check
         uses: sonarsource/sonarqube-quality-gate-action@master
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         timeout-minutes: 5

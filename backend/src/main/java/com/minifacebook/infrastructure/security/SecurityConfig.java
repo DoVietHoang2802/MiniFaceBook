@@ -40,7 +40,7 @@ public class SecurityConfig {
   };
 
   private final String[] PUBLIC_GET_ENDPOINTS = {
-    "/auth/verify"
+    "/auth/verify", "/dev/seed"
   };
 
   private final String[] SWAGGER_ENDPOINTS = {

@@ -24,8 +24,11 @@ import { useWebSocket } from '../../modules/chat/hooks/useWebSocket';
 import { useChatUnread } from '../../modules/chat/hooks/useChatUnread';
 import { useNotifications } from '../../modules/notification/hooks/useNotifications';
 import { friendService } from '../../modules/friends/services/friendService';
+import { presenceService } from '../../modules/chat/services/presenceService';
+import { webSocketService } from '../../modules/chat/services/webSocketService';
 import { NetworkStatusBanner } from '../NetworkStatusBanner';
 import type { NotificationResponse } from '../../modules/notification/types/notification.types';
+import type { FriendshipResponse } from '../../modules/friends/types/friend.types';
 import { useRef } from 'react';
 
 const TYPE_META = {
@@ -78,6 +81,11 @@ export const MainLayout: React.FC = () => {
     { userId: string; name: string; mutualFriendsCount: number; avatar?: string; state: string }[]
   >([]);
 
+  // Bạn bè online thật: Redis presence + WS /topic/presence
+  const [friends, setFriends] = useState<FriendshipResponse[]>([]);
+  const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set());
+  const friendsRef = useRef<FriendshipResponse[]>([]);
+
   // Xác định activeTab dựa trên URL path
   const getActiveTab = () => {
     const path = location.pathname;
@@ -129,6 +137,71 @@ export const MainLayout: React.FC = () => {
           }))
         )
       )
+  }, [user]);
+
+  // Load friends + poll presence + subscribe WS presence (realtime)
+  useEffect(() => {
+    if (!user) {
+      setFriends([]);
+      setOnlineFriendIds(new Set());
+      friendsRef.current = [];
+      return;
+    }
+
+    let cancelled = false;
+    let pollTimer: number | null = null;
+
+    const refreshOnline = (list: FriendshipResponse[]) => {
+      const ids = list.map((f) => f.userId).filter(Boolean);
+      if (ids.length === 0) {
+        if (!cancelled) setOnlineFriendIds(new Set());
+        return;
+      }
+      presenceService
+        .checkOnlineStatus(ids)
+        .then((onlineIds) => {
+          if (!cancelled) setOnlineFriendIds(new Set(onlineIds));
+        })
+        .catch(() => {});
+    };
+
+    friendService
+      .getFriends()
+      .then((list) => {
+        if (cancelled) return;
+        const friendsList = list || [];
+        setFriends(friendsList);
+        friendsRef.current = friendsList;
+        refreshOnline(friendsList);
+        pollTimer = window.setInterval(() => refreshOnline(friendsRef.current), 20000);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFriends([]);
+          friendsRef.current = [];
+        }
+      });
+
+    const unsub = webSocketService.subscribe<{ userId: string; status: string }>(
+      '/topic/presence',
+      (payload) => {
+        if (!payload?.userId) return;
+        const isFriend = friendsRef.current.some((f) => f.userId === payload.userId);
+        if (!isFriend) return;
+        setOnlineFriendIds((prev) => {
+          const next = new Set(prev);
+          if (payload.status === 'ONLINE') next.add(payload.userId);
+          else next.delete(payload.userId);
+          return next;
+        });
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+      unsub();
+    };
   }, [user]);
 
   useEffect(() => {
@@ -235,7 +308,13 @@ export const MainLayout: React.FC = () => {
         <div className="flex items-center space-x-2.5">
           {/* Messenger Icon */}
           <button 
-            onClick={() => navigate('/chats')}
+            onClick={() => {
+              if (activeTab === 'chats') {
+                navigate('/');
+              } else {
+                navigate('/chats');
+              }
+            }}
             title="Trò chuyện"
             className={`h-9 w-9 flex items-center justify-center rounded-full border transition cursor-pointer shadow-sm relative ${
               activeTab === 'chats' 
@@ -588,28 +667,69 @@ export const MainLayout: React.FC = () => {
               </button>
             </div>
 
-            {/* Widget 3: Active Friends */}
+            {/* Widget 3: Bạn bè online (Redis presence + WebSocket realtime) */}
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="font-bold text-slate-800 text-sm font-outfit">Bạn bè đang online</span>
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                {[
-                  { name: 'Nguyễn Huy Khoa', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60' },
-                  { name: 'Cáp Viết Tài', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=60' },
-                  { name: 'Trần Minh Nhật', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60' },
-                  { name: 'Đặng Thế Duy', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60' }
-                ].map((f, idx) => (
-                  <div key={idx} className="relative h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 shadow-sm ring-1 ring-slate-100 shrink-0">
-                    <img src={f.avatar} alt={f.name} className="h-full w-full object-cover" />
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
-                  </div>
-                ))}
-                <div className="h-9 w-9 rounded-full bg-violet-100 border-2 border-white flex items-center justify-center text-[10px] font-black text-violet-600 shadow-sm ring-1 ring-slate-100 cursor-pointer shrink-0">
-                  +12
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="font-bold text-slate-800 text-sm font-outfit">Bạn bè đang online</span>
                 </div>
+                {onlineFriendIds.size > 0 && (
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                    {onlineFriendIds.size}
+                  </span>
+                )}
               </div>
+              {(() => {
+                const onlineFriends = friends.filter((f) => onlineFriendIds.has(f.userId));
+                const shown = onlineFriends.slice(0, 8);
+                const extra = onlineFriends.length - shown.length;
+
+                if (onlineFriends.length === 0) {
+                  return (
+                    <p className="text-slate-400 text-[11px] text-center py-2">
+                      Không có bạn bè nào đang online
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    {shown.map((f) => (
+                      <button
+                        key={f.userId}
+                        type="button"
+                        title={f.name || f.email}
+                        onClick={() => navigate(`/profile/${f.userId}`)}
+                        className="relative h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 shadow-sm ring-1 ring-slate-100 shrink-0 cursor-pointer hover:ring-violet-300 transition"
+                      >
+                        {f.avatar ? (
+                          <img
+                            src={f.avatar}
+                            alt={f.name || f.email}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="h-full w-full flex items-center justify-center text-[11px] font-black text-slate-500 bg-slate-50">
+                            {(f.name || f.email || 'U').charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
+                      </button>
+                    ))}
+                    {extra > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => navigate('/friends')}
+                        className="h-9 w-9 rounded-full bg-violet-100 border-2 border-white flex items-center justify-center text-[10px] font-black text-violet-600 shadow-sm ring-1 ring-slate-100 cursor-pointer shrink-0 hover:bg-violet-200 transition"
+                        title={`Còn ${extra} bạn online`}
+                      >
+                        +{extra}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
           </div>
