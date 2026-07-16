@@ -115,7 +115,7 @@ async function openChatWithFriend(pageA: any, userBEmail: string) {
   await friendRow.locator('button:has-text("Nhắn tin")').click();
 
   // Chờ chat input xuất hiện
-  const chatInput = pageA.locator('input[placeholder^="Message"]');
+  const chatInput = pageA.locator('input[placeholder^="Message"], input[placeholder="Aa"]');
   await expect(chatInput).toBeVisible({ timeout: 12000 });
   return chatInput;
 }
@@ -156,7 +156,7 @@ test.describe('Real-time Chat Flow', () => {
 
       // User A gửi tin nhắn
       await chatInputA.fill(messageText);
-      await pageA.press('input[placeholder^="Message"]', 'Enter');
+      await pageA.press('input[placeholder^="Message"], input[placeholder="Aa"]', 'Enter');
 
       // User B nhận tin nhắn và mở chat
       const userAChatItem = pageB
@@ -286,10 +286,10 @@ test.describe('Chat Page - UI After Refactoring', () => {
 
       // Gửi tin nhắn
       await chatInputA.fill(messageText);
-      await pageA.press('input[placeholder^="Message"]', 'Enter');
+      await pageA.press('input[placeholder^="Message"], input[placeholder="Aa"]', 'Enter');
 
       // Phía A thấy tin nhắn
-      await expect(pageA.locator(`text=${messageText}`)).toBeVisible({ timeout: 8000 });
+      await expect(pageA.locator('div.relative.z-10').filter({ hasText: messageText })).toBeVisible({ timeout: 8000 });
 
       // Phía B thấy tin nhắn trong sidebar
       const chatItemB = pageB
@@ -297,7 +297,7 @@ test.describe('Chat Page - UI After Refactoring', () => {
         .filter({ hasText: messageText.substring(0, 12) });
       await expect(chatItemB).toBeVisible({ timeout: 12000 });
       await chatItemB.click();
-      await expect(pageB.locator(`text=${messageText}`)).toBeVisible({ timeout: 8000 });
+      await expect(pageB.locator('div.relative.z-10').filter({ hasText: messageText })).toBeVisible({ timeout: 8000 });
     } finally {
       await contextA.close();
       await contextB.close();
@@ -331,7 +331,7 @@ test.describe('Chat Page - UI After Refactoring', () => {
       // User A mở chat và gửi 1 tin để tạo conversation
       const chatInputA = await openChatWithFriend(pageA, userBEmail);
       await chatInputA.fill('init');
-      await pageA.press('input[placeholder^="Message"]', 'Enter');
+      await pageA.press('input[placeholder^="Message"], input[placeholder="Aa"]', 'Enter');
       await pageA.waitForTimeout(1500);
 
       // User B tìm và mở conversation
