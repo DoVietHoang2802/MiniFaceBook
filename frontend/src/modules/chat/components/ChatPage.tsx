@@ -1358,7 +1358,9 @@ export default function ChatPage({
                     <h4 className="text-sm font-bold text-slate-800 truncate group-hover/header:text-violet-600 transition-colors">{activePartner?.name}</h4>
                     <span className="text-xs font-medium text-slate-400">
                       {isActivePartnerTyping ? (
-                        <span className="text-violet-600 font-semibold">Đang nhập...</span>
+                        <span data-testid="typing-status" className="text-violet-600 font-semibold">
+                          Đang nhập...
+                        </span>
                       ) : isActivePartnerOnline ? (
                         <span className="text-emerald-600 font-semibold">Online</span>
                       ) : (
@@ -1662,7 +1664,10 @@ export default function ChatPage({
               )}
               {/* Typing indicator (Sprint 4.4) */}
               {isActivePartnerTyping && (
-                <div className="flex items-end gap-2.5 max-w-[75%] mr-auto">
+                <div
+                  data-testid="typing-indicator"
+                  className="flex items-end gap-2.5 max-w-[75%] mr-auto"
+                >
                   <div className="h-8 w-8 rounded-full border overflow-hidden bg-slate-100 shrink-0">
                     {activePartner?.avatar ? (
                       <img src={activePartner.avatar} alt="Avatar" className="h-full w-full object-cover" />

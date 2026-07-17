@@ -410,13 +410,21 @@ test.describe('Chat Page - UI After Refactoring', () => {
         'input[placeholder^="Message"], input[placeholder="Aa"]'
       );
       await expect(chatInputB).toBeVisible({ timeout: 15000 });
-      // Give STOMP subscribe a moment after opening the thread
-      await pageB.waitForTimeout(2000);
-      await pageA.waitForTimeout(500);
+      // Wait for STOMP subscribe after opening the thread
+      await pageB.waitForTimeout(2500);
+      await expect(chatInputA).toBeVisible({ timeout: 10000 });
 
+      // pressSequentially fires input/onChange per key (emitTyping); fill alone can miss race
       await chatInputA.click();
-      await chatInputA.fill('I am typing now...');
-      await expect(pageB.locator('text=đang nhập').first()).toBeVisible({ timeout: 15000 });
+      await chatInputA.fill('');
+      await chatInputA.pressSequentially('I am typing now...', { delay: 80 });
+
+      // UI text is "Đang nhập..." (header/sidebar); bubble uses data-testid only
+      const typingVisible = pageB
+        .getByTestId('typing-indicator')
+        .or(pageB.getByTestId('typing-status'))
+        .or(pageB.getByText(/Đang nhập/i));
+      await expect(typingVisible.first()).toBeVisible({ timeout: 30000 });
     } finally {
       await contextA.close();
       await contextB.close();

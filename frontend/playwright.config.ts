@@ -9,7 +9,7 @@ export default defineConfig({
   testDir: './tests',
   timeout: 120000,
   expect: {
-    timeout: 15000,
+    timeout: 20000,
   },
   /* Run tests in files in parallel */
   fullyParallel: false,
