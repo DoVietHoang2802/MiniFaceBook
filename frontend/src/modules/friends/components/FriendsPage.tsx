@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, UserPlus, UserCheck, UserX, Clock, Users, Loader2, Ban } from 'lucide-react';
+import { Search, UserPlus, UserCheck, UserX, Clock, Users, Loader2, Ban, Sparkles } from 'lucide-react';
 import { friendService } from '../services/friendService';
 import type {
   FriendshipResponse,
   UserSearchResponse,
+  FriendSuggestionResponse,
   RelationshipStatus,
 } from '../types/friend.types';
 import { useToast } from '../../../core/toast/ToastContext';
@@ -39,6 +40,11 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
   const [searchResults, setSearchResults] = useState<UserSearchResponse[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Suggestions (shown when search box is empty — Facebook-style)
+  const [suggestions, setSuggestions] = useState<FriendSuggestionResponse[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [sentSuggestionIds, setSentSuggestionIds] = useState<Set<string>>(new Set());
 
   // List states
   const [friends, setFriends] = useState<FriendshipResponse[]>([]);
@@ -96,6 +102,40 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [keyword, activeTab, runSearch]);
+
+  // Load friend suggestions when opening search tab (empty keyword)
+  useEffect(() => {
+    if (activeTab !== 'search') return;
+    let cancelled = false;
+    setIsLoadingSuggestions(true);
+    friendService
+      .getSuggestions(12)
+      .then((data) => {
+        if (!cancelled) setSuggestions(data);
+      })
+      .catch(() => {
+        if (!cancelled) setSuggestions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSuggestions(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
+  const handleSendSuggestion = async (s: FriendSuggestionResponse) => {
+    setBusy(s.userId, true);
+    try {
+      await friendService.sendRequest(s.userId);
+      setSentSuggestionIds((prev) => new Set(prev).add(s.userId));
+      triggerToast(`Đã gửi lời mời kết bạn đến ${s.name}!`);
+    } catch {
+      triggerToast('Gửi lời mời thất bại.');
+    } finally {
+      setBusy(s.userId, false);
+    }
+  };
 
   // ===== Load danh sách theo tab =====
   const loadList = useCallback((tab: TabKey) => {
@@ -372,10 +412,78 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
               {isSearching && <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 animate-spin" />}
             </div>
 
+            {/* Empty keyword: show "People you may know" suggestions */}
             {!keyword.trim() && (
-              <div className="text-center py-12 text-slate-400">
-                <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p className="text-sm font-medium">Nhập tên để tìm kiếm bạn bè</p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 px-0.5">
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  <h3 className="text-sm font-black text-slate-800">Những người bạn có thể biết</h3>
+                </div>
+
+                {isLoadingSuggestions ? (
+                  <div className="flex items-center justify-center py-12 text-slate-400">
+                    <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+                  </div>
+                ) : suggestions.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400">
+                    <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p className="text-sm font-medium">Chưa có gợi ý kết bạn</p>
+                    <p className="text-xs mt-1 text-slate-400">
+                      Kết bạn thêm để nhận gợi ý theo bạn chung, hoặc gõ tên để tìm kiếm.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {suggestions.map((s) => {
+                      const busy = busyIds.has(s.userId);
+                      const alreadySent = sentSuggestionIds.has(s.userId);
+                      return (
+                        <div
+                          key={s.userId}
+                          className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all"
+                        >
+                          <div
+                            onClick={() => navigate(`/profile/${s.userId}`)}
+                            className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item min-w-0"
+                          >
+                            <Avatar name={s.name} avatar={s.avatar} />
+                            <div className="text-left overflow-hidden">
+                              <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">
+                                {s.name}
+                              </h4>
+                              <p className="text-slate-400 text-xs truncate mt-0.5">
+                                {s.mutualFriendsCount > 0
+                                  ? `${s.mutualFriendsCount} bạn chung`
+                                  : s.bio || s.email}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="shrink-0 ml-2">
+                            {busy ? (
+                              <button
+                                disabled
+                                className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-400"
+                              >
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              </button>
+                            ) : alreadySent ? (
+                              <span className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-white text-slate-600 border border-slate-200 flex items-center">
+                                <Clock className="h-3.5 w-3.5 mr-1" /> Đã gửi
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleSendSuggestion(s)}
+                                className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold bg-violet-600 text-white hover:bg-violet-500 shadow-sm transition cursor-pointer flex items-center"
+                              >
+                                <UserPlus className="h-3.5 w-3.5 mr-1" /> Kết bạn
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -386,23 +494,30 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
               </div>
             )}
 
-            <div className="space-y-2">
-              {searchResults.map((u) => (
-                <div key={u.userId} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all">
-                  <div 
-                    onClick={() => navigate(`/profile/${u.userId}`)}
-                    className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+            {keyword.trim() && (
+              <div className="space-y-2">
+                {searchResults.map((u) => (
+                  <div
+                    key={u.userId}
+                    className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-slate-300 transition-all"
                   >
-                    <Avatar name={u.name} avatar={u.avatar} />
-                    <div className="text-left overflow-hidden">
-                      <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{u.name}</h4>
-                      <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || u.email}</p>
+                    <div
+                      onClick={() => navigate(`/profile/${u.userId}`)}
+                      className="flex items-center space-x-3 overflow-hidden cursor-pointer group/item"
+                    >
+                      <Avatar name={u.name} avatar={u.avatar} />
+                      <div className="text-left overflow-hidden">
+                        <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">
+                          {u.name}
+                        </h4>
+                        <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || u.email}</p>
+                      </div>
                     </div>
+                    <SearchActionButton user={u} />
                   </div>
-                  <SearchActionButton user={u} />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

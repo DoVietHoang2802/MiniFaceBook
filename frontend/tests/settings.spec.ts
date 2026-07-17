@@ -18,7 +18,9 @@ test.describe('Settings and Change Password Flow', () => {
     );
 
     await page.click('button[title="Cài đặt"]');
-    await expect(page.locator('h2')).toContainText('Cài đặt tài khoản');
+    await expect(page.locator('h2')).toContainText('Cài đặt');
+    await page.getByRole('button', { name: /Đổi mật khẩu/i }).first().click();
+    await expect(page.locator('#oldPassword')).toBeVisible();
 
     await page.fill('#oldPassword', oldPassword);
     await page.fill('#newPassword', '123');

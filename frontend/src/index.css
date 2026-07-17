@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: hsl(210 40% 98%);
   --color-card: hsl(0 0% 100%);
@@ -36,18 +38,40 @@
     --destructive: 346.8 84.1% 48.2%;
   }
 
+  .dark {
+    --background: 222 47% 7%;
+    --card: 222 47% 11%;
+    --popover: 222 47% 11%;
+    --primary: 243.4 75.4% 65%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 215 16% 65%;
+    --accent: 243 40% 18%;
+    --border: 217 20% 22%;
+    --ring: 243.4 75.4% 65%;
+  }
+
   body {
     background-color: hsl(var(--background));
     color: #0f172a;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .dark body,
+  html.dark body {
+    color: #e2e8f0;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
+  }
+
+  .font-outfit {
+    font-family: 'Be Vietnam Pro', 'Inter', sans-serif;
   }
 }
 

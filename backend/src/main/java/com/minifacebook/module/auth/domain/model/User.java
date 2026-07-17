@@ -23,6 +23,7 @@ public class User {
   private String email;
   private String password;
   private String avatar;
+  private String cover;
   private String bio;
   private String city;
   private String hometown;

@@ -5,6 +5,7 @@ export interface UserProfileResponse {
   name?: string;
   email: string;
   avatar: string | null;
+  cover: string | null;
   bio: string | null;
   city: string | null;
   hometown: string | null;
@@ -41,6 +42,19 @@ export const profileService = {
     formData.append('file', file);
 
     const response = await axiosClient.post<ApiResponse<UserProfileResponse>>('/user/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Tải lên ảnh bìa
+  uploadCover: async (file: File): Promise<ApiResponse<UserProfileResponse>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosClient.post<ApiResponse<UserProfileResponse>>('/user/cover', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

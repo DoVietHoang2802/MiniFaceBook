@@ -307,15 +307,33 @@ public class AuthService {
     User savedUser = userRepository.save(user);
     log.info("Avatar uploaded and updated successfully for user: {}", email);
 
+    evictProfileCache(email, user.getId());
+    return authMapper.toUserResponse(savedUser);
+  }
+
+  /** Tải lên ảnh bìa trang cá nhân qua Cloudinary và cập nhật hồ sơ. */
+  public UserResponse uploadCover(String email, MultipartFile file) {
+    String coverUrl = mediaService.uploadCover(file);
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+    user.setCover(coverUrl);
+    User savedUser = userRepository.save(user);
+    log.info("Cover uploaded and updated successfully for user: {}", email);
+
+    evictProfileCache(email, user.getId());
+    return authMapper.toUserResponse(savedUser);
+  }
+
+  private void evictProfileCache(String email, String userId) {
     try {
       redisTemplate.delete("user:profile:email:" + email);
-      redisTemplate.delete("user:profile:id:" + user.getId());
+      redisTemplate.delete("user:profile:id:" + userId);
       log.debug("Evicted profile cache for: {}", email);
     } catch (Exception e) {
       log.error("Failed to evict profile cache for: {}", email, e);
     }
-
-    return authMapper.toUserResponse(savedUser);
   }
 
   /** Yêu cầu đặt lại mật khẩu: Sinh mã OTP 6 số, lưu vào Redis và gửi qua email. */

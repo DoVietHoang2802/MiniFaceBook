@@ -41,19 +41,26 @@ public class CloudinaryService implements MediaService {
 
   @Override
   public String uploadAvatar(MultipartFile file) {
+    return uploadImage(file, "miniface/avatars", 400, 400);
+  }
+
+  @Override
+  public String uploadCover(MultipartFile file) {
+    return uploadImage(file, "miniface/covers", 1600, 500);
+  }
+
+  private String uploadImage(MultipartFile file, String folder, int sandboxW, int sandboxH) {
     if (file == null || file.isEmpty()) {
       throw new AppException(ErrorCode.FILE_REQUIRED);
     }
 
-    // Kiểm tra kích thước file thủ công (phòng hờ Tomcat cấu hình bỏ qua)
     if (file.getSize() > 5 * 1024 * 1024) {
       throw new AppException(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED);
     }
 
-    // Bảo mật Magic Bytes bằng Apache Tika
     try {
       String detectedMimeType = tika.detect(file.getInputStream());
-      log.info("Detected MIME type for uploaded file: {} (original content type: {})", 
+      log.info("Detected MIME type for uploaded file: {} (original content type: {})",
           detectedMimeType, file.getContentType());
 
       if (!ALLOWED_MIME_TYPES.contains(detectedMimeType.toLowerCase())) {
@@ -65,25 +72,24 @@ public class CloudinaryService implements MediaService {
       throw new AppException(ErrorCode.UPLOAD_FAILED);
     }
 
-    // Kiểm tra và giả lập sandbox nếu sử dụng Cloudinary key mặc định (dev sandbox)
     if ("demo".equals(cloudName) || "1234567890".equals(apiKey)) {
       log.warn("[SANDBOX FALLBACK] Mock Cloudinary credentials detected. "
           + "Simulating successful upload with Picsum placeholder.");
-      return "https://picsum.photos/seed/" + java.util.UUID.randomUUID() + "/800/600";
+      return "https://picsum.photos/seed/" + java.util.UUID.randomUUID()
+          + "/" + sandboxW + "/" + sandboxH;
     }
 
-    // Tiến hành upload lên Cloudinary
     try {
       Map<?, ?> uploadResult = cloudinary.uploader().upload(
           file.getBytes(),
           Map.of(
-              "folder", "miniface/avatars",
+              "folder", folder,
               "allowed_formats", List.of("jpg", "png", "webp", "gif")
           )
       );
 
       String secureUrl = (String) uploadResult.get("secure_url");
-      log.info("File uploaded successfully to Cloudinary. Secure URL: {}", secureUrl);
+      log.info("File uploaded successfully to Cloudinary folder {}. Secure URL: {}", folder, secureUrl);
       return secureUrl;
     } catch (IOException e) {
       log.error("Cloudinary upload failed", e);

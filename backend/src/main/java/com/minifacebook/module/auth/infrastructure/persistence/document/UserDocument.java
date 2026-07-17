@@ -31,6 +31,8 @@ public class UserDocument extends BaseEntity {
 
   private String avatar;
 
+  private String cover;
+
   private String bio;
 
   private String city;

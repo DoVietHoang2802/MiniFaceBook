@@ -93,6 +93,26 @@ public class UserController {
     return ResponseEntity.ok(apiResponse);
   }
 
+  /** Tải lên ảnh bìa trang cá nhân. */
+  @PostMapping(value = "/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(
+      summary = "Tải lên ảnh bìa",
+      description = "Tải ảnh bìa (cover photo) lên Cloudinary và cập nhật hồ sơ người dùng.")
+  public ResponseEntity<ApiResponse<UserResponse>> uploadCover(
+      @RequestParam("file") MultipartFile file) {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    UserResponse response = authService.uploadCover(email, file);
+
+    ApiResponse<UserResponse> apiResponse =
+        ApiResponse.<UserResponse>builder()
+            .status(HttpStatus.OK.value())
+            .message("Cover uploaded successfully")
+            .data(response)
+            .build();
+
+    return ResponseEntity.ok(apiResponse);
+  }
+
   /** Lấy thông tin cá nhân của một người dùng theo ID. */
   @GetMapping("/{userId}")
   @Operation(

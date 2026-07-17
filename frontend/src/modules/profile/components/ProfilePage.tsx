@@ -166,6 +166,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   
   // Trạng thái tệp tin và upload
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   
   // Phản hồi người dùng
@@ -181,6 +182,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [isSavingDetails, setIsSavingDetails] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // Facebook layout tab navigation, user posts and friends states
   const [activeTab, setActiveTab] = useState<'posts' | 'about' | 'friends'>('posts');
@@ -436,6 +438,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         console.log(`[Compression Test - Avatar] Bỏ qua nén ảnh GIF: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
         const response = await profileService.uploadAvatar(file);
         setUser(response.data);
+        if (isOwnProfile) auth.setUser(response.data as UserResponse);
         setSuccessMessage('Cập nhật ảnh đại diện thành công!');
         return;
       }
@@ -463,6 +466,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
       const response = await profileService.uploadAvatar(compressedFile);
       setUser(response.data);
+      if (isOwnProfile) auth.setUser(response.data as UserResponse);
       setSuccessMessage('Cập nhật ảnh đại diện thành công!');
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Tải ảnh lên thất bại. Vui lòng thử lại.';
@@ -472,9 +476,56 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     }
   };
 
+  const handleCoverFile = async (file: File) => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const validationResult = avatarFileSchema.safeParse(file);
+    if (!validationResult.success) {
+      setErrorMessage(validationResult.error.issues[0].message);
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      let uploadFile = file;
+      if (file.type !== 'image/gif') {
+        const options = {
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: 'image/webp' as const,
+        };
+        const compressedBlob = await imageCompression(file, options);
+        const newFileName = file.name.replace(/\.[^/.]+$/, '.webp');
+        uploadFile = new File([compressedBlob], newFileName, {
+          type: 'image/webp',
+          lastModified: Date.now(),
+        });
+      }
+
+      const response = await profileService.uploadCover(uploadFile);
+      setUser(response.data);
+      if (isOwnProfile) auth.setUser(response.data as UserResponse);
+      setSuccessMessage('Cập nhật ảnh bìa thành công!');
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || 'Tải ảnh bìa thất bại. Vui lòng thử lại.';
+      setErrorMessage(errorMsg);
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleCoverFile(e.target.files[0]);
+      e.target.value = '';
     }
   };
 
@@ -631,17 +682,45 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
       {/* Facebook-style Cover Photo */}
       <div className="relative h-56 sm:h-72 md:h-80 w-full rounded-t-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 overflow-hidden shadow-sm group">
-        <div className="absolute inset-0 bg-slate-900/10 mix-blend-overlay"></div>
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        
+        {user.cover ? (
+          <img
+            src={user.cover}
+            alt="Cover"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-slate-900/10 mix-blend-overlay"></div>
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          </>
+        )}
+
+        {isUploadingCover && (
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10">
+            <Loader2 className="h-8 w-8 text-white animate-spin" />
+            <span className="text-white text-xs font-bold mt-2">Đang tải ảnh bìa...</span>
+          </div>
+        )}
+
         {isOwnProfile && (
-          <button 
-            onClick={() => setSuccessMessage("Tính năng tải ảnh bìa riêng sẽ được cập nhật sớm!")}
-            className="absolute bottom-4 right-4 flex items-center space-x-2 px-3.5 py-2 bg-black/60 hover:bg-black/80 text-white rounded-xl text-[11px] font-bold transition backdrop-blur-sm cursor-pointer shadow-md"
-          >
-            <Camera className="h-4 w-4" />
-            <span>Chỉnh sửa ảnh bìa</span>
-          </button>
+          <>
+            <input
+              type="file"
+              ref={coverInputRef}
+              onChange={handleCoverChange}
+              accept="image/*"
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={isUploadingCover}
+              className="absolute bottom-4 right-4 flex items-center space-x-2 px-3.5 py-2 bg-black/60 hover:bg-black/80 text-white rounded-xl text-[11px] font-bold transition backdrop-blur-sm cursor-pointer shadow-md disabled:opacity-60 z-10"
+            >
+              <Camera className="h-4 w-4" />
+              <span>{user.cover ? 'Đổi ảnh bìa' : 'Chỉnh sửa ảnh bìa'}</span>
+            </button>
+          </>
         )}
       </div>
 

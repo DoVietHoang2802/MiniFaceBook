@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './core/auth/AuthContext';
 import { ToastProvider } from './core/toast/ToastContext';
+import { ThemeProvider } from './core/theme/ThemeContext';
 import GuestRoute from './components/layout/GuestRoute';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AuthLayout from './components/layout/AuthLayout';
@@ -27,37 +28,39 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            {/* Guest routes (chỉ dành cho khách chưa đăng nhập) */}
-            <Route element={<GuestRoute />}>
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<LoginForm />} />
-                <Route path="/register" element={<RegisterForm />} />
-                <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              {/* Guest routes (chỉ dành cho khách chưa đăng nhập) */}
+              <Route element={<GuestRoute />}>
+                <Route element={<AuthLayout />}>
+                  <Route path="/login" element={<LoginForm />} />
+                  <Route path="/register" element={<RegisterForm />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Protected routes (chỉ dành cho thành viên đã đăng nhập) */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<PostFeed />} />
-                <Route path="/friends" element={<FriendsPage />} />
-                <Route path="/chats/:recipientId?" element={<ChatPage />} />
-                <Route path="/profile/:userId?" element={<ProfilePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+              {/* Protected routes (chỉ dành cho thành viên đã đăng nhập) */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<MainLayout />}>
+                  <Route path="/" element={<PostFeed />} />
+                  <Route path="/friends" element={<FriendsPage />} />
+                  <Route path="/chats/:recipientId?" element={<ChatPage />} />
+                  <Route path="/profile/:userId?" element={<ProfilePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Điều hướng mặc định */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </ToastProvider>
+              {/* Điều hướng mặc định */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

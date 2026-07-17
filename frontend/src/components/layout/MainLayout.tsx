@@ -10,7 +10,6 @@ import {
   ChevronDown,
   MessageCircle,
   Users,
-  Compass,
   UserPlus,
   Home,
   X,
@@ -94,7 +93,6 @@ export const MainLayout: React.FC = () => {
     if (path.startsWith('/chats')) return 'chats';
     if (path.startsWith('/profile')) return 'profile';
     if (path.startsWith('/settings')) return 'settings';
-    if (path.startsWith('/discover')) return 'discover';
     return 'feed';
   };
   const activeTab = getActiveTab();
@@ -246,22 +244,13 @@ export const MainLayout: React.FC = () => {
 
   const handleTabClick = (tabId: string) => {
     if (tabId === 'feed') navigate('/');
-    else if (tabId === 'discover') triggerToast("Tính năng Khám phá sẽ ra mắt ở Phase tiếp theo!");
     else if (tabId === 'profile') navigate('/profile');
     else if (tabId === 'friends') navigate('/friends');
     else if (tabId === 'chats') navigate('/chats');
     else if (tabId === 'settings') navigate('/settings');
     else if (tabId === 'logout') handleLogout();
     else if (tabId === 'notifications') {
-      if (activeTab === 'chats') {
-        navigate('/');
-        setTimeout(() => {
-          setShowNotifDropdown(true);
-          if (!notifLoaded) loadNotifications();
-        }, 150);
-      } else {
-        toggleNotifDropdown();
-      }
+      toggleNotifDropdown();
     } else {
       triggerToast(`Tính năng này sẽ ra mắt ở Phase tiếp theo!`);
     }
@@ -270,16 +259,16 @@ export const MainLayout: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className={`bg-[hsl(var(--background))] text-slate-800 flex flex-col relative select-none ${activeTab === 'chats' ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+    <div className={`bg-[hsl(var(--background))] text-slate-800 dark:text-slate-100 flex flex-col relative ${activeTab === 'chats' ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
       {/* Banner mất kết nối Internet (chuẩn Facebook/Discord) */}
       <NetworkStatusBanner />
       
       {/* Hiệu ứng hào quang nền nhẹ nhàng (Minimalist Light Radial Glow) */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 dark:bg-violet-500/10 blur-[120px] pointer-events-none"></div>
 
       {/* Top Header Full-Width */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200 z-[190] flex items-center justify-between px-4 lg:px-6 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-[190] flex items-center justify-between px-4 lg:px-6 shadow-sm">
         {/* Left Section: Logo + Search bar */}
         <div className="flex items-center">
           <div 
@@ -289,7 +278,7 @@ export const MainLayout: React.FC = () => {
             <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-500/20">
               <span className="text-white font-black text-lg font-outfit">H</span>
             </div>
-            <span className="text-xl font-black tracking-tight text-slate-900 font-outfit hidden sm:block">
+            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit hidden sm:block">
               Hizo
             </span>
           </div>
@@ -298,7 +287,7 @@ export const MainLayout: React.FC = () => {
             <input 
               type="text" 
               placeholder="Tìm kiếm bạn bè, bài viết..." 
-              className="w-full h-full pl-9 pr-4 rounded-full bg-slate-100/60 border border-transparent focus:bg-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-xs text-slate-700 transition-all font-medium"
+              className="w-full h-full pl-9 pr-4 rounded-full bg-slate-100/60 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-xs text-slate-700 dark:text-slate-200 transition-all font-medium"
               onClick={() => triggerToast("Tính năng Tìm kiếm nâng cao sẽ ra mắt ở Phase 4!")}
             />
           </div>
@@ -409,7 +398,6 @@ export const MainLayout: React.FC = () => {
             <nav className="space-y-1">
               {[
                 { id: 'feed', label: 'Trang chủ', icon: Home, badge: null },
-                { id: 'discover', label: 'Khám phá', icon: Compass, badge: null },
                 { id: 'friends', label: 'Bạn bè', icon: Users, badge: null },
                 { id: 'chats', label: 'Trò chuyện', icon: MessageCircle, badge: chatUnread > 0 ? (chatUnread > 99 ? '99+' : String(chatUnread)) : null },
                 { id: 'notifications', label: 'Thông báo', icon: Bell, badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null },
@@ -732,19 +720,6 @@ export const MainLayout: React.FC = () => {
               })()}
             </div>
 
-          </div>
-
-          {/* Footer của Sidebar */}
-          <div className="text-left text-[10px] text-slate-400 leading-relaxed max-w-[280px] pt-4">
-            <div className="flex flex-wrap gap-x-2 gap-y-1">
-              <a href="#about" className="hover:underline">Giới thiệu</a>·
-              <a href="#help" className="hover:underline">Hỗ trợ</a>·
-              <a href="#terms" className="hover:underline">Điều khoản</a>·
-              <a href="#privacy" className="hover:underline">Quyền riêng tư</a>·
-              <a href="#cookies" className="hover:underline">Cookies</a>·
-              <a href="#more" className="hover:underline">Thêm</a>
-            </div>
-            <p className="mt-2 text-slate-400">© 2026 Hizo. Bảo lưu mọi quyền.</p>
           </div>
         </aside>
 

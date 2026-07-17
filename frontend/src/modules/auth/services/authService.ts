@@ -8,6 +8,7 @@ export interface UserResponse {
   roles: string[];
   verified: boolean;
   avatar?: string;
+  cover?: string;
   bio?: string;
   city?: string;
   hometown?: string;

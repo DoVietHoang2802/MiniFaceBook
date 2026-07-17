@@ -15,4 +15,12 @@ public interface MediaService {
    * @return URL bảo mật của tệp tin sau khi upload thành công
    */
   String uploadAvatar(MultipartFile file);
+
+  /**
+   * Upload ảnh bìa trang cá nhân (cover photo).
+   *
+   * @param file Tệp tin Multipart từ request
+   * @return URL bảo mật của tệp tin sau khi upload thành công
+   */
+  String uploadCover(MultipartFile file);
 }
