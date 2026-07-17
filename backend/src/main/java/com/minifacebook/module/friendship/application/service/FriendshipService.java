@@ -568,6 +568,21 @@ public class FriendshipService {
   }
 
   private void evictFriendCaches(String user1Id, String user2Id) {
+    if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+      org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+          new org.springframework.transaction.support.TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              performEviction(user1Id, user2Id);
+            }
+          }
+      );
+    } else {
+      performEviction(user1Id, user2Id);
+    }
+  }
+
+  private void performEviction(String user1Id, String user2Id) {
     try {
       userRepository.findById(user1Id).ifPresent(u -> {
         redisTemplate.delete("user:friends:email:" + u.getEmail());

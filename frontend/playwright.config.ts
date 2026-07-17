@@ -31,6 +31,9 @@ export default defineConfig({
     
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
+    video: process.env.CI ? 'retain-on-failure' : 'off',
+    actionTimeout: 20000,
+    navigationTimeout: 30000,
   },
 
   /* CI: chỉ Chromium để pipeline nhanh; local có thể set PW_ALL_BROWSERS=1 */
