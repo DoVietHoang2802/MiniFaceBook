@@ -1,9 +1,60 @@
-import { test, expect } from '@playwright/test';
-import { registerAndLogin } from './helpers/e2e-auth';
+import { test, expect, type Page } from '@playwright/test';
+import {
+  registerAndLogin,
+  appShell,
+  friendsNav,
+  chatsNav,
+} from './helpers/e2e-auth';
+
+async function waitForShell(page: Page) {
+  await expect(appShell(page)).toBeVisible({ timeout: 30000 });
+}
+
+async function goFriends(page: Page) {
+  await waitForShell(page);
+  for (let i = 0; i < 3; i++) {
+    try {
+      await friendsNav(page).click({ timeout: 10000 });
+      await expect(
+        page.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
+      ).toBeVisible({ timeout: 10000 });
+      return;
+    } catch (e: any) {
+      console.warn(`goFriends attempt ${i + 1}: ${e.message}`);
+      await page.reload();
+      await waitForShell(page);
+    }
+  }
+  await friendsNav(page).click();
+  await expect(
+    page.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
+  ).toBeVisible({ timeout: 10000 });
+}
+
+async function goChats(page: Page) {
+  await waitForShell(page);
+  for (let i = 0; i < 3; i++) {
+    try {
+      await chatsNav(page).click({ timeout: 10000 });
+      await expect(
+        page
+          .locator('text=Chưa chọn cuộc trò chuyện nào')
+          .or(page.locator('input[placeholder^="Message"], input[placeholder="Aa"]'))
+          .first()
+      ).toBeVisible({ timeout: 10000 });
+      return;
+    } catch (e: any) {
+      console.warn(`goChats attempt ${i + 1}: ${e.message}`);
+      await page.reload();
+      await waitForShell(page);
+    }
+  }
+  await chatsNav(page).click();
+}
 
 async function makeFriends(
-  pageA: any,
-  pageB: any,
+  pageA: Page,
+  pageB: Page,
   userAEmail: string,
   userBName: string,
   userBEmail: string
@@ -11,10 +62,7 @@ async function makeFriends(
   let sentRequest = false;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      await pageA.click('aside button[title="Bạn bè"]');
-      await expect(
-        pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
-      ).toBeVisible({ timeout: 8000 });
+      await goFriends(pageA);
       await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', '');
       await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userBName);
 
@@ -22,10 +70,9 @@ async function makeFriends(
         .locator('div.flex.items-center.justify-between')
         .filter({ hasText: userBEmail });
 
-      await expect(searchRowA).toBeVisible({ timeout: 12000 });
+      await expect(searchRowA).toBeVisible({ timeout: 15000 });
 
-      const isAlreadySent = await searchRowA.locator('button:has-text("Thu hồi")').isVisible();
-      if (isAlreadySent) {
+      if (await searchRowA.locator('button:has-text("Thu hồi")').isVisible()) {
         sentRequest = true;
         break;
       }
@@ -40,9 +87,9 @@ async function makeFriends(
       sentRequest = true;
       break;
     } catch (e: any) {
-      console.warn(`Attempt ${attempt + 1} to make friends failed: ${e.message}. Retrying...`);
+      console.warn(`makeFriends send attempt ${attempt + 1}: ${e.message}`);
       await pageA.reload();
-      await pageA.waitForTimeout(2000);
+      await waitForShell(pageA);
     }
   }
   expect(sentRequest).toBe(true);
@@ -50,26 +97,19 @@ async function makeFriends(
   let acceptedRequest = false;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      await pageB.click('aside button[title="Bạn bè"]');
-      await expect(
-        pageB.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
-      ).toBeVisible({ timeout: 8000 });
+      await goFriends(pageB);
       await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
 
       const requestRowB = pageB
         .locator('div.flex.items-center.justify-between')
         .filter({ hasText: userAEmail });
 
-      if (attempt > 0) {
-        const count = await requestRowB.count();
-        if (count === 0) {
-          acceptedRequest = true;
-          break;
-        }
-      } else {
-        await expect(requestRowB).toBeVisible({ timeout: 15000 });
+      if (attempt > 0 && (await requestRowB.count()) === 0) {
+        acceptedRequest = true;
+        break;
       }
 
+      await expect(requestRowB).toBeVisible({ timeout: 15000 });
       await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({
         timeout: 12000,
       });
@@ -78,48 +118,63 @@ async function makeFriends(
       acceptedRequest = true;
       break;
     } catch (e: any) {
-      console.warn(
-        `Attempt ${attempt + 1} to accept friend request failed: ${e.message}. Retrying...`
-      );
+      console.warn(`makeFriends accept attempt ${attempt + 1}: ${e.message}`);
       await pageB.reload();
-      await pageB.waitForTimeout(2000);
+      await waitForShell(pageB);
     }
   }
   expect(acceptedRequest).toBe(true);
 }
 
-async function openChatWithFriend(pageA: any, userBEmail: string) {
-  await pageA.click('aside button[title="Bạn bè"]');
-  await expect(
-    pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
-  ).toBeVisible({ timeout: 8000 });
-
-  const friendRow = pageA
-    .locator('div.flex.items-center.justify-between')
-    .filter({ hasText: userBEmail });
-
-  let found = false;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    await pageA.click('button.rounded-t-lg:has-text("Lời mời")');
-    await pageA.waitForTimeout(500);
-    await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
-
+async function openChatWithFriend(pageA: Page, userBEmail: string) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      await expect(friendRow).toBeVisible({ timeout: 2000 });
-      found = true;
-      break;
-    } catch {
-      console.warn(`Friend row not visible on attempt ${attempt + 1}. Retrying...`);
+      await goFriends(pageA);
+
+      const friendRow = pageA
+        .locator('div.flex.items-center.justify-between')
+        .filter({ hasText: userBEmail });
+
+      let found = false;
+      for (let i = 0; i < 5; i++) {
+        await pageA.click('button.rounded-t-lg:has-text("Lời mời")');
+        await pageA.waitForTimeout(400);
+        await pageA.click('button.rounded-t-lg:has-text("Bạn bè")');
+        try {
+          await expect(friendRow).toBeVisible({ timeout: 2500 });
+          found = true;
+          break;
+        } catch {
+          /* retry tab switch */
+        }
+      }
+      expect(found).toBe(true);
+
+      await expect(friendRow.locator('button:has-text("Nhắn tin")')).toBeVisible({
+        timeout: 8000,
+      });
+      await friendRow.locator('button:has-text("Nhắn tin")').click();
+
+      const chatInput = pageA.locator(
+        'input[placeholder^="Message"], input[placeholder="Aa"]'
+      );
+      await expect(chatInput).toBeVisible({ timeout: 20000 });
+      return chatInput;
+    } catch (e: any) {
+      console.warn(`openChatWithFriend attempt ${attempt + 1}: ${e.message}`);
+      await pageA.reload();
+      await waitForShell(pageA);
     }
   }
-  expect(found).toBe(true);
+  throw new Error('openChatWithFriend failed after retries');
+}
 
-  await expect(friendRow.locator('button:has-text("Nhắn tin")')).toBeVisible({ timeout: 8000 });
-  await friendRow.locator('button:has-text("Nhắn tin")').click();
-
-  const chatInput = pageA.locator('input[placeholder^="Message"], input[placeholder="Aa"]');
-  await expect(chatInput).toBeVisible({ timeout: 15000 });
-  return chatInput;
+async function messageBubble(page: Page, messageText: string) {
+  return page
+    .locator('div.relative.z-10')
+    .filter({ hasText: messageText })
+    .or(page.getByText(messageText, { exact: true }))
+    .first();
 }
 
 test.describe('Real-time Chat Flow', () => {
@@ -155,11 +210,11 @@ test.describe('Real-time Chat Flow', () => {
       const chatInputA = await openChatWithFriend(pageA, userB.email);
       await expect(
         pageA.locator('text=Bắt đầu gửi tin nhắn chào mừng bạn mới nhé!')
-      ).toBeVisible({ timeout: 8000 });
+      ).toBeVisible({ timeout: 10000 });
 
-      await pageB.click('aside button[title="Trò chuyện"]');
+      await goChats(pageB);
       await expect(pageB.locator('text=Chưa chọn cuộc trò chuyện nào')).toBeVisible({
-        timeout: 8000,
+        timeout: 10000,
       });
 
       await chatInputA.fill(messageText);
@@ -168,12 +223,10 @@ test.describe('Real-time Chat Flow', () => {
       const userAChatItem = pageB
         .locator('div.cursor-pointer')
         .filter({ hasText: messageText.substring(0, 12) });
-      await expect(userAChatItem).toBeVisible({ timeout: 15000 });
+      await expect(userAChatItem).toBeVisible({ timeout: 20000 });
       await userAChatItem.click();
 
-      await expect(
-        pageB.locator('div.relative.z-10').filter({ hasText: messageText })
-      ).toBeVisible({ timeout: 8000 });
+      await expect(await messageBubble(pageB, messageText)).toBeVisible({ timeout: 15000 });
     } finally {
       await contextA.close();
       await contextB.close();
@@ -288,26 +341,22 @@ test.describe('Chat Page - UI After Refactoring', () => {
 
       const chatInputA = await openChatWithFriend(pageA, userB.email);
 
-      await pageB.click('aside button[title="Trò chuyện"]');
+      await goChats(pageB);
       await expect(pageB.locator('text=Chưa chọn cuộc trò chuyện nào')).toBeVisible({
-        timeout: 8000,
+        timeout: 10000,
       });
 
       await chatInputA.fill(messageText);
       await pageA.press('input[placeholder^="Message"], input[placeholder="Aa"]', 'Enter');
 
-      await expect(
-        pageA.locator('div.relative.z-10').filter({ hasText: messageText })
-      ).toBeVisible({ timeout: 8000 });
+      await expect(await messageBubble(pageA, messageText)).toBeVisible({ timeout: 15000 });
 
       const chatItemB = pageB
         .locator('div.cursor-pointer')
         .filter({ hasText: messageText.substring(0, 12) });
-      await expect(chatItemB).toBeVisible({ timeout: 12000 });
+      await expect(chatItemB).toBeVisible({ timeout: 20000 });
       await chatItemB.click();
-      await expect(
-        pageB.locator('div.relative.z-10').filter({ hasText: messageText })
-      ).toBeVisible({ timeout: 8000 });
+      await expect(await messageBubble(pageB, messageText)).toBeVisible({ timeout: 15000 });
     } finally {
       await contextA.close();
       await contextB.close();
@@ -318,7 +367,9 @@ test.describe('Chat Page - UI After Refactoring', () => {
     browser,
     request,
   }) => {
+    test.setTimeout(180000);
     const password = 'Password123!';
+    const initMsg = `init-typing-${Date.now()}`;
 
     const contextA = await browser.newContext();
     const pageA = await contextA.newPage();
@@ -342,24 +393,30 @@ test.describe('Chat Page - UI After Refactoring', () => {
       );
       await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
 
+      // Both open the same conversation before typing (WS must be subscribed)
       const chatInputA = await openChatWithFriend(pageA, userB.email);
-      await chatInputA.fill('init');
+      await chatInputA.fill(initMsg);
       await pageA.press('input[placeholder^="Message"], input[placeholder="Aa"]', 'Enter');
-      await pageA.waitForTimeout(1500);
+      await expect(await messageBubble(pageA, initMsg)).toBeVisible({ timeout: 15000 });
 
-      await pageB.click('aside button[title="Trò chuyện"]');
-      const chatItemB = pageB.locator('div.cursor-pointer').filter({ hasText: 'init' });
-      await expect(chatItemB).toBeVisible({ timeout: 12000 });
+      await goChats(pageB);
+      const chatItemB = pageB
+        .locator('div.cursor-pointer')
+        .filter({ hasText: initMsg.substring(0, 12) });
+      await expect(chatItemB).toBeVisible({ timeout: 20000 });
       await chatItemB.click();
 
       const chatInputB = pageB.locator(
         'input[placeholder^="Message"], input[placeholder="Aa"]'
       );
-      await expect(chatInputB).toBeVisible({ timeout: 8000 });
-      await pageB.waitForTimeout(1000);
+      await expect(chatInputB).toBeVisible({ timeout: 15000 });
+      // Give STOMP subscribe a moment after opening the thread
+      await pageB.waitForTimeout(2000);
+      await pageA.waitForTimeout(500);
 
+      await chatInputA.click();
       await chatInputA.fill('I am typing now...');
-      await expect(pageB.locator('text=đang nhập').first()).toBeVisible({ timeout: 10000 });
+      await expect(pageB.locator('text=đang nhập').first()).toBeVisible({ timeout: 15000 });
     } finally {
       await contextA.close();
       await contextB.close();

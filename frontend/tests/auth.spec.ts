@@ -14,7 +14,7 @@ test.describe('Authentication Flow', () => {
       'Password123'
     );
 
-    await expect(page.locator('aside').first()).toContainText('Trang cá nhân');
+    await expect(page.locator('button[title="Trang cá nhân"]').first()).toBeVisible();
 
     const profilePill = page.locator(`header div:has-text("${user.name}")`).last();
     await profilePill.click();

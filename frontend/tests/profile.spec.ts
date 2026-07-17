@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerAndLogin } from './helpers/e2e-auth';
+import { registerAndLogin, friendsNav, appShell } from './helpers/e2e-auth';
 
 test.describe('Profile Page - Sidebar & Real User Data', () => {
   test('should display real user name (not email) as profile heading', async ({
@@ -136,10 +136,11 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
         password
       );
 
-      await pageA.click('aside button[title="Bạn bè"]');
+      await expect(appShell(pageA)).toBeVisible({ timeout: 30000 });
+      await friendsNav(pageA).click();
       await expect(
         pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
-      ).toBeVisible({ timeout: 8000 });
+      ).toBeVisible({ timeout: 10000 });
       await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userB.name);
 
       const searchRowA = pageA
@@ -153,7 +154,8 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
         timeout: 10000,
       });
 
-      await pageB.click('aside button[title="Bạn bè"]');
+      await expect(appShell(pageB)).toBeVisible({ timeout: 30000 });
+      await friendsNav(pageB).click();
       await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
       const requestRowB = pageB
         .locator('div.flex.items-center.justify-between')

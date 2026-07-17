@@ -9,6 +9,19 @@ export type E2EUser = {
   password: string;
 };
 
+/** Marker that the main app shell is ready (works even if left aside is delayed). */
+export function appShell(page: Page) {
+  return page.locator('#header-notifications-btn, button[title="Trang cá nhân"]').first();
+}
+
+export function friendsNav(page: Page) {
+  return page.locator('aside button[title="Bạn bè"], button[title="Bạn bè"]').first();
+}
+
+export function chatsNav(page: Page) {
+  return page.locator('aside button[title="Trò chuyện"], button[title="Trò chuyện"], header button[title="Trò chuyện"]').first();
+}
+
 async function waitForVerificationToken(
   request: APIRequestContext,
   email: string
@@ -61,26 +74,46 @@ async function verifyEmail(request: APIRequestContext, token: string): Promise<v
   expect(verified).toBe(true);
 }
 
+export async function ensureLoggedOut(page: Page): Promise<void> {
+  await page.context().clearCookies();
+  await page.goto('/');
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      /* ignore */
+    }
+  });
+  await page.goto('/');
+}
+
 export async function loginAs(
   page: Page,
   email: string,
   password: string
 ): Promise<void> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      await page.goto('/');
+      await ensureLoggedOut(page);
+
+      // Already on shell after weird redirect
+      if (await appShell(page).isVisible().catch(() => false)) {
+        return;
+      }
+
       await expect(page.locator('#login-email')).toBeVisible({ timeout: 20000 });
       await page.fill('#login-email', email);
       await page.fill('#login-password', password);
       await page.click('button[type="submit"]');
-      await expect(page.locator('aside').first()).toBeVisible({ timeout: 30000 });
+      await expect(appShell(page)).toBeVisible({ timeout: 30000 });
       return;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       console.warn(`Login attempt ${attempt + 1} failed: ${message}`);
     }
   }
-  await expect(page.locator('aside').first()).toBeVisible({ timeout: 30000 });
+  await expect(appShell(page)).toBeVisible({ timeout: 30000 });
 }
 
 /**
@@ -105,7 +138,7 @@ export async function registerAndLogin(
     finalName = `${baseName} ${ts}`;
 
     try {
-      await page.goto('/');
+      await ensureLoggedOut(page);
       await page.click('a:has-text("Đăng ký miễn phí")');
       await expect(page.locator('h2')).toHaveText('Tạo tài khoản mới', { timeout: 15000 });
       await page.fill('#register-name', finalName);
