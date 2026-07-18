@@ -68,6 +68,10 @@ public class TokenBlacklistService implements TokenBlacklistPort {
     } catch (JwtException e) {
       // Token invalid → coi như đã bị thu hồi
       return true;
+    } catch (Exception e) {
+      // Redis down / timeout: không chặn toàn bộ API bằng 401 giả
+      log.warn("Blacklist check failed (Redis unavailable?): {}", e.getMessage());
+      return false;
     }
   }
 }

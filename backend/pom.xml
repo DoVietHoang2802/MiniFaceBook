@@ -129,6 +129,19 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- Observability: health for Docker / CI / deploy (Sprint 6.5) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Error tracking: Sentry (Sprint 6.5) — chỉ gửi khi SENTRY_DSN được set -->
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+            <version>7.20.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

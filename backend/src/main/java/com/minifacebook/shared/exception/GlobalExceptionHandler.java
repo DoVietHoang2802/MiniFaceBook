@@ -1,6 +1,7 @@
 package com.minifacebook.shared.exception;
 
 import com.minifacebook.shared.dto.ApiResponse;
+import io.sentry.Sentry;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,8 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(value = Exception.class)
   ResponseEntity<ApiResponse<?>> handlingRuntimeException(RuntimeException exception) {
     log.error("Exception: ", exception);
+    // 500 bất ngờ → Sentry (no-op nếu chưa set DSN)
+    Sentry.captureException(exception);
     ApiResponse<?> apiResponse = new ApiResponse<>();
 
     apiResponse.setStatus(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
@@ -47,6 +50,10 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(value = AppException.class)
   ResponseEntity<ApiResponse<?>> handlingAppException(AppException exception) {
     ErrorCode errorCode = exception.getErrorCode();
+    // Chỉ đẩy lỗi server (5xx) lên Sentry — 4xx nghiệp vụ (sai MK, not found...) không spam
+    if (errorCode.getStatusCode().is5xxServerError()) {
+      Sentry.captureException(exception);
+    }
     ApiResponse<?> apiResponse = new ApiResponse<>();
 
     apiResponse.setStatus(errorCode.getCode());

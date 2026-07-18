@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
+import { Sentry } from '../monitoring/sentry';
 
 // Định nghĩa interface cho hàng đợi các request bị trễ
 interface FailedRequest {
@@ -77,6 +78,11 @@ axiosClient.interceptors.response.use(
             isRefreshing = false;
           });
       });
+    }
+
+    // 5xx từ API → Sentry (no-op nếu chưa set VITE_SENTRY_DSN)
+    if (error.response && error.response.status >= 500) {
+      Sentry.captureException(error);
     }
 
     return Promise.reject(error);

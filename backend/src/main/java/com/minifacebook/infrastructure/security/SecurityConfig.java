@@ -51,6 +51,11 @@ public class SecurityConfig {
     "/ws/**", "/ws"
   };
 
+  /** Public health for Docker / CI / cloud probes (chỉ health được expose trong yml). */
+  private final String[] ACTUATOR_PUBLIC_ENDPOINTS = {
+    "/actuator/health", "/actuator/health/**"
+  };
+
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
     httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource()));
@@ -66,6 +71,8 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(WEBSOCKET_ENDPOINTS)
                 .permitAll()
+                .requestMatchers(ACTUATOR_PUBLIC_ENDPOINTS)
+                .permitAll()
                 .anyRequest()
                 .authenticated());
 
@@ -77,7 +84,8 @@ public class SecurityConfig {
                     request -> {
                       String path = request.getRequestURI();
                       if (path.endsWith("/auth/login") || path.endsWith("/auth/register") || path.endsWith("/auth/refresh")
-                          || path.contains("/auth/forgot-password") || path.contains("/auth/reset-password")) {
+                          || path.contains("/auth/forgot-password") || path.contains("/auth/reset-password")
+                          || path.contains("/actuator/health")) {
                         return null; // Bỏ qua JWT filter cho các API public
                       }
 

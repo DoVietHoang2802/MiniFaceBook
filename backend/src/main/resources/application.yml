@@ -51,6 +51,38 @@ logging:
     com.minifacebook: DEBUG
     org.springframework.data.mongodb: DEBUG
 
+# Sentry error tracking (Sprint 6.5)
+# Để trống SENTRY_DSN = tắt (local/CI không spam). Production: set env SENTRY_DSN.
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  send-default-pii: false
+  traces-sample-rate: 0.0
+  logging:
+    minimum-event-level: error
+    minimum-breadcrumb-level: warn
+
+# Spring Boot Actuator (Sprint 6.5) — chỉ health, không lộ env/beans
+# URL: http://localhost:8080/api/actuator/health  (context-path /api)
+# show-details=never: public chỉ thấy UP/DOWN tổng (an toàn).
+# Muốn chi tiết mongo/redis: xem ghi chú MANAGEMENT_HEALTH_SHOW_DETAILS bên dưới / docs.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never
+  health:
+    # Mongo + Redis vẫn góp vào status tổng (DOWN nếu dependency chết)
+    # Chi tiết từng component không lộ ra public
+    mongo:
+      enabled: true
+    redis:
+      enabled: true
+
 # Cấu hình Security & JWT
 app:
   jwt:

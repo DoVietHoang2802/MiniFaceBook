@@ -32,6 +32,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
   }
 
   @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    // Health probe không tính rate limit (Docker / K8s / CI poll liên tục)
+    return path != null && path.contains("/actuator/health");
+  }
+
+  @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {

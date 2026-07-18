@@ -30,6 +30,13 @@ public class TokenBlacklistFilter extends OncePerRequestFilter {
   private final ObjectMapper objectMapper;
 
   @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    // Health probe phải public kể cả khi Redis down / browser còn cookie JWT
+    return path != null && path.contains("/actuator/health");
+  }
+
+  @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
