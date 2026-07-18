@@ -1,0 +1,9 @@
+# Copy thành application-local.yml (file .yml đó đã gitignore)
+# cp application-local.yml.example application-local.yml
+#
+# Chạy BE:
+#   mvn spring-boot:run -Dspring-boot.run.profiles=local
+
+sentry:
+  dsn: https://YOUR_SPRING_BOOT_DSN_HERE@o0.ingest.de.sentry.io/0
+  environment: local

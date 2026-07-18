@@ -76,6 +76,16 @@ public class DevSeedController {
         }
     }
 
+    /**
+     * Test Sentry BE (Sprint 6.5). Ném RuntimeException → GlobalExceptionHandler → Sentry.
+     * Chỉ dùng local khi đã set SENTRY_DSN. Xóa hoặc chặn production sau này.
+     */
+    @GetMapping("/sentry-test")
+    @Operation(summary = "Test Sentry BE", description = "Cố ý ném 500 để kiểm tra Sentry Issues")
+    public void sentryTest() {
+        throw new RuntimeException("Sentry BE test " + Instant.now());
+    }
+
     @GetMapping("/seed")
     @Operation(summary = "Sinh dữ liệu 20 người dùng Việt Nam kèm tương tác thật", description = "Tạo 20 tài khoản, kết bạn ngẫu nhiên, đăng bài viết kèm hình ảnh, thả tim/haha và bình luận.")
     public ResponseEntity<ApiResponse<Map<String, Object>>> seedData() {

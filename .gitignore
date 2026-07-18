@@ -29,6 +29,9 @@ build/
 .env.local
 .env.*.local
 *.env
+# Local Spring profile (DSN Sentry, secret...) — không commit
+**/application-local.yml
+backend/src/main/resources/application-local.yml
 
 # ===== OS =====
 .DS_Store
