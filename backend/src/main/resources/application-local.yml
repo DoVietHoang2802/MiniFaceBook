@@ -1,0 +1,7 @@
+# Profile "local" — file này đã gitignore, chỉ trên máy bạn.
+# Chạy: mvn spring-boot:run -Dspring-boot.run.profiles=local
+#   hoặc IntelliJ: Active profiles = local
+
+sentry:
+  dsn: https://87bde733d55f661a2d9b7c739c24e615@o4511751078936577.ingest.de.sentry.io/4511756177375312
+  environment: local
