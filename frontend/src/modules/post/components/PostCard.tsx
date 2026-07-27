@@ -169,7 +169,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
               )}
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-800 leading-tight group-hover/author:text-violet-600 transition-colors">{localPost.authorName || 'Người dùng ẩn danh'}</h3>
+              <h3 className="text-sm font-bold text-slate-800 leading-tight group-hover/author:text-violet-600 transition-colors">
+                {localPost.authorName && localPost.authorName.includes('@') 
+                  ? localPost.authorName.split('@')[0] 
+                  : (localPost.authorName || 'Người dùng Hizo')}
+              </h3>
               <div className="flex items-center text-[10px] text-slate-400 font-semibold space-x-1.5 mt-0.5">
                 <span>{formatTime(localPost.createdAt)}</span>
                 <span>•</span>

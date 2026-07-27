@@ -21,6 +21,7 @@ public class CommentDocument {
     
     @Indexed // Đánh index postId để tải bình luận của bài viết siêu nhanh
     private String postId;
+    private String parentId; // ID bình luận cha
     private String authorId;
     private String content;
     private String imageUrl;

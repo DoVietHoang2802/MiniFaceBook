@@ -53,10 +53,10 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 3 | Social Graph & Friends | ✅ Hoàn thành |
 | 4 | Realtime Chat | ✅ Hoàn thành (Sprint 4.1→4.5) |
 | 5 | Notification System | ✅ Hoàn thành (Sprint 5.1→5.4 + Forgot Password OTP) |
-| 6 | Advanced & Deployment | 🚧 Đang làm (Sprint 6.1→6.4 hoàn thành, đang Sprint 6.5) |
-| 7 | Extended Features | ⏳ Chưa bắt đầu |
+| 6 | Navigation, Performance & Testing | ✅ Hoàn thành (Sprint 6.1→6.5) |
+| 7 | Extended Features | 🚧 Đang làm (Sprint 8.5 Nested Comment Reply hoàn thành) |
 
-**Tiến độ: ~98% — Phase 5 Notification hoàn thành 100%, Phase 6 đang thực hiện Sprint 6.5 (Monitoring & Observability).**
+**Tiến độ: ~99% — Sprint 8.5 (Nested Comment Reply & Realtime Count Sync) hoàn thành 100%, sẵn sàng cho Production Deployment (Phase 7).**
 
 ---
 

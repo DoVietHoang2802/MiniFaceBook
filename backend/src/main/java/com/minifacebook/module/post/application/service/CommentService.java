@@ -57,8 +57,16 @@ public class CommentService {
             imageUrl = mediaService.uploadAvatar(request.getImage());
         }
 
+        String parentId = request.getParentId();
+        if (parentId != null && !parentId.isBlank()) {
+            commentRepository.findById(parentId)
+                    .filter(c -> !c.isDeleted())
+                    .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
+        }
+
         Comment comment = Comment.builder()
                 .postId(postId)
+                .parentId(parentId)
                 .authorId(user.getId())
                 .content(request.getContent())
                 .imageUrl(imageUrl)
@@ -263,8 +271,9 @@ public class CommentService {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
+                .parentId(comment.getParentId())
                 .authorId(comment.getAuthorId())
-                .authorName(author != null ? author.getEmail() : "Unknown User")
+                .authorName(author != null ? (author.getName() != null && !author.getName().isBlank() ? author.getName() : author.getEmail()) : "Unknown User")
                 .authorAvatar(author != null ? author.getAvatar() : null)
                 .content(comment.getContent())
                 .imageUrl(comment.getImageUrl())

@@ -8,6 +8,7 @@ import CommentSection from './CommentSection';
 import ReactionsModal from './ReactionsModal';
 import { postService } from '../services/postService';
 import { useMutation } from '@tanstack/react-query';
+import { sseService } from '../../core/services/sseService';
 
 interface PostDetailModalProps {
   post: PostResponse;
@@ -29,6 +30,28 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   useEffect(() => {
     onPostUpdate?.(localPost);
   }, [localPost, onPostUpdate]);
+
+  // SSE: subscribe to post counts updates (commentCount, reactCount, etc.)
+  useEffect(() => {
+    const unsubscribe = sseService.subscribe<{
+      postId: string;
+      reactCount: number;
+      commentCount: number;
+      reactionsCount: Record<string, number>;
+    }>('/api/events/post', (evt) => {
+      if (evt.postId === post.id) {
+        setLocalPost((prev) => ({
+          ...prev,
+          reactCount: evt.reactCount,
+          commentCount: evt.commentCount,
+          reactionsCount: evt.reactionsCount ?? prev.reactionsCount,
+        }));
+        // Đồng bộ ngược lên PostCard qua onCommentCountChange
+        // Tuy nhiên ở đây ta dùng delta = commentCount mới - commentCount cũ
+      }
+    });
+    return () => unsubscribe();
+  }, [post.id]);
 
   // Lock body scroll when modal is open
   useEffect(() => {

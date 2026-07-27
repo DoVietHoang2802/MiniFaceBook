@@ -11,5 +11,7 @@ public class CommentRequest {
     @NotBlank(message = "Comment content cannot be blank")
     private String content;
     
+    private String parentId; // Optional parent comment ID
+    
     private MultipartFile image; // Optional image attachment
 }

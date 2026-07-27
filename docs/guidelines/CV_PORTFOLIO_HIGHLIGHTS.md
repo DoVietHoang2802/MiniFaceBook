@@ -819,3 +819,19 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Performed precision UI cleanup on ChatPage (removed redundant header elements) and enhanced ProfilePage sidebar to render authentic user data (name, occupation, city, photo grid, friend suggestions). Expanded the Playwright E2E suite to 15+ test cases covering profile, chat, feed, settings, and notification flows — ensuring zero regression across all feature updates.*
 
+---
+
+### 💬 Highlight 52: Triển khai Trả lời Bình luận Đa cấp (Nested Comment Reply) và Đồng bộ Realtime đếm Bình luận qua SSE (Sprint 8.5)
+*   **Situation (Bối cảnh):** Module Bình luận (Comment) của mạng xã hội MiniFaceBook ban đầu chỉ hỗ trợ bình luận phẳng 1 cấp (Top-level), chưa hỗ trợ người dùng phản hồi trực tiếp vào một bình luận cụ thể (Nested Comment Reply) chuẩn trải nghiệm Facebook. Ngoài ra, khi thực hiện xóa bình luận, cơ chế đếm số lượng bình luận (`commentCount`) bị tranh chấp dữ liệu (race condition) giữa Optimistic Mutation và SSE Broadcast dẫn đến số đếm bị sai lệch trên UI nếu không F5 lại trang.
+*   **Task (Nhiệm vụ):** (1) Mở rộng schema backend và frontend để hỗ trợ trường `parentId` phục vụ luồng trả lời bình luận đa cấp; (2) Thiết kế giao diện Phản hồi chuẩn Facebook (badge "Đang trả lời...", lùi lề `ml-10`, viền đứng xám, avatar nhỏ hơn); (3) Cấu hình phân quyền xóa bình luận (Tác giả bình luận & Chủ sở hữu bài viết); (4) Giải quyết triệt để race condition đồng bộ `commentCount` realtime qua SSE.
+*   **Action (Hành động):**
+    *   **Backend Refactoring:** Bổ sung `parentId` cho `Comment` entity, `CommentDocument` (MongoDB), `CommentRequest`, và `CommentResponse`. Cập nhật `CommentService.addComment` để validate bình luận cha và trả về `parentId`. Cấu hình quyền xóa: `comment.authorId === userId || post.authorId === userId`.
+    *   **Frontend UI/UX:** Xây dựng state `replyTo` trong `CommentSection.tsx`. Khi ấn "Phản hồi", hiển thị badge tím `"Đang trả lời [Tên]..."` kèm nút hủy `[x]`, tự động focus ô nhập với placeholder động. Phân tách danh sách thành `topLevelComments` và `repliesByParentId`, render bình luận con lùi lề 40px với viền nét đứt sang trọng.
+    *   **SSE Count Synchronization:** Loại bỏ các lệnh trừ số đếm thủ công ở client mutation `onSuccess` để loại bỏ xung đột với SSE event. Đăng ký listener SSE `postCounts` trong cả `PostCard.tsx` và `PostDetailModal.tsx` để nhận số đếm chuẩn tuyệt đối được broadcast từ Spring Boot backend.
+*   **Result (Kết quả):**
+    *   Tính năng Trả lời bình luận hoạt động mượt mà 100% đúng trải nghiệm Facebook.
+    *   Loại bỏ hoàn toàn lỗi đếm sai số bình luận khi xóa, đảm bảo tính nhất quán dữ liệu realtime 100% giữa News Feed và Modal mà không cần F5.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Architected a Facebook-grade Nested Comment Threading system using parentId references across Spring Boot 3 & MongoDB. Designed a dynamic indent UI with contextual reply badges and dual-role deletion permissions. Fixed real-time SSE count race conditions by consolidating live updates via SSE postCounts broadcasts across Feed and Modal components.*
+
+

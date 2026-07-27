@@ -108,7 +108,7 @@ public class PostService {
         return PostResponse.builder()
                 .id(post.getId())
                 .authorId(post.getAuthorId())
-                .authorName(author != null ? author.getEmail() : "Unknown User")
+                .authorName(author != null ? (author.getName() != null && !author.getName().isBlank() ? author.getName() : author.getEmail()) : "Unknown User")
                 .authorAvatar(author != null ? author.getAvatar() : null)
                 .content(post.getContent())
                 .imageUrls(post.getImageUrls())

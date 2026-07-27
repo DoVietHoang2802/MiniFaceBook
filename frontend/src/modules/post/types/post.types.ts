@@ -18,6 +18,7 @@ export interface PostResponse {
 export interface CommentResponse {
   id: string;
   postId: string;
+  parentId?: string;
   authorId: string;
   authorName: string;
   authorAvatar: string | null;

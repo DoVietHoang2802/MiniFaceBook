@@ -1,3 +1,4 @@
+// Test edit for permission approval
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -675,9 +676,15 @@ export const MainLayout: React.FC = () => {
 
                 if (onlineFriends.length === 0) {
                   return (
-                    <p className="text-slate-400 text-[11px] text-center py-2">
-                      Không có bạn bè nào đang online
-                    </p>
+                    <div className="flex flex-col items-center justify-center py-3 text-center space-y-1.5 bg-slate-50/50 rounded-xl p-3 border border-slate-100/60">
+                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                        <Users className="h-4 w-4" />
+                      </div>
+                      <p className="text-slate-400 text-[11px] leading-snug">
+                        Chưa có bạn bè nào online.<br />
+                        <span className="text-violet-600 font-bold cursor-pointer hover:underline" onClick={() => navigate('/friends')}>Kết bạn thêm</span> từ gợi ý trên!
+                      </p>
+                    </div>
                   );
                 }
 

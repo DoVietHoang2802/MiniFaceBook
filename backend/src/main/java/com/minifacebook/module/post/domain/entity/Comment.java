@@ -11,6 +11,7 @@ import java.time.Instant;
 public class Comment {
     private String id;
     private String postId;
+    private String parentId; // ID của bình luận cha (nếu là reply comment)
     private String authorId;
     private String content;
     private String imageUrl; // Cho phép bình luận bằng 1 ảnh (nếu cần)

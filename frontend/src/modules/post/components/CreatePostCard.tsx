@@ -119,7 +119,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
             <img src={currentUser.avatar} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold bg-slate-50">
-              {currentUser?.email?.charAt(0).toUpperCase()}
+              {(currentUser?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
             </div>
           )}
         </div>

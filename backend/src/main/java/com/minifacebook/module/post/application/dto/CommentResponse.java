@@ -11,6 +11,7 @@ import java.util.Map;
 public class CommentResponse {
     private String id;
     private String postId;
+    private String parentId;
     private String authorId;
     private String authorName;
     private String authorAvatar;

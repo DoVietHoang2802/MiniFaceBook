@@ -80,7 +80,8 @@ Lưu trữ các bình luận cấp 1 của người dùng trên bài viết.
 | Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
 | :--- | :--- | :--- |
 | `_id` | ObjectId (String) | Khóa chính tự động sinh. |
-| `postId` | String | Liên kết tới `posts._id`. |
+| `postId` | String | Liên kết tới `posts._id`. **(Index Ascending)** |
+| `parentId` | String | Liên kết tới `comments._id` cho bình luận con (Nested Reply). Nullable (Null nếu là bình luận cấp 1). |
 | `authorId` | String | Liên kết tới `users._id`. |
 | `authorName` | String | Tên người bình luận (Denormalized để truy vấn nhanh). |
 | `authorAvatar`| String | Avatar người bình luận. |

@@ -315,8 +315,8 @@
     - [x] **UI Refinements (ChatPage):** Xóa nút tìm kiếm tròn và nút "Tùy chọn hội thoại" trong header chat để đơn giản hóa UI.
     - [x] **ProfilePage Sidebar (Real Data):** Hiển thị dữ liệu thật: tên người dùng, công việc, thành phố, ảnh (tối đa 6 tấm kèm See All), đề xuất bạn bè (thực tế).
     - [x] **Playwright E2E Test Coverage:** Viết mới `profile.spec.ts` (6 tests) và cập nhật `chat.spec.ts` (6 tests) bao phủ toàn diện các thay đổi.
-    - [ ] Tích hợp **Spring Boot Actuator** cấu hình `/actuator/health` giám sát hệ thống.
-    - [ ] Tích hợp **Sentry** theo dõi và bắt lỗi runtime thời gian thực (Backend + Frontend).
+    - [x] Tích hợp **Spring Boot Actuator** cấu hình `/actuator/health` giám sát hệ thống.
+    - [x] Tích hợp **Sentry** theo dõi và bắt lỗi runtime thời gian thực (Backend + Frontend).
     - [ ] **K6 Load Testing**: Kiểm tra sức chịu tải của API trước khi go-live.
         - *Target:* 100 concurrent users, response time < 500ms.
 
@@ -357,6 +357,11 @@
     - [ ] Tích hợp **Google Gemini API** để tóm tắt hội thoại dài.
     - [ ] **AI Sentiment Analysis**: Phân tích cảm xúc tin nhắn/bài viết.
     - [ ] **Smart Reply Suggestions**: Gợi ý câu trả lời nhanh.
+- [x] **Sprint 8.5: Nested Comment Reply & Realtime Count Sync** ✅
+    - [x] **Trường parentId**: Bổ sung `parentId` cho Comment Entity, Document, DTOs & Service để hỗ trợ luồng trả lời đa cấp (Nested Comment Threads).
+    - [x] **Giao diện Phản hồi chuẩn Facebook**: Nút "Phản hồi", badge tím `"Đang trả lời [Tên]..."` với nút hủy `[x]`, tự động thụt lề (`ml-10` + border-l-2) hiển thị reply con.
+    - [x] **Phân quyền xóa chuẩn Facebook**: Tác giả bình luận & Chủ bài viết đều có quyền xóa bình luận.
+    - [x] **SSE Realtime Count Synchronization**: Khắc phục race condition đếm comment khi xóa bài bằng cách sử dụng luồng phát sóng `postCounts` duy nhất qua SSE.
 
 ---
 

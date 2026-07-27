@@ -701,6 +701,13 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Playwright E2E - chat.spec.ts]** Cập nhật lại `frontend/tests/chat.spec.ts` với 6 test cases toàn diện: không có search/options button, gửi/nhận tin nhắn, typing indicator, infinite scroll, xóa tin nhắn.
   - [x] **[Update Full - Docs Sync]** Thực thi giao thức "Update Full" (9.7): đồng bộ 7 file tài liệu kiến trúc (DATABASE_SCHEMA, PROGRESS, ROADMAP, SESSION_HANDOFF, CV_PORTFOLIO_HIGHLIGHTS, UI_UX_DESIGN, README).
 
+- **Nhật ký phiên làm việc (27/07/2026 - Sprint 8.5: Nested Comment Reply & Realtime Count Sync):**
+  - [x] **[Backend parentId Extension]** Bổ sung trường `parentId` cho `Comment` entity, `CommentDocument` (MongoDB), `CommentRequest`, và `CommentResponse`. Cập nhật `CommentService.addComment` hỗ trợ tạo bình luận con.
+  - [x] **[Facebook-Grade Reply UI]** Triển khai giao diện Phản hồi chuẩn Facebook trong `CommentSection.tsx`: nút "Phản hồi", badge tím `"Đang trả lời [Tên]..."` kèm nút hủy `[x]`, tự động focus ô nhập, lùi lề `ml-10` với đường viền đứng xám.
+  - [x] **[Dual-Role Delete Authorization]** Phân quyền cho cả Tác giả bình luận lẫn Chủ sở hữu bài viết đều có quyền xóa bình luận trong bài viết.
+  - [x] **[SSE Count Sync & Fix Race Condition]** Vá triệt để lỗi xung đột số đếm `commentCount` khi xóa comment bằng cách tập trung đồng bộ realtime qua SSE `postCounts` broadcast trên cả Feed và Modal.
+  - [x] **[Build Verification]** Chạy `npm run build` thành công 100%, 0 lỗi biên dịch TypeScript.
+
 
 
 

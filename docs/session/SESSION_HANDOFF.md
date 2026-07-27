@@ -1,9 +1,45 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 10/07/2026
-## 🏁 Trạng thái hiện tại: 🔧 SPRINT 6.5 ĐANG THỰC HIỆN (UI Refinements: ChatPage Cleanup + ProfilePage Sidebar Real Data + E2E Test Coverage). Tổng tiến độ **~98%**.
+## 📅 Cập nhật ngày: 27/07/2026
+## 🏁 Trạng thái hiện tại: ✅ SPRINT 8.5 HOÀN THÀNH (Nested Comment Reply & Realtime Count Sync). Tổng tiến độ **~99%**.
 
-> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã được tái cấu trúc thành **7 Phases**. Phase 6 là **Navigation, Performance & Testing**; Phase 7 là **Deployment**. Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã bổ sung **Sprint 8.5: Nested Comment Reply & Realtime Count Sync**. Sẵn sàng cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (27/07/2026 - SPRINT 8.5: NESTED COMMENT REPLY & REALTIME COUNT SYNC)
+
+### Công việc đã thực hiện:
+
+1. **Nested Comment Reply (Trả lời bình luận đa cấp)**:
+   - **Backend**: Thêm trường `parentId` trong Entity, Document, DTOs và Service của `Comment` module. Cập nhật `CommentService.addComment` để kiểm tra tồn tại comment gốc và map `parentId` vào response.
+   - **Frontend**: Cập nhật `CommentResponse` type & `postService.addComment`. Triển khai full UI/UX reply chuẩn Facebook trong `CommentSection.tsx`:
+     - Nút **"Phản hồi"** hoạt động → set state `replyTo` & auto-focus textarea.
+     - Badge tím **"Đang trả lời [Tên]..."** kèm nút hủy `[x]`.
+     - Placeholder ô nhập đổi động theo đối tượng trả lời.
+     - Tách top-level comments & replies, render lùi lề (`ml-10` + `border-l-2`) với avatar nhỏ hơn (`h-7 w-7`).
+
+2. **Phân quyền Xóa Bình luận chuẩn Facebook**:
+   - Tác giả viết bình luận (`comment.authorId === currentUser.id`) HOẶC Chủ sở hữu bài viết (`postAuthorId === currentUser.id`) đều có quyền xóa bình luận.
+
+3. **Vá lỗi Realtime Count Sync & Race Condition**:
+   - Loại bỏ xung đột trừ đôi số đếm bình luận khi xóa comment.
+   - Bổ sung SSE `postCounts` listener trong `PostDetailModal.tsx` để nhận số đếm realtime từ backend một cách nhất quán trên cả Feed lẫn Modal.
+   - Biên dịch thành công 100% qua `npm run build` (giai đoạn Vite & TypeScript compilation).
+
+### Files chính:
+- `backend/src/main/java/com/minifacebook/module/post/domain/entity/Comment.java`
+- `backend/src/main/java/com/minifacebook/module/post/infrastructure/persistence/document/CommentDocument.java`
+- `backend/src/main/java/com/minifacebook/module/post/application/dto/CommentRequest.java`
+- `backend/src/main/java/com/minifacebook/module/post/application/dto/CommentResponse.java`
+- `backend/src/main/java/com/minifacebook/module/post/application/service/CommentService.java`
+- `frontend/src/modules/post/types/post.types.ts`
+- `frontend/src/modules/post/services/postService.ts`
+- `frontend/src/modules/post/components/CommentSection.tsx`
+- `frontend/src/modules/post/components/PostDetailModal.tsx`
+- `docs/architecture/DATABASE_SCHEMA.md`
+- `docs/planning/ROADMAP.md`
+- `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md`
 
 ---
 

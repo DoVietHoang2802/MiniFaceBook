@@ -30,9 +30,12 @@ export const postService = {
     return response.data;
   },
 
-  addComment: async (postId: string, content: string, image?: File) => {
+  addComment: async (postId: string, content: string, image?: File, parentId?: string) => {
     const formData = new FormData();
     formData.append('content', content);
+    if (parentId) {
+      formData.append('parentId', parentId);
+    }
     if (image) {
       formData.append('image', image);
     }

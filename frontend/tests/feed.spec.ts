@@ -79,4 +79,63 @@ test.describe('Feed and Post Interactions Flow', () => {
 
     await expect(endMsg).toBeVisible({ timeout: 12000 });
   });
+
+  test('should handle nested comment replies and comment deletion cleanly', async ({ page, request }) => {
+    const postContent = `Test Post for Reply ${Date.now()}`;
+    const commentContent = `Parent Comment ${Date.now()}`;
+    const replyContent = `Child Reply ${Date.now()}`;
+
+    page.on('dialog', async (dialog) => {
+      if (dialog.message().includes('Bạn có chắc chắn muốn xóa')) {
+        await dialog.accept();
+      }
+    });
+
+    await registerAndLogin(page, request, 'replytest@example.com', 'Reply Tester', 'Password123!');
+    await page.waitForTimeout(1000);
+
+    const postInput = page.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
+    await expect(postInput).toBeVisible({ timeout: 15000 });
+    await postInput.fill(postContent);
+    await page.click('button:has-text("Đăng bài")');
+
+    const postCard = page
+      .locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white')
+      .filter({ hasText: postContent })
+      .first();
+    await expect(postCard).toBeVisible({ timeout: 15000 });
+
+    // Open detail modal
+    await postCard.locator('button:has-text("Bình luận")').click();
+    const detailModal = page.locator('div.fixed.inset-0.z-\\[99999\\]');
+    await expect(detailModal).toBeVisible({ timeout: 10000 });
+
+    // Add parent comment
+    const commentInput = detailModal.locator('textarea[placeholder="Viết bình luận..."]');
+    await commentInput.fill(commentContent);
+    await detailModal.locator('button.bg-blue-500').click();
+    await expect(detailModal.locator(`text=${commentContent}`)).toBeVisible({ timeout: 10000 });
+
+    // Click "Phản hồi" on parent comment
+    const parentCommentContainer = detailModal.locator('div.group.animate-fade-in-up').filter({ hasText: commentContent }).first();
+    await parentCommentContainer.locator('button:has-text("Phản hồi")').click();
+
+    // Verify reply badge appears
+    await expect(detailModal.locator('text=Đang trả lời')).toBeVisible({ timeout: 5000 });
+
+    // Fill reply comment and submit
+    const replyInput = detailModal.locator('textarea[placeholder*="Trả lời"]');
+    await replyInput.fill(replyContent);
+    await detailModal.locator('button.bg-blue-500').click();
+
+    // Verify reply appears in modal
+    await expect(detailModal.locator(`text=${replyContent}`)).toBeVisible({ timeout: 10000 });
+
+    // Close modal
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+
+    // Verify comment count on PostCard (should show 2 bình luận)
+    await expect(postCard.locator('button.hover\\:underline').filter({ hasText: 'bình luận' })).toContainText('2 bình luận', { timeout: 10000 });
+  });
 });
