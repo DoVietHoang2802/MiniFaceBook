@@ -9,10 +9,11 @@ target/
 
 # ===== IDE =====
 .idea/
+.antigravity/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.vscode/
 *.swp
 *.swo
 *~
