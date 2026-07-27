@@ -53,6 +53,8 @@ coverage/
 *.bak
 *.tmp
 *.temp
+scratch/
+test_image_large.jpg
 
 # ===== PLAYWRIGHT =====
 playwright-report/
