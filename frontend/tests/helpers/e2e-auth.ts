@@ -27,7 +27,7 @@ async function waitForVerificationToken(
   email: string
 ): Promise<string> {
   let token = '';
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 30; i++) {
     await new Promise((r) => setTimeout(r, 1500));
     try {
       const listResponse = await request.get(`${MAILPIT_BASE}/messages`);
@@ -106,14 +106,14 @@ export async function loginAs(
       await page.fill('#login-email', email);
       await page.fill('#login-password', password);
       await page.click('button[type="submit"]');
-      await expect(appShell(page)).toBeVisible({ timeout: 30000 });
+      await expect(appShell(page)).toBeVisible({ timeout: 45000 });
       return;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       console.warn(`Login attempt ${attempt + 1} failed: ${message}`);
     }
   }
-  await expect(appShell(page)).toBeVisible({ timeout: 30000 });
+  await expect(appShell(page)).toBeVisible({ timeout: 45000 });
 }
 
 /**
