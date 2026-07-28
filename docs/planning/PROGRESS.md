@@ -701,12 +701,15 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Playwright E2E - chat.spec.ts]** Cập nhật lại `frontend/tests/chat.spec.ts` với 6 test cases toàn diện: không có search/options button, gửi/nhận tin nhắn, typing indicator, infinite scroll, xóa tin nhắn.
   - [x] **[Update Full - Docs Sync]** Thực thi giao thức "Update Full" (9.7): đồng bộ 7 file tài liệu kiến trúc (DATABASE_SCHEMA, PROGRESS, ROADMAP, SESSION_HANDOFF, CV_PORTFOLIO_HIGHLIGHTS, UI_UX_DESIGN, README).
 
-- **Nhật ký phiên làm việc (27/07/2026 - Sprint 8.5: Nested Comment Reply & Realtime Count Sync):**
-  - [x] **[Backend parentId Extension]** Bổ sung trường `parentId` cho `Comment` entity, `CommentDocument` (MongoDB), `CommentRequest`, và `CommentResponse`. Cập nhật `CommentService.addComment` hỗ trợ tạo bình luận con.
-  - [x] **[Facebook-Grade Reply UI]** Triển khai giao diện Phản hồi chuẩn Facebook trong `CommentSection.tsx`: nút "Phản hồi", badge tím `"Đang trả lời [Tên]..."` kèm nút hủy `[x]`, tự động focus ô nhập, lùi lề `ml-10` với đường viền đứng xám.
-  - [x] **[Dual-Role Delete Authorization]** Phân quyền cho cả Tác giả bình luận lẫn Chủ sở hữu bài viết đều có quyền xóa bình luận trong bài viết.
-  - [x] **[SSE Count Sync & Fix Race Condition]** Vá triệt để lỗi xung đột số đếm `commentCount` khi xóa comment bằng cách tập trung đồng bộ realtime qua SSE `postCounts` broadcast trên cả Feed và Modal.
-  - [x] **[Build Verification]** Chạy `npm run build` thành công 100%, 0 lỗi biên dịch TypeScript.
+- **Nhật ký phiên làm việc (28/07/2026 - Sprint 8.3: Voice & Video Call 1-1 WebRTC - 0đ Chi phí):**
+  - [x] **[Backend Call Signaling]** Tạo `CallSignalMessage.java` DTO và `CallSignalingController.java` rơ-le các thông điệp tín hiệu WebRTC SDP/ICE qua Spring WebSocket STOMP (`/app/call.signal` -> `/topic/call/{calleeId}`).
+  - [x] **[Frontend WebRTC Engine]** Xây dựng custom hook `useWebRTCCall.ts` kết nối P2P trực tiếp qua Google STUN (`stun:stun.l.google.com:19302`), quản lý Micro và Stream camera.
+  - [x] **[Messenger Call UI/UX]** Dựng `IncomingCallModal.tsx` reo chuông tự tổng hợp, avatar đối phương + hiệu ứng sóng; `ActiveCallModal.tsx` xem video/avatar, nút Mute Mic và Kết thúc cuộc gọi màu đỏ.
+  - [x] **[F5 Disconnect & Safety Listener]** Thêm `@EventListener` `SessionDisconnectEvent` ở Backend và `beforeunload` ở Frontend: tự động ngắt cuộc gọi cho phía đối phương khi có 1 bên F5 hoặc thoát tab/mất mạng.
+  - [x] **[Messenger Call History Message]** Tự động phát tin nhắn lịch sử cuộc gọi vào đoạn chat (`📞 Cuộc gọi thoại đã kết thúc • 01:25` / `📞 Cuộc gọi nhỡ`), lưu lại vĩnh viễn trong khung chat.
+  - [x] **[Smart Fallback]** Tự động chuyển mượt mà về Gọi thoại nếu camera bị chiếm dụng bởi tab khác trên cùng 1 laptop, gỡ bỏ 100% popup alert phiền phức.
+  - [x] **[AI Governance Protocol]** Tạo mới tệp hiến pháp `.agents/AGENTS.md` thiết lập quy định phân lớp Clean Architecture, Update Full Protocol, cấm tự mở browser ngầm và cấm tự push Git khi chưa xin phép.
+
 
 
 

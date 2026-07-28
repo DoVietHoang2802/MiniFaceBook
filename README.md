@@ -54,9 +54,9 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 4 | Realtime Chat | ✅ Hoàn thành (Sprint 4.1→4.5) |
 | 5 | Notification System | ✅ Hoàn thành (Sprint 5.1→5.4 + Forgot Password OTP) |
 | 6 | Navigation, Performance & Testing | ✅ Hoàn thành (Sprint 6.1→6.5) |
-| 7 | Extended Features | 🚧 Đang làm (Sprint 8.5 Nested Comment Reply hoàn thành) |
+| 7 | Extended Features | 🚧 Đang làm (Sprint 8.3 WebRTC Call 1-1 & Sprint 8.5 Nested Reply hoàn thành) |
 
-**Tiến độ: ~99% — Sprint 8.5 (Nested Comment Reply & Realtime Count Sync) hoàn thành 100%, sẵn sàng cho Production Deployment (Phase 7).**
+**Tiến độ: ~99.5% — Sprint 8.3 (Voice & Video Call 1-1 WebRTC) và Sprint 8.5 (Nested Comment Reply) hoàn thành 100%, sẵn sàng cho Production Deployment.**
 
 ---
 

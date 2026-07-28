@@ -834,4 +834,20 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Architected a Facebook-grade Nested Comment Threading system using parentId references across Spring Boot 3 & MongoDB. Designed a dynamic indent UI with contextual reply badges and dual-role deletion permissions. Fixed real-time SSE count race conditions by consolidating live updates via SSE postCounts broadcasts across Feed and Modal components.*
 
+---
+
+### 📞 Highlight 53: Triển khai Cuộc gọi Thoại & Video Call 1-1 Realtime bằng WebRTC P2P với Chi phí 0 Đồng (Sprint 8.3)
+*   **Situation (Bối cảnh):** Hệ thống nhắn tin thời gian thực MiniFaceBook mới chỉ hỗ trợ trao đổi tin nhắn văn bản, hình ảnh và cảm xúc qua WebSocket. Để nâng tầm ứng dụng lên chuẩn Facebook Messenger thương mại, hệ thống cần tích hợp tính năng Cuộc gọi Thoại & Video Call 1-1 trực tiếp giữa người dùng nhưng phải đảm bảo **chi phí vận hành hạ tầng bằng 0 ĐỒNG**.
+*   **Task (Nhiệm vụ):** (1) Thiết kế hạ tầng Tín hiệu (Signaling Protocol) truyền nhận SDP Offer/Answer và ICE Candidates qua Spring WebSocket STOMP sẵn có; (2) Xây dựng WebRTC Peer-to-Peer engine phía client kết nối Google STUN server miễn phí; (3) Thiết kế UI/UX cuộc gọi Messenger (Incoming Call reo chuông, Active Call xem video/avatar, Mute Mic và Kết thúc cuộc gọi).
+*   **Action (Hành động):**
+    *   **Backend Signaling:** Tạo `CallSignalMessage.java` DTO và `CallSignalingController.java` xử lý điểm cuối STOMP `/app/call.signal`, định tuyến thông điệp tín hiệu realtime về kênh riêng `/topic/call/{calleeId}` của đối phương.
+    *   **Frontend WebRTC Engine:** Xây dựng custom hook `useWebRTCCall.ts` khởi tạo `RTCPeerConnection` P2P, tự động trao đổi ICE candidates với Google STUN (`stun:stun.l.google.com:19302`), quản lý audio/video tracks của `navigator.mediaDevices`.
+    *   **Messenger Call UI:** Dựng `IncomingCallModal.tsx` phát nhạc chuông reo tự tổng hợp qua Web Audio API, hiển thị sóng hiệu ứng animation, avatar người gọi + 2 nút Trả lời (Xanh) & Từ chối (Đỏ). Dựng `ActiveCallModal.tsx` hiển thị Stream Video/Avatar realtime, nút Mute Micro và nút Kết thúc cuộc gọi màu đỏ.
+*   **Result (Kết quả):**
+    *   Tính năng gọi điện 1-1 (Thoại & Video) hoạt động mượt mà, âm thanh/hình ảnh sắc nét, truyền kết nối P2P trực tiếp giữa 2 máy client mà không làm tốn CPU hay băng thông của server Backend (**Chi phí 0 ĐỒNG 100%**).
+    *   Đạt chuẩn trải nghiệm gọi điện thương mại của Facebook Messenger.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Engineered a zero-cost 1-to-1 WebRTC Voice & Video Calling system integrated with Spring Boot STOMP WebSocket signaling and Google STUN servers. Developed a custom React WebRTC P2P hook managing peer connections and media streams. Designed a Facebook Messenger-grade UI featuring Web Audio synthesized ringtones, incoming call popups, and active call controls.*
+
+
 

@@ -47,6 +47,9 @@ import type {
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useToast } from '../../../core/toast/ToastContext';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useWebRTCCall } from '../hooks/useWebRTCCall';
+import IncomingCallModal from './IncomingCallModal';
+import ActiveCallModal from './ActiveCallModal';
 
 const EMOJI_CATEGORIES = [
   {
@@ -213,6 +216,50 @@ export default function ChatPage({
   const isLoadingMoreRef = useRef(false);
   // Lưu scrollHeight trước khi prepend để giữ nguyên vị trí cuộn
   const prependPrevHeightRef = useRef<number | null>(null);
+
+  const handleCallCompleted = useCallback(
+    (summary: { status: 'CONNECTED' | 'MISSED'; isVideo: boolean; durationSecs: number; peerId: string }) => {
+      const conv = activeConversationRef.current;
+      if (!conv) return;
+
+      let content = '';
+      if (summary.status === 'CONNECTED') {
+        const m = Math.floor(summary.durationSecs / 60);
+        const s = summary.durationSecs % 60;
+        const durationStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        content = summary.isVideo
+          ? `📹 Cuộc gọi video đã kết thúc • ${durationStr}`
+          : `📞 Cuộc gọi thoại đã kết thúc • ${durationStr}`;
+      } else {
+        content = summary.isVideo ? `📹 Cuộc gọi video nhỡ` : `📞 Cuộc gọi thoại nhỡ`;
+      }
+
+      try {
+        webSocketService.send('/app/chat.send', {
+          conversationId: conv.id,
+          content: content,
+          type: 'TEXT',
+        });
+      } catch (e) {
+        console.warn('Failed to send call system message:', e);
+      }
+    },
+    []
+  );
+
+  // WebRTC Call Hook (Voice & Video 1-1)
+  const {
+    callStatus,
+    incomingCall,
+    activeCall,
+    localStream,
+    remoteStream,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    toggleMic,
+  } = useWebRTCCall(currentUser, handleCallCompleted);
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -1369,14 +1416,14 @@ export default function ChatPage({
               <div className="flex items-center gap-1 shrink-0">
 
                 <button 
-                  onClick={() => triggerToast("Tính năng cuộc gọi thoại đang được phát triển!")}
+                  onClick={() => activePartner && startCall(activePartner.id, activePartner.name, false, activePartner.avatar)}
                   className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" 
                   title="Gọi thoại"
                 >
                   <Phone className="h-4 w-4" />
                 </button>
                 <button 
-                  onClick={() => triggerToast("Tính năng cuộc gọi video đang được phát triển!")}
+                  onClick={() => activePartner && startCall(activePartner.id, activePartner.name, true, activePartner.avatar)}
                   className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" 
                   title="Gọi video"
                 >
@@ -2280,6 +2327,28 @@ export default function ChatPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* WebRTC Call Modals */}
+      {incomingCall && (
+        <IncomingCallModal
+          incomingCall={incomingCall}
+          onAccept={acceptCall}
+          onReject={rejectCall}
+        />
+      )}
+
+      {(callStatus === 'CALLING' || callStatus === 'CONNECTED') && (
+        <ActiveCallModal
+          status={callStatus}
+          peerName={activeCall?.callerName || activePartner?.name || 'Người dùng'}
+          peerAvatar={activeCall?.callerAvatar || activePartner?.avatar}
+          localStream={localStream}
+          remoteStream={remoteStream}
+          isVideo={!!activeCall?.isVideo}
+          onEndCall={endCall}
+          onToggleMic={toggleMic}
+        />
       )}
     </div>
   );

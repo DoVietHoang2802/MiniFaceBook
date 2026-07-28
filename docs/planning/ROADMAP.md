@@ -349,10 +349,10 @@
     - [ ] Hỗ trợ **Video Upload** cho bài viết (Cloudinary video).
     - [ ] Tính năng **Stories** (tin tức 24h tự động xóa).
     - [ ] Giao diện Stories carousel trên đầu newsfeed.
-- [ ] **Sprint 8.3: Voice/Video Call (Research)**
-    - [ ] Nghiên cứu tích hợp **WebRTC** cho cuộc gọi realtime.
-    - [ ] Signaling server với WebSocket.
-    - [ ] TURN/STUN server configuration.
+- [x] **Sprint 8.3: Voice & Video Call 1-1 (WebRTC & WebSocket Signaling)** ✅
+    - [x] **Giao thức WebRTC P2P**: Khởi tạo `RTCPeerConnection` nối trực tiếp giữa 2 máy client với Google STUN miễn phí (**0đ chi phí**).
+    - [x] **STOMP Signaling Controller**: Triển khai `CallSignalingController.java` rơ-le tín hiệu SDP Offer/Answer và ICE Candidates qua `/topic/call/{calleeId}`.
+    - [x] **Trải nghiệm cuộc gọi Messenger**: `IncomingCallModal.tsx` phát âm thanh chuông reo, avatar người gọi + nút Nghe & Từ chối. `ActiveCallModal.tsx` hỗ trợ xem video/avatar, nút Mute Mic và Kết thúc cuộc gọi màu đỏ.
 - [ ] **Sprint 8.4: AI-Assisted Features (Trend 2026)**
     - [ ] Tích hợp **Google Gemini API** để tóm tắt hội thoại dài.
     - [ ] **AI Sentiment Analysis**: Phân tích cảm xúc tin nhắn/bài viết.

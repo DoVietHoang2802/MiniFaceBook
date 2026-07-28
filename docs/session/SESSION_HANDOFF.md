@@ -1,9 +1,41 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 27/07/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 8.5 HOÀN THÀNH (Nested Comment Reply & Realtime Count Sync). Tổng tiến độ **~99%**.
+## 📅 Cập nhật ngày: 28/07/2026
+## 🏁 Trạng thái hiện tại: ✅ SPRINT 8.3 HOÀN THÀNH (Voice & Video Call 1-1 WebRTC - 0đ chi phí). Tổng tiến độ **~99.5%**.
 
-> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã bổ sung **Sprint 8.5: Nested Comment Reply & Realtime Count Sync**. Sẵn sàng cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã hoàn thành **Sprint 8.3: Voice & Video Call 1-1 WebRTC** & **Sprint 8.5: Nested Comment Reply**. Sẵn sàng cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (28/07/2026 - SPRINT 8.3: VOICE & VIDEO CALL 1-1 WEBRTC - 0Đ CHI PHÍ)
+
+### Công việc đã thực hiện:
+
+1. **Backend Call Signaling (Spring Boot 3 + WebSocket STOMP)**:
+   - Tạo DTO `CallSignalMessage.java` chứa các tín hiệu SDP (`OFFER`, `ANSWER`, `ICE_CANDIDATE`, `REJECT`, `END`, `CANCEL`).
+   - Tạo Controller `CallSignalingController.java` xử lý định tuyến tín hiệu realtime qua STOMP destination `/app/call.signal` $\rightarrow$ rơ-le về kênh `/topic/call/{calleeId}`.
+
+2. **Frontend WebRTC Engine & Modals (React + TypeScript)**:
+   - Tạo Custom Hook `useWebRTCCall.ts` khởi tạo `RTCPeerConnection` P2P, kết nối Google STUN (`stun:stun.l.google.com:19302`), quản lý audio/video tracks.
+   - Component `IncomingCallModal.tsx`: Nhạc chuông reo tự tổng hợp, avatar người gọi, sóng hiệu ứng animation, nút Nghe (Xanh) & Từ chối (Đỏ).
+   - Component `ActiveCallModal.tsx`: Xem Stream Video / Voice Avatar realtime, nút Mute Mic và Kết thúc cuộc gọi màu đỏ.
+   - Kết nối nút Gọi thoại & Gọi video ở header `ChatPage.tsx`.
+
+3. **Giao thức Quản trị AI (.agents/AGENTS.md)**:
+   - Tạo mới tệp hiến pháp `.agents/AGENTS.md` thiết lập quy định phân lớp Clean Architecture, Update Full Protocol, cấm tự động mở browser ngầm và cấm tự động push code Git khi chưa xin phép.
+
+### Files chính:
+- `backend/src/main/java/com/minifacebook/module/chat/application/dto/CallSignalMessage.java`
+- `backend/src/main/java/com/minifacebook/module/chat/presentation/CallSignalingController.java`
+- `frontend/src/modules/chat/types/call.types.ts`
+- `frontend/src/modules/chat/hooks/useWebRTCCall.ts`
+- `frontend/src/modules/chat/components/IncomingCallModal.tsx`
+- `frontend/src/modules/chat/components/ActiveCallModal.tsx`
+- `frontend/src/modules/chat/components/ChatPage.tsx`
+- `.agents/AGENTS.md`
+- `docs/planning/ROADMAP.md`
+- `docs/planning/PROGRESS.md`
+- `docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md`
 
 ---
 

@@ -57,3 +57,7 @@ Mỗi khi hoàn thành bất kỳ tính năng mới hoặc chỉnh sửa lớn n
 2. **Clean Repository:**
    - Kiểm tra `git status` trước khi bàn giao để phát hiện file rác, file tạm hoặc code debug chưa xóa.
    - Không commit credential hoặc secret key cứng vào repository (dùng `application-local.yml` hoặc `.env`).
+3. **Browser Automation Safety:**
+   - AI TUYỆT ĐỐI KHÔNG tự động kích hoạt công cụ mở trình duyệt ngầm (`browser_subagent`) khi chưa xin phép và được sự đồng ý trực tiếp từ người dùng.
+4. **Git Operations Safety:**
+   - AI TUYỆT ĐỐI KHÔNG tự động thực hiện các lệnh commit (`git commit`) hoặc push code (`git push`) lên repository khi chưa xin phép và được sự đồng ý trực tiếp từ người dùng.

@@ -1,0 +1,397 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { webSocketService } from '../services/webSocketService';
+import type { CallSignalMessage, CallStatus } from '../types/call.types';
+
+const STUN_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ],
+};
+
+export interface WebRTCCallCompletedSummary {
+  status: 'CONNECTED' | 'MISSED';
+  isVideo: boolean;
+  durationSecs: number;
+  peerId: string;
+}
+
+export const useWebRTCCall = (
+  currentUser: any,
+  onCallCompleted?: (summary: WebRTCCallCompletedSummary) => void
+) => {
+  const [callStatus, setCallStatus] = useState<CallStatus>('IDLE');
+  const [incomingCall, setIncomingCall] = useState<CallSignalMessage | null>(null);
+  const [activeCall, setActiveCall] = useState<CallSignalMessage | null>(null);
+
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  const peerConnRef = useRef<RTCPeerConnection | null>(null);
+  const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
+
+  const activeCallRef = useRef<CallSignalMessage | null>(null);
+  const incomingCallRef = useRef<CallSignalMessage | null>(null);
+  const callStatusRef = useRef<CallStatus>('IDLE');
+  const ringingTimeoutRef = useRef<any>(null);
+  const connectedStartTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    activeCallRef.current = activeCall;
+  }, [activeCall]);
+
+  useEffect(() => {
+    incomingCallRef.current = incomingCall;
+  }, [incomingCall]);
+
+  useEffect(() => {
+    callStatusRef.current = callStatus;
+  }, [callStatus]);
+
+  useEffect(() => {
+    if (callStatus === 'CONNECTED') {
+      connectedStartTimeRef.current = Date.now();
+    }
+  }, [callStatus]);
+
+  // Send signaling message via STOMP /app/call.signal
+  const sendSignal = useCallback((message: CallSignalMessage) => {
+    webSocketService.send('/app/call.signal', message);
+  }, []);
+
+  // Safe media stream fetch with Smart Fallback (Video -> Audio -> Empty)
+  const getMediaStreamSafe = async (reqVideo: boolean): Promise<{ stream: MediaStream; isVideo: boolean }> => {
+    try {
+      if (reqVideo) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+          return { stream, isVideo: true };
+        } catch {
+          console.warn('[WebRTC] Camera busy/unavailable on device, falling back to Audio-only');
+          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          return { stream: audioStream, isVideo: false };
+        }
+      } else {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        return { stream, isVideo: false };
+      }
+    } catch (err) {
+      console.warn('[WebRTC] Media permission denied or hardware unavailable:', err);
+      return { stream: new MediaStream(), isVideo: false };
+    }
+  };
+
+  // Clean up WebRTC peer connection & media streams
+  const cleanupCall = useCallback(() => {
+    if (callStatusRef.current !== 'IDLE' && onCallCompleted) {
+      const isConn = callStatusRef.current === 'CONNECTED';
+      const durationSecs =
+        isConn && connectedStartTimeRef.current
+          ? Math.max(1, Math.floor((Date.now() - connectedStartTimeRef.current) / 1000))
+          : 0;
+
+      const actCall = activeCallRef.current;
+      const incCall = incomingCallRef.current;
+      const peerId: string =
+        (actCall?.calleeId === currentUser?.id
+          ? actCall?.callerId
+          : actCall?.calleeId || incCall?.callerId) || '';
+
+      const isVideo = !!(actCall?.isVideo || incCall?.isVideo);
+
+      onCallCompleted({
+        status: isConn ? 'CONNECTED' : 'MISSED',
+        isVideo,
+        durationSecs,
+        peerId,
+      });
+    }
+
+    if (ringingTimeoutRef.current) {
+      clearTimeout(ringingTimeoutRef.current);
+      ringingTimeoutRef.current = null;
+    }
+    if (peerConnRef.current) {
+      peerConnRef.current.close();
+      peerConnRef.current = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach((t) => t.stop());
+      setLocalStream(null);
+    }
+    setRemoteStream(null);
+    setCallStatus('IDLE');
+    setIncomingCall(null);
+    setActiveCall(null);
+    connectedStartTimeRef.current = null;
+    iceCandidatesQueue.current = [];
+  }, [localStream, currentUser?.id, onCallCompleted]);
+
+  // End active call
+  const endCall = useCallback(() => {
+    const actCall = activeCallRef.current || activeCall;
+    const incCall = incomingCallRef.current || incomingCall;
+    const targetId =
+      actCall?.calleeId === currentUser?.id
+        ? actCall?.callerId
+        : actCall?.calleeId || incCall?.callerId;
+
+    if (targetId && currentUser?.id) {
+      sendSignal({
+        type: 'END',
+        callerId: currentUser.id,
+        calleeId: targetId,
+      });
+    }
+    cleanupCall();
+  }, [activeCall, incomingCall, currentUser?.id, sendSignal, cleanupCall]);
+
+  // Reject incoming call
+  const rejectCall = useCallback(() => {
+    if (incomingCallRef.current && currentUser?.id) {
+      sendSignal({
+        type: 'REJECT',
+        callerId: currentUser.id,
+        calleeId: incomingCallRef.current.callerId,
+      });
+    }
+    cleanupCall();
+  }, [currentUser?.id, sendSignal, cleanupCall]);
+
+  // Create PeerConnection & setup handlers
+  const createPeerConnection = useCallback(
+    (targetUserId: string) => {
+      const pc = new RTCPeerConnection(STUN_SERVERS);
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate && currentUser?.id) {
+          sendSignal({
+            type: 'ICE_CANDIDATE',
+            callerId: currentUser.id,
+            calleeId: targetUserId,
+            candidate: event.candidate.toJSON(),
+          });
+        }
+      };
+
+      pc.ontrack = (event) => {
+        if (event.streams && event.streams[0]) {
+          setRemoteStream(event.streams[0]);
+        }
+      };
+
+      peerConnRef.current = pc;
+      return pc;
+    },
+    [currentUser?.id, sendSignal]
+  );
+
+  // Initiate a new call (Caller)
+  const startCall = async (
+    calleeId: string,
+    calleeName: string,
+    isVideo: boolean = false,
+    calleeAvatar?: string
+  ) => {
+    try {
+      cleanupCall();
+      setCallStatus('CALLING');
+
+      const { stream, isVideo: actualIsVideo } = await getMediaStreamSafe(isVideo);
+      setLocalStream(stream);
+
+      const pc = createPeerConnection(calleeId);
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const callInfo: CallSignalMessage = {
+        type: 'OFFER',
+        callerId: currentUser?.id || '',
+        callerName: currentUser?.name || 'Người dùng',
+        callerAvatar: currentUser?.avatar,
+        calleeId: calleeId,
+        sdp: offer,
+        isVideo: actualIsVideo,
+      };
+
+      setActiveCall({ ...callInfo, callerName: calleeName, callerAvatar: calleeAvatar });
+      sendSignal(callInfo);
+    } catch (err) {
+      console.error('Error starting WebRTC call:', err);
+      cleanupCall();
+    }
+  };
+
+  // Accept incoming call (Callee)
+  const acceptCall = async () => {
+    if (!incomingCall) return;
+
+    try {
+      const reqVideo = !!incomingCall.isVideo;
+      const { stream } = await getMediaStreamSafe(reqVideo);
+      setLocalStream(stream);
+
+      const pc = createPeerConnection(incomingCall.callerId);
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      if (incomingCall.sdp) {
+        await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.sdp));
+      }
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      setActiveCall(incomingCall);
+      setCallStatus('CONNECTED');
+      setIncomingCall(null);
+
+      sendSignal({
+        type: 'ANSWER',
+        callerId: currentUser?.id || '',
+        calleeId: incomingCall.callerId,
+        sdp: answer,
+      });
+
+      // Process queued candidates
+      while (iceCandidatesQueue.current.length > 0) {
+        const candidate = iceCandidatesQueue.current.shift();
+        if (candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      }
+    } catch (err) {
+      console.error('Error accepting WebRTC call:', err);
+      rejectCall();
+    }
+  };
+
+  // Auto end call on F5 / Page reload / Tab close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (callStatusRef.current !== 'IDLE' && currentUser?.id) {
+        const targetId =
+          activeCallRef.current?.calleeId === currentUser.id
+            ? activeCallRef.current?.callerId
+            : activeCallRef.current?.calleeId || incomingCallRef.current?.callerId;
+
+        if (targetId) {
+          const validTargetId: string = targetId;
+          sendSignal({
+            type: 'END',
+            callerId: currentUser.id,
+            calleeId: validTargetId,
+          });
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentUser?.id, sendSignal]);
+
+  // 30s Ringing Timeout safety
+  useEffect(() => {
+    if (callStatus === 'CALLING' || callStatus === 'RINGING') {
+      ringingTimeoutRef.current = setTimeout(() => {
+        console.warn('[WebRTC] Ringing 30s timeout reached, ending call');
+        endCall();
+      }, 30000);
+    } else if (callStatus === 'CONNECTED') {
+      if (ringingTimeoutRef.current) {
+        clearTimeout(ringingTimeoutRef.current);
+        ringingTimeoutRef.current = null;
+      }
+    }
+  }, [callStatus, endCall]);
+
+  // Handle incoming signaling messages from STOMP topic /topic/call/{currentUser.id}
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    const unsubscribe = webSocketService.subscribe<CallSignalMessage>(
+      `/topic/call/${currentUser.id}`,
+      async (msg) => {
+        switch (msg.type) {
+          case 'OFFER': {
+            if (callStatusRef.current !== 'IDLE') {
+              // Auto-reject if busy
+              sendSignal({
+                type: 'REJECT',
+                callerId: currentUser.id,
+                calleeId: msg.callerId,
+              });
+              return;
+            }
+            setIncomingCall(msg);
+            setCallStatus('RINGING');
+            break;
+          }
+
+          case 'ANSWER': {
+            if (peerConnRef.current && msg.sdp) {
+              await peerConnRef.current.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+              setCallStatus('CONNECTED');
+              // Process queued ICE candidates
+              while (iceCandidatesQueue.current.length > 0) {
+                const candidate = iceCandidatesQueue.current.shift();
+                if (candidate) {
+                  await peerConnRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+                }
+              }
+            }
+            break;
+          }
+
+          case 'ICE_CANDIDATE': {
+            if (msg.candidate) {
+              if (peerConnRef.current && peerConnRef.current.remoteDescription) {
+                await peerConnRef.current.addIceCandidate(new RTCIceCandidate(msg.candidate));
+              } else {
+                iceCandidatesQueue.current.push(msg.candidate);
+              }
+            }
+            break;
+          }
+
+          case 'REJECT':
+          case 'CANCEL':
+          case 'END': {
+            cleanupCall();
+            break;
+          }
+
+          default:
+            break;
+        }
+      }
+    );
+
+    return () => unsubscribe();
+  }, [currentUser?.id, sendSignal, cleanupCall]);
+
+  // Mute / Unmute Mic
+  const toggleMic = (muted: boolean) => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach((track) => {
+        track.enabled = !muted;
+      });
+    }
+  };
+
+  return {
+    callStatus,
+    incomingCall,
+    activeCall,
+    localStream,
+    remoteStream,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    toggleMic,
+  };
+};
