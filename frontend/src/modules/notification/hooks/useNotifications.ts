@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { sseService } from '../../core/services/sseService';
 import { notificationService, normalizeNotification } from '../services/notificationService';
 import type { NotificationResponse } from '../types/notification.types';
+import { webSocketService } from '../../chat/services/webSocketService';
 
 /**
  * Hook quản lý Notification Center (Phase 5.1).
@@ -71,32 +72,41 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
       .then((count) => setUnreadCount(count))
       .catch(() => {});
 
-    // Subscribe SSE cho notifications.
-    // Endpoint yêu cầu authentication (JWT cookie sẽ được gửi tự động).
-    const unsubscribe = sseService.subscribe<NotificationResponse>(
+    const handleIncomingNotif = (raw: NotificationResponse) => {
+      if (!raw) return;
+      const notif = normalizeNotification(raw);
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notif.id)) return prev; // chống trùng
+        return [notif, ...prev];
+      });
+      setUnreadCount((c) => c + 1);
+
+      // Phát âm thanh thông báo (Sprint 5.3)
+      try {
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (err) {}
+
+      onNewRef.current?.(notif);
+    };
+
+    // Subscribe SSE + WebSocket STOMP song song (Kép 2 kênh đảm bảo 100% Realtime)
+    const unsubscribeSSE = sseService.subscribe<NotificationResponse>(
       '/api/events/notifications',
-      (raw) => {
-        const notif = normalizeNotification(raw);
-        setNotifications((prev) => {
-          if (prev.some((n) => n.id === notif.id)) return prev; // chống trùng
-          return [notif, ...prev];
-        });
-        setUnreadCount((c) => c + 1);
-
-        // Phát âm thanh thông báo (Sprint 5.3)
-        try {
-          const audio = new Audio('/sounds/notification.mp3');
-          audio.volume = 0.5;
-          audio.play().catch((err) => console.log('[Audio] Notification play blocked/failed', err));
-        } catch (err) {
-          console.error('[Audio] Error playing notification sound', err);
-        }
-
-        onNewRef.current?.(notif);
-      }
+      handleIncomingNotif
     );
 
-    return () => unsubscribe();
+    webSocketService.connect();
+    const unsubWS = webSocketService.subscribe<NotificationResponse>(
+      '/topic/notifications',
+      handleIncomingNotif
+    );
+
+    return () => {
+      unsubscribeSSE();
+      unsubWS();
+    };
   }, [isLoggedIn]);
 
   return {

@@ -710,11 +710,11 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] **[Smart Fallback]** Tự động chuyển mượt mà về Gọi thoại nếu camera bị chiếm dụng bởi tab khác trên cùng 1 laptop, gỡ bỏ 100% popup alert phiền phức.
   - [x] **[AI Governance Protocol]** Tạo mới tệp hiến pháp `.agents/AGENTS.md` thiết lập quy định phân lớp Clean Architecture, Update Full Protocol, cấm tự mở browser ngầm và cấm tự push Git khi chưa xin phép.
 
-
-
-
-
-
-
-
-
+- **Nhật ký phiên làm việc (29/07/2026 - Sprint 8.6: Standalone Admin Portal & JWT Role Fix):**
+  - [x] **[Backend JWT Role Fix]** Cập nhật `AuthenticationService.java` & `AuthService.java` đưa danh sách `roles` (`ADMIN`, `USER`) vào JWT Claim. Cấu hình `JwtAuthenticationConverter` với `JwtGrantedAuthoritiesConverter` (Set prefix `"ROLE_"`, claim `"roles"`) trong `SecurityConfig.java`. Loại bỏ 100% lỗi `403 Forbidden` kẹt 4 thẻ KPI `...`.
+  - [x] **[Frontend Standalone Admin Layout]** Tạo mới `AdminLayout.tsx` tràn viền 100% độc lập: Topbar Admin chuyên dụng (Logo Hizo Admin, Live ICT Clock, Super Admin Badge, Nút "Về trang chủ MiniFaceBook", Logout).
+  - [x] **[Cyberpunk Sleek Dark Redesign]** Tái thiết kế `AdminDashboardPage.tsx` theo phong cách **Sleek Dark Mode Cyberpunk** (`#090d16` / `#0f172a`), thẻ KPI Glassmorphism viền dạ quang (Purple/Indigo/Pink/Emerald).
+  - [x] **[App Route Restructuring]** Đưa `/admin` ra ngoài `MainLayout` trong `App.tsx`, bọc bởi `ProtectedRoute` $\rightarrow$ `AdminRoute` $\rightarrow$ `AdminLayout`.
+  - [x] **[Profile Data Reset Fix]** Sửa triệt để lỗi xóa trắng bài viết và bạn bè khi cập nhật thông tin profile/avatar bằng loadedProfileIdRef guard trong ProfilePage.tsx.
+  - [x] **[Profile UI/UX Refinement]** Ẩn dòng vai trò hệ thống, chuẩn hóa nút "Chỉnh sửa trang cá nhân", nâng cấp nút "Bạn bè (Hủy kết bạn)" thành Dropdown Menu ✓ Bạn bè chuẩn 100% Facebook UI/UX.
+  - [x] **[Update Full Protocol]** Đồng bộ 100% tài liệu kiến trúc (ROADMAP, SESSION_HANDOFF, PROGRESS, CV_PORTFOLIO_HIGHLIGHTS, README, walkthrough).

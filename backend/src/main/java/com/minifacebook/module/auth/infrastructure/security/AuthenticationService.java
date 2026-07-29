@@ -1,5 +1,6 @@
 package com.minifacebook.module.auth.infrastructure.security;
 
+import com.minifacebook.module.auth.domain.model.Role;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import com.nimbusds.jose.JOSEException;
@@ -16,6 +17,8 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
@@ -45,10 +48,14 @@ public class AuthenticationService {
   protected long REFRESH_TOKEN_EXPIRATION;
 
   /** Tạo Token (Access hoặc Refresh). */
-  public String generateToken(String username, boolean isRefresh) {
+  public String generateToken(String username, Set<Role> roles, boolean isRefresh) {
     JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
 
     long expiration = isRefresh ? REFRESH_TOKEN_EXPIRATION : ACCESS_TOKEN_EXPIRATION;
+
+    List<String> roleNames = (roles != null && !roles.isEmpty())
+        ? roles.stream().map(role -> role != null ? role.name() : "USER").toList()
+        : List.of("USER");
 
     JWTClaimsSet jwtClaimsSet =
         new JWTClaimsSet.Builder()
@@ -59,6 +66,7 @@ public class AuthenticationService {
                 new Date(Instant.now().plus(expiration, ChronoUnit.SECONDS).toEpochMilli()))
             .jwtID(UUID.randomUUID().toString())
             .claim("scope", isRefresh ? "REFRESH_TOKEN" : "ACCESS_TOKEN")
+            .claim("roles", roleNames)
             .build();
 
     Payload payload = new Payload(jwtClaimsSet.toJSONObject());
@@ -72,6 +80,10 @@ public class AuthenticationService {
       log.error("Cannot create token", e);
       throw new RuntimeException(e);
     }
+  }
+
+  public String generateToken(String username, boolean isRefresh) {
+    return generateToken(username, null, isRefresh);
   }
 
   /** Kiểm tra tính hợp lệ của Token. */

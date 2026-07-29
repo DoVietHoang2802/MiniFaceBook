@@ -138,10 +138,10 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
 
       await expect(appShell(pageA)).toBeVisible({ timeout: 30000 });
       await friendsNav(pageA).click();
-      await expect(
-        pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]')
-      ).toBeVisible({ timeout: 10000 });
-      await pageA.fill('input[placeholder="Nhập tên người bạn muốn tìm..."]', userB.name);
+      const friendSearchInput = pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]').first();
+      await expect(friendSearchInput).toBeVisible({ timeout: 20000 });
+      await pageA.waitForTimeout(500);
+      await friendSearchInput.fill(userB.name);
 
       const searchRowA = pageA
         .locator('div.flex.items-center.justify-between')

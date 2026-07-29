@@ -1,6 +1,8 @@
 package com.minifacebook.module.auth.infrastructure.security;
 
+import com.minifacebook.module.auth.domain.model.Role;
 import com.minifacebook.module.auth.domain.service.TokenService;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +22,17 @@ public class TokenServiceAdapter implements TokenService {
   }
 
   @Override
+  public String generateAccessToken(String email, Set<Role> roles) {
+    return authenticationService.generateToken(email, roles, false);
+  }
+
+  @Override
   public String generateRefreshToken(String email) {
     return authenticationService.generateToken(email, true);
+  }
+
+  @Override
+  public String generateRefreshToken(String email, Set<Role> roles) {
+    return authenticationService.generateToken(email, roles, true);
   }
 }

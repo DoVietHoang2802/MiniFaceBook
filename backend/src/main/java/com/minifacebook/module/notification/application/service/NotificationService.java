@@ -86,14 +86,16 @@ public class NotificationService {
         .ifPresent(
             recipient -> {
               NotificationResponse payload = toResponse(saved, resolveActor(actorId));
-              // WebSocket (legacy)
-              messagingTemplate.convertAndSendToUser(
-                  recipient.getEmail(), "/queue/notifications", payload);
-              log.debug(
-                  "Pushed realtime notification type={} to user={} (queue /user/queue/notifications)",
-                  type,
-                  recipient.getEmail());
-              // SSE broadcast (mới)
+              // WebSocket STOMP broadcast
+              try {
+                messagingTemplate.convertAndSendToUser(
+                    recipient.getEmail(), "/queue/notifications", payload);
+                messagingTemplate.convertAndSend("/topic/notifications", payload);
+              } catch (Exception ex) {
+                log.error("Failed to push notification via WebSocket STOMP", ex);
+              }
+
+              // SSE broadcast
               notificationEventBroadcaster.broadcast(payload);
             });
 
@@ -177,12 +179,22 @@ public class NotificationService {
   }
 
   private NotificationResponse toResponse(Notification n, User actor) {
+    boolean isAdminSystem = "ADMIN".equalsIgnoreCase(n.getActorId())
+        || n.getType() == NotificationType.SYSTEM_ANNOUNCEMENT
+        || n.getType() == NotificationType.SYSTEM_MODERATION;
+
+    String name = isAdminSystem
+        ? "Ban Quản Trị (Admin)"
+        : (actor != null ? actor.getName() : "Người dùng");
+
+    String avatar = (actor != null ? actor.getAvatar() : null);
+
     return NotificationResponse.builder()
         .id(n.getId())
         .recipientId(n.getRecipientId())
         .actorId(n.getActorId())
-        .actorName(actor != null ? actor.getName() : "Người dùng")
-        .actorAvatar(actor != null ? actor.getAvatar() : null)
+        .actorName(name)
+        .actorAvatar(avatar)
         .type(n.getType())
         .entityId(n.getEntityId())
         .content(n.getContent())

@@ -102,8 +102,13 @@ public class AuthService {
       throw new AppException(ErrorCode.USER_NOT_VERIFIED);
     }
 
-    String accessToken = tokenService.generateAccessToken(user.getEmail());
-    String refreshToken = tokenService.generateRefreshToken(user.getEmail());
+    if (user.isBanned()) {
+      log.warn("Login failed: Account {} is banned", request.getEmail());
+      throw new AppException(ErrorCode.USER_BANNED);
+    }
+
+    String accessToken = tokenService.generateAccessToken(user.getEmail(), user.getRoles());
+    String refreshToken = tokenService.generateRefreshToken(user.getEmail(), user.getRoles());
 
     // Xoá tất cả refresh token cũ của người dùng này để tránh rác
     refreshTokenRepository.deleteByEmail(user.getEmail());
@@ -164,8 +169,8 @@ public class AuthService {
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
     // Sinh cặp token mới
-    String newAccessToken = tokenService.generateAccessToken(user.getEmail());
-    String newRefreshToken = tokenService.generateRefreshToken(user.getEmail());
+    String newAccessToken = tokenService.generateAccessToken(user.getEmail(), user.getRoles());
+    String newRefreshToken = tokenService.generateRefreshToken(user.getEmail(), user.getRoles());
 
     // Lưu Refresh Token mới
     RefreshToken newRefreshTokenEntity = RefreshToken.builder()

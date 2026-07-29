@@ -5,6 +5,7 @@ import type { PostResponse } from '../types/post.types';
 import CreatePostCard from './CreatePostCard';
 import PostCard from './PostCard';
 import { useAuth } from '../../../core/auth/AuthContext';
+import { webSocketService } from '../../chat/services/webSocketService';
 
 interface PostFeedProps {
   currentUser?: any;
@@ -44,6 +45,17 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => 
 
   useEffect(() => {
     fetchPosts(0);
+  }, []);
+
+  // Lắng nghe tín hiệu WebSocket Realtime khi Admin/Tác giả xóa bài viết (Tự động biến mất 0ms trên Feed)
+  useEffect(() => {
+    webSocketService.connect();
+    const unsub = webSocketService.subscribe<string>('/topic/posts/deleted', (deletedPostId) => {
+      if (deletedPostId) {
+        setPosts((prev) => prev.filter((p) => p.id !== deletedPostId));
+      }
+    });
+    return () => unsub();
   }, []);
 
   useEffect(() => {

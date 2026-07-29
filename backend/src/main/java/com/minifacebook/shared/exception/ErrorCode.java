@@ -32,6 +32,7 @@ public enum ErrorCode {
   NAME_REQUIRED(1020, "Vui lòng nhập họ và tên", HttpStatus.BAD_REQUEST),
   NAME_INVALID(1021, "Họ và tên phải có ít nhất {min} ký tự", HttpStatus.BAD_REQUEST),
   USER_NOT_VERIFIED(1013, "Tài khoản chưa được xác thực email", HttpStatus.FORBIDDEN),
+  USER_BANNED(1029, "Tài khoản của bạn đã bị khóa bởi Quản trị viên!", HttpStatus.FORBIDDEN),
   INVALID_VERIFICATION_TOKEN(
       1014, "Mã xác thực không hợp lệ hoặc đã hết hạn", HttpStatus.BAD_REQUEST),
   REFRESH_TOKEN_EXPIRED(

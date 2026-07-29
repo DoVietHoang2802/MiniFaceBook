@@ -1,5 +1,5 @@
 /** Loại thông báo (khớp enum backend Phase 5.1). */
-export type NotificationType = 'LIKE' | 'COMMENT' | 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED';
+export type NotificationType = 'LIKE' | 'COMMENT' | 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED' | 'SYSTEM_ANNOUNCEMENT' | 'SYSTEM_MODERATION';
 
 /** Một thông báo trả về từ backend (đã enrich thông tin actor). */
 export interface NotificationResponse {

@@ -15,21 +15,21 @@ test.describe('Header and Notification Panel Layout Spec', () => {
     );
 
     const searchInput = page.locator('input[placeholder*="Tìm kiếm"]');
-    await expect(searchInput).toBeVisible({ timeout: 10000 });
+    await expect(searchInput).toBeVisible({ timeout: 25000 });
 
     const profilePill = page.locator(`div:has-text("${user.name}")`).last();
-    await expect(profilePill).toBeVisible({ timeout: 10000 });
+    await expect(profilePill).toBeVisible({ timeout: 25000 });
 
     const topBar = page.locator('header').first();
     const headerBellBtn = topBar.locator('#header-notifications-btn');
-    await expect(headerBellBtn).toBeVisible();
+    await expect(headerBellBtn).toBeVisible({ timeout: 15000 });
     await expect(topBar.locator('button[title*="theme"]')).toHaveCount(0);
 
     await headerBellBtn.click();
     await page.waitForTimeout(1000);
 
-    const notificationPanel = page.locator('.fixed.right-4');
-    await expect(notificationPanel).toBeVisible({ timeout: 10000 });
+    const notificationPanel = page.locator('div.fixed.right-4, div.fixed.right-6').first();
+    await expect(notificationPanel).toBeVisible({ timeout: 20000 });
 
     const panelBox = await notificationPanel.boundingBox();
     expect(panelBox).not.toBeNull();

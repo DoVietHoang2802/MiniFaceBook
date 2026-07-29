@@ -15,6 +15,9 @@ import FriendsPage from './modules/friends/components/FriendsPage';
 import ChatPage from './modules/chat/components/ChatPage';
 import ProfilePage from './modules/profile/components/ProfilePage';
 import SettingsPage from './modules/profile/components/SettingsPage';
+import { AdminRoute } from './components/layout/AdminRoute';
+import { AdminLayout } from './components/layout/AdminLayout';
+import { AdminDashboardPage } from './modules/admin/pages/AdminDashboardPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -45,12 +48,20 @@ function App() {
 
               {/* Protected routes (chỉ dành cho thành viên đã đăng nhập) */}
               <Route element={<ProtectedRoute />}>
+                {/* Layout người dùng mạng xã hội */}
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<PostFeed />} />
                   <Route path="/friends" element={<FriendsPage />} />
                   <Route path="/chats/:recipientId?" element={<ChatPage />} />
                   <Route path="/profile/:userId?" element={<ProfilePage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                </Route>
+
+                {/* Standalone Admin Portal Layout */}
+                <Route element={<AdminRoute />}>
+                  <Route element={<AdminLayout />}>
+                    <Route path="/admin" element={<AdminDashboardPage />} />
+                  </Route>
                 </Route>
               </Route>
 

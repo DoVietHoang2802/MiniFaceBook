@@ -24,4 +24,6 @@ public interface MongoUserRepository extends MongoRepository<UserDocument, Strin
    */
   @Query("{ 'name': { $regex: ?0, $options: 'i' }, 'verified': true }")
   Page<UserDocument> searchByName(String keyword, Pageable pageable);
+
+  Page<UserDocument> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String name, String email, Pageable pageable);
 }

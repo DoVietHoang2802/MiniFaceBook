@@ -86,6 +86,30 @@ public class DevSeedController {
         throw new RuntimeException("Sentry BE test " + Instant.now());
     }
 
+    @GetMapping("/make-admin")
+    @Operation(summary = "Thăng cấp Admin cho tài khoản Nguyễn Văn An", description = "Cấp vai trò Role.ADMIN cho nguyen.van.an@seed.miniface.com để test trang Quản trị.")
+    public ResponseEntity<ApiResponse<String>> makeAdmin() {
+        Optional<UserDocument> opt = userRepository.findByEmail("nguyen.van.an@seed.miniface.com");
+        if (opt.isPresent()) {
+            UserDocument u = opt.get();
+            Set<Role> roles = new HashSet<>(u.getRoles() != null ? u.getRoles() : Set.of());
+            roles.add(Role.ADMIN);
+            roles.add(Role.USER);
+            u.setRoles(roles);
+            userRepository.save(u);
+            return ResponseEntity.ok(ApiResponse.<String>builder()
+                    .status(200)
+                    .message("Đã cấp quyền ADMIN thành công cho " + u.getEmail())
+                    .data(u.getEmail())
+                    .build());
+        } else {
+            return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                    .status(400)
+                    .message("Tài khoản nguyen.van.an@seed.miniface.com chưa tồn tại, vui lòng chạy /dev/seed trước!")
+                    .build());
+        }
+    }
+
     @GetMapping("/seed")
     @Operation(summary = "Sinh dữ liệu 20 người dùng Việt Nam kèm tương tác thật", description = "Tạo 20 tài khoản, kết bạn ngẫu nhiên, đăng bài viết kèm hình ảnh, thả tim/haha và bình luận.")
     public ResponseEntity<ApiResponse<Map<String, Object>>> seedData() {
@@ -172,13 +196,25 @@ public class DevSeedController {
                 ud.setHometown(su.hometown);
                 ud.setWork(su.work);
                 ud.setRelationship(su.relationship);
-                ud.setRoles(Collections.singleton(Role.USER));
+                if ("nguyen.van.an@seed.miniface.com".equalsIgnoreCase(su.email)) {
+                    ud.setRoles(Set.of(Role.ADMIN, Role.USER));
+                } else {
+                    ud.setRoles(Collections.singleton(Role.USER));
+                }
                 ud.setVerified(true);
                 UserDocument saved = userRepository.save(ud);
                 createdUsers.add(saved);
                 usersCreated++;
             } else {
-                createdUsers.add(opt.get());
+                UserDocument existing = opt.get();
+                if ("nguyen.van.an@seed.miniface.com".equalsIgnoreCase(existing.getEmail())) {
+                    Set<Role> roles = new HashSet<>(existing.getRoles() != null ? existing.getRoles() : Set.of());
+                    roles.add(Role.ADMIN);
+                    roles.add(Role.USER);
+                    existing.setRoles(roles);
+                    userRepository.save(existing);
+                }
+                createdUsers.add(existing);
             }
         }
         stats.put("users_created", usersCreated);

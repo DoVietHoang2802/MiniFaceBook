@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Bell, Heart, MessageCircle, UserPlus, UserCheck, CheckCheck } from 'lucide-react';
+import { Bell, Heart, MessageCircle, UserPlus, UserCheck, CheckCheck, Shield } from 'lucide-react';
 import type { NotificationResponse, NotificationType } from '../types/notification.types';
 
 interface NotificationBellProps {
@@ -21,6 +21,8 @@ const TYPE_META: Record<NotificationType, { icon: typeof Heart; color: string; b
   COMMENT: { icon: MessageCircle, color: 'text-sky-500', bg: 'bg-sky-50' },
   FRIEND_REQUEST: { icon: UserPlus, color: 'text-violet-500', bg: 'bg-violet-50' },
   FRIEND_ACCEPTED: { icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+  SYSTEM_ANNOUNCEMENT: { icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50' },
+  SYSTEM_MODERATION: { icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50' },
 };
 
 /** Định dạng thời gian tương đối kiểu Facebook (vài giây/phút/giờ/ngày trước). */
@@ -127,32 +129,43 @@ export default function NotificationBell({
               notifications.map((n) => {
                 const meta = TYPE_META[n.type] ?? TYPE_META.LIKE;
                 const Icon = meta.icon;
+                const isAdmin = n.actorId === 'ADMIN' || n.type === 'SYSTEM_ANNOUNCEMENT' || n.type === 'SYSTEM_MODERATION';
+                const displayName = isAdmin ? 'Ban Quản Trị (Admin)' : (n.actorName || 'Người dùng');
+
                 return (
                   <button
                     key={n.id}
                     onClick={() => handleClick(n)}
                     className={`w-full flex items-start gap-3 px-4 py-3 text-left transition cursor-pointer hover:bg-slate-50 border-b border-slate-50 ${
-                      n.isRead ? '' : 'bg-violet-50/40'
+                      n.isRead ? '' : 'bg-purple-50/50'
                     }`}
                   >
                     {/* Avatar actor + icon loại */}
                     <div className="relative shrink-0">
-                      <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 font-bold">
-                        {n.actorAvatar ? (
-                          <img src={n.actorAvatar} alt={n.actorName} className="h-full w-full object-cover" />
-                        ) : (
-                          n.actorName?.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <span className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center border-2 border-white ${meta.bg}`}>
-                        <Icon className={`h-3 w-3 ${meta.color}`} />
-                      </span>
+                      {isAdmin || (n.actorAvatar && n.actorAvatar.includes('ADMIN')) ? (
+                        <div className="h-10 w-10 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center text-purple-600 font-bold">
+                          <Shield className="h-5.5 w-5.5 text-purple-600 fill-purple-200/50" />
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 font-bold">
+                          {n.actorAvatar ? (
+                            <img src={n.actorAvatar} alt={displayName} className="h-full w-full object-cover" />
+                          ) : (
+                            displayName.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                      )}
+                      {!isAdmin && (
+                        <span className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center border-2 border-white ${meta.bg}`}>
+                          <Icon className={`h-3 w-3 ${meta.color}`} />
+                        </span>
+                      )}
                     </div>
 
                     {/* Nội dung */}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-slate-700 leading-snug">
-                        <span className="font-bold text-slate-900">{n.actorName}</span>{' '}
+                        <span className={`font-bold ${isAdmin ? 'text-purple-700 font-black' : 'text-slate-900'}`}>{displayName}</span>{' '}
                         {n.content ?? ''}
                       </p>
                       <p className="text-[10px] text-slate-400 mt-1">{timeAgo(n.createdAt)}</p>

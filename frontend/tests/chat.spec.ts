@@ -430,4 +430,66 @@ test.describe('Chat Page - UI After Refactoring', () => {
       await contextB.close();
     }
   });
+
+  test('should handle 1-1 WebRTC voice call flow and end call cleanly', async ({
+    browser,
+    request,
+  }) => {
+    const password = 'Password123!';
+    const contextA = await browser.newContext({
+      permissions: ['microphone', 'camera'],
+    });
+    const contextB = await browser.newContext({
+      permissions: ['microphone', 'camera'],
+    });
+    const pageA = await contextA.newPage();
+    const pageB = await contextB.newPage();
+
+    try {
+      const userA = await registerAndLogin(
+        pageA,
+        request,
+        `call-a-${Date.now()}@example.com`,
+        'Call User A',
+        password
+      );
+      const userB = await registerAndLogin(
+        pageB,
+        request,
+        `call-b-${Date.now()}@example.com`,
+        'Call User B',
+        password
+      );
+      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
+
+      // Both open chat thread
+      await openChatWithFriend(pageA, userB.email);
+      await goChats(pageB);
+
+      // User A clicks phone call button
+      const phoneBtnA = pageA.locator('button[title="Gọi thoại"]');
+      await expect(phoneBtnA).toBeVisible({ timeout: 15000 });
+      await phoneBtnA.click();
+
+      // User B should see incoming call modal with Accept button
+      const acceptBtnB = pageB.locator('button:has-text("Trả lời")');
+      await expect(acceptBtnB).toBeVisible({ timeout: 20000 });
+      await acceptBtnB.click({ force: true });
+
+      // Both should see active call modal with End call button
+      const activeCallB = pageB.locator('button[title="Kết thúc cuộc gọi"]');
+      await expect(activeCallB).toBeVisible({ timeout: 15000 });
+
+      // User A ends call
+      const endBtnA = pageA.locator('button[title="Kết thúc cuộc gọi"]');
+      await expect(endBtnA).toBeVisible({ timeout: 15000 });
+      await endBtnA.click();
+
+      // Both call modals should close cleanly
+      await expect(activeCallB).not.toBeVisible({ timeout: 10000 });
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
+  });
 });

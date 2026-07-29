@@ -849,5 +849,34 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Engineered a zero-cost 1-to-1 WebRTC Voice & Video Calling system integrated with Spring Boot STOMP WebSocket signaling and Google STUN servers. Developed a custom React WebRTC P2P hook managing peer connections and media streams. Designed a Facebook Messenger-grade UI featuring Web Audio synthesized ringtones, incoming call popups, and active call controls.*
 
+---
+
+### 🛡️ Highlight 54: Triển khai Standalone Admin Portal (/admin) Độc lập & Khắc phục Phân quyền JWT Spring Security (Sprint 8.6)
+*   **Situation (Bối cảnh):** Trang Quản trị Admin ban đầu bị nhúng bên trong `MainLayout` người dùng nên giao diện bị ép hẹp và dính cột bạn bè. Ngoài ra, khi gọi API `/api/admin/stats`, các thẻ KPI bị kẹt số liệu `...` do JWT Token ở Spring Security chưa trích xuất được authority `ROLE_ADMIN`.
+*   **Task (Nhiệm vụ):** (1) Tái cấu trúc phân quyền JWT ở Backend, đưa `roles` vào JWT Claim và map thành Granted Authorities `ROLE_ADMIN` qua `JwtGrantedAuthoritiesConverter`; (2) Tách hẳn trang Admin thành **Standalone Admin Portal (`AdminLayout.tsx`)** tràn viền 100% màn hình với Topbar Admin độc lập; (3) Thiết kế giao diện **Sleek Dark Mode Cyberpunk** đẳng cấp (nền `#090d16`, thẻ Glassmorphism viền dạ quang).
+*   **Action (Hành động):**
+    *   **Backend JWT Role Mapping:** Cập nhật `AuthenticationService.java` & `AuthService.java` đưa danh sách `roles` (`ADMIN`, `USER`) vào JWT Claim. Cấu hình `JwtAuthenticationConverter` trong `SecurityConfig.java` map claim `roles` thành Granted Authorities `ROLE_ADMIN` & `ROLE_USER`.
+    *   **Frontend Standalone Layout:** Xây dựng `AdminLayout.tsx` độc lập tràn viền: Topbar Admin (Logo Hizo Admin, Live Clock, Super Admin Badge, Nút "Về trang chủ MiniFaceBook", Logout). Tái thiết kế `AdminDashboardPage.tsx` theo phong cách Sleek Dark Mode Cyberpunk.
+*   **Result (Kết quả):**
+    *   Trang Quản trị Admin Portal `/admin` hoạt động mượt mà 100% như một hệ thống Enterprise Dashboard độc lập, bảo mật tuyệt đối.
+    *   4 Thẻ KPI nạp số liệu thật từ MongoDB tức thì, không bị lỗi 403 Forbidden hay kẹt `...`.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Architected a Standalone Enterprise Admin Portal featuring dedicated topbar controls, full-bleed Cyberpunk dark mode layout, and 4 moderation modules. Resolved Spring Security JWT authority mapping by implementing a custom JwtGrantedAuthoritiesConverter, granting ROLE_ADMIN permissions and eliminating 403 Forbidden errors to load real-time database KPIs seamlessly.*
+
+---
+
+### 🎨 Highlight 55: Tối ưu hóa React State & Tinh chỉnh UI/UX Trang cá nhân theo Chuẩn Facebook (Sprint 8.6 Fixes)
+*   **Situation (Bối cảnh):** Trên `ProfilePage.tsx`, mỗi khi người dùng thực hiện thao tác cập nhật ảnh đại diện hay lưu thông tin cá nhân (quê quán, công việc, tình trạng quan hệ), việc re-render của `auth.user` làm kích hoạt `useEffect` tải dữ liệu xã hội và vô tình làm dọn sạch (`setFriendsList([])`, `setPosts([])`) toàn bộ bài viết và bạn bè trên màn hình, ép người dùng phải F5 lại trang mới thấy dữ liệu.
+*   **Task (Nhiệm vụ):** (1) Khắc phục triệt để lỗi đua trạng thái (State Race Condition) bằng cơ chế Ref Guard; (2) Chuẩn hóa giao diện trang cá nhân theo 100% Facebook UI/UX (ẩn dòng vai trò hệ thống, nâng cấp nút hành động bạn bè thành Dropdown `✓ Bạn bè 🔽`, loại bỏ các nút chỉnh sửa trùng lặp).
+*   **Action (Hành động):**
+    *   **React State Ref Guard:** Tối ưu hóa `ProfilePage.tsx` bằng việc giới hạn dependency array `useEffect` chỉ lắng nghe thay đổi tuyến đường (`[userId, isOwnProfile]`). Bổ sung `loadedProfileIdRef` để khóa không nạp lại dữ liệu xã hội khi người dùng chỉ chỉnh sửa thông tin bản thân trên cùng một trang cá nhân.
+    *   **Facebook UX Redesign:** Gỡ bỏ `QUYỀN HẠN HỆ THỐNG` khỏi tab Giới thiệu để nâng cao thẩm mỹ; gom các nút chỉnh sửa thành 1 nút duy nhất **Chỉnh sửa trang cá nhân** ở Header; biến đổi nút `Bạn bè (Hủy kết bạn)` thành Popover Dropdown Menu **`✓ Bạn bè 🔽`** nền xanh pastel chứa tùy chọn `🚫 Hủy kết bạn`.
+*   **Result (Kết quả):**
+    *   Loại bỏ **100%** hiện tượng biến mất bài viết/bạn bè khi cập nhật profile, loại bỏ hoàn toàn nhu cầu F5 trang.
+    *   Đạt chuẩn UI/UX Facebook thương mại, tăng mức độ hài lòng của người dùng khi quản lý thông tin cá nhân.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Eliminated profile data reset race conditions by restructuring React useEffect dependencies and implementing a useRef profile guard. Redesigned the user profile UI to Facebook standards, introducing a responsive friend action dropdown, streamling editing triggers, and preserving 100% of user posts and friends during live profile updates without page reloads.*
+
+
 
 

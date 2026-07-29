@@ -9,4 +9,8 @@ import org.springframework.data.mongodb.repository.Query;
 public interface MongoPostRepository extends MongoRepository<PostDocument, String> {
     @Query(value = "{'deleted': { $ne: true }}", sort = "{'createdAt': -1}")
     Page<PostDocument> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    Page<PostDocument> findByDeletedFalse(Pageable pageable);
+
+    Page<PostDocument> findByContentContainingIgnoreCaseAndDeletedFalse(String content, Pageable pageable);
 }

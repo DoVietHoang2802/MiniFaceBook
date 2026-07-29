@@ -1,15 +1,52 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 28/07/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 8.3 HOÀN THÀNH (Voice & Video Call 1-1 WebRTC - 0đ chi phí). Tổng tiến độ **~99.5%**.
+## 📅 Cập nhật ngày: 29/07/2026
+## 🏁 Trạng thái hiện tại: ✅ SPRINT 8.6 HOÀN THÀNH (Standalone Admin Portal, System Broadcast & Dual Realtime Notification). Tổng tiến độ **100%**.
 
-> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã hoàn thành **Sprint 8.3: Voice & Video Call 1-1 WebRTC** & **Sprint 8.5: Nested Comment Reply**. Sẵn sàng cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã hoàn thành **Sprint 8.6: Standalone Admin Portal (/admin)**, **Sprint 8.3: Voice & Video Call 1-1 WebRTC** & **Sprint 8.5: Nested Comment Reply**. Sẵn sàng 100% cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
 
 ---
 
-## 📋 TÓM TẮT PHIÊN LÀM VIỆC (28/07/2026 - SPRINT 8.3: VOICE & VIDEO CALL 1-1 WEBRTC - 0Đ CHI PHÍ)
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (29/07/2026 - SYSTEM BROADCAST NOTIFICATION & DUAL REALTIME SYNC)
 
 ### Công việc đã thực hiện:
+
+1. **Fix System Broadcast Notification & Missing Enum Value**:
+   - Thêm `SYSTEM_ANNOUNCEMENT` và `SYSTEM_MODERATION` vào `NotificationType` enum ở cả Backend (Java) & Frontend (TypeScript), sửa lỗi `IllegalArgumentException` làm nuốt thông báo.
+   - Gỡ bỏ bộ lọc `isVerified` trong `AdminService.java` để 100% người dùng hệ thống (kể cả seed users) nhận thông báo vào Database MongoDB.
+   - Loại bỏ hoàn toàn thẻ `<img>` hỏng và hiển thị Icon Khiên Admin tím dạ quang (`Shield 🛡️`) chuẩn Vector Lucide với tên người gửi **Ban Quản Trị (Admin)**.
+
+2. **Kênh kép Realtime Notification Badge (WebSocket STOMP + SSE)**:
+   - Cấu hình `useNotifications.ts` lắng nghe song song kênh WebSocket STOMP (`/topic/notifications`) và SSE (`/api/events/notifications`).
+3. **Nâng cấp Profile UI/UX & Khắc phục nạp bạn bè**:
+   - Ẩn dòng "Quyền hạn hệ thống: USER/ADMIN" khỏi Tab Giới thiệu để bảo mật và giữ thẩm mỹ tinh tế.
+   - Loại bỏ các nút "Chỉnh sửa" trùng lặp dư thừa; chuẩn hóa 1 nút duy nhất **Chỉnh sửa trang cá nhân** ở Header.
+   - Nâng cấp nút "Bạn bè (Hủy kết bạn)" thô cứng thành **Dropdown Menu `✓ Bạn bè` 🔽** với lựa chọn "Hủy kết bạn" chuẩn 100% Facebook UI/UX.
+   - Khắc phục triệt để lỗi bạn bè bị nảy về 0 khi tải ảnh đại diện/ảnh bìa bằng cách bảo lưu dữ liệu hiện có trong `ProfilePage.tsx`.
+
+1. **Backend Spring Security JWT Role Fix (Spring Boot 3 + Java 21)**:
+   - Cập nhật `AuthenticationService.java` & `AuthService.java` đưa danh sách `roles` (`ADMIN`, `USER`) vào JWT Claim.
+   - Cấu hình `JwtAuthenticationConverter` với `JwtGrantedAuthoritiesConverter` (Set prefix `"ROLE_"`, claim `"roles"`) trong `SecurityConfig.java`.
+   - Loại bỏ triệt để lỗi `403 Forbidden` do thiếu Granted Authority `ROLE_ADMIN`, giúp 4 thẻ KPI nạp số liệu thật từ MongoDB tức thì.
+
+2. **Frontend Standalone Admin Layout & Cyberpunk Redesign (React + TypeScript)**:
+   - Tạo mới `AdminLayout.tsx` độc lập 100% tràn viền màn hình: Topbar Admin chuyên dụng (Hizo Admin Logo, ICT Live Clock, Super Admin Badge, Nút "Về trang chủ MiniFaceBook", Logout).
+   - Tái thiết kế `AdminDashboardPage.tsx` theo phong cách **Sleek Dark Mode Cyberpunk** (`#090d16` / `#0f172a`), thẻ KPI Glassmorphism viền dạ quang (Purple/Indigo/Pink/Emerald).
+   - Đưa route `/admin` ra ngoài `MainLayout` trong `App.tsx`, bọc bởi `ProtectedRoute` $\rightarrow$ `AdminRoute` $\rightarrow$ `AdminLayout`.
+
+1. **Admin Portal Backend (Spring Boot 3 + Java 21)**:
+   - Thêm trường `banned` vào `UserDocument` & `User`. Chặn đăng nhập tức khắc trong `AuthService` với mã lỗi `USER_BANNED` (1029).
+   - Tạo các DTOs: `AdminStatsResponse`, `AdminUserResponse`, `AdminPostResponse`, `AdminBroadcastRequest`.
+   - Tạo `AdminService.java` & `AdminController.java` (`@PreAuthorize("hasRole('ADMIN')")`) xử lý 4 use-cases: Thống kê KPI, Quản lý User (Ban/Unban & Role Swap), Kiểm duyệt Bài viết (Xóa bài vi phạm), và Phát thông báo toàn hệ thống (System Broadcast).
+
+2. **Admin Portal Frontend (React + TypeScript + TailwindCSS)**:
+   - Component `AdminDashboardPage.tsx` đa tab: 4 Thẻ KPI Analytics, Bảng danh sách User (Ban/Unban, Role Swap, Search), Grid Kiểm duyệt bài viết (Delete), Form Phát thông báo hệ thống.
+   - `AdminRoute.tsx` bảo vệ route `/admin` (Redirect nếu không phải Admin).
+   - Bổ sung nút "Trang Quản trị (Admin)" trong Sidebar trái và Dropdown Menu góc phải.
+
+3. **Playwright E2E WebRTC Test & Full Docs Sync**:
+   - Viết mới test case `should handle 1-1 WebRTC voice call flow and end call cleanly` trong `chat.spec.ts`.
+   - Thực thi "Update Full Protocol" đồng bộ 6 file tài liệu kiến trúc (`ROADMAP`, `SESSION_HANDOFF`, `PROGRESS`, `CV_PORTFOLIO_HIGHLIGHTS`, `README`, `implementation_plan`).
 
 1. **Backend Call Signaling (Spring Boot 3 + WebSocket STOMP)**:
    - Tạo DTO `CallSignalMessage.java` chứa các tín hiệu SDP (`OFFER`, `ANSWER`, `ICE_CANDIDATE`, `REJECT`, `END`, `CANCEL`).

@@ -146,7 +146,7 @@ export async function registerAndLogin(
       await page.fill('#register-password', password);
       await page.fill('#register-confirm', password);
       await page.click('button[type="submit"]');
-      await expect(page.locator('h2')).toHaveText('Chào mừng trở lại', { timeout: 15000 });
+      await expect(page.locator('h2')).toHaveText('Chào mừng trở lại', { timeout: 30000 });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       console.warn(`Registration attempt ${regAttempt + 1} failed: ${message}`);

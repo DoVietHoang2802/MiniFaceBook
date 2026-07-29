@@ -47,5 +47,7 @@ public class UserDocument extends BaseEntity {
 
   private boolean verified;
 
+  private boolean banned;
+
   private String verificationToken;
 }

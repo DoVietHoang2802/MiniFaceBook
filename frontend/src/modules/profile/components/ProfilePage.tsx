@@ -18,7 +18,8 @@ import {
   UserPlus,
   UserCheck,
   UserX,
-  Clock
+  Clock,
+  ChevronDown
 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { profileService } from '../services/profileService';
@@ -192,6 +193,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [relationshipStatus, setRelationshipStatus] = useState<'NONE' | 'FRIEND' | 'PENDING_SENT' | 'PENDING_RECEIVED'>('NONE');
   const [friendshipId, setFriendshipId] = useState<string | null>(null);
   const [isLoadingRelationship, setIsLoadingRelationship] = useState(false);
+  const [showFriendOptions, setShowFriendOptions] = useState(false);
+  const loadedProfileIdRef = useRef<string | null>(null);
 
   const checkRelationship = async () => {
     if (isOwnProfile || !userId) return;
@@ -318,11 +321,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     setSuccessMessage('Đã xóa bài viết thành công.');
   };
 
-  // Sync state khi activeUser thay đổi hoặc khi userId thay đổi (để load profile mới)
+  // Sync state khi đổi route profile (userId thay đổi)
   useEffect(() => {
-    // Đổi profile → reset list ngay để không hiện bạn bè của người trước
-    setFriendsList([]);
-    setPosts([]);
+    // Chỉ reset list khi thực sự chuyển sang profile người khác
+    const targetId = userId || auth.user?.id;
+    if (loadedProfileIdRef.current && loadedProfileIdRef.current !== targetId) {
+      setFriendsList([]);
+      setPosts([]);
+      loadedProfileIdRef.current = null;
+    }
+
     setActiveTab('posts');
     setFriendSearchQuery('');
     setRelationshipStatus('NONE');
@@ -362,33 +370,44 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         cancelled = true;
       };
     }
-  }, [userId, isOwnProfile, auth.user, initialUser]);
+  }, [userId, isOwnProfile]);
+
+  // Tự động đồng bộ các state chi tiết cá nhân mỗi khi đối tượng user thay đổi
+  useEffect(() => {
+    if (user) {
+      setBio(user.bio || '');
+      setCity((user as any).city || '');
+      setHometown((user as any).hometown || '');
+      setWork((user as any).work || '');
+      setRelationship((user as any).relationship || '');
+    }
+  }, [user]);
 
   // Load posts + friends theo đúng chủ profile đang xem (tránh stale / race)
   useEffect(() => {
     const profileOwnerId = user?.id;
     if (!profileOwnerId) return;
 
+    // Đã nạp bài viết/bạn bè cho ID này rồi thì KHÔNG nạp lại khi chỉ cập nhật thông tin cá nhân/avatar
+    if (loadedProfileIdRef.current === profileOwnerId) return;
+
     let cancelled = false;
     const load = async () => {
       setIsLoadingFriends(true);
       setIsLoadingPosts(true);
-      setFriendsList([]);
-      setPosts([]);
       try {
         const [friendsData, postsRes] = await Promise.all([
-          friendService.getFriends(profileOwnerId),
+          friendService.getFriends(isOwnProfile ? undefined : profileOwnerId),
           postService.getNewsFeed(0, 50),
         ]);
         if (cancelled) return;
-        setFriendsList(friendsData || []);
+        if (friendsData) setFriendsList(friendsData);
         const content = postsRes?.data?.content ?? [];
         setPosts(content.filter((p: PostResponse) => p.authorId === profileOwnerId));
+        loadedProfileIdRef.current = profileOwnerId;
       } catch (err) {
         if (!cancelled) {
           console.error('Error loading profile social data:', err);
-          setFriendsList([]);
-          setPosts([]);
         }
       } finally {
         if (!cancelled) {
@@ -401,7 +420,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, isOwnProfile]);
 
   // Tự động tắt thông báo sau 4 giây
   useEffect(() => {
@@ -560,8 +579,17 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     setIsSavingBio(true);
 
     try {
-      const response = await profileService.updateProfile({ bio });
+      const response = await profileService.updateProfile({ 
+        bio,
+        city: city || (user as any)?.city || '',
+        hometown: hometown || (user as any)?.hometown || '',
+        work: work || (user as any)?.work || '',
+        relationship: relationship || (user as any)?.relationship || ''
+      });
       setUser(response.data);
+      if (isOwnProfile && auth.setUser) {
+        auth.setUser(response.data as any);
+      }
       setIsEditingBio(false);
       setSuccessMessage('Cập nhật tiểu sử thành công!');
     } catch (err: any) {
@@ -783,9 +811,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                     setActiveTab('about');
                     setIsEditingBio(true);
                   }}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[11px] font-black text-slate-700 transition cursor-pointer shadow-sm"
+                  className="px-4 py-2.5 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-100 text-[11px] font-black text-violet-700 transition cursor-pointer shadow-sm"
                 >
-                  Chỉnh sửa tiểu sử
+                  Chỉnh sửa trang cá nhân
                 </button>
                 <button
                   onClick={handleLogoutClick}
@@ -837,14 +865,32 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                     </button>
                   </div>
                 ) : (
-                  // FRIEND status
-                  <button
-                    onClick={handleUnfriend}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border border-transparent hover:border-rose-100"
-                  >
-                    <UserCheck className="h-4 w-4 text-emerald-500" />
-                    <span>Bạn bè (Hủy kết bạn)</span>
-                  </button>
+                  // FRIEND status - Dropdown ✓ Bạn bè kiểu Facebook
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowFriendOptions(!showFriendOptions)}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border border-emerald-200/60 shadow-sm"
+                    >
+                      <UserCheck className="h-4 w-4 text-emerald-600" />
+                      <span>Bạn bè</span>
+                      <ChevronDown className="h-3.5 w-3.5 text-emerald-600 ml-0.5" />
+                    </button>
+
+                    {showFriendOptions && (
+                      <div className="absolute left-0 top-full mt-1.5 w-44 bg-white border border-slate-200 rounded-xl p-1 shadow-xl z-50 animate-fade-in-up">
+                        <button
+                          onClick={() => {
+                            setShowFriendOptions(false);
+                            handleUnfriend();
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-bold transition cursor-pointer"
+                        >
+                          <UserX className="h-4 w-4 text-rose-500" />
+                          <span>Hủy kết bạn</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Nút Nhắn Tin luôn hiển thị bên cạnh */}
@@ -1246,14 +1292,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                     <BookOpen className="h-5 w-5 text-violet-500" />
                     <span>Tiểu sử giới thiệu</span>
                   </h3>
-                  {!isEditingBio && isOwnProfile && (
-                    <button
-                      onClick={() => setIsEditingBio(true)}
-                      className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
-                    >
-                      Chỉnh sửa
-                    </button>
-                  )}
                 </div>
 
                 {isEditingBio ? (

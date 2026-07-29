@@ -31,6 +31,7 @@ public class User {
   private String relationship;
   private Set<Role> roles;
   private boolean verified;
+  private boolean banned;
   private String verificationToken;
   private Instant createdAt;
   private Instant updatedAt;

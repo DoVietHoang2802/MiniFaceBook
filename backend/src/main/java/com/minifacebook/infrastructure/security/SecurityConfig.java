@@ -40,7 +40,7 @@ public class SecurityConfig {
   };
 
   private final String[] PUBLIC_GET_ENDPOINTS = {
-    "/auth/verify", "/dev/seed", "/dev/sentry-test"
+    "/auth/verify", "/dev/seed", "/dev/sentry-test", "/dev/make-admin", "/dev/**"
   };
 
   private final String[] SWAGGER_ENDPOINTS = {
@@ -79,7 +79,9 @@ public class SecurityConfig {
     httpSecurity.oauth2ResourceServer(
         oauth2 ->
             oauth2
-                .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder))
+                .jwt(jwtConfigurer -> jwtConfigurer
+                    .decoder(jwtDecoder)
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 .bearerTokenResolver(
                     request -> {
                       String path = request.getRequestURI();
@@ -138,6 +140,17 @@ public class SecurityConfig {
     httpSecurity.addFilterAfter(tokenBlacklistFilter, RateLimitingFilter.class);
 
     return httpSecurity.build();
+  }
+
+  @Bean
+  public org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter jwtAuthenticationConverter() {
+    var grantedAuthoritiesConverter = new org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter();
+    grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+    grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+
+    var jwtAuthenticationConverter = new org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter();
+    jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+    return jwtAuthenticationConverter;
   }
 
   @Bean
