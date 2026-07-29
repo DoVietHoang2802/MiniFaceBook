@@ -76,7 +76,7 @@ async function verifyEmail(request: APIRequestContext, token: string): Promise<v
 
 export async function ensureLoggedOut(page: Page): Promise<void> {
   await page.context().clearCookies();
-  await page.goto('/');
+  await page.goto('/login');
   await page.evaluate(() => {
     try {
       localStorage.clear();
@@ -85,7 +85,6 @@ export async function ensureLoggedOut(page: Page): Promise<void> {
       /* ignore */
     }
   });
-  await page.goto('/');
 }
 
 export async function loginAs(
@@ -107,6 +106,13 @@ export async function loginAs(
       await page.fill('#login-password', password);
       await page.click('button[type="submit"]');
       await expect(appShell(page)).toBeVisible({ timeout: 45000 });
+
+      const cookies = await page.context().cookies(API_BASE);
+      expect(cookies.some((cookie) => cookie.name === 'accessToken')).toBe(true);
+      expect(cookies.some((cookie) => cookie.name === 'refreshToken')).toBe(true);
+
+      const sessionResponse = await page.context().request.get(`${API_BASE}/auth/me`);
+      expect(sessionResponse.ok()).toBe(true);
       return;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
@@ -150,6 +156,7 @@ export async function registerAndLogin(
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       console.warn(`Registration attempt ${regAttempt + 1} failed: ${message}`);
+      continue;
     }
 
     token = await waitForVerificationToken(request, finalEmail);

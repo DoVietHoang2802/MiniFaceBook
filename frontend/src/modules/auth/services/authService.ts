@@ -45,7 +45,10 @@ export const authService = {
 
   // Lấy thông tin user hiện tại (kiểm tra trạng thái đăng nhập)
   getMe: async (): Promise<ApiResponse<UserResponse>> => {
-    const response = await axiosClient.get<ApiResponse<UserResponse>>('/auth/me');
+    // An anonymous bootstrap is expected to return 401; it must not trigger a global logout.
+    const response = await axiosClient.get<ApiResponse<UserResponse>>('/auth/me', {
+      skipAuthRefresh: true,
+    });
     return response.data;
   },
 

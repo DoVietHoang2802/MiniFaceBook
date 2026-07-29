@@ -2,6 +2,13 @@ import axios, { AxiosError } from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 import { Sentry } from '../monitoring/sentry';
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    _retry?: boolean;
+    skipAuthRefresh?: boolean;
+  }
+}
+
 // Định nghĩa interface cho hàng đợi các request bị trễ
 interface FailedRequest {
   resolve: (token: string | null) => void;
@@ -35,16 +42,17 @@ const processQueue = (error: any, token: string | null = null) => {
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig;
 
     // Nếu gặp lỗi 401 Unauthorized, không phải request refresh/login/register, và chưa từng được thử lại
-    if (error.response?.status === 401 && 
-        originalRequest && 
-        !originalRequest.url?.includes('/auth/refresh') && 
-        !originalRequest.url?.includes('/auth/login') && 
-        !originalRequest.url?.includes('/auth/register') && 
+    if (error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest.url?.includes('/auth/refresh') &&
+        !originalRequest.url?.includes('/auth/login') &&
+        !originalRequest.url?.includes('/auth/register') &&
+        !originalRequest.skipAuthRefresh &&
         !originalRequest._retry) {
-      
+
       // Nếu đang có 1 tiến trình đi xin token mới, đưa request này vào hàng đợi chờ đợi
       if (isRefreshing) {
         return new Promise<string | null>((resolve, reject) => {

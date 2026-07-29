@@ -18,6 +18,15 @@ import {
   UserCheck,
   CheckCircle2,
   Activity,
+  Eye,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Mail,
+  User,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { adminService } from '../services/adminService';
 import type { AdminStats, AdminUser, AdminPost } from '../services/adminService';
@@ -30,14 +39,21 @@ export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
-  // Users State
+  // Users State & Pagination
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [userSearch, setUserSearch] = useState('');
+  const [userPage, setUserPage] = useState(0);
+  const [userTotalPages, setUserTotalPages] = useState(0);
+  const [userTotalElements, setUserTotalElements] = useState(0);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
-  // Posts State
+  // Posts State & Pagination
   const [posts, setPosts] = useState<AdminPost[]>([]);
   const [postSearch, setPostSearch] = useState('');
+  const [postPage, setPostPage] = useState(0);
+  const [postTotalPages, setPostTotalPages] = useState(0);
+  const [postTotalElements, setPostTotalElements] = useState(0);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
@@ -62,11 +78,13 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   // Fetch Users (Realtime Auto Sync)
-  const fetchUsers = async (isSilent = false) => {
+  const fetchUsers = async (isSilent = false, page = userPage) => {
     try {
       if (!isSilent) setLoadingUsers(true);
-      const res = await adminService.getUsers(userSearch);
+      const res = await adminService.getUsers(userSearch, page, 10);
       setUsers(res.content || []);
+      setUserTotalPages(res.totalPages || 0);
+      setUserTotalElements(res.totalElements || 0);
     } catch (err) {
       console.error('Failed to fetch users:', err);
     } finally {
@@ -75,11 +93,13 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   // Fetch Posts (Realtime Auto Sync)
-  const fetchPosts = async (isSilent = false) => {
+  const fetchPosts = async (isSilent = false, page = postPage) => {
     try {
       if (!isSilent) setLoadingPosts(true);
-      const res = await adminService.getPosts(postSearch);
+      const res = await adminService.getPosts(postSearch, page, 10);
       setPosts(res.content || []);
+      setPostTotalPages(res.totalPages || 0);
+      setPostTotalElements(res.totalElements || 0);
     } catch (err) {
       console.error('Failed to fetch posts:', err);
     } finally {
@@ -92,8 +112,8 @@ export const AdminDashboardPage: React.FC = () => {
     const runSync = (isSilent = true) => {
       if (document.hidden) return; // Tự động tạm dừng 100% request khi người dùng mở tab khác
       if (activeTab === 'stats') fetchStats(isSilent);
-      else if (activeTab === 'users') fetchUsers(isSilent);
-      else if (activeTab === 'posts') fetchPosts(isSilent);
+      else if (activeTab === 'users') fetchUsers(isSilent, userPage);
+      else if (activeTab === 'posts') fetchPosts(isSilent, postPage);
     };
 
     runSync(false);
@@ -108,7 +128,7 @@ export const AdminDashboardPage: React.FC = () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [activeTab, userSearch, postSearch]);
+  }, [activeTab, userSearch, postSearch, userPage, postPage]);
 
   // Lắng nghe luồng WebSocket STOMP Realtime PUSH liên tục (/topic/admin/stats)
   useEffect(() => {
@@ -121,20 +141,48 @@ export const AdminDashboardPage: React.FC = () => {
     return () => unsub();
   }, []);
 
+  // Lắng nghe phím ESC để đóng Modal tức thì
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedUser(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleSearchUserSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchUsers();
+    setUserPage(0);
+    fetchUsers(false, 0);
   };
 
   const handleSearchPostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchPosts();
+    setPostPage(0);
+    fetchPosts(false, 0);
+  };
+
+  const handleUserPageChange = (newPage: number) => {
+    if (newPage < 0 || newPage >= userTotalPages) return;
+    setUserPage(newPage);
+    fetchUsers(false, newPage);
+  };
+
+  const handlePostPageChange = (newPage: number) => {
+    if (newPage < 0 || newPage >= postTotalPages) return;
+    setPostPage(newPage);
+    fetchPosts(false, newPage);
   };
 
   const handleToggleBan = async (userId: string) => {
     try {
-      await adminService.toggleBanUser(userId);
-      fetchUsers();
+      const updated = await adminService.toggleBanUser(userId);
+      if (selectedUser?.id === userId) {
+        setSelectedUser(updated);
+      }
+      fetchUsers(true, userPage);
     } catch (err) {
       alert('Thao tác Ban/Unban thất bại!');
     }
@@ -145,8 +193,11 @@ export const AdminDashboardPage: React.FC = () => {
     if (!confirm(`Bạn có chắc muốn chuyển vai trò tài khoản thành ${newRole}?`)) return;
 
     try {
-      await adminService.changeUserRole(userId, newRole);
-      fetchUsers();
+      const updated = await adminService.changeUserRole(userId, newRole);
+      if (selectedUser?.id === userId) {
+        setSelectedUser(updated);
+      }
+      fetchUsers(true, userPage);
     } catch (err) {
       alert('Thao tác đổi quyền thất bại!');
     }
@@ -389,8 +440,11 @@ export const AdminDashboardPage: React.FC = () => {
                   ) : (
                     users.map((u) => (
                       <tr key={u.id} className="hover:bg-slate-800/40 transition">
-                        <td className="py-4 px-6 flex items-center space-x-3">
-                          <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-800 border border-slate-700 shrink-0">
+                        <td
+                          onClick={() => setSelectedUser(u)}
+                          className="py-4 px-6 flex items-center space-x-3 cursor-pointer group"
+                        >
+                          <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-800 border border-slate-700 shrink-0 group-hover:border-purple-500 transition">
                             {u.avatar ? (
                               <img src={u.avatar} alt="Avatar" className="h-full w-full object-cover" />
                             ) : (
@@ -400,7 +454,10 @@ export const AdminDashboardPage: React.FC = () => {
                             )}
                           </div>
                           <div>
-                            <div className="font-bold text-slate-200">{u.name}</div>
+                            <div className="font-bold text-slate-200 group-hover:text-purple-300 transition flex items-center space-x-1.5">
+                              <span>{u.name}</span>
+                              <Eye className="h-3.5 w-3.5 text-slate-500 group-hover:text-purple-400 opacity-0 group-hover:opacity-100 transition" />
+                            </div>
                             <div className="text-[10px] text-slate-500">ID: {u.id}</div>
                           </div>
                         </td>
@@ -437,6 +494,13 @@ export const AdminDashboardPage: React.FC = () => {
                         </td>
                         <td className="py-4 px-4 text-right space-x-2">
                           <button
+                            onClick={() => setSelectedUser(u)}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 border border-slate-700 transition cursor-pointer"
+                            title="Xem chi tiết thông tin tài khoản"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
                             onClick={() => handleChangeRole(u.id, u.roles)}
                             className="p-1.5 rounded-lg bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 border border-slate-700 transition cursor-pointer"
                             title="Đổi vai trò Role"
@@ -461,6 +525,54 @@ export const AdminDashboardPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* USER PAGINATION */}
+            {userTotalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-slate-800/80 bg-slate-950/40 text-xs text-slate-400">
+                <div>
+                  Hiển thị trang <span className="font-bold text-slate-200">{userPage + 1}</span> / <span className="font-bold text-slate-200">{userTotalPages}</span> (Tổng <span className="font-bold text-purple-400">{userTotalElements}</span> người dùng)
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    onClick={() => handleUserPageChange(userPage - 1)}
+                    disabled={userPage === 0}
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center space-x-1 font-bold cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>Trang trước</span>
+                  </button>
+
+                  {Array.from({ length: userTotalPages }, (_, i) => i)
+                    .filter((p) => p === 0 || p === userTotalPages - 1 || Math.abs(p - userPage) <= 1)
+                    .map((p, index, array) => (
+                      <React.Fragment key={p}>
+                        {index > 0 && array[index - 1] !== p - 1 && (
+                          <span className="px-1 text-slate-600">...</span>
+                        )}
+                        <button
+                          onClick={() => handleUserPageChange(p)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            userPage === p
+                              ? 'bg-purple-600 text-white shadow-md'
+                              : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                          }`}
+                        >
+                          {p + 1}
+                        </button>
+                      </React.Fragment>
+                    ))}
+
+                  <button
+                    onClick={() => handleUserPageChange(userPage + 1)}
+                    disabled={userPage >= userTotalPages - 1}
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center space-x-1 font-bold cursor-pointer"
+                  >
+                    <span>Trang sau</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -544,6 +656,54 @@ export const AdminDashboardPage: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* POST PAGINATION */}
+          {postTotalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400">
+              <div>
+                Hiển thị trang <span className="font-bold text-slate-200">{postPage + 1}</span> / <span className="font-bold text-slate-200">{postTotalPages}</span> (Tổng <span className="font-bold text-purple-400">{postTotalElements}</span> bài viết)
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() => handlePostPageChange(postPage - 1)}
+                  disabled={postPage === 0}
+                  className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center space-x-1 font-bold cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Trang trước</span>
+                </button>
+
+                {Array.from({ length: postTotalPages }, (_, i) => i)
+                  .filter((p) => p === 0 || p === postTotalPages - 1 || Math.abs(p - postPage) <= 1)
+                  .map((p, index, array) => (
+                    <React.Fragment key={p}>
+                      {index > 0 && array[index - 1] !== p - 1 && (
+                        <span className="px-1 text-slate-600">...</span>
+                      )}
+                      <button
+                        onClick={() => handlePostPageChange(p)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          postPage === p
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {p + 1}
+                      </button>
+                    </React.Fragment>
+                  ))}
+
+                <button
+                  onClick={() => handlePostPageChange(postPage + 1)}
+                  disabled={postPage >= postTotalPages - 1}
+                  className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center space-x-1 font-bold cursor-pointer"
+                >
+                  <span>Trang sau</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -650,6 +810,182 @@ export const AdminDashboardPage: React.FC = () => {
               )}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* MODAL USER DETAILS PREVIEW */}
+      {selectedUser && (
+        <div
+          onClick={() => setSelectedUser(null)}
+          className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[9999] flex items-center justify-center p-4 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-slate-900 border border-purple-500/30 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl animate-fade-in-up relative overflow-hidden cursor-default"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            {/* Header & Close */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center space-x-2 text-purple-400 font-bold text-sm">
+                <User className="h-5 w-5 pointer-events-none" />
+                <span>Hồ Sơ Chi Tiết Người Dùng</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedUser(null);
+                }}
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition cursor-pointer shrink-0 z-10"
+                title="Đóng (hoặc nhấn ESC)"
+              >
+                <X className="h-5 w-5 pointer-events-none" />
+              </button>
+            </div>
+
+            {/* User Info Card */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5">
+              <div className="h-20 w-20 rounded-full overflow-hidden bg-slate-800 border-2 border-purple-500/50 shrink-0 shadow-lg">
+                {selectedUser.avatar ? (
+                  <img src={selectedUser.avatar} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center font-black text-2xl text-purple-300 bg-purple-950">
+                    {selectedUser.name.charAt(0)}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5 text-center sm:text-left flex-1">
+                <h3 className="text-lg font-black text-white">{selectedUser.name}</h3>
+                <div className="flex items-center justify-center sm:justify-start space-x-2 text-xs font-mono text-slate-400">
+                  <Mail className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                  <span>{selectedUser.email}</span>
+                </div>
+                <div className="text-[11px] font-mono text-slate-500">ID: {selectedUser.id}</div>
+              </div>
+            </div>
+
+            {/* Badges Grid */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {/* Role */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Vai trò (Role)</span>
+                <div>
+                  {selectedUser.roles?.includes('ADMIN') ? (
+                    <span className="inline-flex items-center space-x-1 text-xs font-black text-purple-300">
+                      <ShieldCheck className="h-4 w-4 text-purple-400" />
+                      <span>SUPER ADMIN</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-300">
+                      <UserCheck className="h-4 w-4 text-slate-400" />
+                      <span>THÀNH VIÊN (USER)</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Ban Status */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Trạng thái tài khoản</span>
+                <div>
+                  {selectedUser.banned ? (
+                    <span className="inline-flex items-center space-x-1 text-xs font-black text-rose-400">
+                      <Ban className="h-4 w-4 text-rose-500" />
+                      <span>ĐÃ BỊ KHÓA (BANNED)</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center space-x-1 text-xs font-bold text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      <span>ĐANG HOẠT ĐỘNG</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Verification Status */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Xác thực Email</span>
+                <div>
+                  {selectedUser.verified ? (
+                    <span className="inline-flex items-center space-x-1 text-xs font-bold text-emerald-400">
+                      <CheckCircle className="h-4 w-4 text-emerald-400" />
+                      <span>ĐÃ XÁC THỰC EMAIL</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center space-x-1 text-xs font-bold text-amber-400">
+                      <XCircle className="h-4 w-4 text-amber-400" />
+                      <span>CHƯA XÁC THỰC EMAIL</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Online Status */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Trạng thái Online</span>
+                <div>
+                  {selectedUser.isOnline ? (
+                    <span className="inline-flex items-center space-x-1 text-xs font-bold text-emerald-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>ONLINE REALTIME</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center space-x-1 text-xs font-bold text-slate-400">
+                      <span className="h-2 w-2 rounded-full bg-slate-600"></span>
+                      <span>OFFLINE</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Date info */}
+            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center space-x-1.5">
+                <Calendar className="h-4 w-4 text-purple-400" />
+                <span>Ngày đăng ký tài khoản:</span>
+              </span>
+              <span className="font-mono font-bold text-slate-200">
+                {new Date(selectedUser.createdAt).toLocaleString('vi-VN')}
+              </span>
+            </div>
+
+            {/* Quick Action Footer */}
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => handleChangeRole(selectedUser.id, selectedUser.roles)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-purple-900/80 text-slate-200 hover:text-purple-200 border border-slate-700 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Shield className="h-4 w-4" />
+                <span>{selectedUser.roles?.includes('ADMIN') ? 'Hạ quyền USER' : 'Nâng quyền ADMIN'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleToggleBan(selectedUser.id)}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition border flex items-center space-x-1.5 cursor-pointer ${
+                  selectedUser.banned
+                    ? 'bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border-emerald-700'
+                    : 'bg-rose-950 hover:bg-rose-900 text-rose-300 border-rose-700'
+                }`}
+              >
+                {selectedUser.banned ? (
+                  <>
+                    <Unlock className="h-4 w-4" />
+                    <span>Mở khóa</span>
+                  </>
+                ) : (
+                  <>
+                    <Ban className="h-4 w-4" />
+                    <span>Khóa</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

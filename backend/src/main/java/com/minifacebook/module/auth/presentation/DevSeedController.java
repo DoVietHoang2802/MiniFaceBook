@@ -110,6 +110,44 @@ public class DevSeedController {
         }
     }
 
+    @GetMapping("/clean-test-users")
+    @Operation(summary = "Dọn dẹp tất cả tài khoản test/rác tự động sinh ra khi chạy test E2E")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> cleanTestUsers() {
+        log.info("[DevSeed] Bắt đầu dọn dẹp tài khoản rác test E2E...");
+        Map<String, Object> result = new HashMap<>();
+
+        List<UserDocument> testUsers = userRepository.findAll().stream()
+                .filter(u -> u.getEmail() != null && (
+                        u.getEmail().contains("example.com") ||
+                        u.getEmail().contains("nosearch") ||
+                        u.getEmail().contains("profile-name") ||
+                        u.getEmail().contains("test-")
+                ))
+                .toList();
+
+        int count = 0;
+        for (UserDocument tu : testUsers) {
+            String uid = tu.getId();
+            // Xóa mối quan hệ bạn bè của user rác
+            friendshipRepository.findAll().stream()
+                    .filter(f -> uid.equals(f.getRequesterId()) || uid.equals(f.getAddresseeId()))
+                    .forEach(friendshipRepository::delete);
+
+            // Xóa user rác
+            userRepository.delete(tu);
+            count++;
+        }
+
+        result.put("deleted_users_count", count);
+        log.info("[DevSeed] Đã dọn dẹp {} tài khoản rác thành công", count);
+
+        return ResponseEntity.ok(ApiResponse.<Map<String, Object>>builder()
+                .status(200)
+                .message("Đã dọn dẹp thành công " + count + " tài khoản rác!")
+                .data(result)
+                .build());
+    }
+
     @GetMapping("/seed")
     @Operation(summary = "Sinh dữ liệu 20 người dùng Việt Nam kèm tương tác thật", description = "Tạo 20 tài khoản, kết bạn ngẫu nhiên, đăng bài viết kèm hình ảnh, thả tim/haha và bình luận.")
     public ResponseEntity<ApiResponse<Map<String, Object>>> seedData() {

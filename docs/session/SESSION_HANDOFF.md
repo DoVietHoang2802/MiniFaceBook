@@ -7,9 +7,18 @@
 
 ---
 
-## 📋 TÓM TẮT PHIÊN LÀM VIỆC (29/07/2026 - SYSTEM BROADCAST NOTIFICATION & DUAL REALTIME SYNC)
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (29/07/2026 - ADMIN USER DETAILS MODAL & PAGINATION SYNC)
 
 ### Công việc đã thực hiện:
+
+1. **Admin Control Center User Details Preview Modal**:
+   - Bổ sung Modal xem chi tiết hồ sơ người dùng trong bảng Quản lý Người dùng ([AdminDashboardPage.tsx](file:///d:/Project/Web%20MiniFace/frontend/src/modules/admin/pages/AdminDashboardPage.tsx)).
+   - Hiển thị đầy đủ: Avatar phóng to, Tên người dùng, Email, User ID, Vai trò (Super Admin / User), Trạng thái tài khoản (Hoạt động / Banned), Trạng thái xác thực Email, Trạng thái Online Realtime, Ngày đăng ký tài khoản.
+   - Bổ sung nút bấm trực tiếp thay đổi vai trò (Role Swap) và Khóa/Mở khóa (Ban/Unban) ngay trong Modal.
+
+2. **Server-side Pagination & UI Controls (Phân trang người dùng & bài viết)**:
+   - Tích hợp phân trang Server-side linh hoạt cho cả 2 tab **Quản lý Người dùng** và **Kiểm duyệt Bài viết** với `page`, `size`, `totalPages`, `totalElements`.
+   - Bổ sung thanh điều hướng phân trang UI chuyên nghiệp (`Trang trước`, `1, 2, 3...`, `Trang sau`) giúp xem toàn bộ người dùng và bài viết trong hệ thống mà không lo dữ liệu bị giới hạn.
 
 1. **Fix System Broadcast Notification & Missing Enum Value**:
    - Thêm `SYSTEM_ANNOUNCEMENT` và `SYSTEM_MODERATION` vào `NotificationType` enum ở cả Backend (Java) & Frontend (TypeScript), sửa lỗi `IllegalArgumentException` làm nuốt thông báo.

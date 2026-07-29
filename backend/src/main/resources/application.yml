@@ -85,6 +85,8 @@ management:
 
 # Cấu hình Security & JWT
 app:
+  rate-limit:
+    capacity: ${RATE_LIMIT_CAPACITY:100}
   jwt:
     # Ưu tiên lấy từ biến môi trường JWT_SECRET, nếu không có mới dùng chuỗi mặc định (chỉ cho dev)
     secret: ${JWT_SECRET:vM6Yp9Xz2B8nL5K3rJ7hG4dF1sA0qW2eR5tY8uI1oP4aS7dF0gH3jK6lL9zX}

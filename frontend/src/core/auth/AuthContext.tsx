@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authService } from '../../modules/auth/services/authService';
 import type { UserResponse } from '../../modules/auth/services/authService';
 
@@ -12,19 +12,30 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserResponse | null>(null);
+  const [user, setUserState] = useState<UserResponse | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const authGenerationRef = useRef(0);
+
+  const setUser: React.Dispatch<React.SetStateAction<UserResponse | null>> = (value) => {
+    authGenerationRef.current += 1;
+    setUserState(value);
+  };
 
   useEffect(() => {
+    const requestGeneration = authGenerationRef.current;
+
     authService.getMe()
       .then((response) => {
         const loggedInUser = response.data;
-        if (loggedInUser && loggedInUser.email) {
-          setUser(loggedInUser);
+        if (authGenerationRef.current === requestGeneration && loggedInUser?.email) {
+          setUserState(loggedInUser);
         }
       })
       .catch(() => {
-        setUser(null);
+        // Ignore a bootstrap request that completed after a newer login/logout action.
+        if (authGenerationRef.current === requestGeneration) {
+          setUserState(null);
+        }
       })
       .finally(() => {
         setIsCheckingAuth(false);
@@ -33,7 +44,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      setUser(null);
+      authGenerationRef.current += 1;
+      setUserState(null);
     };
     window.addEventListener('unauthorized', handleUnauthorized);
     return () => {
@@ -45,7 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.logout();
     } finally {
-      setUser(null);
+      authGenerationRef.current += 1;
+      setUserState(null);
     }
   };
 

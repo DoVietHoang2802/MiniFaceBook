@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,11 +24,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
   // Lưu trữ các "xô" (bucket) cho từng IP
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+  private final long capacity;
 
-  // Định nghĩa băng thông: 100 requests mỗi phút (Khoảng 1.5 request/giây)
+  public RateLimitingFilter(@Value("${app.rate-limit.capacity:100}") long capacity) {
+    this.capacity = capacity;
+  }
+
+  // Production mặc định 100/phút; CI có thể nâng quota cho E2E qua biến môi trường.
   private Bucket createNewBucket() {
     return Bucket.builder()
-        .addLimit(Bandwidth.builder().capacity(100).refillGreedy(100, Duration.ofMinutes(1)).build())
+        .addLimit(
+            Bandwidth.builder()
+                .capacity(capacity)
+                .refillGreedy(capacity, Duration.ofMinutes(1))
+                .build())
         .build();
   }
 

@@ -44,6 +44,15 @@ jobs:
           done
           echo "MongoDB is healthy!"
 
+      - name: Wait for Redis Healthcheck
+        run: |
+          echo "Waiting for Redis to be healthy..."
+          until [ "$(docker inspect --format='{{.State.Health.Status}}' miniface-redis)" = "healthy" ]; do
+            echo "Current Redis Status: $(docker inspect --format='{{.State.Health.Status}}' miniface-redis)"
+            sleep 2
+          done
+          echo "Redis is healthy!"
+
       - name: Wait for Mailpit
         run: |
           echo "Waiting for Mailpit..."
@@ -65,20 +74,22 @@ jobs:
           mvn clean package
 
       - name: Run Backend Server in Background
+        env:
+          RATE_LIMIT_CAPACITY: 10000
         run: |
           cd backend
           nohup java -jar target/*.jar > backend.log 2>&1 &
           echo $! > backend.pid
 
-      - name: Wait for Backend Server Port 8080
+      - name: Wait for Backend Healthcheck
         run: |
           echo "Waiting for Backend Server to start..."
           for i in {1..40}; do
-            if curl -s http://localhost:8080/api/docs > /dev/null; then
+            if curl -fsS http://localhost:8080/api/actuator/health > /dev/null; then
               echo "Backend Server is up and running!"
               exit 0
             fi
-            echo "Waiting for API Docs endpoint (Attempt $i/40)..."
+            echo "Waiting for health endpoint (Attempt $i/40)..."
             sleep 3
           done
           echo "Backend Server failed to start! Printing logs:"
