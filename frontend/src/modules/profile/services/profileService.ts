@@ -1,9 +1,11 @@
 import axiosClient from '../../../core/api/axiosClient';
 
+export type ProfileFieldVisibility = 'PUBLIC' | 'FRIENDS' | 'ONLY_ME';
+
 export interface UserProfileResponse {
   id: string;
   name?: string;
-  email: string;
+  email: string | null;
   avatar: string | null;
   cover: string | null;
   bio: string | null;
@@ -11,6 +13,10 @@ export interface UserProfileResponse {
   hometown: string | null;
   work: string | null;
   relationship: string | null;
+  cityVisibility: ProfileFieldVisibility | null;
+  hometownVisibility: ProfileFieldVisibility | null;
+  workVisibility: ProfileFieldVisibility | null;
+  relationshipVisibility: ProfileFieldVisibility | null;
   roles: string[];
   createdAt: string;
   updatedAt: string;
@@ -31,6 +37,10 @@ export const profileService = {
     hometown?: string;
     work?: string;
     relationship?: string;
+    cityVisibility?: ProfileFieldVisibility;
+    hometownVisibility?: ProfileFieldVisibility;
+    workVisibility?: ProfileFieldVisibility;
+    relationshipVisibility?: ProfileFieldVisibility;
   }): Promise<ApiResponse<UserProfileResponse>> => {
     const response = await axiosClient.put<ApiResponse<UserProfileResponse>>('/user/profile', data);
     return response.data;

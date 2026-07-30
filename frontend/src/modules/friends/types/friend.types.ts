@@ -17,7 +17,7 @@ export interface FriendshipResponse {
   status: FriendshipStatus;
   userId: string;
   name: string;
-  email: string;
+  email?: string | null;
   avatar?: string;
   bio?: string;
   sentByMe: boolean;
@@ -28,7 +28,7 @@ export interface FriendshipResponse {
 export interface UserSearchResponse {
   userId: string;
   name: string;
-  email: string;
+  email?: string | null;
   avatar?: string;
   bio?: string;
   relationshipStatus: RelationshipStatus;
@@ -39,7 +39,7 @@ export interface UserSearchResponse {
 export interface FriendSuggestionResponse {
   userId: string;
   name: string;
-  email: string;
+  email?: string | null;
   avatar?: string;
   bio?: string;
   mutualFriendsCount: number;

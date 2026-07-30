@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './core/auth/AuthContext';
 import { ToastProvider } from './core/toast/ToastContext';
@@ -22,8 +22,19 @@ import { AdminDashboardPage } from './modules/admin/pages/AdminDashboardPage';
 function ScrollToTop() {
   const { pathname } = useLocation();
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  useLayoutEffect(() => {
+    const scrollToRouteStart = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+    };
+
+    // Reset once before paint and once after route layout settles. This prevents
+    // a fixed-height screen such as Chat from inheriting the previous tab's scroll offset.
+    scrollToRouteStart();
+    const frame = window.requestAnimationFrame(scrollToRouteStart);
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   return null;

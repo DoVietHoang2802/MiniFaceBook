@@ -17,13 +17,15 @@ test.describe('Feed and Post Interactions Flow', () => {
     await registerAndLogin(page, request, 'feedtest@example.com', 'Feed Tester', 'Password123!');
     await page.waitForTimeout(1000);
 
-    const postInput = page.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
+    await page.getByTestId('create-post-card').getByRole('button', { name: 'Bạn đang nghĩ gì thế?' }).click();
+    const createPostDialog = page.getByTestId('create-post-dialog');
+    const postInput = createPostDialog.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
     await expect(postInput).toBeVisible({ timeout: 15000 });
     await postInput.fill(postContent);
-    await page.click('button:has-text("Đăng bài")');
+    await createPostDialog.getByRole('button', { name: 'Đăng' }).click();
 
     const postCard = page
-      .locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white')
+      .getByTestId('post-card')
       .filter({ hasText: postContent })
       .first();
     await expect(postCard).toBeVisible({ timeout: 15000 });
@@ -59,22 +61,25 @@ test.describe('Feed and Post Interactions Flow', () => {
       'Password123!'
     );
 
-    const postInput = page.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
+    await page.getByTestId('create-post-card').getByRole('button', { name: 'Bạn đang nghĩ gì thế?' }).click();
+    const createPostDialog = page.getByTestId('create-post-dialog');
+    const postInput = createPostDialog.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
     await expect(postInput).toBeVisible({ timeout: 15000 });
     await postInput.fill('Bài viết test cuộn trang');
-    await page.click('button:has-text("Đăng bài")');
+    await createPostDialog.getByRole('button', { name: 'Đăng' }).click();
 
     const postCard = page
-      .locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white')
+      .getByTestId('post-card')
       .filter({ hasText: 'Bài viết test cuộn trang' })
       .first();
     await expect(postCard).toBeVisible({ timeout: 10000 });
 
     const endMsg = page.locator('text=Bạn đã xem hết bài viết');
-    for (let i = 0; i < 15; i++) {
-      await page.keyboard.press('PageDown');
-      await page.waitForTimeout(500);
+    const loadMore = page.getByTestId('feed-load-more');
+    for (let i = 0; i < 25; i++) {
       if (await endMsg.isVisible()) break;
+      await loadMore.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(700);
     }
 
     await expect(endMsg).toBeVisible({ timeout: 12000 });
@@ -94,13 +99,15 @@ test.describe('Feed and Post Interactions Flow', () => {
     await registerAndLogin(page, request, 'replytest@example.com', 'Reply Tester', 'Password123!');
     await page.waitForTimeout(1000);
 
-    const postInput = page.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
+    await page.getByTestId('create-post-card').getByRole('button', { name: 'Bạn đang nghĩ gì thế?' }).click();
+    const createPostDialog = page.getByTestId('create-post-dialog');
+    const postInput = createPostDialog.locator('textarea[placeholder*="Bạn đang nghĩ gì thế"]');
     await expect(postInput).toBeVisible({ timeout: 15000 });
     await postInput.fill(postContent);
-    await page.click('button:has-text("Đăng bài")');
+    await createPostDialog.getByRole('button', { name: 'Đăng' }).click();
 
     const postCard = page
-      .locator('div.w-full.rounded-2xl.border.border-slate-200.bg-white')
+      .getByTestId('post-card')
       .filter({ hasText: postContent })
       .first();
     await expect(postCard).toBeVisible({ timeout: 15000 });

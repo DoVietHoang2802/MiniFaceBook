@@ -5,9 +5,11 @@ import com.minifacebook.module.auth.application.dto.UpdateProfileRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
 import com.minifacebook.module.auth.application.mapper.AuthMapper;
 import com.minifacebook.module.auth.domain.model.User;
+import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
 import com.minifacebook.module.auth.domain.repository.RefreshTokenRepository;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.auth.domain.service.EmailService;
+import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
 import com.minifacebook.module.auth.domain.service.TokenService;
 import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.security.TokenBlacklistPort;
@@ -41,6 +43,7 @@ public class AuthServiceTest {
     @Mock private StringRedisTemplate redisTemplate;
     @Mock private ObjectMapper objectMapper;
     @Mock private ValueOperations<String, String> valueOperations;
+    @Mock private FriendshipRepository friendshipRepository;
 
     @InjectMocks
     private AuthService authService;
@@ -146,5 +149,47 @@ public class AuthServiceTest {
         assertEquals("dating", actualResponse.getRelationship());
         verify(redisTemplate, times(1)).delete(cacheKey);
         verify(redisTemplate, times(1)).delete("user:profile:id:123");
+    }
+
+    @Test
+    void getUserById_HidesPrivateAccountDataAndFriendsOnlyDetailsFromNonFriend() {
+        User owner = User.builder()
+                .id("owner-id")
+                .email("owner@test.com")
+                .city("Hà Nội")
+                .hometown("Đồng Nai")
+                .work("Developer")
+                .relationship("Hẹn hò")
+                .cityVisibility(ProfileFieldVisibility.FRIENDS)
+                .hometownVisibility(ProfileFieldVisibility.FRIENDS)
+                .workVisibility(ProfileFieldVisibility.FRIENDS)
+                .relationshipVisibility(ProfileFieldVisibility.FRIENDS)
+                .build();
+        User viewer = User.builder().id("viewer-id").email("viewer@test.com").build();
+        UserResponse mapped = UserResponse.builder()
+                .id("owner-id")
+                .email("owner@test.com")
+                .city("Hà Nội")
+                .hometown("Đồng Nai")
+                .work("Developer")
+                .relationship("Hẹn hò")
+                .roles(java.util.Set.of())
+                .createdAt(java.time.Instant.now())
+                .build();
+
+        when(userRepository.findById("owner-id")).thenReturn(Optional.of(owner));
+        when(userRepository.findByEmail("viewer@test.com")).thenReturn(Optional.of(viewer));
+        when(authMapper.toUserResponse(owner)).thenReturn(mapped);
+        when(friendshipRepository.findBetweenUsers("viewer-id", "owner-id")).thenReturn(Optional.empty());
+
+        UserResponse response = authService.getUserById("owner-id", "viewer@test.com");
+
+        assertNull(response.getEmail());
+        assertNull(response.getRoles());
+        assertNull(response.getCreatedAt());
+        assertNull(response.getCity());
+        assertNull(response.getHometown());
+        assertNull(response.getWork());
+        assertNull(response.getRelationship());
     }
 }

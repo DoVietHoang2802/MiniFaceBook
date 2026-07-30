@@ -29,6 +29,10 @@ public class User {
   private String hometown;
   private String work;
   private String relationship;
+  private ProfileFieldVisibility cityVisibility;
+  private ProfileFieldVisibility hometownVisibility;
+  private ProfileFieldVisibility workVisibility;
+  private ProfileFieldVisibility relationshipVisibility;
   private Set<Role> roles;
   private boolean verified;
   private boolean banned;

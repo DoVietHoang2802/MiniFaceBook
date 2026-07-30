@@ -11,15 +11,15 @@ export type E2EUser = {
 
 /** Marker that the main app shell is ready (works even if left aside is delayed). */
 export function appShell(page: Page) {
-  return page.locator('#header-notifications-btn, button[title="Trang cá nhân"]').first();
+  return page.getByTestId('app-shell');
 }
 
 export function friendsNav(page: Page) {
-  return page.locator('aside button[title="Bạn bè"], button[title="Bạn bè"]').first();
+  return page.locator('[data-testid="mobile-nav-friends"]:visible, aside button[title="Bạn bè"]:visible').first();
 }
 
 export function chatsNav(page: Page) {
-  return page.locator('aside button[title="Trò chuyện"], button[title="Trò chuyện"], header button[title="Trò chuyện"]').first();
+  return page.locator('[data-testid="mobile-nav-chats"]:visible, aside button[title="Trò chuyện"]:visible, header button[title="Trò chuyện"]:visible').first();
 }
 
 async function waitForVerificationToken(

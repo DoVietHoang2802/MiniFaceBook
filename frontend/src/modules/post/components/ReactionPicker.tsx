@@ -9,7 +9,7 @@ interface ReactionPickerProps {
 const ReactionPicker: React.FC<ReactionPickerProps> = ({ onSelect }) => {
   return (
     <div
-      className="bg-white border border-slate-200 shadow-xl rounded-full px-2 py-1.5 flex gap-1 animate-pop-in"
+      className="max-w-[calc(100vw-1rem)] bg-white border border-slate-200 shadow-xl rounded-full px-1.5 py-1 flex gap-0.5 animate-pop-in"
       style={{ fontSize: '0.9rem' }}
     >
       {(Object.keys(REACTION_ICONS) as ReactionType[]).map((type) => {
@@ -19,7 +19,8 @@ const ReactionPicker: React.FC<ReactionPickerProps> = ({ onSelect }) => {
             key={type}
             onClick={() => onSelect(type)}
             title={conf.label}
-            className="relative flex items-center justify-center cursor-pointer group/icon p-1"
+            aria-label={conf.label}
+            className="relative flex h-11 w-11 items-center justify-center cursor-pointer group/icon rounded-full transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-violet-500"
             type="button"
           >
             <span

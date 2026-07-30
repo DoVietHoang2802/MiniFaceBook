@@ -55,9 +55,8 @@ async function goChats(page: Page) {
 async function makeFriends(
   pageA: Page,
   pageB: Page,
-  userAEmail: string,
-  userBName: string,
-  userBEmail: string
+  userAName: string,
+  userBName: string
 ) {
   let sentRequest = false;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -68,7 +67,7 @@ async function makeFriends(
 
       const searchRowA = pageA
         .locator('div.flex.items-center.justify-between')
-        .filter({ hasText: userBEmail });
+        .filter({ hasText: userBName });
 
       await expect(searchRowA).toBeVisible({ timeout: 15000 });
 
@@ -102,7 +101,7 @@ async function makeFriends(
 
       const requestRowB = pageB
         .locator('div.flex.items-center.justify-between')
-        .filter({ hasText: userAEmail });
+        .filter({ hasText: userAName });
 
       if (attempt > 0 && (await requestRowB.count()) === 0) {
         acceptedRequest = true;
@@ -126,14 +125,14 @@ async function makeFriends(
   expect(acceptedRequest).toBe(true);
 }
 
-async function openChatWithFriend(pageA: Page, userBEmail: string) {
+async function openChatWithFriend(pageA: Page, userBName: string) {
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       await goFriends(pageA);
 
       const friendRow = pageA
         .locator('div.flex.items-center.justify-between')
-        .filter({ hasText: userBEmail });
+        .filter({ hasText: userBName });
 
       let found = false;
       for (let i = 0; i < 5; i++) {
@@ -205,9 +204,9 @@ test.describe('Real-time Chat Flow', () => {
         'Chat User B',
         password
       );
-      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
+      await makeFriends(pageA, pageB, userA.name, userB.name);
 
-      const chatInputA = await openChatWithFriend(pageA, userB.email);
+      const chatInputA = await openChatWithFriend(pageA, userB.name);
       await expect(
         pageA.locator('text=Bắt đầu gửi tin nhắn chào mừng bạn mới nhé!')
       ).toBeVisible({ timeout: 10000 });
@@ -261,8 +260,8 @@ test.describe('Chat Page - UI After Refactoring', () => {
         'NoSearch B',
         password
       );
-      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
-      await openChatWithFriend(pageA, userB.email);
+      await makeFriends(pageA, pageB, userA.name, userB.name);
+      await openChatWithFriend(pageA, userB.name);
 
       const standaloneSearch = pageA.locator(
         'button[aria-label="Tìm kiếm tin nhắn"], button[title="Tìm kiếm tin nhắn"]'
@@ -300,8 +299,8 @@ test.describe('Chat Page - UI After Refactoring', () => {
         'NoOpts B',
         password
       );
-      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
-      await openChatWithFriend(pageA, userB.email);
+      await makeFriends(pageA, pageB, userA.name, userB.name);
+      await openChatWithFriend(pageA, userB.name);
 
       const optionsBtn = pageA.locator(
         'button[aria-label="Tùy chọn hội thoại"], button[title="Tùy chọn hội thoại"]'
@@ -337,9 +336,9 @@ test.describe('Chat Page - UI After Refactoring', () => {
         'SendMsg B',
         password
       );
-      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
+      await makeFriends(pageA, pageB, userA.name, userB.name);
 
-      const chatInputA = await openChatWithFriend(pageA, userB.email);
+      const chatInputA = await openChatWithFriend(pageA, userB.name);
 
       await goChats(pageB);
       await expect(pageB.locator('text=Chưa chọn cuộc trò chuyện nào')).toBeVisible({
@@ -391,10 +390,10 @@ test.describe('Chat Page - UI After Refactoring', () => {
         'Typing B',
         password
       );
-      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
+      await makeFriends(pageA, pageB, userA.name, userB.name);
 
       // Both open the same conversation before typing (WS must be subscribed)
-      const chatInputA = await openChatWithFriend(pageA, userB.email);
+      const chatInputA = await openChatWithFriend(pageA, userB.name);
       await chatInputA.fill(initMsg);
       await pageA.press('input[placeholder^="Message"], input[placeholder="Aa"]', 'Enter');
       await expect(await messageBubble(pageA, initMsg)).toBeVisible({ timeout: 15000 });
@@ -460,10 +459,10 @@ test.describe('Chat Page - UI After Refactoring', () => {
         'Call User B',
         password
       );
-      await makeFriends(pageA, pageB, userA.email, userB.name, userB.email);
+      await makeFriends(pageA, pageB, userA.name, userB.name);
 
       // Both open chat thread
-      await openChatWithFriend(pageA, userB.email);
+      await openChatWithFriend(pageA, userB.name);
       await goChats(pageB);
 
       // User A clicks phone call button

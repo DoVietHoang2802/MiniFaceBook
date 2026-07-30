@@ -1,5 +1,6 @@
 package com.minifacebook.module.auth.application.dto;
 
+import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,4 +30,12 @@ public class UpdateProfileRequest {
   private String work;
 
   private String relationship;
+
+  private ProfileFieldVisibility cityVisibility;
+
+  private ProfileFieldVisibility hometownVisibility;
+
+  private ProfileFieldVisibility workVisibility;
+
+  private ProfileFieldVisibility relationshipVisibility;
 }

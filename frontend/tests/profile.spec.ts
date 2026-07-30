@@ -145,7 +145,7 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
 
       const searchRowA = pageA
         .locator('div.flex.items-center.justify-between')
-        .filter({ hasText: userB.email });
+        .filter({ hasText: userB.name });
       await expect(searchRowA.locator('button:has-text("Kết bạn")')).toBeVisible({
         timeout: 12000,
       });
@@ -159,7 +159,7 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
       await pageB.click('button.rounded-t-lg:has-text("Lời mời")');
       const requestRowB = pageB
         .locator('div.flex.items-center.justify-between')
-        .filter({ hasText: userA.email });
+        .filter({ hasText: userA.name });
       await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({
         timeout: 15000,
       });

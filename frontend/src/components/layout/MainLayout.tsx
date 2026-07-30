@@ -1,5 +1,5 @@
 // Test edit for permission approval
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -28,6 +28,8 @@ import { friendService } from '../../modules/friends/services/friendService';
 import { presenceService } from '../../modules/chat/services/presenceService';
 import { webSocketService } from '../../modules/chat/services/webSocketService';
 import { NetworkStatusBanner } from '../NetworkStatusBanner';
+import MobileHeader from './MobileHeader';
+import MobileBottomNav from './MobileBottomNav';
 import type { NotificationResponse } from '../../modules/notification/types/notification.types';
 import type { FriendshipResponse } from '../../modules/friends/types/friend.types';
 import { useRef } from 'react';
@@ -57,6 +59,7 @@ function timeAgo(iso: string): string {
 export const MainLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const notifRef = useRef<HTMLDivElement>(null);
+  const mobileContentRef = useRef<HTMLDivElement>(null);
   const { triggerToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -108,6 +111,37 @@ export const MainLayout: React.FC = () => {
     return 'feed';
   };
   const activeTab = getActiveTab();
+  const isMobileChatThread = /^\/chats\/[^/]+/.test(location.pathname);
+
+  const resetMobileRouteScroll = () => {
+    mobileContentRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  };
+
+  useLayoutEffect(() => {
+    resetMobileRouteScroll();
+    const frame = window.requestAnimationFrame(resetMobileRouteScroll);
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const syncMobileViewport = () => {
+      if (window.matchMedia('(max-width: 767px)').matches) {
+        document.documentElement.style.setProperty('--mobile-visual-viewport-height', `${viewport.height}px`);
+      }
+    };
+
+    syncMobileViewport();
+    viewport.addEventListener('resize', syncMobileViewport);
+    viewport.addEventListener('scroll', syncMobileViewport);
+    return () => {
+      viewport.removeEventListener('resize', syncMobileViewport);
+      viewport.removeEventListener('scroll', syncMobileViewport);
+      document.documentElement.style.removeProperty('--mobile-visual-viewport-height');
+    };
+  }, []);
 
   // Notification Center (Phase 5.1): badge realtime + dropdown chuông.
   const {
@@ -226,16 +260,31 @@ export const MainLayout: React.FC = () => {
 
   useEffect(() => {
     if (!showNotifDropdown) return;
+
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('#sidebar-notifications-btn')) return;
       if (target.closest('#header-notifications-btn')) return;
+      if (target.closest('#mobile-notifications-btn')) return;
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifDropdown(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowNotifDropdown(false);
+    };
+
+    const shouldLockBody = window.matchMedia('(max-width: 767px)').matches;
+    const previousOverflow = document.body.style.overflow;
+    if (shouldLockBody) document.body.style.overflow = 'hidden';
+
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (shouldLockBody) document.body.style.overflow = previousOverflow;
+    };
   }, [showNotifDropdown]);
 
   // Xử lý gửi lời mời kết bạn THẬT (Optimistic Micro-interaction)
@@ -265,13 +314,25 @@ export const MainLayout: React.FC = () => {
   };
 
   const handleTabClick = (tabId: string) => {
-    if (tabId === 'feed') navigate('/');
-    else if (tabId === 'profile') navigate('/profile');
-    else if (tabId === 'friends') navigate('/friends');
-    else if (tabId === 'chats') navigate('/chats');
-    else if (tabId === 'admin') navigate('/admin');
-    else if (tabId === 'settings') navigate('/settings');
-    else if (tabId === 'logout') handleLogout();
+    if (tabId === 'feed') {
+      resetMobileRouteScroll();
+      navigate('/');
+    } else if (tabId === 'profile') {
+      resetMobileRouteScroll();
+      navigate('/profile');
+    } else if (tabId === 'friends') {
+      resetMobileRouteScroll();
+      navigate('/friends');
+    } else if (tabId === 'chats') {
+      resetMobileRouteScroll();
+      navigate('/chats');
+    } else if (tabId === 'admin') {
+      resetMobileRouteScroll();
+      navigate('/admin');
+    } else if (tabId === 'settings') {
+      resetMobileRouteScroll();
+      navigate('/settings');
+    } else if (tabId === 'logout') handleLogout();
     else if (tabId === 'notifications') {
       toggleNotifDropdown();
     } else {
@@ -282,7 +343,10 @@ export const MainLayout: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className={`bg-[hsl(var(--background))] text-slate-800 dark:text-slate-100 flex flex-col relative ${activeTab === 'chats' ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+    <div
+      data-testid="app-shell"
+      className="app-dynamic-height relative flex flex-col overflow-hidden bg-[hsl(var(--background))] text-slate-800 dark:text-slate-100 md:h-auto md:min-h-screen md:overflow-x-hidden md:overflow-y-visible"
+    >
       {/* Banner mất kết nối Internet (chuẩn Facebook/Discord) */}
       <NetworkStatusBanner />
       
@@ -290,8 +354,14 @@ export const MainLayout: React.FC = () => {
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 dark:bg-violet-500/10 blur-[120px] pointer-events-none"></div>
 
+      <MobileHeader
+        onHome={() => navigate('/')}
+        onSearch={() => triggerToast('Tìm kiếm bài viết sẽ ra mắt ở Phase tiếp theo!')}
+        showSearch={activeTab === 'feed'}
+      />
+
       {/* Top Header Full-Width */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-[190] flex items-center justify-between px-4 lg:px-6 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-[190] hidden md:flex items-center justify-between px-4 lg:px-6 shadow-sm">
         {/* Left Section: Logo + Search bar */}
         <div className="flex items-center">
           <div 
@@ -305,15 +375,17 @@ export const MainLayout: React.FC = () => {
               Hizo
             </span>
           </div>
-          <div className="relative w-48 sm:w-64 md:w-80 h-9 ml-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm bạn bè, bài viết..." 
-              className="w-full h-full pl-9 pr-4 rounded-full bg-slate-100/60 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-xs text-slate-700 dark:text-slate-200 transition-all font-medium"
-              onClick={() => triggerToast("Tính năng Tìm kiếm nâng cao sẽ ra mắt ở Phase 4!")}
-            />
-          </div>
+          {activeTab === 'feed' && (
+            <div className="relative w-48 sm:w-64 md:w-80 h-9 ml-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm bài viết..."
+                className="w-full h-full pl-9 pr-4 rounded-full bg-slate-100/60 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-xs text-slate-700 dark:text-slate-200 transition-all font-medium"
+                onClick={() => triggerToast('Tìm kiếm bài viết sẽ ra mắt ở Phase tiếp theo!')}
+              />
+            </div>
+          )}
         </div>
 
         {/* Right Section: Messenger + Notifications + Profile Avatar */}
@@ -393,11 +465,15 @@ export const MainLayout: React.FC = () => {
         </div>
       </header>
 
-      <div className={`flex-grow w-full max-w-[1600px] mx-auto flex justify-start relative pt-14 ${
+      <div
+        ref={mobileContentRef}
+        data-testid="mobile-route-scroll"
+        className={`app-header-offset flex-1 min-h-0 w-full max-w-[1600px] mx-auto flex justify-start relative ${
         activeTab === 'chats' 
-          ? 'px-2 lg:px-3 gap-3 h-full overflow-hidden lg:justify-between' 
-          : 'px-4 lg:px-6 xl:px-8 gap-6 min-h-[calc(100vh-56px)]'
-      }`}>
+          ? 'px-0 md:px-2 lg:px-3 gap-3 flex-1 min-h-0 overflow-hidden lg:justify-between'
+          : 'px-4 lg:px-6 xl:px-8 gap-6 overflow-y-auto overscroll-contain md:overflow-visible'
+      }`}
+      >
         
         {/* CỘT TRÁI: SIDEBAR ĐIỀU HƯỚNG */}
         <aside className="hidden md:flex flex-col w-[80px] lg:w-[240px] shrink-0 sticky top-14 h-[calc(100vh-56px)] py-3 lg:pr-2 transition-all duration-300 justify-between overflow-y-auto scrollbar-none">
@@ -450,21 +526,35 @@ export const MainLayout: React.FC = () => {
 
         {/* Floating Notification Panel */}
         {showNotifDropdown && (
-          <div 
+          <>
+          <button
+            type="button"
+            aria-label="Đóng bảng thông báo"
+            onClick={() => setShowNotifDropdown(false)}
+            className="fixed inset-0 z-[194] bg-slate-950/35 backdrop-blur-[2px] md:hidden"
+          />
+          <div
             ref={notifRef}
-            className="fixed right-4 md:right-6 top-[58px] w-[360px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-2xl shadow-2xl z-[195] animate-fade-in overflow-hidden h-[calc(100vh-80px)] flex flex-col"
+            data-testid="notification-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notification-panel-title"
+            className="fixed inset-x-0 bottom-0 z-[195] flex max-h-[var(--sheet-max-height)] flex-col overflow-hidden rounded-t-3xl border border-b-0 border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl animate-fade-in md:inset-x-auto md:bottom-auto md:right-6 md:top-[58px] md:h-[calc(100vh-80px)] md:w-[360px] md:max-w-[calc(100vw-2rem)] md:rounded-2xl md:border-b md:pb-0"
           >
+            <div className="flex h-5 items-center justify-center md:hidden" aria-hidden="true">
+              <span className="h-1 w-10 rounded-full bg-slate-300" />
+            </div>
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 shrink-0">
+            <div className="flex items-center justify-between px-4 py-2.5 md:py-3.5 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-violet-600 fill-violet-50/50" />
-                <span className="font-bold text-slate-800 text-sm font-outfit">Thông báo</span>
+                <span id="notification-panel-title" className="font-bold text-slate-800 text-sm font-outfit">Thông báo</span>
               </div>
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllNotifAsRead}
-                    className="flex items-center gap-1 text-[11px] font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
+                    className="touch-target flex items-center gap-1 text-xs font-bold text-violet-600 hover:text-violet-500 transition cursor-pointer"
                   >
                     <CheckCheck className="h-3.5 w-3.5" />
                     Đọc tất cả
@@ -472,7 +562,8 @@ export const MainLayout: React.FC = () => {
                 )}
                 <button 
                   onClick={() => setShowNotifDropdown(false)}
-                  className="p-1 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition cursor-pointer"
+                  aria-label="Đóng bảng thông báo"
+                  className="touch-target flex items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -510,6 +601,7 @@ export const MainLayout: React.FC = () => {
                       className={`w-full flex items-start gap-3 px-3 py-2.5 text-left transition cursor-pointer hover:bg-slate-50 border-b border-slate-100/50 rounded-xl ${
                         n.isRead ? 'text-slate-600' : 'bg-purple-50/40 font-semibold text-slate-900'
                       }`}
+                      aria-label={`${displayName} ${n.content ?? ''}`}
                     >
                       {/* Avatar actor */}
                       <div className="relative shrink-0">
@@ -551,35 +643,18 @@ export const MainLayout: React.FC = () => {
                 })}
             </div>
           </div>
+          </>
         )}
 
         {/* CỘT GIỮA: RENDER ROUTE CON */}
         <main className={`flex-1 w-full min-w-0 transition-all duration-300 ${
           activeTab === 'chats' 
-            ? 'lg:max-w-full py-1 h-full overflow-hidden flex flex-col' 
+            ? 'lg:max-w-full py-0 md:py-1 h-full overflow-hidden flex flex-col'
             : (activeTab === 'profile' || activeTab === 'settings')
-            ? 'lg:max-w-[1000px] py-3 min-h-screen'
-            : 'lg:max-w-[680px] py-3 min-h-screen'
+            ? 'lg:max-w-[1000px] py-3 min-h-0 md:min-h-screen'
+            : 'lg:max-w-[680px] py-3 min-h-0 md:min-h-screen'
         }`}>
 
-
-          {/* Header Mobile thanh lịch */}
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 md:hidden">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-sm">
-                <span className="text-white font-black text-sm">H</span>
-              </div>
-              <span className="text-lg font-black tracking-tight text-slate-800 font-outfit">
-                Hizo
-              </span>
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="p-2 rounded-lg bg-slate-50 text-rose-500 border border-slate-200 hover:bg-rose-100/50 text-xs font-bold transition"
-            >
-              Đăng xuất
-            </button>
-          </div>
 
           {/* Render trang con */}
           <div className={`w-full ${activeTab === 'chats' ? 'flex-1 min-h-0 flex flex-col' : ''}`}>
@@ -713,19 +788,19 @@ export const MainLayout: React.FC = () => {
                       <button
                         key={f.userId}
                         type="button"
-                        title={f.name || f.email}
+                        title={f.name || 'Bạn bè'}
                         onClick={() => navigate(`/profile/${f.userId}`)}
                         className="relative h-9 w-9 rounded-full border-2 border-white overflow-hidden bg-slate-100 shadow-sm ring-1 ring-slate-100 shrink-0 cursor-pointer hover:ring-violet-300 transition"
                       >
                         {f.avatar ? (
                           <img
                             src={f.avatar}
-                            alt={f.name || f.email}
+                            alt={f.name || 'Bạn bè'}
                             className="h-full w-full object-cover"
                           />
                         ) : (
                           <span className="h-full w-full flex items-center justify-center text-[11px] font-black text-slate-500 bg-slate-50">
-                            {(f.name || f.email || 'U').charAt(0).toUpperCase()}
+                            {(f.name || 'U').charAt(0).toUpperCase()}
                           </span>
                         )}
                         <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
@@ -750,6 +825,15 @@ export const MainLayout: React.FC = () => {
         </aside>
 
       </div>
+
+      <MobileBottomNav
+        activeTab={activeTab}
+        chatUnread={chatUnread}
+        notificationUnread={unreadCount}
+        notificationsOpen={showNotifDropdown}
+        hidden={isMobileChatThread}
+        onSelect={handleTabClick}
+      />
     </div>
   );
 };

@@ -1,5 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { Image as ImageIcon, Loader2, Send } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  BarChart3,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  MoreHorizontal,
+  Smile,
+  X,
+} from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { postService } from '../services/postService';
 import type { PostResponse } from '../types/post.types';
@@ -9,216 +18,263 @@ interface CreatePostCardProps {
   currentUser: any;
 }
 
+const MAX_SIZE = 20 * 1024 * 1024;
+
 const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentUser }) => {
   const [content, setContent] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showMoreActions, setShowMoreActions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+  const canSubmit = content.trim().length > 0 || files.length > 0;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
-      const validFiles: File[] = [];
-      const MAX_SIZE = 20 * 1024 * 1024; // Mở rộng lên 20MB để thuật toán nén tự xử lý
+  useEffect(() => () => {
+    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [previewUrls]);
 
-      let hasOversizedFile = false;
-      setIsSubmitting(true);
+  useEffect(() => {
+    if (!isExpanded) return;
 
-      for (const file of selectedFiles) {
-        if (file.size > MAX_SIZE) {
-          hasOversizedFile = true;
-        } else {
-          if (file.type === 'image/gif') {
-            // Bỏ qua nén ảnh GIF để bảo toàn Animation
-            validFiles.push(file);
-            console.log(`[Compression Test - Bài viết] Bỏ qua nén ảnh GIF: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-            continue;
-          }
-
-          try {
-            // Options cho Client-side Image Compression
-            const options = {
-              maxSizeMB: 1, // Nén xuống dưới 1MB
-              maxWidthOrHeight: 1920,
-              useWebWorker: true,
-              fileType: 'image/webp' as const, // Ép nén sang chuẩn WebP
-            };
-            // Nén ảnh bằng WebWorker ngầm
-            const compressedBlob = await imageCompression(file, options);
-            
-            // Console log để Test tỷ lệ nén (F12)
-            console.log(`[Compression Test - Bài viết] Ảnh gốc: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-            console.log(`[Compression Test - Bài viết] Ảnh WebP sau nén: ${(compressedBlob.size / 1024 / 1024).toFixed(2)} MB`);
-            console.log(`[Compression Test - Bài viết] Tiết kiệm băng thông: ${Math.round((1 - compressedBlob.size / file.size) * 100)}%`);
-
-            // Đổi đuôi file sang .webp
-            const newFileName = file.name.replace(/\.[^/.]+$/, ".webp");
-
-            // Convert Blob về File
-            const compressedFile = new File([compressedBlob], newFileName, {
-              type: 'image/webp',
-              lastModified: Date.now(),
-            });
-            
-            validFiles.push(compressedFile);
-          } catch (error) {
-            console.error('Lỗi khi nén ảnh:', error);
-            // Fallback: nếu lỗi nén thì dùng ảnh gốc
-            validFiles.push(file);
-          }
-        }
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmitting) {
+        setIsExpanded(false);
+        setShowMoreActions(false);
       }
-      
-      setIsSubmitting(false);
+    };
 
-      if (hasOversizedFile && typeof window !== 'undefined') {
-        const event = new CustomEvent('toast', { 
-          detail: 'Có ảnh vượt quá 20MB đã bị loại bỏ!' 
-        });
-        window.dispatchEvent(event);
-      }
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExpanded, isSubmitting]);
 
-      if (validFiles.length > 0) {
-        setFiles((prev) => [...prev, ...validFiles]);
-      }
-      
-      // Reset input để có thể chọn lại cùng 1 file nếu cần
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+  const triggerToast = (message: string) => {
+    window.dispatchEvent(new CustomEvent('toast', { detail: message }));
   };
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return;
+
+    const validFiles: File[] = [];
+    let hasOversizedFile = false;
+    setIsSubmitting(true);
+
+    for (const file of Array.from(event.target.files)) {
+      if (file.size > MAX_SIZE) {
+        hasOversizedFile = true;
+        continue;
+      }
+
+      if (file.type === 'image/gif') {
+        validFiles.push(file);
+        continue;
+      }
+
+      try {
+        const compressedBlob = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: 'image/webp',
+        });
+        const compressedFile = new File(
+          [compressedBlob],
+          file.name.replace(/\.[^/.]+$/, '.webp'),
+          { type: 'image/webp', lastModified: Date.now() }
+        );
+        validFiles.push(compressedFile);
+      } catch (error) {
+        console.error('Lỗi khi nén ảnh:', error);
+        validFiles.push(file);
+      }
+    }
+
+    setFiles((previousFiles) => [...previousFiles, ...validFiles]);
+    setIsSubmitting(false);
+    if (hasOversizedFile) triggerToast('Có ảnh vượt quá 20MB đã bị loại bỏ!');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async () => {
-    if (!content.trim() && files.length === 0) return;
-    
+    if (!canSubmit) return;
+
     setIsSubmitting(true);
     try {
       const response = await postService.createPost(content, files);
-      if (response.data) {
-        onPostCreated(response.data);
-      }
+      if (response.data) onPostCreated(response.data);
       setContent('');
       setFiles([]);
-    } catch (err) {
-      console.error('Lỗi khi đăng bài:', err);
+      setIsExpanded(false);
+      setShowMoreActions(false);
+    } catch (error) {
+      console.error('Lỗi khi đăng bài:', error);
+      triggerToast('Không thể đăng bài lúc này. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mb-6 p-5 transition-all duration-300">
-      <div className="flex items-start space-x-4">
-        <div className="h-10 w-10 rounded-full border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-sm">
-          {currentUser?.avatar ? (
-            <img src={currentUser.avatar} alt="Avatar" className="h-full w-full object-cover" />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold bg-slate-50">
-              {(currentUser?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
-            </div>
-          )}
+  const avatar = (
+    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 shadow-sm">
+      {currentUser?.avatar ? (
+        <img src={currentUser.avatar} alt="Avatar" className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-slate-50 font-bold text-slate-400">
+          {(currentUser?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
         </div>
-        
-        <div className="flex-grow space-y-3">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={`Bạn đang nghĩ gì thế?`}
-            className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-100/80 focus:border-violet-500/30 focus:ring-4 focus:ring-violet-500/5 rounded-2xl px-4 py-3 text-slate-800 placeholder-slate-400 resize-none outline-none text-sm min-h-[48px] focus:min-h-[80px] transition-all duration-300 font-medium shadow-inner"
-            disabled={isSubmitting}
-          />
-          
-          {files.length > 0 && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
-              {files.map((file, index) => (
-                <div key={index} className="relative aspect-square rounded-xl border border-slate-200 overflow-hidden group">
-                  <img src={URL.createObjectURL(file)} alt="Preview" className="h-full w-full object-cover" />
-                  <button 
-                    onClick={() => removeFile(index)}
-                    className="absolute top-1 right-1 h-6 w-6 rounded-full bg-slate-950/80 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-3 gap-3">
-            {/* Thanh biểu tượng (Photo, Feeling, Check in, Poll) từ TrangChu4.png */}
-            <div className="flex flex-wrap gap-1">
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center space-x-1.5 text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded-xl transition text-xs font-bold cursor-pointer"
-                disabled={isSubmitting}
-              >
-                <ImageIcon className="h-4.5 w-4.5" />
-                <span>Ảnh / Video</span>
-              </button>
-              <input type="file" ref={fileInputRef} multiple accept="image/*" onChange={handleFileChange} className="hidden" title="Chọn hình ảnh hoặc video để đăng" />
-
-              <button 
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    const event = new CustomEvent('toast', { detail: 'Tính năng Bày tỏ cảm xúc sẽ ra mắt ở Phase tiếp theo!' });
-                    window.dispatchEvent(event);
-                  }
-                }}
-                className="flex items-center space-x-1.5 text-amber-500 hover:bg-amber-50 px-3 py-1.5 rounded-xl transition text-xs font-bold cursor-pointer"
-              >
-                <span className="text-sm">😊</span>
-                <span>Cảm xúc</span>
-              </button>
-
-              <button 
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    const event = new CustomEvent('toast', { detail: 'Tính năng Đăng ký điểm đến (Check-in) sẽ ra mắt ở Phase tiếp theo!' });
-                    window.dispatchEvent(event);
-                  }
-                }}
-                className="flex items-center space-x-1.5 text-rose-500 hover:bg-rose-50 px-3 py-1.5 rounded-xl transition text-xs font-bold cursor-pointer"
-              >
-                <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Check-in</span>
-              </button>
-
-              <button 
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    const event = new CustomEvent('toast', { detail: 'Tính năng Tạo cuộc bình chọn (Poll) sẽ ra mắt ở Phase tiếp theo!' });
-                    window.dispatchEvent(event);
-                  }
-                }}
-                className="flex items-center space-x-1.5 text-violet-500 hover:bg-violet-50 px-3 py-1.5 rounded-xl transition text-xs font-bold cursor-pointer"
-              >
-                <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>Thăm dò</span>
-              </button>
-            </div>
-            
-            <button 
-              onClick={handleSubmit}
-              disabled={isSubmitting || (!content.trim() && files.length === 0)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-xs transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md shadow-indigo-500/10 hover-lift shrink-0"
-            >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              <span>Đăng bài</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
+  );
+
+  const openComposer = () => setIsExpanded(true);
+
+  return (
+    <>
+      <section data-testid="create-post-card" className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm sm:mb-6 sm:rounded-2xl sm:p-5">
+        <div className="flex items-center gap-2.5 sm:gap-4">
+          {avatar}
+          <button
+            type="button"
+            onClick={openComposer}
+            className="min-h-11 flex-1 rounded-full bg-slate-100 px-4 text-left text-base font-medium text-slate-400 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 sm:text-sm"
+          >
+            Bạn đang nghĩ gì thế?
+          </button>
+        </div>
+        <div className="mt-3 grid grid-cols-2 border-t border-slate-100 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              openComposer();
+              window.setTimeout(() => fileInputRef.current?.click(), 0);
+            }}
+            className="min-h-11 flex items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold text-emerald-600 transition hover:bg-emerald-50"
+          >
+            <ImageIcon className="h-4 w-4" />
+            Ảnh / Video
+          </button>
+          <button
+            type="button"
+            onClick={openComposer}
+            className="min-h-11 flex items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold text-amber-500 transition hover:bg-amber-50"
+          >
+            <Smile className="h-4 w-4" />
+            Cảm xúc
+          </button>
+        </div>
+      </section>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+        title="Chọn hình ảnh để đăng"
+      />
+
+      {isExpanded && createPortal(
+        <div className="fixed inset-0 z-[1000000] flex items-end bg-slate-950/45 backdrop-blur-[2px] sm:items-center sm:justify-center">
+          <button
+            type="button"
+            aria-label="Đóng tạo bài viết"
+            onClick={() => !isSubmitting && setIsExpanded(false)}
+            className="absolute inset-0 cursor-default"
+          />
+          <section
+            data-testid="create-post-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-post-title"
+            className="relative flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-h-[85dvh] sm:max-w-xl sm:rounded-3xl"
+          >
+            <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
+              <button
+                type="button"
+                aria-label="Đóng tạo bài viết"
+                onClick={() => !isSubmitting && setIsExpanded(false)}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h2 id="create-post-title" className="font-outfit text-base font-black text-slate-900">Tạo bài viết</h2>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting || !canSubmit}
+                className="min-h-11 rounded-xl px-3 text-sm font-black text-violet-600 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Đăng'}
+              </button>
+            </header>
+
+            <div className="overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <div className="mb-4 flex items-center gap-3">
+                {avatar}
+                <div>
+                  <p className="text-sm font-black text-slate-800">{currentUser?.name || currentUser?.email?.split('@')[0] || 'Người dùng Hizo'}</p>
+                  <span className="inline-flex rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-500">Công khai</span>
+                </div>
+              </div>
+
+              <textarea
+                autoFocus
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                placeholder="Bạn đang nghĩ gì thế?"
+                className="min-h-40 w-full resize-none border-0 bg-transparent text-base font-medium leading-relaxed text-slate-800 outline-none placeholder:text-slate-400"
+                disabled={isSubmitting}
+              />
+
+              {previewUrls.length > 0 && (
+                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {previewUrls.map((url, index) => (
+                    <div key={url} className="relative aspect-square overflow-hidden rounded-xl border border-slate-200">
+                      <img src={url} alt={`Ảnh xem trước ${index + 1}`} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setFiles((previousFiles) => previousFiles.filter((_, fileIndex) => fileIndex !== index))}
+                        aria-label={`Xóa ảnh ${index + 1}`}
+                        className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-bl-2xl bg-slate-950/75 text-white"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-sm font-bold text-emerald-600 hover:bg-emerald-50">
+                  <ImageIcon className="h-5 w-5" /> Ảnh / Video
+                </button>
+                <button type="button" onClick={() => triggerToast('Tính năng Bày tỏ cảm xúc sẽ ra mắt ở Phase tiếp theo!')} className="flex min-h-12 w-full items-center gap-3 border-t border-slate-100 px-4 text-left text-sm font-bold text-amber-500 hover:bg-amber-50">
+                  <Smile className="h-5 w-5" /> Cảm xúc
+                </button>
+                <div className="relative border-t border-slate-100">
+                  <button type="button" onClick={() => setShowMoreActions((value) => !value)} aria-expanded={showMoreActions} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-sm font-bold text-slate-600 hover:bg-slate-50">
+                    <MoreHorizontal className="h-5 w-5" /> Thêm vào bài viết
+                  </button>
+                  {showMoreActions && (
+                    <div className="grid grid-cols-2 gap-1 border-t border-slate-100 bg-slate-50 p-2">
+                      <button type="button" onClick={() => triggerToast('Tính năng Đăng ký điểm đến sẽ ra mắt ở Phase tiếp theo!')} className="min-h-11 rounded-xl px-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50"><MapPin className="mr-1.5 inline h-4 w-4" />Check-in</button>
+                      <button type="button" onClick={() => triggerToast('Tính năng Tạo cuộc bình chọn sẽ ra mắt ở Phase tiếp theo!')} className="min-h-11 rounded-xl px-3 text-left text-xs font-bold text-violet-600 hover:bg-violet-50"><BarChart3 className="mr-1.5 inline h-4 w-4" />Khảo sát</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>,
+        document.body
+      )}
+    </>
   );
 };
 

@@ -35,7 +35,7 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 - **Security:** Spring Security (Stateless JWT) + Refresh Token Rotation + **RBAC (Role-Based Access Control)**.
 - **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
 - **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI), **Sentry (Error Tracking)**.
-- **Frontend:** React + TypeScript + shadcn/ui + Tailwind v4 + Zod + TanStack Query.
+- **Frontend:** React + TypeScript + shadcn/ui + Tailwind v4 + Zod + TanStack Query, responsive mobile shell với safe-area và touch-first UX.
 - **DevOps:** Docker Compose, GitHub Actions.
 - **Testing:** JUnit 5, Mockito, MockMvc, Testcontainers, Playwright, **K6 (Load Testing)**.
 
@@ -53,7 +53,7 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 3 | Social Graph & Friends | ✅ Hoàn thành |
 | 4 | Realtime Chat | ✅ Hoàn thành (Sprint 4.1→4.5) |
 | 5 | Notification System | ✅ Hoàn thành (Sprint 5.1→5.4 + System Broadcast) |
-| 6 | Navigation, Performance & Testing | ✅ Hoàn thành (Sprint 6.1→6.5) |
+| 6 | Navigation, Performance & Testing | ✅ Hoàn thành core (Sprint 6.1→6.6, gồm Mobile Responsive UX + Playwright mobile); K6 load test còn optional |
 | 7 | Extended Features | ✅ Hoàn thành (Sprint 8.3 WebRTC Call, 8.5 Nested Reply, 8.6 Standalone Admin Portal & Profile UX Fixes) |
 
 **Tiến độ: 100% — Toàn bộ các Phase từ 0 đến 7 hoàn thành 100%, sẵn sàng cho Production Deployment.**
@@ -65,6 +65,7 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 - **[STRUCTURE.md](docs/architecture/STRUCTURE.md):** Cách vận hành Docs & Skills.
 - **[SYSTEM_DESIGN.md](docs/architecture/SYSTEM_DESIGN.md):** Bản thiết kế DB và Kiến trúc hệ thống.
 - **[PROGRESS.md](docs/planning/PROGRESS.md):** Nhật ký tiến độ và các quyết định kỹ thuật.
+- **[PROFILE_PRIVACY_POLICY.md](docs/guidelines/PROFILE_PRIVACY_POLICY.md):** Chính sách hiển thị dữ liệu Profile và contract API theo người xem.
 - **[AI_GUIDELINES.md](docs/guidelines/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
 - **[AI_REPORT_COMMANDS.md](docs/guidelines/AI_REPORT_COMMANDS.md):** Format báo cáo tiến độ chuẩn cho AI.
 - **[DOCUMENTATION_STANDARDS.md](docs/guidelines/DOCUMENTATION_STANDARDS.md):** Đề án chuẩn hóa thư mục tài liệu mới.

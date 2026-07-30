@@ -88,6 +88,47 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 
 ## 📝 NHẬT KÝ PHIÊN LÀM VIỆC (WORK LOG)
 
+- **Phiên 30/07/2026 (Profile Privacy Controls & Server-side Enforcement):**
+  - [x] Thêm quyền xem theo trường `PUBLIC`, `FRIENDS`, `ONLY_ME` cho thành phố, quê quán, công việc và tình trạng quan hệ.
+  - [x] Mặc định tài khoản mới đặt bốn trường cá nhân là `FRIENDS`; dữ liệu Mongo cũ có giá trị null cũng được diễn giải an toàn là `FRIENDS`.
+  - [x] `/user/{id}` lọc server-side theo friendship `ACCEPTED`: visitor không bao giờ nhận email, roles, ngày đăng ký hoặc metadata tài khoản; trường cá nhân chỉ trả theo policy.
+  - [x] Email cũng không còn được map trong Friends/Search/Suggestions DTOs; frontend dùng bio/trạng thái trung lập thay vì email.
+  - [x] Owner có selector Công khai/Bạn bè/Chỉ mình tôi cho từng trường; visitor chỉ thấy field được chia sẻ hoặc empty state.
+  - [x] `npm run build` pass; `mvn clean -Dtest=AuthServiceTest,FriendshipServiceTest test` pass (8 tests).
+
+- **Phiên 30/07/2026 (Sprint 6.6 - P0 Profile & Feed Density Redesign):**
+  - [x] Thu gọn Profile action area: giữ Edit Profile compact, chuyển Logout vào overflow menu và thêm đường dẫn Settings.
+  - [x] Sắp Profile tabs thành Bài viết, Bạn bè, Giới thiệu; giữ touch target đầy đủ.
+  - [x] Thiết kế lại Create Post theo compact-to-expanded flow: dialog portal, safe area, body lock, More menu cho Check-in/Poll và media preview cleanup.
+  - [x] Tối ưu Feed density: clamp text, `Xem thêm/Thu gọn`, media height cap/lazy loading, ẩn zero counters, giảm vertical spacing.
+  - [x] Cập nhật Feed E2E theo dialog composer và `IntersectionObserver` sentinel. Build pass; mobile P0 E2E 3/3, feed E2E 3/3.
+  - [!] Profile full suite 4/5: failure còn lại là auth/session 401 trong helper login khi test chạy dài, không phải regression UI.
+
+- **Phiên 30/07/2026 (Mobile Route Scroll Reset Fix):**
+  - [x] Khắc phục scroll offset bị kế thừa khi chuyển Bottom Navigation (ví dụ Friends đã cuộn xuống rồi mở Chat).
+  - [x] Dùng `useLayoutEffect` reset `window`, `documentElement`, `body` và `scrollingElement` trước/sau route layout để Chat luôn bắt đầu ngay dưới mobile header.
+  - [x] Bổ sung Playwright regression: cuộn Friends xuống đáy → mở Chat → xác minh `window.scrollY = 0`; mobile suite đạt 4/4 pass.
+
+- **Phiên 30/07/2026 (Mobile End-of-List Layout Fix):**
+  - [x] Loại bỏ `min-h-screen` dư ở content mobile; dùng chiều cao thực giữa Header và Bottom Navigation.
+  - [x] Chat list khóa chiều cao/flex đúng và dùng `overscroll-contain`; CTA không còn kết thúc trước vùng navigation.
+  - [x] Friends không còn cuộn thêm sau khi danh sách kết thúc; thêm label “Bạn đã xem hết gợi ý hiện có”. Mobile suite 4/4 pass.
+
+- **Phiên 30/07/2026 (Mobile Scroll Owner Hardening):**
+  - [x] Thay `flex-grow` bằng `flex-1` cho mobile route container để chiều cao không còn phình theo content rồi bị parent cắt.
+  - [x] Thiết lập `mobile-route-scroll` là scroll owner duy nhất của Feed/Friends/Profile, reset trực tiếp khi đổi Bottom Navigation hoặc pathname.
+  - [x] Xác nhận bằng mobile E2E: scroll Friends container → mở Chat → container reset top; suite đạt 4/4 pass.
+
+- **Phiên 30/07/2026 (Sprint 6.6 - Mobile Responsive UX Hardening):**
+  - [x] Thiết lập responsive foundation gồm `viewport-fit=cover`, safe-area CSS, dynamic viewport `100dvh`, layout tokens, focus-visible và reduced motion.
+  - [x] Tách `MobileHeader` và `MobileBottomNav`; loại bỏ mobile header trùng lặp, đồng bộ active state theo URL và thêm unread badges.
+  - [x] Chuyển Notification UI thành Bottom Sheet trên mobile có backdrop, Escape, body scroll lock; desktop tiếp tục dùng floating panel.
+  - [x] Hoàn thiện Chat single-pane: list full-width, route Back về `/chats`, composer/input touch-friendly và profile panel dạng full-width sheet.
+  - [x] Nâng cấp Feed/Create Post sang touch-first: action 44px, long-press Reaction Picker, responsive spacing và xử lý horizontal overflow từ flex min-content.
+  - [x] Tối ưu Profile và Admin trên mobile: avatar/cover controls, action wrapping, content priority, compact admin topbar/search/actions.
+  - [x] Thêm `mobile-chromium` 360×800 và `mobile-responsive.spec.ts`; mobile E2E đạt 2/2 pass, build pass.
+  - [!] Full Chromium desktop suite đạt 12/17; 5 failure bắt đầu từ auth/session 401 trong suite dài. Các regression responsive chạy riêng đạt 5/5 pass; cần hardening auth E2E ở task riêng.
+
 - **Phiên 16/05/2026 (Sprint 0.1 - Scaffolding):**
   - [x] Khởi tạo Monorepo: `backend/` và `frontend/`.
   - [x] Cấu hình `backend/pom.xml`: Spring Boot 3.3, Java 21, MapStruct, Lombok, Mongock.

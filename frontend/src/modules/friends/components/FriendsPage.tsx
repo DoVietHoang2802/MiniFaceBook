@@ -454,7 +454,7 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
                               <p className="text-slate-400 text-xs truncate mt-0.5">
                                 {s.mutualFriendsCount > 0
                                   ? `${s.mutualFriendsCount} bạn chung`
-                                  : s.bio || s.email}
+                                  : s.bio || 'Chưa cập nhật tiểu sử'}
                               </p>
                             </div>
                           </div>
@@ -482,6 +482,11 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
                         </div>
                       );
                     })}
+                    {suggestions.length > 0 && (
+                      <p className="py-3 text-center text-[11px] font-semibold text-slate-400">
+                        Bạn đã xem hết gợi ý hiện có
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -510,7 +515,7 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
                         <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">
                           {u.name}
                         </h4>
-                        <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || u.email}</p>
+                        <p className="text-slate-400 text-xs truncate mt-0.5">{u.bio || 'Chưa cập nhật tiểu sử'}</p>
                       </div>
                     </div>
                     <SearchActionButton user={u} />
@@ -559,7 +564,7 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
                         <Avatar name={item.name} avatar={item.avatar} />
                         <div className="text-left overflow-hidden">
                           <h4 className="font-bold text-slate-800 text-sm truncate group-hover/item:text-violet-600 transition-colors">{item.name}</h4>
-                          <p className="text-slate-400 text-xs truncate mt-0.5">{item.bio || item.email}</p>
+                          <p className="text-slate-400 text-xs truncate mt-0.5">{item.bio || 'Chưa cập nhật tiểu sử'}</p>
                         </div>
                       </div>
 

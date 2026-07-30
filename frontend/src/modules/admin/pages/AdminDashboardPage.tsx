@@ -236,16 +236,16 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-5 sm:space-y-8 animate-fade-in">
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-800/80">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Shield className="h-8 w-8 text-purple-500" />
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2 sm:gap-3">
+              <Shield className="h-7 w-7 sm:h-8 sm:w-8 text-purple-500" />
               <span>Admin Control Center</span>
             </h1>
-            <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-purple-950 text-purple-300 border border-purple-800/60">
+            <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-extrabold bg-purple-950 text-purple-300 border border-purple-800/60">
               MODERATION PORTAL
             </span>
           </div>
@@ -260,7 +260,7 @@ export const AdminDashboardPage: React.FC = () => {
             if (activeTab === 'users') fetchUsers();
             if (activeTab === 'posts') fetchPosts();
           }}
-          className="flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-bold transition shadow-lg cursor-pointer shrink-0"
+          className="min-h-11 w-full md:w-auto flex items-center justify-center space-x-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-bold transition shadow-lg cursor-pointer shrink-0"
         >
           <RefreshCw className={`h-4 w-4 text-purple-400 ${loadingStats || loadingUsers || loadingPosts ? 'animate-spin' : ''}`} />
           <span>Làm mới dữ liệu</span>
@@ -324,7 +324,7 @@ export const AdminDashboardPage: React.FC = () => {
           {/* KPI CARDS GRID */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Card 1: Total Users */}
-            <div className="relative p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-purple-500/20 shadow-xl overflow-hidden group hover:border-purple-500/40 transition">
+            <div className="relative p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-purple-500/20 shadow-xl overflow-hidden group hover:border-purple-500/40 transition">
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition"></div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Tổng Người Dùng</span>
@@ -339,7 +339,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             {/* Card 2: Total Posts */}
-            <div className="relative p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-indigo-500/20 shadow-xl overflow-hidden group hover:border-indigo-500/40 transition">
+            <div className="relative p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-indigo-500/20 shadow-xl overflow-hidden group hover:border-indigo-500/40 transition">
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition"></div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Tổng Bài Viết</span>
@@ -354,7 +354,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             {/* Card 3: Total Comments */}
-            <div className="relative p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-pink-500/20 shadow-xl overflow-hidden group hover:border-pink-500/40 transition">
+            <div className="relative p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-pink-500/20 shadow-xl overflow-hidden group hover:border-pink-500/40 transition">
               <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-500/20 transition"></div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Tổng Bình Luận</span>
@@ -369,7 +369,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             {/* Card 4: Online Users */}
-            <div className="relative p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/20 shadow-xl overflow-hidden group hover:border-emerald-500/40 transition">
+            <div className="relative p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/20 shadow-xl overflow-hidden group hover:border-emerald-500/40 transition">
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 tracking-wider uppercase">Online Realtime</span>
@@ -391,7 +391,7 @@ export const AdminDashboardPage: React.FC = () => {
       {activeTab === 'users' && (
         <div className="space-y-6">
           {/* SEARCH BAR */}
-          <form onSubmit={handleSearchUserSubmit} className="flex gap-3">
+          <form onSubmit={handleSearchUserSubmit} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
@@ -399,12 +399,12 @@ export const AdminDashboardPage: React.FC = () => {
                 placeholder="Tìm kiếm người dùng theo Tên hoặc Email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+                className="min-h-11 w-full pl-10 pr-4 bg-slate-900 border border-slate-800 rounded-xl text-base sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
               />
             </div>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg cursor-pointer"
+              className="min-h-11 px-5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg cursor-pointer"
             >
               Tìm kiếm
             </button>
@@ -495,21 +495,21 @@ export const AdminDashboardPage: React.FC = () => {
                         <td className="py-4 px-4 text-right space-x-2">
                           <button
                             onClick={() => setSelectedUser(u)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 border border-slate-700 transition cursor-pointer"
+                            className="h-11 w-11 inline-flex items-center justify-center rounded-xl bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 border border-slate-700 transition cursor-pointer"
                             title="Xem chi tiết thông tin tài khoản"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleChangeRole(u.id, u.roles)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 border border-slate-700 transition cursor-pointer"
+                            className="h-11 w-11 inline-flex items-center justify-center rounded-xl bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 border border-slate-700 transition cursor-pointer"
                             title="Đổi vai trò Role"
                           >
                             <Shield className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleToggleBan(u.id)}
-                            className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                            className={`h-11 w-11 inline-flex items-center justify-center rounded-xl border transition cursor-pointer ${
                               u.banned
                                 ? 'bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
                                 : 'bg-rose-950/60 hover:bg-rose-900 text-rose-300 border-rose-700/60'
@@ -581,7 +581,7 @@ export const AdminDashboardPage: React.FC = () => {
       {activeTab === 'posts' && (
         <div className="space-y-6">
           {/* SEARCH BAR */}
-          <form onSubmit={handleSearchPostSubmit} className="flex gap-3">
+          <form onSubmit={handleSearchPostSubmit} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <input
@@ -589,12 +589,12 @@ export const AdminDashboardPage: React.FC = () => {
                 placeholder="Tìm kiếm nội dung bài viết..."
                 value={postSearch}
                 onChange={(e) => setPostSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+                className="min-h-11 w-full pl-10 pr-4 bg-slate-900 border border-slate-800 rounded-xl text-base sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
               />
             </div>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg cursor-pointer"
+              className="min-h-11 px-5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-lg cursor-pointer"
             >
               Tìm kiếm
             </button>
@@ -634,7 +634,7 @@ export const AdminDashboardPage: React.FC = () => {
 
                       <button
                         onClick={() => setDeletingPostId(p.id)}
-                        className="p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 transition cursor-pointer text-xs font-bold flex items-center space-x-1"
+                        className="min-h-11 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 transition cursor-pointer text-xs font-bold flex items-center space-x-1"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         <span>Xóa bài</span>

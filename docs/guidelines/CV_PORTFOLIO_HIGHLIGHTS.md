@@ -877,6 +877,38 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Eliminated profile data reset race conditions by restructuring React useEffect dependencies and implementing a useRef profile guard. Redesigned the user profile UI to Facebook standards, introducing a responsive friend action dropdown, streamling editing triggers, and preserving 100% of user posts and friends during live profile updates without page reloads.*
 
+---
+
+### 📱 Highlight 56: Xây dựng Mobile Responsive UX System với Safe Area, Touch-first Interaction & Automated Mobile E2E (Sprint 6.6)
+*   **Situation (Bối cảnh):** Giao diện desktop ba cột thiếu điều hướng trên điện thoại, notification panel dễ tràn viewport, Chat chưa tận dụng toàn bộ chiều rộng và các tương tác reaction phụ thuộc hover nên không dùng tốt trên touch device.
+*   **Task (Nhiệm vụ):** Thiết kế một responsive application shell nhất quán cho viewport từ 360px, bảo toàn desktop behavior, chuẩn hóa touch target và tạo automated mobile regression coverage.
+*   **Action (Hành động):**
+    *   Xây dựng Mobile Header, Bottom Navigation theo URL, safe-area CSS tokens, dynamic viewport `100dvh` và responsive Notification Bottom Sheet có body scroll lock.
+    *   Hoàn thiện Chat route-authoritative single-pane, mobile composer/profile sheet; chuyển Reaction Picker sang long-press và chuẩn hóa action controls đạt tối thiểu 44px.
+    *   Tạo Playwright `mobile-chromium` project 360×800, stable `data-testid` contracts và assertions cho overflow, touch target, navigation, notifications, reactions và Chat list.
+*   **Result (Kết quả):**
+    *   Frontend production build thành công; mobile responsive E2E đạt 2/2 pass và các regression responsive desktop trọng điểm đều pass.
+    *   Loại bỏ horizontal overflow do decoration/flex min-content và mang lại navigation đầy đủ cho người dùng điện thoại mà không làm thay đổi desktop information architecture.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Engineered a mobile-first responsive UX system for a React social platform using safe-area-aware navigation, dynamic viewport units, route-authoritative single-pane chat, accessible notification sheets, and long-press touch reactions; added dedicated Playwright mobile projects and regression assertions covering 360px viewports while preserving desktop behavior.*
+
+---
+
+### 🛡️ Highlight 57: Xây dựng Field-level Profile Privacy với Server-side Authorization (Profile Privacy Controls)
+*   **Situation (Bối cảnh):** Profile API trước đây trả cùng một payload cho chủ hồ sơ và visitor, có nguy cơ lộ email, role, ngày tạo tài khoản và các thông tin cá nhân qua trang Profile hoặc các response discovery như Friends/Search/Suggestions.
+*   **Task (Nhiệm vụ):** Thiết kế cơ chế quyền riêng tư theo từng trường hồ sơ, đảm bảo policy được enforce tại backend theo danh tính người xem và quan hệ bạn bè, thay vì chỉ che dữ liệu bằng UI.
+*   **Action (Hành động):**
+    *   Bổ sung enum `ProfileFieldVisibility` (`PUBLIC`, `FRIENDS`, `ONLY_ME`) xuyên suốt Domain, MongoDB document, DTO và API cập nhật Profile cho `city`, `hometown`, `work`, `relationship`.
+    *   Triển khai response filtering trong `AuthService.getUserById(id, viewerEmail)`: xác định owner từ JWT, kiểm tra friendship `ACCEPTED`, loại bỏ tuyệt đối `email`, `roles`, `createdAt`, `updatedAt` khỏi visitor payload và chỉ trả field cá nhân khi policy cho phép.
+    *   Thiết lập default an toàn `FRIENDS` cho user mới và diễn giải dữ liệu cũ chưa có setting (`null`) là `FRIENDS`, tránh public-by-default trong quá trình rollout.
+    *   Ngừng map email trong Friends, User Search và Friend Suggestions DTOs; xây dựng owner-only selector trong React Profile UI, đồng thời cập nhật E2E selector sang user name để không phụ thuộc email hiển thị.
+*   **Result (Kết quả):**
+    *   Ngăn lộ dữ liệu tài khoản qua cả Profile endpoint lẫn các endpoint discovery công khai, với authorization phụ thuộc trực tiếp vào viewer context.
+    *   Cung cấp quyền kiểm soát minh bạch cho người dùng mà không phải tạo migration bắt buộc cho dữ liệu MongoDB hiện có.
+    *   Xác minh qua `npm run build` và `mvn clean "-Dtest=AuthServiceTest,FriendshipServiceTest" test` với 8 test pass.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Implemented field-level profile privacy in a Spring Boot and React social platform, enforcing viewer-aware authorization for public, friends-only, and owner-only data. Eliminated account-data exposure across profile and discovery APIs by filtering responses against accepted friendships, while shipping backward-safe defaults and verified service-level regression coverage.*
+
 
 
 

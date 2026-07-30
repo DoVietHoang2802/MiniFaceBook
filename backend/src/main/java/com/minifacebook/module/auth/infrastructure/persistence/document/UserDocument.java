@@ -1,6 +1,7 @@
 package com.minifacebook.module.auth.infrastructure.persistence.document;
 
 import com.minifacebook.module.auth.domain.model.Role;
+import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
 import com.minifacebook.shared.domain.BaseEntity;
 import java.util.Set;
 import lombok.Getter;
@@ -42,6 +43,14 @@ public class UserDocument extends BaseEntity {
   private String work;
 
   private String relationship;
+
+  private ProfileFieldVisibility cityVisibility;
+
+  private ProfileFieldVisibility hometownVisibility;
+
+  private ProfileFieldVisibility workVisibility;
+
+  private ProfileFieldVisibility relationshipVisibility;
 
   private Set<Role> roles;
 

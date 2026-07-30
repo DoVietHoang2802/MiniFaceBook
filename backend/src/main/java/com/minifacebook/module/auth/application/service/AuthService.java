@@ -11,6 +11,7 @@ import com.minifacebook.module.auth.application.dto.UserResponse;
 import com.minifacebook.module.auth.application.mapper.AuthMapper;
 import com.minifacebook.module.auth.domain.model.RefreshToken;
 import com.minifacebook.module.auth.domain.model.Role;
+import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.RefreshTokenRepository;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
@@ -20,6 +21,8 @@ import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import com.minifacebook.shared.security.TokenBlacklistPort;
+import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
+import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -55,6 +58,7 @@ public class AuthService {
   private final TokenBlacklistPort tokenBlacklistService;
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
+  private final FriendshipRepository friendshipRepository;
 
 
   /** Đăng ký người dùng mới và gửi email kích hoạt qua Resend. */
@@ -67,6 +71,10 @@ public class AuthService {
     User user = authMapper.toUser(request);
     user.setPassword(passwordEncoder.encode(request.getPassword()));
     user.setRoles(Set.of(Role.USER));
+    user.setCityVisibility(ProfileFieldVisibility.FRIENDS);
+    user.setHometownVisibility(ProfileFieldVisibility.FRIENDS);
+    user.setWorkVisibility(ProfileFieldVisibility.FRIENDS);
+    user.setRelationshipVisibility(ProfileFieldVisibility.FRIENDS);
     user.setVerified(false);
     user.setVerificationToken(UUID.randomUUID().toString());
 
@@ -235,31 +243,40 @@ public class AuthService {
     return response;
   }
 
-  /** Lấy thông tin tài khoản người dùng theo ID. */
-  public UserResponse getUserById(String id) {
-    String cacheKey = "user:profile:id:" + id;
-    try {
-      String cachedJson = redisTemplate.opsForValue().get(cacheKey);
-      if (cachedJson != null) {
-        log.debug("Cache hit for user profile of ID: {}", id);
-        return objectMapper.readValue(cachedJson, UserResponse.class);
-      }
-    } catch (Exception e) {
-      log.warn("Failed to read user profile cache for ID: {}", id, e);
-    }
-
-    User user = userRepository.findById(id)
+  /**
+   * Lấy hồ sơ theo ID với dữ liệu đã lọc theo người xem. Email, role và dữ liệu tài khoản nội bộ
+   * không bao giờ được trả cho visitor; các trường cá nhân tuân theo quyền xem từng trường.
+   */
+  public UserResponse getUserById(String id, String viewerEmail) {
+    User profileOwner = userRepository.findById(id)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-    UserResponse response = authMapper.toUserResponse(user);
+    User viewer = userRepository.findByEmail(viewerEmail)
+        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    UserResponse response = authMapper.toUserResponse(profileOwner);
 
-    try {
-      String json = objectMapper.writeValueAsString(response);
-      redisTemplate.opsForValue().set(cacheKey, json, 24, TimeUnit.HOURS);
-      log.debug("Cached user profile for ID: {}", id);
-    } catch (Exception e) {
-      log.error("Failed to cache user profile for ID: {}", id, e);
+    if (profileOwner.getId().equals(viewer.getId())) {
+      return response;
     }
 
+    boolean isFriend = friendshipRepository.findBetweenUsers(viewer.getId(), profileOwner.getId())
+        .map(friendship -> friendship.getStatus() == FriendshipStatus.ACCEPTED)
+        .orElse(false);
+
+    response.setEmail(null);
+    response.setRoles(null);
+    response.setCreatedAt(null);
+    response.setUpdatedAt(null);
+
+    if (!canView(profileOwner.getCityVisibility(), isFriend)) response.setCity(null);
+    if (!canView(profileOwner.getHometownVisibility(), isFriend)) response.setHometown(null);
+    if (!canView(profileOwner.getWorkVisibility(), isFriend)) response.setWork(null);
+    if (!canView(profileOwner.getRelationshipVisibility(), isFriend)) response.setRelationship(null);
+
+    // Visibility settings are owner-only configuration, not visitor metadata.
+    response.setCityVisibility(null);
+    response.setHometownVisibility(null);
+    response.setWorkVisibility(null);
+    response.setRelationshipVisibility(null);
     return response;
   }
 
@@ -286,6 +303,18 @@ public class AuthService {
     if (request.getRelationship() != null) {
       user.setRelationship(request.getRelationship());
     }
+    if (request.getCityVisibility() != null) {
+      user.setCityVisibility(request.getCityVisibility());
+    }
+    if (request.getHometownVisibility() != null) {
+      user.setHometownVisibility(request.getHometownVisibility());
+    }
+    if (request.getWorkVisibility() != null) {
+      user.setWorkVisibility(request.getWorkVisibility());
+    }
+    if (request.getRelationshipVisibility() != null) {
+      user.setRelationshipVisibility(request.getRelationshipVisibility());
+    }
 
     User savedUser = userRepository.save(user);
     log.info("User profile updated successfully for: {}", email);
@@ -299,6 +328,13 @@ public class AuthService {
     }
 
     return authMapper.toUserResponse(savedUser);
+  }
+
+  private boolean canView(ProfileFieldVisibility visibility, boolean isFriend) {
+    ProfileFieldVisibility effectiveVisibility =
+        visibility == null ? ProfileFieldVisibility.FRIENDS : visibility;
+    return effectiveVisibility == ProfileFieldVisibility.PUBLIC
+        || (effectiveVisibility == ProfileFieldVisibility.FRIENDS && isFriend);
   }
 
   /** Tải lên hình ảnh đại diện qua Cloudinary và cập nhật thông tin cá nhân. */

@@ -119,7 +119,8 @@ public class UserController {
       summary = "Lấy thông tin cá nhân theo ID",
       description = "Trả về thông tin chi tiết hồ sơ người dùng tương ứng với ID chỉ định.")
   public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable String userId) {
-    UserResponse response = authService.getUserById(userId);
+    String viewerEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+    UserResponse response = authService.getUserById(userId, viewerEmail);
 
     ApiResponse<UserResponse> apiResponse =
         ApiResponse.<UserResponse>builder()

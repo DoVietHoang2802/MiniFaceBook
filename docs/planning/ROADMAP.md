@@ -1,6 +1,6 @@
 # 🗺️ DETAILED PROJECT ROADMAP - PROJECT MINI FACEBOOK
 
-> **Last Updated:** May 2026 | **Version:** 2.0 | **Total Phases:** 7
+> **Last Updated:** July 2026 | **Version:** 2.0 | **Total Phases:** 7
 
 ---
 
@@ -55,6 +55,9 @@
     - [x] API Get Me & Update Profile người dùng.
     - [x] API Upload Avatar (xử lý trung gian qua Cloudinary).
     - [x] Xây dựng giao diện Profile Page Premium (Avatar Ripple Pulse, Upload Media trực quan).
+    - [x] Privacy theo từng trường Profile (`PUBLIC` / `FRIENDS` / `ONLY_ME`) cho thành phố, quê quán, công việc và tình trạng quan hệ.
+        - *Security:* Visitor response được lọc server-side theo friendship `ACCEPTED`; email, role và metadata tài khoản không được trả cho người khác.
+        - *Reference:* [Profile Privacy Policy](../guidelines/PROFILE_PRIVACY_POLICY.md).
 
 ---
 
@@ -319,6 +322,13 @@
     - [x] Tích hợp **Sentry** theo dõi và bắt lỗi runtime thời gian thực (Backend + Frontend).
     - [ ] **K6 Load Testing**: Kiểm tra sức chịu tải của API trước khi go-live.
         - *Target:* 100 concurrent users, response time < 500ms.
+- [x] **Sprint 6.6: Mobile Responsive UX Hardening** ✅
+    - [x] Xây dựng Mobile Header và Bottom Navigation 5 mục với unread badges, safe-area và route-aware active state.
+    - [x] Chuyển Notification panel thành responsive Bottom Sheet trên mobile, giữ anchored panel trên desktop.
+    - [x] Hoàn thiện Chat single-pane full-width, route-authoritative Back, `100dvh`, composer và profile sheet mobile.
+    - [x] Chuyển Reaction Picker sang touch/long-press; chuẩn hóa action Feed/Profile/Admin đạt touch target tối thiểu 44px.
+    - [x] Thêm Playwright project `mobile-chromium` 360×800 và mobile responsive E2E (2/2 pass).
+    - [x] Frontend production build pass; ghi nhận residual auth/session 401 ở full desktop suite dài để hardening riêng.
 
 ---
 

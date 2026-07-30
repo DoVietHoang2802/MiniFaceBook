@@ -1,6 +1,7 @@
 package com.minifacebook.module.auth.application.dto;
 
 import com.minifacebook.module.auth.domain.model.Role;
+import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
 import java.time.Instant;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,10 @@ public class UserResponse {
   private String hometown;
   private String work;
   private String relationship;
+  private ProfileFieldVisibility cityVisibility;
+  private ProfileFieldVisibility hometownVisibility;
+  private ProfileFieldVisibility workVisibility;
+  private ProfileFieldVisibility relationshipVisibility;
   private Set<Role> roles;
   private Instant createdAt;
   private Instant updatedAt;

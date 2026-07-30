@@ -295,6 +295,12 @@ export default function ChatPage({
     }, 50);
   };
 
+  const handleComposerFocus = () => {
+    setShowEmojiPicker(false);
+    // Let the browser resize its visual viewport before keeping the composer and latest message visible.
+    window.requestAnimationFrame(() => scrollToBottom('auto'));
+  };
+
   // 1. Tải danh sách cuộc hội thoại
   const loadConversations = useCallback(async (selectId?: string) => {
     setIsLoadingConvs(true);
@@ -1144,12 +1150,15 @@ export default function ChatPage({
   }
 
   return (
-    <div className="flex bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden h-full animate-fade-in-up">
+    <div className="flex h-full overflow-hidden bg-white animate-fade-in-up md:rounded-xl md:border md:border-slate-200/80 md:shadow-sm">
 
       {/* ========================================================== */}
       {/* CỘT 1: DANH SÁCH CUỘC TRÒ CHUYỆN                           */}
       {/* ========================================================== */}
-      <div className={`w-[280px] border-r border-slate-200 flex flex-col h-full bg-white shrink-0 ${activeConversation ? 'hidden md:flex' : ''}`}>
+      <div
+        data-testid="chat-list"
+        className={`w-full border-r border-slate-200 flex flex-col h-full bg-white shrink-0 md:w-[280px] ${activeConversation ? 'hidden md:flex' : ''}`}
+      >
         {/* Header Stories */}
         <div className="px-3 pt-3 pb-2">
           <h3 className="text-xs font-black text-slate-800 mb-2">Stories</h3>
@@ -1261,7 +1270,7 @@ export default function ChatPage({
         </div>
 
         {/* List cuộc trò chuyện */}
-        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
+        <div data-testid="chat-list-scroll" className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2 py-1 space-y-0.5">
           {isLoadingConvs && conversations.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 text-violet-500 animate-spin" />
@@ -1352,10 +1361,10 @@ export default function ChatPage({
         </div>
 
         {/* Nút tìm bạn mới */}
-        <div className="px-3 py-2.5 border-t border-slate-100">
+        <div className="shrink-0 px-3 py-2.5 border-t border-slate-100">
           <button
             onClick={openNewChatModal}
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-full border border-violet-200 text-violet-600 font-bold text-xs hover:bg-violet-50 transition cursor-pointer"
+            className="min-h-11 w-full flex items-center justify-center gap-1.5 px-3 rounded-full border border-violet-200 text-violet-600 font-bold text-xs hover:bg-violet-50 transition cursor-pointer"
           >
             <UserPlus className="h-3.5 w-3.5" />
             Find new friends
@@ -1366,18 +1375,24 @@ export default function ChatPage({
       {/* ========================================================== */}
       {/* CỘT 2: CHI TIẾT KHUNG CHAT                                 */}
       {/* ========================================================== */}
-      <div className={`flex-1 flex flex-col h-full bg-white relative min-w-0 ${!activeConversation ? 'hidden md:flex' : ''}`}>
+      <div
+        data-testid="chat-thread"
+        className={`flex-1 flex flex-col h-full bg-white relative min-w-0 ${!activeConversation ? 'hidden md:flex' : ''}`}
+      >
         {activeConversation ? (
           <>
             {/* Header chat */}
-            <div className="px-4 py-2.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
+            <div className="px-2 sm:px-4 py-1.5 sm:py-2.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
               <div className="flex items-center gap-3 flex-grow min-w-0">
                 <button
-                  onClick={() => setActiveConversation(null)}
-                  className="md:hidden p-1.5 hover:bg-slate-100 rounded-lg transition cursor-pointer shrink-0"
+                  onClick={() => {
+                    setActiveConversation(null);
+                    navigate('/chats');
+                  }}
+                  className="md:hidden h-11 w-11 flex items-center justify-center hover:bg-slate-100 rounded-full transition cursor-pointer shrink-0"
                   aria-label="Quay lại danh sách"
                 >
-                  <ArrowLeft className="h-4 w-4 text-slate-600" />
+                  <ArrowLeft className="h-5 w-5 text-slate-600" />
                 </button>
                 <div 
                   onClick={() => activePartner && navigate(`/profile/${activePartner.id}`)}
@@ -1413,27 +1428,32 @@ export default function ChatPage({
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-0.5 shrink-0">
 
                 <button 
+                  type="button"
                   onClick={() => activePartner && startCall(activePartner.id, activePartner.name, false, activePartner.avatar)}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" 
+                  aria-label="Gọi thoại"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-violet-50 hover:text-violet-600 transition cursor-pointer"
                   title="Gọi thoại"
                 >
-                  <Phone className="h-4 w-4" />
+                  <Phone className="h-4.5 w-4.5" />
                 </button>
                 <button 
+                  type="button"
                   onClick={() => activePartner && startCall(activePartner.id, activePartner.name, true, activePartner.avatar)}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer" 
+                  aria-label="Gọi video"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-violet-50 hover:text-violet-600 transition cursor-pointer"
                   title="Gọi video"
                 >
-                  <Video className="h-4 w-4" />
+                  <Video className="h-4.5 w-4.5" />
                 </button>
 
                 <button 
                   type="button"
                   onClick={() => setShowProfilePanel(!showProfilePanel)}
-                  className={`h-8 w-8 rounded-full flex items-center justify-center transition cursor-pointer ${
+                  aria-label={showProfilePanel ? 'Ẩn thông tin hội thoại' : 'Hiện thông tin hội thoại'}
+                  className={`h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center transition cursor-pointer ${
                     showProfilePanel 
                       ? 'text-violet-600 bg-violet-50 hover:bg-violet-100' 
                       : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
@@ -1491,7 +1511,7 @@ export default function ChatPage({
                         <div
                           key={m.id}
                           ref={(el) => { messageRefs.current[m.id] = el; }}
-                          className={`flex items-end gap-2.5 max-w-[75%] rounded-2xl transition-all duration-500 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} ${highlightedMsgId === m.id ? 'ring-2 ring-violet-400 ring-offset-2 bg-violet-50/40' : ''}`}
+                          className={`flex items-end gap-2 max-w-[86%] rounded-2xl transition-all duration-500 sm:gap-2.5 md:max-w-[75%] ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} ${highlightedMsgId === m.id ? 'ring-2 ring-violet-400 ring-offset-2 bg-violet-50/40' : ''}`}
                         >
                           {/* Avatar đối phương */}
                           {!isMe && (
@@ -1807,14 +1827,14 @@ export default function ChatPage({
             {/* Input bar */}
             <form
               onSubmit={handleSendMessage}
-              className="px-3 py-2.5 border-t border-slate-200 bg-white flex items-center gap-2 z-10"
+              className="px-2 sm:px-3 py-1.5 sm:py-2.5 border-t border-slate-200 bg-white flex items-center gap-1.5 sm:gap-2 z-10 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
             >
               {/* Messenger Left Toolbar */}
               <div className="flex items-center gap-0.5 shrink-0">
                 <button 
                   type="button" 
                   onClick={() => triggerToast("Tính năng đính kèm tệp đang được phát triển!")}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer" 
+                  className="hidden sm:flex h-11 w-11 rounded-full items-center justify-center text-violet-500 hover:bg-violet-50 transition cursor-pointer"
                   title="Thêm"
                 >
                   <Plus className="h-4.5 w-4.5" />
@@ -1823,7 +1843,7 @@ export default function ChatPage({
                 <button 
                   type="button" 
                   onClick={() => imageInputRef.current?.click()} 
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer" 
+                  className="h-11 w-11 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer"
                   title="Chọn ảnh tải lên"
                 >
                   <ImageIcon className="h-4.5 w-4.5" />
@@ -1841,7 +1861,7 @@ export default function ChatPage({
                 <button 
                   type="button" 
                   onClick={() => triggerToast("Tính năng ghi âm giọng nói đang được phát triển!")}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer" 
+                  className="hidden sm:flex h-11 w-11 rounded-full items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer"
                   title="Gửi tin nhắn thoại"
                 >
                   <Mic className="h-4.5 w-4.5" />
@@ -1851,7 +1871,7 @@ export default function ChatPage({
               {/* Text Input Wrapper (with inline Emoji button & Picker popup) */}
               <div className="flex-grow relative flex items-center" ref={emojiPickerRef}>
                 {showEmojiPicker && (
-                  <div className="absolute bottom-full right-0 mb-3 w-72 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="absolute bottom-full right-0 mb-3 w-[min(18rem,calc(100vw-1.5rem))] bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
                     {/* Header: Tabs */}
                     <div className="flex items-center justify-around border-b border-slate-100 bg-slate-50/50 p-2">
                       {EMOJI_CATEGORIES.map((cat, idx) => (
@@ -1859,7 +1879,7 @@ export default function ChatPage({
                           key={cat.name}
                           type="button"
                           onClick={() => setActiveEmojiCategory(idx)}
-                          className={`h-8 w-8 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
+                          className={`h-11 w-11 rounded-xl flex items-center justify-center text-lg transition cursor-pointer ${
                             activeEmojiCategory === idx ? 'bg-white shadow-sm scale-110' : 'hover:bg-slate-100 opacity-60 hover:opacity-100'
                           }`}
                           title={cat.name}
@@ -1876,7 +1896,7 @@ export default function ChatPage({
                           key={emoji}
                           type="button"
                           onClick={() => setMessageInput((prev) => prev + emoji)}
-                          className="h-8 w-8 text-xl flex items-center justify-center hover:bg-slate-100 rounded-lg transition active:scale-90 cursor-pointer"
+                          className="h-11 w-11 text-xl flex items-center justify-center hover:bg-slate-100 rounded-xl transition active:scale-90 cursor-pointer"
                         >
                           {emoji}
                         </button>
@@ -1891,6 +1911,7 @@ export default function ChatPage({
                 )}
 
                 <input
+                  data-testid="chat-composer-input"
                   type="text"
                   value={messageInput}
                   onChange={(e) => {
@@ -1902,12 +1923,16 @@ export default function ChatPage({
                     }
                   }}
                   placeholder="Aa"
-                  className="w-full pl-4 pr-10 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-sm text-slate-700 transition-all font-medium"
+                  inputMode="text"
+                  enterKeyHint="send"
+                  autoComplete="off"
+                  onFocus={handleComposerFocus}
+                  className="w-full min-h-11 pl-4 pr-11 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-base sm:text-sm text-slate-700 transition-all font-medium"
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className={`absolute right-2 h-7 w-7 rounded-full flex items-center justify-center transition cursor-pointer ${
+                  className={`absolute right-1 h-11 w-11 rounded-full flex items-center justify-center transition cursor-pointer ${
                     showEmojiPicker ? 'text-violet-600 bg-violet-100' : 'text-slate-400 hover:bg-slate-200/50 hover:text-violet-600'
                   }`}
                   title="Biểu tượng cảm xúc"
@@ -1921,7 +1946,7 @@ export default function ChatPage({
                 <button
                   type="button"
                   onClick={() => handleSendMessage(undefined, "👍")}
-                  className="h-9 w-9 text-violet-600 rounded-full hover:bg-slate-100 transition shrink-0 cursor-pointer flex items-center justify-center"
+                  className="h-11 w-11 text-violet-600 rounded-full hover:bg-slate-100 transition shrink-0 cursor-pointer flex items-center justify-center"
                   title="Gửi nút Like nhanh"
                 >
                   <ThumbsUp className="h-5 w-5 fill-current" />
@@ -1930,7 +1955,7 @@ export default function ChatPage({
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="h-9 w-9 bg-violet-600 text-white rounded-full hover:bg-violet-500 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
+                  className="h-11 w-11 bg-violet-600 text-white rounded-full hover:bg-violet-500 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
                 >
                   {isSending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1957,18 +1982,18 @@ export default function ChatPage({
       {/* ========================================================== */}
       {activeConversation && activePartner && (
         <div 
-          className={`border-l border-slate-200 flex-col h-full bg-white shrink-0 overflow-y-auto overflow-x-hidden transition-all duration-300 ease-in-out z-40 fixed right-0 top-14 h-[calc(100vh-56px)] shadow-2xl lg:relative lg:top-0 lg:h-full lg:shadow-none flex ${
+          className={`border-l border-slate-200 flex-col bg-white shrink-0 overflow-y-auto overflow-x-hidden transition-all duration-300 ease-in-out z-40 fixed inset-x-0 bottom-0 top-[calc(var(--app-header-height)+env(safe-area-inset-top))] h-auto shadow-2xl lg:relative lg:inset-auto lg:h-full lg:shadow-none flex ${
             showProfilePanel 
-              ? 'w-[260px] opacity-100 translate-x-0' 
-              : 'w-0 opacity-0 !border-l-0 pointer-events-none translate-x-full lg:translate-x-0'
+              ? 'w-full opacity-100 translate-x-0 lg:w-[260px]'
+              : 'w-full opacity-0 !border-l-0 pointer-events-none translate-x-full lg:w-0 lg:translate-x-0'
           }`}
         >
-          <div className="w-[260px] flex flex-col shrink-0 relative">
+          <div className="w-full lg:w-[260px] flex flex-col shrink-0 relative pb-[env(safe-area-inset-bottom)] lg:pb-0">
             {/* Close button for mobile/tablet */}
             <button 
               type="button"
               onClick={() => setShowProfilePanel(false)}
-              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer lg:hidden"
+              className="absolute top-3 right-3 h-11 w-11 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer lg:hidden"
               title="Đóng thông tin"
             >
               <X className="h-4 w-4" />
@@ -2204,7 +2229,7 @@ export default function ChatPage({
                     </div>
                     <div className="text-left overflow-hidden">
                       <h4 className="text-xs font-bold text-slate-800 truncate">{friend.name}</h4>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.bio || friend.email}</p>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">{friend.bio || 'Chưa cập nhật tiểu sử'}</p>
                     </div>
                   </div>
                 ))

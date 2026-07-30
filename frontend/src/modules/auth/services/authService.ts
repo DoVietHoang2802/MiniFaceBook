@@ -14,6 +14,10 @@ export interface UserResponse {
   hometown?: string;
   work?: string;
   relationship?: string;
+  cityVisibility?: 'PUBLIC' | 'FRIENDS' | 'ONLY_ME';
+  hometownVisibility?: 'PUBLIC' | 'FRIENDS' | 'ONLY_ME';
+  workVisibility?: 'PUBLIC' | 'FRIENDS' | 'ONLY_ME';
+  relationshipVisibility?: 'PUBLIC' | 'FRIENDS' | 'ONLY_ME';
   createdAt?: string;
   updatedAt?: string;
 }

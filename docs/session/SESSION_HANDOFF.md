@@ -1,9 +1,59 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 29/07/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 8.6 HOÀN THÀNH (Standalone Admin Portal, System Broadcast & Dual Realtime Notification). Tổng tiến độ **100%**.
+## 📅 Cập nhật ngày: 30/07/2026
+## 🏁 Trạng thái hiện tại: ✅ SPRINT 6.6 MOBILE RESPONSIVE UX HARDENING HOÀN THÀNH. Mobile E2E 2/2 và frontend build pass; full desktop suite còn residual auth/session 401 (12/17 pass).
 
 > ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã hoàn thành **Sprint 8.6: Standalone Admin Portal (/admin)**, **Sprint 8.3: Voice & Video Call 1-1 WebRTC** & **Sprint 8.5: Nested Comment Reply**. Sẵn sàng 100% cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
+
+---
+
+## 📋 TÓM TẮT PHIÊN LÀM VIỆC (30/07/2026 - MOBILE RESPONSIVE UX HARDENING)
+
+### Profile Privacy Controls tiếp nối:
+
+- Backend thêm `ProfileFieldVisibility` cho city/hometown/work/relationship: `PUBLIC`, `FRIENDS`, `ONLY_ME`; mặc định an toàn là `FRIENDS`.
+- API visitor `/user/{id}` lọc email, role, created/updated time tuyệt đối; chỉ trả field cá nhân theo friendship `ACCEPTED` và policy.
+- Friends/Search/Suggestions không còn map email. UI Profile owner có privacy selector; visitor chỉ thấy trường được phép hoặc empty state.
+- Xác minh: frontend build pass; `AuthServiceTest` + `FriendshipServiceTest` 8/8 pass sau clean rebuild.
+- Policy chi tiết và contract API: [`docs/guidelines/PROFILE_PRIVACY_POLICY.md`](../guidelines/PROFILE_PRIVACY_POLICY.md).
+
+### P0 Redesign tiếp nối:
+
+- Profile: Logout đã chuyển vào overflow menu; Edit Profile là compact action; tabs là Posts/Friends/About.
+- Feed: Create Post dùng compact composer và portal dialog; Check-in/Poll nằm trong More menu; PostCard có text clamp/media cap/zero-counter hiding.
+- Xác minh: `npm run build` pass, mobile P0 E2E 3/3, feed E2E 3/3. Profile full test 4/5 do auth/session 401 flake đã biết.
+- Route scroll reset: đã sửa lỗi Friends scroll offset làm Chat bị che phần đầu; mobile P0 E2E hiện 4/4 pass.
+
+### Công việc đã thực hiện:
+
+1. **Responsive Foundation & Navigation Shell:**
+   - Thêm `viewport-fit=cover`, safe-area tokens, `100dvh`, reduced motion và focus-visible.
+   - Tạo `MobileHeader.tsx`, `MobileBottomNav.tsx`; loại bỏ mobile header trùng trong `MainLayout`.
+   - Bottom Navigation gồm Trang chủ, Bạn bè, Trò chuyện, Thông báo, Cá nhân với unread badges và active state theo URL.
+
+2. **Notification, Chat & Touch-first Feed:**
+   - Notification dùng Bottom Sheet trên mobile, floating panel trên desktop; hỗ trợ backdrop, Escape và body scroll lock.
+   - Chat list full-width single-pane; Back điều hướng về `/chats`; composer, emoji picker và profile panel được tối ưu mobile/safe-area.
+   - PostCard/CreatePostCard có spacing responsive, action 44px, long-press Reaction Picker và không còn horizontal overflow.
+
+3. **Profile, Admin & Automated Verification:**
+   - Profile avatar/cover/action/tab hỗ trợ touch; Admin topbar/search/action responsive.
+   - Thêm Playwright `mobile-chromium` 360×800 và `mobile-responsive.spec.ts`.
+   - `npm run build`: PASS. Mobile E2E: 2/2 PASS. Responsive regression chọn lọc: PASS.
+   - Full Chromium suite: 12/17 PASS; 5 failure bắt đầu từ login/session trả 401 trong suite dài, không tái hiện trong các test responsive chạy riêng.
+
+### Files chính:
+
+- `frontend/src/components/layout/MobileHeader.tsx`
+- `frontend/src/components/layout/MobileBottomNav.tsx`
+- `frontend/src/components/layout/MainLayout.tsx`
+- `frontend/src/modules/chat/components/ChatPage.tsx`
+- `frontend/src/modules/post/components/PostCard.tsx`
+- `frontend/src/modules/post/components/CreatePostCard.tsx`
+- `frontend/src/modules/profile/components/ProfilePage.tsx`
+- `frontend/src/modules/admin/pages/AdminDashboardPage.tsx`
+- `frontend/tests/mobile-responsive.spec.ts`
+- `frontend/playwright.config.ts`
 
 ---
 

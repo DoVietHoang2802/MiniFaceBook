@@ -37,6 +37,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const reactionAreaRef = React.useRef<HTMLDivElement>(null);
+  const longPressTimerRef = React.useRef<number | null>(null);
+  const longPressTriggeredRef = React.useRef(false);
 
   const deletePostMutation = useMutation({
     mutationFn: () => postService.deletePost(localPost.id),
@@ -58,6 +62,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
   React.useEffect(() => {
     setLocalPost(post);
+    setIsContentExpanded(false);
   }, [post]);
 
   React.useEffect(() => {
@@ -79,6 +84,25 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     });
     return () => unsubscribe();
   }, [post.id]);
+
+  React.useEffect(() => {
+    if (!isHoveringReaction) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (reactionAreaRef.current && !reactionAreaRef.current.contains(event.target as Node)) {
+        setIsHoveringReaction(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [isHoveringReaction]);
+
+  React.useEffect(() => () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+    }
+  }, []);
 
   const reactionMutation = useMutation({
     mutationFn: (type: ReactionType) => postService.reactToPost(localPost.id, { type }),
@@ -119,6 +143,32 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     setIsHoveringReaction(false);
   };
 
+  const startReactionLongPress = (event: React.PointerEvent) => {
+    if (event.pointerType === 'mouse') return;
+
+    longPressTriggeredRef.current = false;
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setIsHoveringReaction(true);
+    }, 450);
+  };
+
+  const cancelReactionLongPress = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handlePrimaryReaction = () => {
+    cancelReactionLongPress();
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+    handleReact(localPost.myReactionType || 'LIKE');
+  };
+
   const [showReactionsModal, setShowReactionsModal] = useState(false);
 
   const adjustCommentCount = (delta: number) => {
@@ -133,10 +183,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     .sort((a, b) => b[1] - a[1])
     .map(([type]) => type as ReactionType)
     .slice(0, 3);
+  const hasLongContent = localPost.content.length > 280;
+  const hasEngagement = localPost.reactCount > 0 || localPost.commentCount > 0 || (localPost.shareCount ?? 0) > 0;
 
   if (isHidden) {
     return (
-      <div className="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm mb-6 flex items-center justify-between animate-fade-in-up">
+      <div className="w-full rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm mb-4 sm:mb-6 flex items-center justify-between animate-fade-in-up">
         <div className="flex items-center space-x-3 text-slate-500 text-xs font-semibold">
           <EyeOff className="h-4.5 w-4.5 text-slate-400 shrink-0" />
           <span>Bài viết này đã được ẩn khỏi bảng tin của bạn.</span>
@@ -152,8 +204,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   }
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm mb-6 transition-all duration-300 hover:shadow-md animate-fade-in-up">
-      <div className="p-5">
+    <article data-testid="post-card" className="w-full rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-sm mb-4 sm:mb-6 transition-all duration-300 hover:shadow-md animate-fade-in-up">
+      <div className="p-3.5 sm:p-5">
         <div className="flex items-center justify-between mb-4">
           <div 
             onClick={() => navigate(`/profile/${localPost.authorId}`)}
@@ -185,7 +237,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             <button 
               onClick={() => setShowMenu(!showMenu)}
               title="Tùy chọn bài viết"
-              className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg p-1.5 transition cursor-pointer"
+              className="touch-target flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition cursor-pointer"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>
@@ -223,9 +275,20 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
         </div>
 
         {localPost.content && (
-          <p className="text-slate-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap font-medium">
-            {localPost.content}
-          </p>
+          <div className="mb-4">
+            <p className={`whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-600 ${!isContentExpanded && hasLongContent ? 'line-clamp-5' : ''}`}>
+              {localPost.content}
+            </p>
+            {hasLongContent && (
+              <button
+                type="button"
+                onClick={() => setIsContentExpanded((value) => !value)}
+                className="mt-1 min-h-8 text-xs font-black text-violet-600 transition hover:text-violet-500"
+              >
+                {isContentExpanded ? 'Thu gọn' : 'Xem thêm'}
+              </button>
+            )}
+          </div>
         )}
 
         {localPost.imageUrls && localPost.imageUrls.length > 0 && (
@@ -238,7 +301,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
               let itemClasses = 'relative aspect-square';
               if (localPost.imageUrls!.length === 1) {
-                itemClasses = 'relative max-h-[500px] w-full';
+                itemClasses = 'relative h-[min(65dvh,420px)] w-full';
               } else if (localPost.imageUrls!.length === 3 && idx === 0) {
                 itemClasses = 'relative row-span-2 h-full w-full';
               }
@@ -248,7 +311,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
                   <img 
                     src={url} 
                     alt="Post image" 
-                    className={`inset-0 h-full w-full object-cover hover:scale-102 transition duration-500 cursor-pointer ${localPost.imageUrls!.length === 1 ? 'relative' : 'absolute'}`} 
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 hover:scale-102 cursor-pointer"
                   />
 
                   {isLast && remainingCount > 0 && (
@@ -262,7 +326,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           </div>
         )}
 
-        {(localPost.reactCount > 0 || localPost.commentCount > 0) && (
+        {hasEngagement && (
           <div className="flex items-center justify-between py-2 text-xs text-slate-500 font-medium">
             {localPost.reactCount > 0 ? (
               <button
@@ -298,13 +362,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
                   {localPost.commentCount} bình luận
                 </button>
               )}
-              <span className="text-slate-400">{localPost.shareCount ?? 0} chia sẻ</span>
+              {(localPost.shareCount ?? 0) > 0 && (
+                <span className="text-slate-400">{localPost.shareCount} chia sẻ</span>
+              )}
             </div>
           </div>
         )}
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-1.5 mt-1 gap-1">
           <div
+            ref={reactionAreaRef}
             className="flex-1 flex justify-center relative"
             onMouseEnter={() => setIsHoveringReaction(true)}
             onMouseLeave={() => setIsHoveringReaction(false)}
@@ -316,8 +383,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             )}
 
             <button
-              onClick={() => handleReact(localPost.myReactionType || 'LIKE')}
-              className={`flex items-center space-x-2 p-2 w-full rounded-xl transition-all cursor-pointer justify-center ${localPost.myReactionType && REACTION_ICONS[localPost.myReactionType] ? `${REACTION_ICONS[localPost.myReactionType].color} ${REACTION_ICONS[localPost.myReactionType].bgColor} font-bold` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+              onClick={handlePrimaryReaction}
+              onPointerDown={startReactionLongPress}
+              onPointerUp={cancelReactionLongPress}
+              onPointerCancel={cancelReactionLongPress}
+              onPointerLeave={cancelReactionLongPress}
+              aria-label="Thích bài viết. Nhấn giữ để chọn cảm xúc"
+              className={`flex min-h-11 items-center space-x-1.5 sm:space-x-2 px-2 w-full rounded-xl transition-all cursor-pointer justify-center select-none touch-none ${localPost.myReactionType && REACTION_ICONS[localPost.myReactionType] ? `${REACTION_ICONS[localPost.myReactionType].color} ${REACTION_ICONS[localPost.myReactionType].bgColor} font-bold` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
               {localPost.myReactionType && REACTION_ICONS[localPost.myReactionType]
                 ? <span className="text-[1.1rem] leading-none">{REACTION_ICONS[localPost.myReactionType].emoji}</span>
@@ -333,13 +405,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
           <button
             onClick={() => setIsDetailModalOpen(true)}
-            className="flex items-center space-x-2 p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center"
+            className="flex min-h-11 items-center space-x-1.5 sm:space-x-2 px-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center"
           >
             <MessageCircle className="h-4.5 w-4.5" />
             <span className="text-xs font-bold">Bình luận</span>
           </button>
 
-          <button className="flex items-center space-x-2 p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center">
+          <button className="flex min-h-11 items-center space-x-1.5 sm:space-x-2 px-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center">
             <Share2 className="h-4.5 w-4.5" />
             <span className="text-xs font-bold">Chia sẻ</span>
           </button>
@@ -359,7 +431,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           />
         )}
       </div>
-    </div>
+    </article>
   );
 };
 

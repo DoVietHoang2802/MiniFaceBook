@@ -38,11 +38,37 @@ export default defineConfig({
 
   /* CI: chỉ Chromium để pipeline nhanh; local có thể set PW_ALL_BROWSERS=1 */
   projects: process.env.CI && !process.env.PW_ALL_BROWSERS
-    ? [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
+    ? [
+        {
+          name: 'chromium',
+          testIgnore: '**/mobile-responsive.spec.ts',
+          use: { ...devices['Desktop Chrome'] },
+        },
+        {
+          name: 'mobile-chromium',
+          testMatch: '**/mobile-responsive.spec.ts',
+          use: {
+            viewport: { width: 360, height: 800 },
+            deviceScaleFactor: 2,
+            hasTouch: true,
+            isMobile: true,
+          },
+        },
+      ]
     : [
-        { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-        { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-        { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+        { name: 'chromium', testIgnore: '**/mobile-responsive.spec.ts', use: { ...devices['Desktop Chrome'] } },
+        { name: 'firefox', testIgnore: '**/mobile-responsive.spec.ts', use: { ...devices['Desktop Firefox'] } },
+        { name: 'webkit', testIgnore: '**/mobile-responsive.spec.ts', use: { ...devices['Desktop Safari'] } },
+        {
+          name: 'mobile-chromium',
+          testMatch: '**/mobile-responsive.spec.ts',
+          use: {
+            viewport: { width: 360, height: 800 },
+            deviceScaleFactor: 2,
+            hasTouch: true,
+            isMobile: true,
+          },
+        },
       ],
 
   /* Run your local dev server before starting the tests */

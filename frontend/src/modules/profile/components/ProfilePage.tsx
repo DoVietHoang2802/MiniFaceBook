@@ -19,11 +19,14 @@ import {
   UserCheck,
   UserX,
   Clock,
-  ChevronDown
+  ChevronDown,
+  MoreHorizontal,
+  Pencil,
+  Settings
 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { profileService } from '../services/profileService';
-import type { UserProfileResponse } from '../services/profileService';
+import type { ProfileFieldVisibility, UserProfileResponse } from '../services/profileService';
 import { authService } from '../../auth/services/authService';
 import type { UserResponse } from '../../auth/services/authService';
 import { useAuth } from '../../../core/auth/AuthContext';
@@ -49,6 +52,11 @@ const avatarFileSchema = z.instanceof(File)
 
 const bioSchema = z.string()
   .max(255, 'Tiểu sử không được vượt quá 255 ký tự');
+
+const DEFAULT_PROFILE_VISIBILITY: ProfileFieldVisibility = 'FRIENDS';
+
+const getVisibility = (value?: ProfileFieldVisibility | null): ProfileFieldVisibility =>
+  value ?? DEFAULT_PROFILE_VISIBILITY;
 
 const VIETNAM_CITIES = [
   "An Giang", "Bà Rịa - Vũng Tàu", "Bạc Liêu", "Bắc Giang", "Bắc Kạn", "Bắc Ninh",
@@ -139,6 +147,24 @@ const CitySearchSelect: React.FC<CitySearchSelectProps> = ({ label, value, onCha
   );
 };
 
+interface VisibilitySelectProps {
+  value: ProfileFieldVisibility;
+  onChange: (value: ProfileFieldVisibility) => void;
+}
+
+const VisibilitySelect: React.FC<VisibilitySelectProps> = ({ value, onChange }) => (
+  <select
+    value={value}
+    onChange={(event) => onChange(event.target.value as ProfileFieldVisibility)}
+    aria-label="Quyền xem thông tin"
+    className="min-h-10 rounded-xl border border-slate-200 bg-white px-2 text-[11px] font-bold text-slate-600 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+  >
+    <option value="PUBLIC">Công khai</option>
+    <option value="FRIENDS">Bạn bè</option>
+    <option value="ONLY_ME">Chỉ mình tôi</option>
+  </select>
+);
+
 interface ProfilePageProps {
   initialUser?: UserProfileResponse | UserResponse | null;
   onLogout?: () => void;
@@ -175,6 +201,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [hometown, setHometown] = useState('');
   const [work, setWork] = useState('');
   const [relationship, setRelationship] = useState('');
+  const [cityVisibility, setCityVisibility] = useState<ProfileFieldVisibility>(DEFAULT_PROFILE_VISIBILITY);
+  const [hometownVisibility, setHometownVisibility] = useState<ProfileFieldVisibility>(DEFAULT_PROFILE_VISIBILITY);
+  const [workVisibility, setWorkVisibility] = useState<ProfileFieldVisibility>(DEFAULT_PROFILE_VISIBILITY);
+  const [relationshipVisibility, setRelationshipVisibility] = useState<ProfileFieldVisibility>(DEFAULT_PROFILE_VISIBILITY);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
 
@@ -194,6 +224,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [friendshipId, setFriendshipId] = useState<string | null>(null);
   const [isLoadingRelationship, setIsLoadingRelationship] = useState(false);
   const [showFriendOptions, setShowFriendOptions] = useState(false);
+  const [showProfileOptions, setShowProfileOptions] = useState(false);
   const loadedProfileIdRef = useRef<string | null>(null);
 
   const checkRelationship = async () => {
@@ -380,6 +411,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
       setHometown((user as any).hometown || '');
       setWork((user as any).work || '');
       setRelationship((user as any).relationship || '');
+      setCityVisibility(getVisibility((user as any).cityVisibility));
+      setHometownVisibility(getVisibility((user as any).hometownVisibility));
+      setWorkVisibility(getVisibility((user as any).workVisibility));
+      setRelationshipVisibility(getVisibility((user as any).relationshipVisibility));
     }
   }, [user]);
 
@@ -607,10 +642,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
     try {
       const response = await profileService.updateProfile({
-        city: city || '',
-        hometown: hometown || '',
-        work: work || '',
-        relationship: relationship || ''
+      city: city || '',
+      hometown: hometown || '',
+      work: work || '',
+      relationship: relationship || '',
+      cityVisibility,
+      hometownVisibility,
+      workVisibility,
+      relationshipVisibility,
       });
       setUser(response.data);
       if (isOwnProfile && auth.setUser) {
@@ -662,7 +701,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
 
   // Guard: Nếu chưa có dữ liệu user (vd: phiên hết hạn, API trả 401), tránh crash khi
   // truy cập user.email.split(...). Hiển thị trạng thái loading và đăng xuất an toàn.
-  if (!user || !user.email) {
+  if (!user) {
     return (
       <div className="w-full max-w-4xl mx-auto px-4 py-20 flex flex-col items-center justify-center text-center animate-fade-in-up">
         <AlertTriangle className="h-10 w-10 text-rose-500 mb-4 animate-pulse" />
@@ -682,14 +721,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
     const query = friendSearchQuery.toLowerCase().trim();
     if (!query) return true;
     const name = (friend.name || '').toLowerCase();
-    const email = (friend.email || '').toLowerCase();
-    return name.includes(query) || email.includes(query);
+    return name.includes(query);
   });
+  const hasVisiblePersonalDetails = Boolean(
+    user.city || user.hometown || user.work || (user.relationship && user.relationship !== 'Không rõ')
+  );
 
   return (
     <div className="w-full max-w-5xl mx-auto px-0 py-2 animate-fade-in-up">
       {/* Khối Thông báo Hệ thống (Toasts) */}
-      <div className="fixed top-5 right-5 z-50 space-y-3 max-w-md w-full pointer-events-none">
+      <div className="fixed inset-x-3 top-[calc(var(--app-header-height)+env(safe-area-inset-top)+0.75rem)] z-[180] space-y-3 pointer-events-none md:inset-x-auto md:right-5 md:top-5 md:w-full md:max-w-md">
         {successMessage && (
           <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-950/80 text-emerald-300 flex items-center space-x-3 shadow-lg shadow-emerald-500/10 backdrop-blur-md animate-fade-in-right pointer-events-auto">
             <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 animate-bounce" />
@@ -705,7 +746,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
       </div>
 
       {/* Facebook-style Cover Photo */}
-      <div className="relative h-56 sm:h-72 md:h-80 w-full rounded-t-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 overflow-hidden shadow-sm group">
+      <div className="relative h-44 sm:h-72 md:h-80 w-full rounded-t-xl sm:rounded-t-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 overflow-hidden shadow-sm group">
         {user.cover ? (
           <img
             src={user.cover}
@@ -739,22 +780,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
               type="button"
               onClick={() => coverInputRef.current?.click()}
               disabled={isUploadingCover}
-              className="absolute bottom-4 right-4 flex items-center space-x-2 px-3.5 py-2 bg-black/60 hover:bg-black/80 text-white rounded-xl text-[11px] font-bold transition backdrop-blur-sm cursor-pointer shadow-md disabled:opacity-60 z-10"
+              aria-label={user.cover ? 'Đổi ảnh bìa' : 'Chỉnh sửa ảnh bìa'}
+              className="absolute bottom-3 right-3 min-h-11 flex items-center space-x-2 px-3.5 bg-black/60 hover:bg-black/80 text-white rounded-xl text-[11px] font-bold transition backdrop-blur-sm cursor-pointer shadow-md disabled:opacity-60 z-10 sm:bottom-4 sm:right-4"
             >
               <Camera className="h-4 w-4" />
-              <span>{user.cover ? 'Đổi ảnh bìa' : 'Chỉnh sửa ảnh bìa'}</span>
+              <span className="hidden sm:inline">{user.cover ? 'Đổi ảnh bìa' : 'Chỉnh sửa ảnh bìa'}</span>
             </button>
           </>
         )}
       </div>
 
       {/* Facebook-style Profile Info Bar */}
-      <div className="w-full bg-white rounded-b-2xl border border-t-0 border-slate-200 px-6 sm:px-8 pb-4 shadow-sm mb-6">
-        <div className="flex flex-col md:flex-row md:items-end -mt-20 md:-mt-14 md:space-x-6 mb-4 text-center md:text-left">
+      <div className="w-full bg-white rounded-b-xl sm:rounded-b-2xl border border-t-0 border-slate-200 px-4 sm:px-8 pb-4 shadow-sm mb-4 sm:mb-6">
+        <div className="flex flex-col md:flex-row md:items-end -mt-14 sm:-mt-20 md:-mt-14 md:space-x-6 mb-4 text-center md:text-left">
           
           {/* Large Overlapping Avatar */}
           <div className="relative group mx-auto md:mx-0 shrink-0">
-            <div className="h-36 w-36 rounded-full border-4 border-white overflow-hidden bg-slate-100 relative shadow-md flex items-center justify-center">
+            <div className="h-28 w-28 sm:h-36 sm:w-36 rounded-full border-4 border-white overflow-hidden bg-slate-100 relative shadow-md flex items-center justify-center">
               {user.avatar ? (
                 <img 
                   src={user.avatar} 
@@ -775,13 +817,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
               {!isUploadingAvatar && isOwnProfile && (
                 <button
                   onClick={triggerFileInput}
-                  className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white cursor-pointer"
+                  className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex flex-col items-center justify-center text-white cursor-pointer"
                 >
                   <Camera className="h-5 w-5 text-white" />
                   <span className="text-[9px] uppercase font-black tracking-widest mt-1">Thay ảnh</span>
                 </button>
               )}
             </div>
+
+            {!isUploadingAvatar && isOwnProfile && (
+              <button
+                type="button"
+                onClick={triggerFileInput}
+                className="absolute bottom-0 right-0 flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-violet-600 text-white shadow-lg md:hidden"
+                aria-label="Thay ảnh đại diện"
+              >
+                <Camera className="h-4.5 w-4.5" />
+              </button>
+            )}
 
             <input 
               type="file" 
@@ -795,7 +848,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
           {/* User Name & Bio Summary */}
           <div className="flex-grow mt-4 md:mt-0 md:pb-2">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight font-outfit mb-1.5">
-              {(user as any).name || user.email.split('@')[0]}
+              {(user as any).name || user.email?.split('@')[0] || 'Người dùng'}
             </h1>
             <p className="text-slate-500 text-xs font-semibold max-w-lg mx-auto md:mx-0">
               {user.bio || "Chưa thiết lập tiểu sử cá nhân."}
@@ -803,7 +856,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
           </div>
 
           {/* Header Action Buttons */}
-          <div className="flex justify-center items-center gap-2 mt-4 md:mt-0 md:pb-2 shrink-0">
+          <div className="flex w-full justify-center gap-2 mt-4 sm:w-auto sm:items-center md:mt-0 md:pb-2 shrink-0">
             {isOwnProfile ? (
               <>
                 <button
@@ -811,30 +864,60 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                     setActiveTab('about');
                     setIsEditingBio(true);
                   }}
-                  className="px-4 py-2.5 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-100 text-[11px] font-black text-violet-700 transition cursor-pointer shadow-sm"
+                  className="min-h-11 flex-1 sm:flex-none px-4 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-100 text-xs font-black text-violet-700 transition cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
                 >
+                  <Pencil className="h-3.5 w-3.5" />
                   Chỉnh sửa trang cá nhân
                 </button>
-                <button
-                  onClick={handleLogoutClick}
-                  className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-100 hover:bg-rose-100 text-[11px] font-black text-rose-600 transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Đăng xuất</span>
-                </button>
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    data-testid="profile-more-actions"
+                    onClick={() => setShowProfileOptions((value) => !value)}
+                    aria-label="Mở thêm tùy chọn trang cá nhân"
+                    aria-expanded={showProfileOptions}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+                  >
+                    <MoreHorizontal className="h-5 w-5" />
+                  </button>
+                  {showProfileOptions && (
+                    <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl animate-fade-in-up">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileOptions(false);
+                          navigate('/settings');
+                        }}
+                        className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                      >
+                        <Settings className="h-4 w-4 text-slate-400" />
+                        Cài đặt tài khoản
+                      </button>
+                      <div className="my-1 border-t border-slate-100" />
+                      <button
+                        type="button"
+                        onClick={handleLogoutClick}
+                        className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-bold text-rose-600 transition hover:bg-rose-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto">
                 {/* Nút Kết Bạn / Bạn Bè dựa trên relationshipStatus */}
                 {isLoadingRelationship ? (
-                  <button className="px-4 py-2.5 rounded-xl bg-slate-100 text-[11px] font-black text-slate-500 flex items-center gap-1.5 cursor-not-allowed" disabled>
+                    <button className="min-h-11 px-4 rounded-xl bg-slate-100 text-xs font-black text-slate-500 flex items-center gap-1.5 cursor-not-allowed" disabled>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     <span>Đang xử lý...</span>
                   </button>
                 ) : relationshipStatus === 'NONE' ? (
                   <button
                     onClick={handleSendFriendRequest}
-                    className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-black transition flex items-center gap-1.5 shadow-md shadow-violet-500/10 cursor-pointer"
+                    className="min-h-11 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-violet-500/10 cursor-pointer"
                   >
                     <UserPlus className="h-4 w-4" />
                     <span>Thêm bạn bè</span>
@@ -842,7 +925,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 ) : relationshipStatus === 'PENDING_SENT' ? (
                   <button
                     onClick={handleCancelFriendRequest}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer"
+                    className="min-h-11 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <Clock className="h-4 w-4 text-amber-500 animate-pulse" />
                     <span>Đã gửi lời mời (Hủy)</span>
@@ -851,14 +934,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={handleAcceptFriendRequest}
-                      className="px-3.5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-black transition flex items-center gap-1 cursor-pointer"
+                      className="min-h-11 px-3.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-black transition flex items-center gap-1 cursor-pointer"
                     >
                       <UserCheck className="h-4 w-4" />
                       <span>Xác nhận</span>
                     </button>
                     <button
                       onClick={handleRejectFriendRequest}
-                      className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-black transition flex items-center gap-1 cursor-pointer"
+                      className="min-h-11 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition flex items-center gap-1 cursor-pointer"
                     >
                       <UserX className="h-4 w-4 text-rose-500" />
                       <span>Xóa</span>
@@ -869,7 +952,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                   <div className="relative">
                     <button
                       onClick={() => setShowFriendOptions(!showFriendOptions)}
-                      className="px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-black transition flex items-center gap-1.5 cursor-pointer border border-emerald-200/60 shadow-sm"
+                      className="min-h-11 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-black transition flex items-center gap-1.5 cursor-pointer border border-emerald-200/60 shadow-sm"
                     >
                       <UserCheck className="h-4 w-4 text-emerald-600" />
                       <span>Bạn bè</span>
@@ -896,7 +979,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 {/* Nút Nhắn Tin luôn hiển thị bên cạnh */}
                 <button
                   onClick={() => navigate(`/chats/${user.id}`)}
-                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="min-h-11 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <MessageSquare className="h-4 w-4 text-violet-600" />
                   <span>Nhắn tin</span>
@@ -907,16 +990,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
         </div>
 
         {/* Tab Selectors */}
-        <div className="flex items-center space-x-6 border-t border-slate-100 pt-3 mt-4 overflow-x-auto scrollbar-none">
-          {(['posts', 'about', 'friends'] as const).map((tab) => (
+          <div className="grid grid-cols-3 border-t border-slate-100 pt-3 mt-4">
+           {(['posts', 'friends', 'about'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-2.5 text-xs font-black relative transition-colors cursor-pointer whitespace-nowrap ${
+                className={`min-h-11 px-1 text-xs font-black relative transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === tab ? "text-violet-600 font-black" : "text-slate-500 hover:text-slate-800"
               }`}
             >
-              {tab === 'posts' ? 'Bài viết' : tab === 'about' ? 'Giới thiệu' : 'Bạn bè'}
+              {tab === 'posts' ? 'Bài viết' : tab === 'friends' ? 'Bạn bè' : 'Giới thiệu'}
               {activeTab === tab && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-full" />
               )}
@@ -932,10 +1015,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2 animate-fade-in-up">
             
             {/* Left Column Sidebar (Intro, Photos, Friends Quick view) */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="order-1 lg:order-1 lg:col-span-5 space-y-6">
               
               {/* Intro Box */}
-              <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+              <div data-testid="profile-photos-box" className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
                 <h3 className="text-sm font-black text-slate-800">Giới thiệu</h3>
                 <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
                   {user.bio ? (
@@ -1003,7 +1086,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
               </div>
 
               {/* Photos Gallery Box */}
-              <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
+              <div data-testid="profile-friends-box" className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-sm font-black text-slate-800">Hình ảnh</h3>
                   <button 
@@ -1054,15 +1137,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                       >
                         <div className="aspect-square w-full rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
                           {friend.avatar ? (
-                            <img src={friend.avatar} alt={friend.name || friend.email} className="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
+                            <img src={friend.avatar} alt={friend.name || 'Bạn bè'} className="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-slate-400 font-black bg-slate-50 text-xs">
-                              {(friend.name || friend.email || 'U').charAt(0).toUpperCase()}
+                              {(friend.name || 'U').charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
                         <span className="text-[10px] font-black text-slate-700 truncate mt-1.5 group-hover:text-violet-600 transition">
-                          {friend.name || friend.email.split('@')[0]}
+                          {friend.name || 'Bạn bè'}
                         </span>
                       </div>
                     ))}
@@ -1075,7 +1158,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
             </div>
 
             {/* Right Column: Feed and Creator */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="order-2 space-y-4 lg:order-2 lg:col-span-7 lg:space-y-6">
               
               {/* Post Creation (if own profile) */}
               {isOwnProfile && (
@@ -1122,7 +1205,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
             {/* Account Details Box */}
             <div className="lg:col-span-7 space-y-6">
               
-              {/* Contact Info */}
+              {/* Account data is owner-only. Visitors never receive these values from the API. */}
+              {isOwnProfile && (
               <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-5">
                 <h3 className="text-base font-black text-slate-800 flex items-center space-x-2">
                   <UserIcon className="h-5 w-5 text-violet-500" />
@@ -1132,7 +1216,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên hiển thị</span>
-                    <span className="text-xs font-extrabold text-slate-700">{(user as any).name || user.email.split('@')[0]}</span>
+                    <span className="text-xs font-extrabold text-slate-700">{(user as any).name || user.email?.split('@')[0] || 'Người dùng'}</span>
                   </div>
 
                   <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
@@ -1157,6 +1241,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Detailed Info Card (Lives in, Hometown, Work, Relationship) */}
               <div className="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-5">
@@ -1191,6 +1276,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                       onChange={setCity}
                       placeholder="Chọn tỉnh/thành phố hiện tại"
                     />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-500">Ai có thể xem?</span>
+                      <VisibilitySelect value={cityVisibility} onChange={setCityVisibility} />
+                    </div>
 
                     <CitySearchSelect
                       label="Quê quán"
@@ -1198,6 +1287,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                       onChange={setHometown}
                       placeholder="Chọn quê quán"
                     />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-500">Ai có thể xem?</span>
+                      <VisibilitySelect value={hometownVisibility} onChange={setHometownVisibility} />
+                    </div>
 
                     <div className="space-y-1.5">
                       <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Công việc</label>
@@ -1208,6 +1301,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                         placeholder="Ví dụ: App Developer tại Vidimi"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all"
                       />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-500">Ai có thể xem?</span>
+                      <VisibilitySelect value={workVisibility} onChange={setWorkVisibility} />
                     </div>
 
                     <div className="space-y-1.5">
@@ -1221,6 +1318,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                         <option value="Độc thân">Độc thân</option>
                         <option value="Không rõ">Không rõ (Không hiển thị)</option>
                       </select>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-500">Ai có thể xem?</span>
+                      <VisibilitySelect value={relationshipVisibility} onChange={setRelationshipVisibility} />
                     </div>
 
                     <div className="flex space-x-2 justify-end pt-2">
@@ -1254,33 +1355,46 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {!isOwnProfile && !hasVisiblePersonalDetails && (
+                      <p className="py-3 text-center text-xs font-medium text-slate-400">
+                        Người này chưa chia sẻ thông tin cá nhân.
+                      </p>
+                    )}
+                    {(isOwnProfile || user.city) && (
                     <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><Home className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Tỉnh/Thành phố hiện tại</span>
                       <span className={`text-xs font-extrabold ${user.city ? "text-slate-700" : "text-slate-400 italic"}`}>
                         {user.city || "Chưa thiết lập"}
                       </span>
                     </div>
+                    )}
 
+                    {(isOwnProfile || user.hometown) && (
                     <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><MapPin className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Quê quán</span>
                       <span className={`text-xs font-extrabold ${user.hometown ? "text-slate-700" : "text-slate-400 italic"}`}>
                         {user.hometown || "Chưa thiết lập"}
                       </span>
                     </div>
+                    )}
 
+                    {(isOwnProfile || user.work) && (
                     <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><Briefcase className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Công việc</span>
                       <span className={`text-xs font-extrabold ${user.work ? "text-slate-700" : "text-slate-400 italic"}`}>
                         {user.work || "Chưa thiết lập"}
                       </span>
                     </div>
+                    )}
 
+                    {(isOwnProfile || (user.relationship && user.relationship !== 'Không rõ')) && (
                     <div className="flex justify-between items-center">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center"><Heart className="h-3.5 w-3.5 text-slate-400 mr-1.5" /> Tình trạng quan hệ</span>
                       <span className={`text-xs font-extrabold ${(user.relationship && user.relationship !== 'Không rõ') ? "text-slate-700" : "text-slate-400 italic"}`}>
                         {(user.relationship && user.relationship !== 'Không rõ') ? user.relationship : "Chưa thiết lập hoặc ẩn"}
                       </span>
                     </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1451,16 +1565,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                       >
                         <div className="h-20 w-20 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0 shadow-inner">
                           {friend.avatar ? (
-                            <img src={friend.avatar} alt={friend.name || friend.email} className="h-full w-full object-cover group-hover:scale-105 transition duration-500" />
+                            <img src={friend.avatar} alt={friend.name || 'Bạn bè'} className="h-full w-full object-cover group-hover:scale-105 transition duration-500" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-slate-450 font-black bg-slate-100 text-lg">
-                              {(friend.name || friend.email || 'U').charAt(0).toUpperCase()}
+                              {(friend.name || 'U').charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
                         <div className="overflow-hidden space-y-1">
                           <h4 className="font-extrabold text-slate-800 text-sm group-hover:text-violet-600 transition truncate">
-                            {friend.name || friend.email.split('@')[0]}
+                            {friend.name || 'Bạn bè'}
                           </h4>
                           <p className="text-[10px] text-slate-400 font-bold truncate max-w-[180px]">
                             {friend.bio || "Bạn bè trên MiniFaceBook"}

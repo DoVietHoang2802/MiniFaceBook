@@ -106,7 +106,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => 
           Chưa có bài viết nào. Hãy là người đầu tiên chia sẻ!
         </div>
       ) : (
-        <div className="space-y-6 mt-4">
+        <div className="mt-3 space-y-0">
           {posts.map((post) => (
             <PostCard 
               key={post.id} 
@@ -117,7 +117,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ currentUser: propCurrentUser }) => 
           ))}
           
           {hasMore && (
-            <div ref={observerRef} className="flex justify-center pt-6 pb-12">
+            <div ref={observerRef} data-testid="feed-load-more" className="flex justify-center pt-6 pb-12">
               <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
               <span className="ml-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Đang tải thêm bài viết...</span>
             </div>
