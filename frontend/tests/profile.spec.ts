@@ -140,7 +140,6 @@ test.describe('Profile Page - Sidebar & Real User Data', () => {
       await friendsNav(pageA).click();
       const friendSearchInput = pageA.locator('input[placeholder="Nhập tên người bạn muốn tìm..."]').first();
       await expect(friendSearchInput).toBeVisible({ timeout: 20000 });
-      await pageA.waitForTimeout(500);
       await friendSearchInput.fill(userB.name);
 
       const searchRowA = pageA

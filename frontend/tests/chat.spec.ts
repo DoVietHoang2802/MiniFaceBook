@@ -103,11 +103,6 @@ async function makeFriends(
         .locator('div.flex.items-center.justify-between')
         .filter({ hasText: userAName });
 
-      if (attempt > 0 && (await requestRowB.count()) === 0) {
-        acceptedRequest = true;
-        break;
-      }
-
       await expect(requestRowB).toBeVisible({ timeout: 15000 });
       await expect(requestRowB.locator('button:has-text("Chấp nhận")')).toBeVisible({
         timeout: 12000,

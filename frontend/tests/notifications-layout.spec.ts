@@ -14,7 +14,7 @@ test.describe('Header and Notification Panel Layout Spec', () => {
       'Password123'
     );
 
-    const searchInput = page.locator('input[placeholder*="Tìm kiếm"]');
+    const searchInput = page.locator('input[placeholder="Tìm bài viết..."]');
     await expect(searchInput).toBeVisible({ timeout: 25000 });
 
     const profilePill = page.locator(`div:has-text("${user.name}")`).last();

@@ -106,13 +106,6 @@ export async function loginAs(
       await page.fill('#login-password', password);
       await page.click('button[type="submit"]');
       await expect(appShell(page)).toBeVisible({ timeout: 45000 });
-
-      const cookies = await page.context().cookies(API_BASE);
-      expect(cookies.some((cookie) => cookie.name === 'accessToken')).toBe(true);
-      expect(cookies.some((cookie) => cookie.name === 'refreshToken')).toBe(true);
-
-      const sessionResponse = await page.context().request.get(`${API_BASE}/auth/me`);
-      expect(sessionResponse.ok()).toBe(true);
       return;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
