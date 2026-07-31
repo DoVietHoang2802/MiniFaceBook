@@ -10,5 +10,6 @@ public interface PostRepository {
     Post save(Post post);
     Optional<Post> findById(String id);
     Page<Post> findAllOrderByCreatedAtDesc(Pageable pageable);
+    Page<Post> searchByContent(String query, Pageable pageable);
     void deleteById(String id);
 }

@@ -12,14 +12,17 @@ MongoDB được sử dụng làm cơ sở dữ liệu chính để lưu trữ c
 Lưu trữ thông tin hồ sơ người dùng và trạng thái tài khoản.
 
 *   **Indexes:**
-    *   `email` (Unique Index, Hashed/Ascending) -> Đảm bảo không trùng lặp email và tăng tốc độ tìm kiếm khi đăng nhập.
+     *   `email` (Unique Index, Hashed/Ascending) -> Đảm bảo không trùng lặp email và tăng tốc độ tìm kiếm khi đăng nhập.
+    *   `googleSubject` (Partial Unique Index, non-empty string) -> Một Google OIDC subject chỉ liên kết với một user; legacy null/missing fields không collide.
 
 | Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |
 | :--- | :--- | :--- |
 | `_id` | ObjectId (String) | Khóa chính tự động sinh. |
 | `email` | String | Email duy nhất, định dạng chuẩn, bắt buộc. **(Unique Index)** |
 | `name` | String | Họ và tên hiển thị, bắt buộc (2-50 ký tự). **(Index thường - phục vụ tìm kiếm Sprint 3.3)** |
-| `password` | String | Mật khẩu băm Bcrypt, bắt buộc. |
+| `password` | String | Mật khẩu băm BCrypt. Nullable cho account `GOOGLE`; bắt buộc với `PASSWORD`/`PASSWORD_AND_GOOGLE`. |
+| `googleSubject` | String | Google OIDC `sub` bất biến; nullable, Partial Unique Index khi tồn tại. |
+| `authProvider` | Enum | `PASSWORD`, `GOOGLE`, `PASSWORD_AND_GOOGLE`; chỉ trả về cho owner qua auth/settings APIs. |
 | `avatar` | String | URL ảnh đại diện (Lưu trên Cloudinary). Mặc định null. |
 | `bio` | String | Tiểu sử ngắn (tối đa 255 ký tự). Nullable. |
 | `city` | String | **(Sprint 6.5 UI)** Tỉnh/Thành phố hiện tại đang sống. Nullable. |
@@ -56,6 +59,7 @@ Lưu trữ thông tin bài viết của người dùng trên News Feed.
 
 *   **Indexes:**
     *   `createdAt` (Descending) -> Tối ưu hóa truy vấn lấy News Feed theo thời gian mới nhất (Phân trang).
+    *   `post_content_text_idx` (Text Index trên `content`) -> Post Search MVP `$text` search; được tạo qua Mongock.
     *   `authorId` (Hashed/Ascending) -> Tối ưu hóa truy vấn lấy danh sách bài viết trên trang cá nhân (Profile Page).
 
 | Trường | Kiểu dữ liệu | Đặc tả / Ràng buộc |

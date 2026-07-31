@@ -18,6 +18,8 @@ public interface MongoUserRepository extends MongoRepository<UserDocument, Strin
 
   Optional<UserDocument> findByVerificationToken(String verificationToken);
 
+  Optional<UserDocument> findByGoogleSubject(String googleSubject);
+
   /**
    * Tìm user theo tên, dùng Regex case-insensitive (option 'i') khớp một phần. Chỉ lấy các tài
    * khoản đã xác thực (verified=true) để không lộ tài khoản chưa kích hoạt.

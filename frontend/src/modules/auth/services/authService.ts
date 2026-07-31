@@ -6,6 +6,7 @@ export interface UserResponse {
   email: string;
   name: string;
   roles: string[];
+  authProvider?: 'PASSWORD' | 'GOOGLE' | 'PASSWORD_AND_GOOGLE';
   verified: boolean;
   avatar?: string;
   cover?: string;
@@ -53,6 +54,22 @@ export const authService = {
     const response = await axiosClient.get<ApiResponse<UserResponse>>('/auth/me', {
       skipAuthRefresh: true,
     });
+    return response.data;
+  },
+
+  completeGoogleProfile: async (name: string): Promise<ApiResponse<UserResponse>> => {
+    const response = await axiosClient.post<ApiResponse<UserResponse>>(
+      '/auth/oauth/google/complete-profile',
+      { name },
+    );
+    return response.data;
+  },
+
+  getGoogleProfileCompletion: async (): Promise<ApiResponse<{ suggestedName: string }>> => {
+    const response = await axiosClient.get<ApiResponse<{ suggestedName: string }>>(
+      '/auth/oauth/google/profile',
+      { skipAuthRefresh: true },
+    );
     return response.data;
   },
 

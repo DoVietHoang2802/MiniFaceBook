@@ -22,6 +22,8 @@ public class User {
   private String name;
   private String email;
   private String password;
+  private String googleSubject;
+  private AuthProvider authProvider;
   private String avatar;
   private String cover;
   private String bio;

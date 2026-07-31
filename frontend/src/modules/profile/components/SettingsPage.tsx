@@ -28,7 +28,7 @@ const CONTACT_EMAIL = 'doviethoang281202@gmail.com';
 
 const SettingsPage: React.FC = () => {
   const { triggerToast } = useToast();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { theme, setTheme, isDark } = useTheme();
   const navigate = useNavigate();
 
@@ -45,6 +45,7 @@ const SettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const isGoogleOnly = user?.authProvider === 'GOOGLE';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +102,8 @@ const SettingsPage: React.FC = () => {
   }[] = [
     {
       key: 'security',
-      label: 'Đổi mật khẩu',
-      desc: 'Cập nhật mật khẩu đăng nhập',
+      label: isGoogleOnly ? 'Đăng nhập Google' : 'Đổi mật khẩu',
+      desc: isGoogleOnly ? 'Tài khoản này không dùng mật khẩu' : 'Cập nhật mật khẩu đăng nhập',
       icon: Lock,
     },
     {
@@ -181,7 +182,16 @@ const SettingsPage: React.FC = () => {
 
           {/* Right content */}
           <div className="flex-grow p-5 sm:p-6">
-            {section === 'security' && (
+            {section === 'security' && isGoogleOnly && (
+              <div className="max-w-lg space-y-4">
+                <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Đăng nhập bằng Google</h3>
+                <div className="flex items-start space-x-3 rounded-xl border border-violet-100 bg-violet-50 p-4 text-violet-700 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-300">
+                  <Shield className="mt-0.5 h-5 w-5 shrink-0 text-violet-500" />
+                  <p className="text-sm leading-relaxed">Tài khoản của bạn đang đăng nhập qua Google nên không có mật khẩu MiniFaceBook để thay đổi.</p>
+                </div>
+              </div>
+            )}
+            {section === 'security' && !isGoogleOnly && (
               <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
                 <div>
                   <h3 className="text-base font-black text-slate-800 dark:text-slate-100">

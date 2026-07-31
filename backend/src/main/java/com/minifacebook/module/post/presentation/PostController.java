@@ -4,6 +4,7 @@ import com.minifacebook.module.post.application.dto.CommentRequest;
 import com.minifacebook.module.post.application.dto.CommentResponse;
 import com.minifacebook.module.post.application.dto.CreatePostRequest;
 import com.minifacebook.module.post.application.dto.PostResponse;
+import com.minifacebook.module.post.application.dto.PostSuggestionResponse;
 import com.minifacebook.module.post.application.dto.ReactionRequest;
 import com.minifacebook.module.post.application.service.CommentService;
 import com.minifacebook.module.post.application.service.PostService;
@@ -59,6 +60,30 @@ public class PostController {
         Pageable pageable = PageRequest.of(page, size);
         Page<PostResponse> response = postService.getNewsFeed(email, pageable);
         return ApiResponse.success("News feed fetched successfully", response);
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Tìm kiếm bài viết", description = "Tìm kiếm bài viết công khai theo nội dung")
+    public ApiResponse<Page<PostResponse>> searchPosts(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        if (page < 0 || size < 1 || size > 20) {
+            throw new com.minifacebook.shared.exception.AppException(
+                com.minifacebook.shared.exception.ErrorCode.INVALID_SEARCH_QUERY);
+        }
+        Page<PostResponse> response = postService.searchPosts(jwt.getSubject(), q, PageRequest.of(page, size));
+        return ApiResponse.success("Post search completed", response);
+    }
+
+    @GetMapping("/search/suggestions")
+    @Operation(summary = "Gợi ý tìm kiếm bài viết", description = "Trả tối đa năm bài viết công khai")
+    public ApiResponse<java.util.List<PostSuggestionResponse>> getSearchSuggestions(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam String q) {
+        return ApiResponse.success("Post search suggestions completed",
+            postService.getSearchSuggestions(jwt.getSubject(), q));
     }
 
     @PostMapping("/{postId}/react")

@@ -88,6 +88,30 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
 
 ## 📝 NHẬT KÝ PHIÊN LÀM VIỆC (WORK LOG)
 
+- **Phiên 31/07/2026 (Cloudinary Local Integration & Google OAuth Local Core):**
+  - [x] Xác thực Cloudinary local credential qua startup `api().ping`; Cloudinary upload chỉ chạy với credential thật, không còn trả URL Picsum random khi config thiếu/sai.
+  - [x] Làm rõ Cloudinary API key cần quyền `create/upload` asset; hướng dẫn local credential, folder `miniface/avatars`, `miniface/covers`, `miniface/posts` và profile local được ghi tại `LOCAL_CONFIGURATION.md`.
+  - [x] Thêm Google OAuth2 Client feature flag, browser redirect, success/failure handler, Google subject partial unique index, auto-link verified email và onboarding xác nhận tên cho Google account mới.
+  - [x] Chặn OAuth redirect sai trong Axios API request; unauthenticated API trả 401, chỉ explicit Google button mới điều hướng browser sang Google.
+  - [x] Google-only account có `authProvider=GOOGLE`, không local password; Settings ẩn Change Password và backend không phát forgot-password OTP.
+  - [x] Backend/frontend compile pass và `AuthServiceTest` pass 5/5 trong quá trình local verification.
+  - [ ] Google OAuth chưa production-ready: cần complete create-password reauthentication flow, dedicated OAuth test suite, AWS HTTPS/custom domain/cookie policy và production consent screen.
+
+- **Phiên 31/07/2026 (Post Image Upload Validation Hardening):**
+  - [x] Chuẩn hóa post image policy: tối đa 10 ảnh, raw input FE tối đa 20MB/ảnh, final payload BE tối đa 10MB/ảnh và 30MB/post.
+  - [x] FE giới hạn slot còn lại, loại MIME không hỗ trợ, nén WebP thích ứng theo aggregate budget, tái kiểm tra fallback/GIF và hiển thị budget ảnh đã chọn.
+  - [x] BE thêm `@Size(max = 10)`, service-level count/per-file/aggregate validation để chặn direct multipart bypass; Spring Multipart nâng thành 10MB/file, 30MB/request.
+  - [x] Tách `MediaService.uploadPostImage` sang folder `miniface/posts`; giữ avatar/cover ở 5MB policy riêng.
+  - [x] `PostServiceTest` pass 7/7; frontend production build pass.
+  - [ ] Direct Signed Cloudinary Upload được thiết kế tại `IMAGE_UPLOAD_VALIDATION_PLAN.md`, chờ Cloudinary production credentials/config để triển khai và bật an toàn.
+
+- **Phiên 31/07/2026 (Phase 1 Post Search MVP):**
+  - [x] Thêm Mongock migration tạo MongoDB text index `post_content_text_idx` cho nội dung bài viết.
+  - [x] Thêm API authenticated `/posts/search` và `/posts/search/suggestions`; query được NFC-normalize, trim/collapse whitespace và giới hạn 2-100 ký tự.
+  - [x] Suggestions giới hạn năm kết quả, dùng DTO public không chứa email hoặc `myReactionType`; chưa thêm Redis cache để tránh cache state theo viewer.
+  - [x] Thêm Home search dropdown có debounce/cancel request/keyboard navigation và Search Page `/search?q=` với loading, error, empty và tải thêm kết quả.
+  - [x] Thêm Post service coverage cho normalize, validation và suggestion projection; bổ sung Playwright flow tạo post → suggestion → Enter → kết quả đầy đủ.
+
 - **Phiên 30/07/2026 (Profile Privacy Controls & Server-side Enforcement):**
   - [x] Thêm quyền xem theo trường `PUBLIC`, `FRIENDS`, `ONLY_ME` cho thành phố, quê quán, công việc và tình trạng quan hệ.
   - [x] Mặc định tài khoản mới đặt bốn trường cá nhân là `FRIENDS`; dữ liệu Mongo cũ có giá trị null cũng được diễn giải an toàn là `FRIENDS`.

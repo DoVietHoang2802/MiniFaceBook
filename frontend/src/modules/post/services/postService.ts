@@ -1,5 +1,5 @@
 import axiosClient from '../../../core/api/axiosClient';
-import type { PostResponse, Page, ReactionRequest, CommentResponse, ReactionUserResponse } from '../types/post.types';
+import type { PostResponse, PostSuggestionResponse, Page, ReactionRequest, CommentResponse, ReactionUserResponse } from '../types/post.types';
 
 export const postService = {
   createPost: async (content: string, files: File[]) => {
@@ -16,6 +16,22 @@ export const postService = {
   getNewsFeed: async (page: number = 0, size: number = 10) => {
     const response = await axiosClient.get<{ data: Page<PostResponse> }>(`/posts/newsfeed`, {
       params: { page, size },
+    });
+    return response.data;
+  },
+
+  searchPosts: async (query: string, page: number = 0, size: number = 10, signal?: AbortSignal) => {
+    const response = await axiosClient.get<{ data: Page<PostResponse> }>('/posts/search', {
+      params: { q: query, page, size },
+      signal,
+    });
+    return response.data;
+  },
+
+  getSearchSuggestions: async (query: string, signal?: AbortSignal) => {
+    const response = await axiosClient.get<{ data: PostSuggestionResponse[] }>('/posts/search/suggestions', {
+      params: { q: query },
+      signal,
     });
     return response.data;
   },

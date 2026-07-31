@@ -23,4 +23,7 @@ public interface MediaService {
    * @return URL bảo mật của tệp tin sau khi upload thành công
    */
   String uploadCover(MultipartFile file);
+
+  /** Upload một ảnh thuộc bài viết với policy dung lượng và folder riêng. */
+  String uploadPostImage(MultipartFile file);
 }

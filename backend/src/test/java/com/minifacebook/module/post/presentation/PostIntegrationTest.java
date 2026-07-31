@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.TextIndexDefinition;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -57,11 +59,19 @@ public class PostIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     private final String email = "post_integration@example.com";
     private User testUser;
 
     @BeforeEach
     void setUp() {
+        mongoTemplate.indexOps("posts").ensureIndex(
+                new TextIndexDefinition.TextIndexDefinitionBuilder()
+                        .onField("content")
+                        .named("post_content_text_idx")
+                        .build());
         mongoCommentRepository.deleteAll();
         mongoPostRepository.deleteAll();
         mongoUserRepository.findByEmail(email).ifPresent(mongoUserRepository::delete);
@@ -189,5 +199,42 @@ public class PostIntegrationTest extends BaseIntegrationTest {
                 .andReturn();
         var unauthorizedErrorResponse = objectMapper.readTree(deleteUnauthorizedResult.getResponse().getContentAsString());
         assertEquals(5003, unauthorizedErrorResponse.get("status").asInt());
+    }
+
+    @Test
+    void searchPosts_ReturnsOnlyMatchingNonDeletedPostsAndPublicSuggestions() throws Exception {
+        Post matching = postRepository.save(Post.builder()
+                .authorId(testUser.getId())
+                .content("Tìm kiếm cà phê trứng Hà Nội")
+                .build());
+        postRepository.save(Post.builder()
+                .authorId(testUser.getId())
+                .content("Bài viết không liên quan")
+                .build());
+        postRepository.save(Post.builder()
+                .authorId(testUser.getId())
+                .content("cà phê đã xóa")
+                .deleted(true)
+                .build());
+
+        MvcResult searchResult = mockMvc.perform(get("/posts/search")
+                        .param("q", "cà phê")
+                        .with(jwt().jwt(builder -> builder.subject(email))))
+                .andExpect(status().isOk())
+                .andReturn();
+        var searchPayload = objectMapper.readTree(searchResult.getResponse().getContentAsString());
+        assertEquals(200, searchPayload.get("status").asInt());
+        assertEquals(1, searchPayload.at("/data/content").size());
+        assertEquals(matching.getId(), searchPayload.at("/data/content/0/id").asText());
+
+        MvcResult suggestionsResult = mockMvc.perform(get("/posts/search/suggestions")
+                        .param("q", "cà phê")
+                        .with(jwt().jwt(builder -> builder.subject(email))))
+                .andExpect(status().isOk())
+                .andReturn();
+        var suggestionsPayload = objectMapper.readTree(suggestionsResult.getResponse().getContentAsString());
+        assertEquals(1, suggestionsPayload.at("/data").size());
+        assertFalse(suggestionsPayload.at("/data/0").has("myReactionType"));
+        assertFalse(suggestionsPayload.at("/data/0").has("email"));
     }
 }

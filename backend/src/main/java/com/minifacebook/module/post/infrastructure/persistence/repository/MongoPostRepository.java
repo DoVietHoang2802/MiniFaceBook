@@ -12,5 +12,8 @@ public interface MongoPostRepository extends MongoRepository<PostDocument, Strin
 
     Page<PostDocument> findByDeletedFalse(Pageable pageable);
 
+    @Query(value = "{ $text: { $search: ?0 }, deleted: { $ne: true } }", sort = "{ score: { $meta: 'textScore' }, createdAt: -1 }")
+    Page<PostDocument> searchByText(String query, Pageable pageable);
+
     Page<PostDocument> findByContentContainingIgnoreCaseAndDeletedFalse(String content, Pageable pageable);
 }

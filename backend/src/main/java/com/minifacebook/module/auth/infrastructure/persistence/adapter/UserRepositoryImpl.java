@@ -48,6 +48,11 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
+  public Optional<User> findByGoogleSubject(String googleSubject) {
+    return mongoUserRepository.findByGoogleSubject(googleSubject).map(userDocumentMapper::toDomain);
+  }
+
+  @Override
   public List<User> findAllByIds(List<String> ids) {
     return mongoUserRepository.findAllById(ids).stream()
         .map(userDocumentMapper::toDomain)

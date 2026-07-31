@@ -26,7 +26,7 @@
 
 ## 🏃‍♂️ Khởi chạy nhanh (Quick Start)
 1. **Hạ tầng:** `docker-compose up -d`
-2. **Backend:** Truy cập `backend/` và chạy `mvn spring-boot:run`
+2. **Backend local:** Truy cập `backend/` và chạy `mvn "-Dspring-boot.run.profiles=local" spring-boot:run`
 3. **Tài liệu API:** Truy cập [http://localhost:8080/api/docs](http://localhost:8080/api/docs)
 
 Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui lòng xem tại: **[docs/testing/TESTING_GUIDE.md](docs/testing/TESTING_GUIDE.md)**
@@ -56,7 +56,7 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 6 | Navigation, Performance & Testing | ✅ Hoàn thành core (Sprint 6.1→6.6, gồm Mobile Responsive UX + Playwright mobile); K6 load test còn optional |
 | 7 | Extended Features | ✅ Hoàn thành (Sprint 8.3 WebRTC Call, 8.5 Nested Reply, 8.6 Standalone Admin Portal & Profile UX Fixes) |
 
-**Tiến độ: 100% — Toàn bộ các Phase từ 0 đến 7 hoàn thành 100%, sẵn sàng cho Production Deployment.**
+**Tiến độ core: hoàn thành.** Các hardening/extended features đang hoàn thiện trước production gồm Google OAuth production flow, Cloudinary direct signed upload, production secrets/domain/HTTPS và load verification.
 
 ---
 
@@ -66,6 +66,9 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 - **[SYSTEM_DESIGN.md](docs/architecture/SYSTEM_DESIGN.md):** Bản thiết kế DB và Kiến trúc hệ thống.
 - **[PROGRESS.md](docs/planning/PROGRESS.md):** Nhật ký tiến độ và các quyết định kỹ thuật.
 - **[PROFILE_PRIVACY_POLICY.md](docs/guidelines/PROFILE_PRIVACY_POLICY.md):** Chính sách hiển thị dữ liệu Profile và contract API theo người xem.
+- **[IMAGE_UPLOAD_VALIDATION_PLAN.md](docs/planning/IMAGE_UPLOAD_VALIDATION_PLAN.md):** Policy upload ảnh bài viết, validation và lộ trình Direct Signed Cloudinary Upload.
+- **[GOOGLE_OAUTH_LOGIN_PLAN.md](docs/planning/GOOGLE_OAUTH_LOGIN_PLAN.md):** Kế hoạch Google OAuth/OIDC với JWT HttpOnly cookie và account linking an toàn.
+- **[LOCAL_CONFIGURATION.md](docs/guidelines/LOCAL_CONFIGURATION.md):** Cấu hình local Cloudinary, Google OAuth, profile và nguyên tắc giữ secret ngoài Git.
 - **[AI_GUIDELINES.md](docs/guidelines/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
 - **[AI_REPORT_COMMANDS.md](docs/guidelines/AI_REPORT_COMMANDS.md):** Format báo cáo tiến độ chuẩn cho AI.
 - **[DOCUMENTATION_STANDARDS.md](docs/guidelines/DOCUMENTATION_STANDARDS.md):** Đề án chuẩn hóa thư mục tài liệu mới.
@@ -81,7 +84,7 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 2. **Khởi chạy Backend (Spring Boot):**
    ```bash
    cd backend
-   ./mvnw spring-boot:run
+    ./mvnw -Dspring-boot.run.profiles=local spring-boot:run
    ```
    *Swagger API UI sẽ chạy tại `http://localhost:8080/api/docs`*
 3. **Khởi chạy Frontend (React + Vite):**

@@ -7,6 +7,7 @@ import com.minifacebook.shared.exception.ErrorCode;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
@@ -32,29 +33,54 @@ public class CloudinaryService implements MediaService {
   @Value("${app.cloudinary.api-key}")
   private String apiKey;
 
+  @Value("${app.cloudinary.verify-on-startup:false}")
+  private boolean verifyOnStartup;
+
   private static final List<String> ALLOWED_MIME_TYPES = List.of(
       "image/jpeg",
       "image/png",
       "image/webp",
       "image/gif"
   );
+  private static final long DEFAULT_IMAGE_MAX_BYTES = 5L * 1024 * 1024;
+  private static final long POST_IMAGE_MAX_BYTES = 10L * 1024 * 1024;
+
+  @PostConstruct
+  void logCloudinaryConfiguration() {
+    log.info("Cloudinary upload configured for cloud: {}", cloudName);
+    if (!verifyOnStartup || "demo".equals(cloudName) || "1234567890".equals(apiKey)) {
+      return;
+    }
+    try {
+      cloudinary.api().ping(Map.of());
+      log.info("Cloudinary credentials verified successfully for cloud: {}", cloudName);
+    } catch (Exception exception) {
+      log.error("Cloudinary credential verification failed for cloud {}: {}", cloudName,
+          exception.getMessage());
+    }
+  }
 
   @Override
   public String uploadAvatar(MultipartFile file) {
-    return uploadImage(file, "miniface/avatars", 400, 400);
+    return uploadImage(file, "miniface/avatars", DEFAULT_IMAGE_MAX_BYTES);
   }
 
   @Override
   public String uploadCover(MultipartFile file) {
-    return uploadImage(file, "miniface/covers", 1600, 500);
+    return uploadImage(file, "miniface/covers", DEFAULT_IMAGE_MAX_BYTES);
   }
 
-  private String uploadImage(MultipartFile file, String folder, int sandboxW, int sandboxH) {
+  @Override
+  public String uploadPostImage(MultipartFile file) {
+    return uploadImage(file, "miniface/posts", POST_IMAGE_MAX_BYTES);
+  }
+
+  private String uploadImage(MultipartFile file, String folder, long maxFileBytes) {
     if (file == null || file.isEmpty()) {
       throw new AppException(ErrorCode.FILE_REQUIRED);
     }
 
-    if (file.getSize() > 5 * 1024 * 1024) {
+    if (file.getSize() > maxFileBytes) {
       throw new AppException(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED);
     }
 
@@ -73,10 +99,8 @@ public class CloudinaryService implements MediaService {
     }
 
     if ("demo".equals(cloudName) || "1234567890".equals(apiKey)) {
-      log.warn("[SANDBOX FALLBACK] Mock Cloudinary credentials detected. "
-          + "Simulating successful upload with Picsum placeholder.");
-      return "https://picsum.photos/seed/" + java.util.UUID.randomUUID()
-          + "/" + sandboxW + "/" + sandboxH;
+      log.error("Cloudinary credentials are not configured; refusing to create a placeholder upload.");
+      throw new AppException(ErrorCode.UPLOAD_FAILED);
     }
 
     try {
@@ -91,8 +115,8 @@ public class CloudinaryService implements MediaService {
       String secureUrl = (String) uploadResult.get("secure_url");
       log.info("File uploaded successfully to Cloudinary folder {}. Secure URL: {}", folder, secureUrl);
       return secureUrl;
-    } catch (IOException e) {
-      log.error("Cloudinary upload failed", e);
+    } catch (Exception e) {
+      log.error("Cloudinary upload failed for cloud {}: {}", cloudName, e.getMessage(), e);
       throw new AppException(ErrorCode.UPLOAD_FAILED);
     }
   }

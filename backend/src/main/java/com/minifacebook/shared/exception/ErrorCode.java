@@ -45,6 +45,12 @@ public enum ErrorCode {
       HttpStatus.BAD_REQUEST),
   UPLOAD_FAILED(1018, "Tải tệp lên thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
   FILE_REQUIRED(1019, "Vui lòng chọn tệp để tải lên", HttpStatus.BAD_REQUEST),
+  MAX_POST_IMAGES_EXCEEDED(
+      1030, "Mỗi bài viết chỉ được đăng tối đa 10 ảnh", HttpStatus.BAD_REQUEST),
+  MAX_POST_IMAGE_SIZE_EXCEEDED(
+      1031, "Mỗi ảnh đăng bài tối đa 10MB sau khi xử lý", HttpStatus.BAD_REQUEST),
+  MAX_POST_IMAGES_TOTAL_SIZE_EXCEEDED(
+      1032, "Tổng dung lượng ảnh trong bài viết tối đa 30MB", HttpStatus.BAD_REQUEST),
 
   // ===== FRIENDSHIP (Phase 3) =====
   CANNOT_FRIEND_SELF(
@@ -92,6 +98,7 @@ public enum ErrorCode {
       5003,
       "Bạn không có quyền thực hiện hành động này đối với bài viết này",
       HttpStatus.FORBIDDEN),
+  INVALID_SEARCH_QUERY(5004, "Từ khóa tìm kiếm phải có từ 2 đến 100 ký tự", HttpStatus.BAD_REQUEST),
   ;
 
 

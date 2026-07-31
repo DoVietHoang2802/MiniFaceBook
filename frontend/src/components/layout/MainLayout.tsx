@@ -25,6 +25,7 @@ import { useWebSocket } from '../../modules/chat/hooks/useWebSocket';
 import { useChatUnread } from '../../modules/chat/hooks/useChatUnread';
 import { useNotifications } from '../../modules/notification/hooks/useNotifications';
 import { friendService } from '../../modules/friends/services/friendService';
+import { postService } from '../../modules/post/services/postService';
 import { presenceService } from '../../modules/chat/services/presenceService';
 import { webSocketService } from '../../modules/chat/services/webSocketService';
 import { NetworkStatusBanner } from '../NetworkStatusBanner';
@@ -32,6 +33,7 @@ import MobileHeader from './MobileHeader';
 import MobileBottomNav from './MobileBottomNav';
 import type { NotificationResponse } from '../../modules/notification/types/notification.types';
 import type { FriendshipResponse } from '../../modules/friends/types/friend.types';
+import type { PostSuggestionResponse } from '../../modules/post/types/post.types';
 import { useRef } from 'react';
 
 const TYPE_META = {
@@ -42,6 +44,8 @@ const TYPE_META = {
   SYSTEM_ANNOUNCEMENT: { icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50' },
   SYSTEM_MODERATION: { icon: Shield, color: 'text-amber-600', bg: 'bg-amber-50' },
 };
+
+const normalizeSearchQuery = (value: string) => value.normalize('NFC').trim().replace(/\s+/g, ' ');
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -59,6 +63,7 @@ function timeAgo(iso: string): string {
 export const MainLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const notifRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const { triggerToast } = useToast();
   const location = useLocation();
@@ -81,6 +86,11 @@ export const MainLayout: React.FC = () => {
 
   // Trạng thái giao diện cao cấp
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<PostSuggestionResponse[]>([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
 
   const toggleNotifDropdown = () => {
     const next = !showNotifDropdown;
@@ -108,6 +118,7 @@ export const MainLayout: React.FC = () => {
     if (path.startsWith('/chats')) return 'chats';
     if (path.startsWith('/profile')) return 'profile';
     if (path.startsWith('/settings')) return 'settings';
+    if (path.startsWith('/search')) return 'search';
     return 'feed';
   };
   const activeTab = getActiveTab();
@@ -121,7 +132,7 @@ export const MainLayout: React.FC = () => {
     resetMobileRouteScroll();
     const frame = window.requestAnimationFrame(resetMobileRouteScroll);
     return () => window.cancelAnimationFrame(frame);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const viewport = window.visualViewport;
@@ -287,6 +298,52 @@ export const MainLayout: React.FC = () => {
     };
   }, [showNotifDropdown]);
 
+  useEffect(() => {
+    const query = normalizeSearchQuery(searchQuery);
+    if (query.length < 2) {
+      setSearchSuggestions([]);
+      setIsSearching(false);
+      setActiveSuggestion(-1);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setIsSearching(true);
+      postService.getSearchSuggestions(query, controller.signal)
+        .then((response) => setSearchSuggestions(response.data))
+        .catch((error: any) => {
+          if (error?.code !== 'ERR_CANCELED') setSearchSuggestions([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setIsSearching(false);
+        });
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) setIsSearchOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsSearchOpen(false);
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isSearchOpen]);
+
   // Xử lý gửi lời mời kết bạn THẬT (Optimistic Micro-interaction)
   const handleAddFriend = (userId: string, name: string) => {
     setSuggestedFriends((prev) =>
@@ -312,6 +369,18 @@ export const MainLayout: React.FC = () => {
     logout();
     triggerToast("Đăng xuất thành công!");
   };
+
+  const submitPostSearch = () => {
+    const query = normalizeSearchQuery(searchQuery);
+    if (query.length < 2) {
+      triggerToast('Nhập ít nhất 2 ký tự để tìm bài viết.');
+      return;
+    }
+    setIsSearchOpen(false);
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
+  const selectSuggestion = () => submitPostSearch();
 
   const handleTabClick = (tabId: string) => {
     if (tabId === 'feed') {
@@ -356,7 +425,7 @@ export const MainLayout: React.FC = () => {
 
       <MobileHeader
         onHome={() => navigate('/')}
-        onSearch={() => triggerToast('Tìm kiếm bài viết sẽ ra mắt ở Phase tiếp theo!')}
+        onSearch={() => navigate('/search')}
         showSearch={activeTab === 'feed'}
       />
 
@@ -376,14 +445,62 @@ export const MainLayout: React.FC = () => {
             </span>
           </div>
           {activeTab === 'feed' && (
-            <div className="relative w-48 sm:w-64 md:w-80 h-9 ml-4">
+            <div ref={searchRef} className="relative ml-4 h-9 w-48 sm:w-64 md:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Tìm bài viết..."
-                className="w-full h-full pl-9 pr-4 rounded-full bg-slate-100/60 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/10 text-xs text-slate-700 dark:text-slate-200 transition-all font-medium"
-                onClick={() => triggerToast('Tìm kiếm bài viết sẽ ra mắt ở Phase tiếp theo!')}
-              />
+              <form onSubmit={(event) => { event.preventDefault(); submitPostSearch(); }}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onFocus={() => setIsSearchOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowDown' && searchSuggestions.length > 0) {
+                      event.preventDefault();
+                      setActiveSuggestion((current) => Math.min(current + 1, searchSuggestions.length - 1));
+                    } else if (event.key === 'ArrowUp' && searchSuggestions.length > 0) {
+                      event.preventDefault();
+                      setActiveSuggestion((current) => Math.max(current - 1, 0));
+                    } else if (event.key === 'Escape') {
+                      setIsSearchOpen(false);
+                    }
+                  }}
+                  role="combobox"
+                  aria-label="Tìm bài viết"
+                  aria-expanded={isSearchOpen && normalizeSearchQuery(searchQuery).length >= 2}
+                  aria-controls="post-search-suggestions"
+                  aria-activedescendant={activeSuggestion >= 0 ? `post-search-suggestion-${activeSuggestion}` : undefined}
+                  placeholder="Tìm bài viết..."
+                  className="h-full w-full rounded-full border border-transparent bg-slate-100/60 pl-9 pr-4 text-xs font-medium text-slate-700 transition-all focus:border-violet-500 focus:bg-white focus:ring-2 focus:ring-violet-500/10 dark:bg-slate-800 dark:text-slate-200 dark:focus:bg-slate-900"
+                />
+              </form>
+              {isSearchOpen && normalizeSearchQuery(searchQuery).length >= 2 && (
+                <div id="post-search-suggestions" role="listbox" className="absolute left-0 top-11 z-[210] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900">
+                  {isSearching ? (
+                    <div className="flex items-center gap-2 px-3 py-3 text-xs font-medium text-slate-400"><Loader2 className="h-4 w-4 animate-spin text-violet-500" />Đang tìm kiếm...</div>
+                  ) : searchSuggestions.length > 0 ? (
+                    <>
+                      {searchSuggestions.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          id={`post-search-suggestion-${index}`}
+                          type="button"
+                          role="option"
+                          aria-selected={activeSuggestion === index}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={selectSuggestion}
+                          className={`block w-full rounded-xl px-3 py-2 text-left transition ${activeSuggestion === index ? 'bg-violet-50 dark:bg-violet-500/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                        >
+                          <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">{suggestion.authorName}</p>
+                          <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{suggestion.excerpt}</p>
+                        </button>
+                      ))}
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={submitPostSearch} className="mt-1 w-full rounded-xl border-t border-slate-100 px-3 py-2 text-left text-xs font-bold text-violet-600 hover:bg-violet-50 dark:border-slate-800 dark:hover:bg-violet-500/10">Xem tất cả kết quả</button>
+                    </>
+                  ) : (
+                    <p className="px-3 py-3 text-xs text-slate-400">Không tìm thấy bài viết phù hợp.</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

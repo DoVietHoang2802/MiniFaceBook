@@ -10,7 +10,10 @@ import MainLayout from './components/layout/MainLayout';
 import LoginForm from './modules/auth/components/LoginForm';
 import RegisterForm from './modules/auth/components/RegisterForm';
 import ForgotPasswordForm from './modules/auth/components/ForgotPasswordForm';
+import OAuthCallbackPage from './modules/auth/components/OAuthCallbackPage';
+import OAuthCompleteProfilePage from './modules/auth/components/OAuthCompleteProfilePage';
 import PostFeed from './modules/post/components/PostFeed';
+import SearchPage from './modules/post/components/SearchPage';
 import FriendsPage from './modules/friends/components/FriendsPage';
 import ChatPage from './modules/chat/components/ChatPage';
 import ProfilePage from './modules/profile/components/ProfilePage';
@@ -57,11 +60,17 @@ function App() {
                 </Route>
               </Route>
 
+              <Route element={<AuthLayout />}>
+                <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+                <Route path="/oauth/complete-profile" element={<OAuthCompleteProfilePage />} />
+              </Route>
+
               {/* Protected routes (chỉ dành cho thành viên đã đăng nhập) */}
               <Route element={<ProtectedRoute />}>
                 {/* Layout người dùng mạng xã hội */}
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<PostFeed />} />
+                  <Route path="/search" element={<SearchPage />} />
                   <Route path="/friends" element={<FriendsPage />} />
                   <Route path="/chats/:recipientId?" element={<ChatPage />} />
                   <Route path="/profile/:userId?" element={<ProfilePage />} />

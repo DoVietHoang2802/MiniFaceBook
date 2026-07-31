@@ -5,6 +5,8 @@ import { authService } from '../services/authService';
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useToast } from '../../../core/toast/ToastContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { isAxiosError } from 'axios';
+import axiosClient from '../../../core/api/axiosClient';
 
 const LoginForm: React.FC = () => {
   const { setUser } = useAuth();
@@ -17,6 +19,17 @@ const LoginForm: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const handleGoogleLogin = () => {
+    setAuthError(null);
+    const apiBaseUrl = axiosClient.defaults.baseURL;
+    if (!apiBaseUrl) {
+      setAuthError('Không thể bắt đầu đăng nhập bằng Google. Vui lòng thử lại.');
+      return;
+    }
+
+    window.location.assign(`${apiBaseUrl.replace(/\/$/, '')}/oauth2/authorization/google`);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,14 +58,14 @@ const LoginForm: React.FC = () => {
       setUser(loggedInUser);
       triggerToast('Đăng nhập thành công!');
       navigate('/');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Phân biệt Network Error vs API Error (chuẩn Facebook/Discord)
-      if (!err.response) {
+      if (!isAxiosError<{ message?: string }>(err) || !err.response) {
         // Network error: server tắt, mất mạng, timeout
         setAuthError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.');
       } else {
         // API error: server trả response lỗi (401, 400...)
-        const errorMsg = err.response?.data?.message || 'Email hoặc mật khẩu không chính xác hoặc tài khoản chưa xác minh.';
+        const errorMsg = err.response.data?.message || 'Email hoặc mật khẩu không chính xác hoặc tài khoản chưa xác minh.';
         setAuthError(errorMsg);
       }
     } finally {
@@ -168,7 +181,7 @@ const LoginForm: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => alert('Đăng nhập với Google (Mockup Flow)')}
+          onClick={handleGoogleLogin}
           className="w-full py-2.5 sm:py-3 px-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold flex items-center justify-center space-x-2.5 transition-all duration-200 cursor-pointer bg-white shadow-sm text-sm sm:text-base"
           disabled={isLoading}
         >

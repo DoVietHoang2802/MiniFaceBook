@@ -18,7 +18,13 @@ interface CreatePostCardProps {
   currentUser: any;
 }
 
-const MAX_SIZE = 20 * 1024 * 1024;
+const MAX_RAW_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_FINAL_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_POST_IMAGE_BYTES = 30 * 1024 * 1024;
+const MAX_POST_IMAGES = 10;
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+
+const formatBytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)}MB`;
 
 const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentUser }) => {
   const [content, setContent] = useState('');
@@ -61,42 +67,79 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
     if (!event.target.files) return;
 
     const validFiles: File[] = [];
-    let hasOversizedFile = false;
+    const selectedFiles = Array.from(event.target.files);
+    const remainingSlots = MAX_POST_IMAGES - files.length;
+    let totalBytes = files.reduce((total, file) => total + file.size, 0);
+    let oversizedRawFiles = 0;
+    let oversizedFinalFiles = 0;
+    let unsupportedFiles = 0;
+    let totalBudgetFiles = 0;
     setIsSubmitting(true);
 
-    for (const file of Array.from(event.target.files)) {
-      if (file.size > MAX_SIZE) {
-        hasOversizedFile = true;
+    if (remainingSlots <= 0) {
+      triggerToast(`Mỗi bài viết chỉ được đăng tối đa ${MAX_POST_IMAGES} ảnh.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setIsSubmitting(false);
+      return;
+    }
+
+    for (const [index, file] of selectedFiles.slice(0, remainingSlots).entries()) {
+      if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+        unsupportedFiles += 1;
+        continue;
+      }
+      if (file.size > MAX_RAW_FILE_BYTES) {
+        oversizedRawFiles += 1;
         continue;
       }
 
+      let processedFile = file;
       if (file.type === 'image/gif') {
-        validFiles.push(file);
-        continue;
+        // Preserve animation, while applying the same final server payload limit.
+        processedFile = file;
+      } else {
+        const remainingFiles = selectedFiles.slice(index, remainingSlots).length;
+        const availableBytes = Math.max(0, MAX_POST_IMAGE_BYTES - totalBytes);
+        const targetSizeMB = Math.min(
+          6,
+          Math.max(1, availableBytes / Math.max(1, remainingFiles) / (1024 * 1024))
+        );
+        try {
+          const compressedBlob = await imageCompression(file, {
+            maxSizeMB: targetSizeMB,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            fileType: 'image/webp',
+          });
+          processedFile = new File(
+            [compressedBlob],
+            file.name.replace(/\.[^/.]+$/, '.webp'),
+            { type: 'image/webp', lastModified: Date.now() }
+          );
+        } catch (error) {
+          console.error('Lỗi khi nén ảnh:', error);
+        }
       }
 
-      try {
-        const compressedBlob = await imageCompression(file, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-          fileType: 'image/webp',
-        });
-        const compressedFile = new File(
-          [compressedBlob],
-          file.name.replace(/\.[^/.]+$/, '.webp'),
-          { type: 'image/webp', lastModified: Date.now() }
-        );
-        validFiles.push(compressedFile);
-      } catch (error) {
-        console.error('Lỗi khi nén ảnh:', error);
-        validFiles.push(file);
+      if (processedFile.size > MAX_FINAL_FILE_BYTES) {
+        oversizedFinalFiles += 1;
+        continue;
       }
+      if (totalBytes + processedFile.size > MAX_POST_IMAGE_BYTES) {
+        totalBudgetFiles += 1;
+        continue;
+      }
+      totalBytes += processedFile.size;
+      validFiles.push(processedFile);
     }
 
     setFiles((previousFiles) => [...previousFiles, ...validFiles]);
     setIsSubmitting(false);
-    if (hasOversizedFile) triggerToast('Có ảnh vượt quá 20MB đã bị loại bỏ!');
+    if (selectedFiles.length > remainingSlots) triggerToast(`Chỉ có thể thêm ${remainingSlots} ảnh nữa.`);
+    if (unsupportedFiles > 0) triggerToast('Chỉ chấp nhận ảnh JPG, PNG, WEBP hoặc GIF.');
+    if (oversizedRawFiles > 0) triggerToast('Có ảnh gốc vượt quá 20MB đã bị loại bỏ.');
+    if (oversizedFinalFiles > 0) triggerToast('Có ảnh sau xử lý vượt quá 10MB đã bị loại bỏ.');
+    if (totalBudgetFiles > 0) triggerToast('Tổng ảnh sau xử lý vượt quá 30MB; một số ảnh đã bị loại bỏ.');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -173,7 +216,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileChange}
         className="hidden"
         title="Chọn hình ảnh để đăng"
@@ -233,8 +276,10 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
               />
 
               {previewUrls.length > 0 && (
-                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {previewUrls.map((url, index) => (
+                <div className="mb-4">
+                  <p className="mb-2 text-xs font-semibold text-slate-500">{files.length}/{MAX_POST_IMAGES} ảnh · {formatBytes(files.reduce((total, file) => total + file.size, 0))}/30MB</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {previewUrls.map((url, index) => (
                     <div key={url} className="relative aspect-square overflow-hidden rounded-xl border border-slate-200">
                       <img src={url} alt={`Ảnh xem trước ${index + 1}`} className="h-full w-full object-cover" />
                       <button
@@ -246,7 +291,8 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                         <X className="h-4 w-4" />
                       </button>
                     </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 

@@ -2,6 +2,7 @@ package com.minifacebook.module.auth.infrastructure.persistence.document;
 
 import com.minifacebook.module.auth.domain.model.Role;
 import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
+import com.minifacebook.module.auth.domain.model.AuthProvider;
 import com.minifacebook.shared.domain.BaseEntity;
 import java.util.Set;
 import lombok.Getter;
@@ -29,6 +30,10 @@ public class UserDocument extends BaseEntity {
   private String name;
 
   private String password;
+
+  private String googleSubject;
+
+  private AuthProvider authProvider;
 
   private String avatar;
 

@@ -9,6 +9,8 @@
   - `bio` (String)
   - `roles` (Set<Role>)
   - `verified` (Boolean, default: false)
+  - `googleSubject` (String, unique partial index when present)
+  - `authProvider` (`PASSWORD`, `GOOGLE`, `PASSWORD_AND_GOOGLE`; owner-only account metadata)
   - `verificationToken` (String, index)
   - `createdAt` (Instant)
   - `updatedAt` (Instant)
@@ -59,12 +61,12 @@ Mỗi module bên trong Backend được tổ chức thành 4 lớp để đảm
 - **Security (Hệ thống bảo mật cấp cao):**
   - **Đăng ký (Register):** Mã hóa mật khẩu bằng BCrypt bảo mật cao, tự động phát sinh token kích hoạt tài khoản.
   - **Xác thực tài khoản (Verify Email):** Tích hợp hoàn hảo với **Resend Email API**, gửi email kích hoạt thật đến hòm thư người dùng để xác nhận trạng thái `verified: true` trước khi cho phép đăng nhập.
-  - **Đăng nhập (Login):** Xác thực thông tin, kiểm tra trạng thái kích hoạt tài khoản và phát hành đồng thời 2 HttpOnly Cookies (`accessToken` và `refreshToken`) xuống client, bảo vệ tuyệt đối khỏi các mối đe dọa XSS và CSRF.
+  - **Đăng nhập (Login):** Password login và Google OAuth/OIDC local flow phát hành 2 HttpOnly Cookies (`accessToken` và `refreshToken`). Google-only account không có local password; password actions được ẩn/chặn cho đến khi có secure create-password flow.
   - **Phân quyền (RBAC):** Tích hợp phân quyền nghiêm ngặt theo các Role (ADMIN, USER) trực tiếp trong Claims của JWT, bảo vệ tuyệt đối các API nhạy cảm.
   - **Refresh Token Rotation (Xoay vòng Token):** Cơ chế phòng chống Replay Attack thông minh. Khi người dùng refresh token, hệ thống sẽ cấp phát một cặp token mới và thu hồi token cũ. Nếu phát hiện token cũ đã bị sử dụng lại (kẻ gian lấy trộm), hệ thống lập tức xóa sạch toàn bộ active tokens của user đó để bảo vệ tài khoản.
   - **Đăng xuất (Logout):** Xóa sạch cookies ở Client và vô hiệu hóa (**`revoked: true`**) Refresh Token trong cơ sở dữ liệu MongoDB (vá thành công lỗ hổng bảo mật bỏ sót hủy token ở database ban đầu).
   - **Chống Spam (Adaptive Rate Limiting):** Tích hợp thuật toán giới hạn thích ứng (Adaptive Rate Limiting) bằng `Bucket4j` và Redis để tự động nhận diện và chặn đứng các IP spam bot tốc độ cao, đồng thời bảo vệ trải nghiệm thông suốt không bị block nhầm cho người dùng thực.
-  - **Upload Media Bảo Mật Cao (Zero-Trust Validation):** Tích hợp bộ quét chữ ký nhị phân **Apache Tika (Magic Bytes)** ở Backend để xác thực cấu trúc nội dung tệp tin tải lên thật sự là hình ảnh (`image/jpeg`, `image/png`, `image/webp`, `image/gif`), chống lại 100% các cuộc tấn công ngụy trang đuôi file độc hại. Kết hợp validate dung lượng Zod tối đa 5MB ở Frontend và cấu hình `@ExceptionHandler` bắt lỗi Tomcat `MaxUploadSizeExceededException` tập trung để bảo vệ tài nguyên RAM khỏi DDoS tải trọng lớn.
+  - **Upload Media Bảo Mật Cao:** Backend xác thực Apache Tika Magic Bytes cho JPEG/PNG/WebP/GIF. Post media enforce tối đa 10 ảnh, 10MB final file và 30MB aggregate request; FE nhận raw input tối đa 20MB/ảnh, nén WebP bằng Web Worker rồi tái kiểm tra final budget. Avatar/cover giữ policy 5MB riêng. Cloudinary có startup verification ở local, không còn fallback ảnh random khi credential thiếu/sai.
   - **Tài liệu hóa (OpenAPI):** Tích hợp Swagger UI tại `/api/docs` cập nhật đầy đủ 100% mô tả nghiệp vụ và nút Authorize Token.
 
   
@@ -114,6 +116,7 @@ Dự án sử dụng Docker Compose để quản lý các Service phụ trợ. C
 - **Modular Monolith trên 1 VPS:** Toàn bộ Backend chạy trên một instance duy nhất. Đơn giản, dễ vận hành, phù hợp giai đoạn hiện tại.
 - **MongoDB là database duy nhất:** Quản lý toàn bộ dữ liệu (User, Post, Chat, Friendship). Không sử dụng Graph Database.
 - **Redis đa mục đích (Phase 4):** Presence Online/Offline (TTL), JWT Blacklist, Typing Indicator (TTL), Unread Count, và **Redis Pub/Sub** (channel `chat.room.*`) đồng bộ chat realtime đa server. Rate Limiting vẫn dùng Bucket4j in-memory.
+- **OAuth transaction (single AWS instance):** Spring `JSESSIONID` chỉ dùng tạm cho Google authorization state/nonce và bị hủy sau callback; JWT cookies vẫn là application session. Redis/Spring Session chỉ cần khi scale nhiều backend replicas.
 - **Tạc vụ nền bằng Spring `@Async`:** Giải quyết các tác vụ bất đồng bộ (gửi mail, xử lý ảnh) mà không cần Message Broker.
 - **K6 Load Testing:** Bắt buộc chạy kiểm tra sức chịu tải trước mỗi lần deploy lên Production.
 

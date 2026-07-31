@@ -1,13 +1,34 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 30/07/2026
-## 🏁 Trạng thái hiện tại: ✅ SPRINT 6.6 MOBILE RESPONSIVE UX HARDENING HOÀN THÀNH. Mobile E2E 2/2 và frontend build pass; full desktop suite còn residual auth/session 401 (12/17 pass).
+## 📅 Cập nhật ngày: 31/07/2026
+## 🏁 Trạng thái hiện tại: 🟡 Cloudinary local integration verified; Google OAuth local core implemented but production hardening pending.
 
-> ⚠️ **Lưu ý lộ trình (Version 2.1):** ROADMAP đã hoàn thành **Sprint 8.6: Standalone Admin Portal (/admin)**, **Sprint 8.3: Voice & Video Call 1-1 WebRTC** & **Sprint 8.5: Nested Comment Reply**. Sẵn sàng 100% cho **Phase 7: Production Deployment**. Chi tiết xem `ROADMAP.md`.
+> ⚠️ **Lưu ý lộ trình:** Core Phase 7 features đã hoàn thành, nhưng production release vẫn chờ Google OAuth production hardening, Cloudinary direct-upload decision, AWS HTTPS/custom domain/secrets và load verification. Chi tiết xem `ROADMAP.md` và các plan liên quan.
 
 ---
 
 ## 📋 TÓM TẮT PHIÊN LÀM VIỆC (30/07/2026 - MOBILE RESPONSIVE UX HARDENING)
+
+### Cloudinary Local Integration tiếp nối:
+
+- `application-local.yml` dùng Cloudinary credential local và `verify-on-startup: true`; startup phải log `Cloudinary credentials verified successfully` trước khi test upload.
+- Cloudinary API key phải có quyền `create/upload` asset. Credential hợp lệ nhưng thiếu permission sẽ báo `Request forbidden due to missing permissions (actions=["create"])`.
+- Sandbox random/Picsum fallback đã bị loại bỏ: config không đúng phải trả `UPLOAD_FAILED`, không tạo post/profile với ảnh giả.
+- MongoDB chỉ lưu media URL; file mới nằm Cloudinary folders `miniface/avatars`, `miniface/covers`, `miniface/posts`. Seed/Picsum/Unsplash URLs cũ không tự migrate.
+
+### Google OAuth Local Core tiếp nối:
+
+- Google OAuth bật qua `app.oauth.google.enabled=true` trong `application-local.yml`; redirect URI local là `http://localhost:8080/api/login/oauth2/code/google`.
+- OAuth state dùng JSESSIONID tạm trong single backend instance, hủy sau callback; JWT HttpOnly cookie vẫn là application session.
+- Google user mới xác nhận display name trước khi persist; verified email trùng local verified account auto-link; Google-only account không có password và hidden Change/Forgot Password.
+- Chưa production-ready: optional create-password after Google reauthentication, OAuth test coverage, AWS custom HTTPS domains/cookies, production Google consent configuration.
+
+### Post Image Upload Validation Hardening tiếp nối:
+
+- Post upload hiện enforce 10 ảnh, raw FE 20MB/ảnh, final BE 10MB/ảnh và tổng 30MB/post; client nén WebP theo aggregate budget và giữ GIF theo policy final payload.
+- Backend có DTO/service validation chống bypass multipart, `MediaService.uploadPostImage` dùng folder post riêng; avatar/cover vẫn giữ 5MB policy.
+- `PostServiceTest` 7/7 và frontend build pass.
+- Direct Signed Cloudinary Upload chưa bật. Cloudinary server-proxy local credential đã xác thực; kiến trúc ticket/ownership policy và account checklist: [`IMAGE_UPLOAD_VALIDATION_PLAN.md`](../planning/IMAGE_UPLOAD_VALIDATION_PLAN.md).
 
 ### Profile Privacy Controls tiếp nối:
 

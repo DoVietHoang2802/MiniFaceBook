@@ -58,6 +58,12 @@
     - [x] Privacy theo từng trường Profile (`PUBLIC` / `FRIENDS` / `ONLY_ME`) cho thành phố, quê quán, công việc và tình trạng quan hệ.
         - *Security:* Visitor response được lọc server-side theo friendship `ACCEPTED`; email, role và metadata tài khoản không được trả cho người khác.
         - *Reference:* [Profile Privacy Policy](../guidelines/PROFILE_PRIVACY_POLICY.md).
+- [ ] **Sprint 1.5: Google OAuth Identity (Local Core Complete, Production Pending)**
+    - [x] Spring OAuth2 Client Google authorization/callback flow behind local feature flag.
+    - [x] Google `sub` partial unique identity, verified-email auto-link and new-user display-name confirmation.
+    - [x] Google-only password UI/recovery guard and safe OAuth failure redirect.
+    - [ ] Complete Google reauthentication before optional local password creation.
+    - [ ] Add dedicated OAuth callback/account-link test suite and production AWS HTTPS/domain/consent configuration.
 
 ---
 
@@ -67,6 +73,8 @@
 - [x] **Sprint 2.1: Post System (ĐÃ HOÀN THÀNH 🎉)**
     - [x] API Đăng bài viết (Hỗ trợ Text và Image qua Cloudinary).
     - [x] API Newsfeed: Hiển thị bài viết phân trang chuẩn Clean Architecture.
+    - [x] Hardening image upload proxy: 10 ảnh/post, 10MB final file, 30MB aggregate request, WebP compression budget và Apache Tika trust validation.
+        - *Next scale step:* Direct Signed Cloudinary Upload được giữ feature plan, chỉ bật sau khi credentials/preset production được cấu hình.
     - [x] Giao diện 3 cột Premium (`3-Column Grid Layout`).
     - [x] Tích hợp Responsive cực mịn (Icon-Only mode, Floating Actions).
 - [x] **Sprint 2.2: Reactions & Comments (ĐÃ HOÀN THÀNH 🎉)**

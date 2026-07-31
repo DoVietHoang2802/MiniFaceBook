@@ -7,6 +7,8 @@ import com.minifacebook.module.auth.application.dto.UserResponse;
 import com.minifacebook.module.auth.application.dto.ForgotPasswordRequest;
 import com.minifacebook.module.auth.application.dto.VerifyOtpRequest;
 import com.minifacebook.module.auth.application.dto.ResetPasswordRequest;
+import com.minifacebook.module.auth.application.dto.GoogleProfileCompletionRequest;
+import com.minifacebook.module.auth.application.dto.GoogleProfileCompletionResponse;
 import com.minifacebook.module.auth.application.service.AuthService;
 import com.minifacebook.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,6 +75,26 @@ public class AuthController {
             .build();
 
     return ResponseEntity.ok(apiResponse);
+  }
+
+  @GetMapping("/oauth/google/profile")
+  public ResponseEntity<ApiResponse<GoogleProfileCompletionResponse>> getGoogleProfileCompletion(
+      @CookieValue(value = "googleProfileCompletion", required = false) String onboardingToken) {
+    GoogleProfileCompletionResponse profile = authService.getGoogleProfileCompletion(onboardingToken);
+    return ResponseEntity.ok(ApiResponse.<GoogleProfileCompletionResponse>builder()
+        .status(HttpStatus.OK.value()).message("Google profile completion loaded").data(profile).build());
+  }
+
+  @PostMapping("/oauth/google/complete-profile")
+  public ResponseEntity<ApiResponse<UserResponse>> completeGoogleProfile(
+      @CookieValue(value = "googleProfileCompletion", required = false) String onboardingToken,
+      @Valid @RequestBody GoogleProfileCompletionRequest request,
+      HttpServletResponse response) {
+    LoginResult loginResult = authService.completeGoogleProfile(onboardingToken, request);
+    setTokenCookies(response, loginResult.getAccessToken(), loginResult.getRefreshToken());
+    clearGoogleProfileCompletionCookie(response);
+    return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+        .status(HttpStatus.OK.value()).message("Google profile completed").data(loginResult.getUser()).build());
   }
 
   /** Xác thực tài khoản người dùng thông qua mã token gửi qua email. */
@@ -264,5 +286,11 @@ public class AuthController {
 
     response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+  }
+
+  private void clearGoogleProfileCompletionCookie(HttpServletResponse response) {
+    ResponseCookie cookie = ResponseCookie.from("googleProfileCompletion", "")
+        .httpOnly(true).secure(false).sameSite("Lax").path("/api").maxAge(0).build();
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
   }
 }

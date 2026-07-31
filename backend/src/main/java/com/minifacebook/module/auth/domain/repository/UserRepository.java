@@ -20,6 +20,8 @@ public interface UserRepository {
 
   Optional<User> findByVerificationToken(String token);
 
+  Optional<User> findByGoogleSubject(String googleSubject);
+
   /**
    * Lấy danh sách nhiều User theo danh sách id chỉ trong MỘT truy vấn (batch load). Dùng để tránh
    * vấn đề N+1 query khi cần load thông tin nhiều user cùng lúc (vd: danh sách bạn bè).

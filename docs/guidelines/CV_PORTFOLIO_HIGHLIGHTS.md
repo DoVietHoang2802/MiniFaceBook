@@ -909,6 +909,35 @@
 *   **Bullet Point đưa vào CV (Tiếng Anh):**
     *   *Implemented field-level profile privacy in a Spring Boot and React social platform, enforcing viewer-aware authorization for public, friends-only, and owner-only data. Eliminated account-data exposure across profile and discovery APIs by filtering responses against accepted friendships, while shipping backward-safe defaults and verified service-level regression coverage.*
 
+---
+
+### 🖼️ Highlight 58: Hardening Image Upload Pipeline với Multi-layer Validation & Compression Budget
+*   **Situation (Bối cảnh):** Upload ảnh bài viết có client compression nhưng thiếu quota số lượng và aggregate budget, đồng thời policy 20MB ở client mâu thuẫn với giới hạn backend 5MB.
+*   **Task (Nhiệm vụ):** Chuẩn hóa policy upload ảnh cho post, ngăn bypass multipart và bảo vệ backend khỏi payload lớn mà vẫn cho phép người dùng chọn ảnh gốc chất lượng cao.
+*   **Action (Hành động):**
+    *   Thiết kế và triển khai policy 10 ảnh/post, raw admission 20MB/ảnh ở browser, final payload 10MB/ảnh và 30MB/post ở Spring Multipart/service layer.
+    *   Bổ sung WebP compression thích ứng theo aggregate budget, MIME UX filtering, GIF preservation với final-size guard và feedback về số slot/budget còn lại.
+    *   Tách post media sang `uploadPostImage`/Cloudinary folder riêng, giữ Apache Tika Magic Bytes validation và coverage chống direct multipart bypass.
+*   **Result (Kết quả):**
+    *   Loại bỏ mismatch client/server size policy, hạn chế request quá lớn và chuẩn bị migration an toàn sang Direct Signed Cloudinary Upload.
+    *   Xác minh bằng frontend production build và 7 PostService unit tests pass.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Hardened a social-platform image upload pipeline with client-side adaptive WebP compression, server-enforced per-file and aggregate budgets, multipart bypass protection, and content-type validation; established a migration-ready design for direct signed Cloudinary uploads.*
+
+---
+
+### 🔐 Highlight 59: Google OAuth Local Core với Account Linking, Cookie Session Reuse & Provider-aware Recovery
+*   **Situation (Bối cảnh):** Password-only auth không đáp ứng user onboarding nhanh; OAuth tích hợp sai có thể redirect API XHR sang Google, tạo account duplicate hoặc hiển thị password flow vô nghĩa cho Google-only user.
+*   **Action (Hành động):**
+    *   Tích hợp Spring OAuth2 Client sau feature flag local, dùng browser navigation tới Google và tái sử dụng JWT HttpOnly cookie/refresh-token session sau callback.
+    *   Thêm Google OIDC subject partial unique identity, auto-link khi Google và MiniFaceBook cùng xác minh email, và onboarding xác nhận display name trước khi tạo user mới.
+    *   Tách OAuth transaction JSESSIONID tạm khỏi application JWT session, hủy transaction sau callback, ép unauthenticated API requests trả 401 thay vì OAuth redirect/CORS failure.
+    *   Áp dụng provider-aware password UX: account `GOOGLE` không có local password, không nhận forgot-password OTP và không render Change Password.
+*   **Result (Kết quả):**
+    *   Hoàn thành local core và compile/regression verification; production consent/domain/cookie hardening và reauthentication create-password flow được giữ explicit pending, không overclaim readiness.
+*   **Bullet Point đưa vào CV (Tiếng Anh):**
+    *   *Built the local core of a Google OAuth/OIDC login flow for a Spring Boot and React platform, reusing JWT HttpOnly sessions, enforcing immutable provider identity and verified-email linking, and preventing OAuth redirects from corrupting API/XHR authentication behavior.*
+
 
 
 

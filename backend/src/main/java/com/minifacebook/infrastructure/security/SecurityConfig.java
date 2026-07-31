@@ -8,15 +8,21 @@ import com.minifacebook.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -33,10 +39,14 @@ public class SecurityConfig {
   private final RateLimitingFilter rateLimitingFilter;
   private final TokenBlacklistFilter tokenBlacklistFilter;
   private final JwtDecoder jwtDecoder;
+  private final GoogleOAuthProperties googleOAuthProperties;
+  private final GoogleOAuthSuccessHandler googleOAuthSuccessHandler;
+  private final GoogleOAuthFailureHandler googleOAuthFailureHandler;
 
   private final String[] PUBLIC_POST_ENDPOINTS = {
     "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect",
-    "/auth/forgot-password", "/auth/forgot-password/verify", "/auth/reset-password"
+    "/auth/forgot-password", "/auth/forgot-password/verify", "/auth/reset-password",
+    "/auth/oauth/google/complete-profile"
   };
 
   private final String[] PUBLIC_GET_ENDPOINTS = {
@@ -71,7 +81,9 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(WEBSOCKET_ENDPOINTS)
                 .permitAll()
-                .requestMatchers(ACTUATOR_PUBLIC_ENDPOINTS)
+                 .requestMatchers(ACTUATOR_PUBLIC_ENDPOINTS)
+                 .permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**", "/auth/oauth/google/profile")
                 .permitAll()
                 .anyRequest()
                 .authenticated());
@@ -131,6 +143,17 @@ public class SecurityConfig {
                       response.flushBuffer();
                     }));
 
+    // API clients must receive 401, never an OAuth HTML redirect. The explicit
+    // /oauth2/authorization/google navigation is still handled by its own filter.
+    httpSecurity.exceptionHandling(exceptions -> exceptions
+        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+
+    if (googleOAuthProperties.isEnabled()) {
+      httpSecurity.oauth2Login(oauth -> oauth
+          .successHandler(googleOAuthSuccessHandler)
+          .failureHandler(googleOAuthFailureHandler));
+    }
+
     httpSecurity.csrf(AbstractHttpConfigurer::disable);
 
     // Thêm Rate Limiting Filter vào đầu chuỗi
@@ -143,6 +166,26 @@ public class SecurityConfig {
   }
 
   @Bean
+  @ConditionalOnProperty(prefix = "app.oauth.google", name = "enabled", havingValue = "true")
+  ClientRegistrationRepository googleClientRegistrationRepository() {
+    ClientRegistration google = ClientRegistration.withRegistrationId("google")
+        .clientId(googleOAuthProperties.getClientId())
+        .clientSecret(googleOAuthProperties.getClientSecret())
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+        .scope("openid", "profile", "email")
+        .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
+        .tokenUri("https://oauth2.googleapis.com/token")
+        .jwkSetUri("https://www.googleapis.com/oauth2/v3/certs")
+        .userInfoUri("https://openidconnect.googleapis.com/v1/userinfo")
+        .userNameAttributeName("sub")
+        .clientName("Google")
+        .build();
+    return new InMemoryClientRegistrationRepository(google);
+  }
+
+  @Bean
   public org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter jwtAuthenticationConverter() {
     var grantedAuthoritiesConverter = new org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter();
     grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
@@ -151,11 +194,6 @@ public class SecurityConfig {
     var jwtAuthenticationConverter = new org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter();
     jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
     return jwtAuthenticationConverter;
-  }
-
-  @Bean
-  PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
   }
 
   @Bean

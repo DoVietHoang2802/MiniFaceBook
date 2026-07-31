@@ -21,9 +21,11 @@ docker-compose up -d
 Di chuyển vào thư mục `backend` và chạy lệnh:
 
 ```bash
-mvn spring-boot:run
+    mvn "-Dspring-boot.run.profiles=local" spring-boot:run
 ```
 *Ứng dụng sẽ khởi chạy tại: http://localhost:8080*
+
+Khi local Cloudinary được cấu hình, startup phải có log `Cloudinary credentials verified successfully`. Xem [`LOCAL_CONFIGURATION.md`](../guidelines/LOCAL_CONFIGURATION.md) để cấu hình credential và Google OAuth local mà không commit secrets.
 
 ---
 
@@ -102,6 +104,19 @@ mvn test -Dtest=ArchitectureTest
 #### Kịch bản 4: Đăng xuất (Logout)
 1. Gửi request `POST /api/auth/logout`.
 2. **Kỳ vọng:** Cả hai Cookie `accessToken` và `refreshToken` đều được set thời gian sống về `0` (`Max-Age = 0`), xóa sạch dấu vết phiên đăng nhập khỏi trình duyệt.
+
+#### Kịch bản 5: Google OAuth Local Core
+1. Bật `app.oauth.google.enabled=true` trong `application-local.yml` và cấu hình Google redirect URI `http://localhost:8080/api/login/oauth2/code/google`.
+2. Bấm Google tại Login; browser phải điều hướng tới Google Account Chooser, không phải Axios/XHR.
+3. Account Google mới phải đi tới `/oauth/complete-profile`, xác nhận tên rồi vào Home.
+4. Account `GOOGLE` không có form Change Password và Forgot Password không được tạo OTP/reset password.
+5. API unauthenticated phải trả 401; không được redirect XHR sang `accounts.google.com`.
+
+#### Kịch bản 6: Cloudinary Upload
+1. Xác nhận startup Cloudinary credential verification thành công.
+2. Upload avatar, cover hoặc post image từ máy.
+3. Kỳ vọng URL mới thuộc `res.cloudinary.com` và asset xuất hiện ở folder `miniface/avatars`, `miniface/covers` hoặc `miniface/posts`.
+4. Nếu Cloudinary trả missing `create` permission, cấp quyền upload/create cho API key; không bật fallback ảnh random.
 
 ---
 

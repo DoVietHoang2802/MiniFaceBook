@@ -37,6 +37,12 @@ public class PostRepositoryImpl implements PostRepository {
     }
 
     @Override
+    public Page<Post> searchByContent(String query, Pageable pageable) {
+        return mongoPostRepository.searchByText(query, pageable)
+                .map(postMapper::toDomain);
+    }
+
+    @Override
     public void deleteById(String id) {
         mongoPostRepository.deleteById(id);
     }

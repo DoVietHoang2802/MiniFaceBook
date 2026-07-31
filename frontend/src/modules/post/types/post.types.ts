@@ -15,6 +15,15 @@ export interface PostResponse {
   createdAt: string;
 }
 
+export interface PostSuggestionResponse {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string | null;
+  excerpt: string;
+  createdAt: string;
+}
+
 export interface CommentResponse {
   id: string;
   postId: string;

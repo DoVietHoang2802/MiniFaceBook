@@ -8,10 +8,14 @@ import com.minifacebook.module.auth.application.dto.VerifyOtpRequest;
 import com.minifacebook.module.auth.application.dto.ResetPasswordRequest;
 import com.minifacebook.module.auth.application.dto.UpdateProfileRequest;
 import com.minifacebook.module.auth.application.dto.UserResponse;
+import com.minifacebook.module.auth.application.dto.GoogleOnboardingData;
+import com.minifacebook.module.auth.application.dto.GoogleProfileCompletionRequest;
+import com.minifacebook.module.auth.application.dto.GoogleProfileCompletionResponse;
 import com.minifacebook.module.auth.application.mapper.AuthMapper;
 import com.minifacebook.module.auth.domain.model.RefreshToken;
 import com.minifacebook.module.auth.domain.model.Role;
 import com.minifacebook.module.auth.domain.model.ProfileFieldVisibility;
+import com.minifacebook.module.auth.domain.model.AuthProvider;
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.RefreshTokenRepository;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
@@ -21,6 +25,8 @@ import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import com.minifacebook.shared.security.TokenBlacklistPort;
+import com.minifacebook.shared.security.GoogleOAuthLoginPort;
+import com.minifacebook.shared.security.GoogleOAuthLoginPort.GoogleOAuthLoginResult;
 import com.minifacebook.module.friendship.domain.entity.FriendshipStatus;
 import com.minifacebook.module.friendship.domain.repository.FriendshipRepository;
 import java.time.Instant;
@@ -42,10 +48,11 @@ import com.minifacebook.module.auth.application.dto.ChangePasswordRequest;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthService {
+public class AuthService implements GoogleOAuthLoginPort {
 
   private static final String OTP_KEY_PREFIX = "otp:reset:";
   private static final String RESET_TOKEN_KEY_PREFIX = "reset:token:";
+  private static final String GOOGLE_ONBOARDING_KEY_PREFIX = "oauth2:google:profile:";
   private final SecureRandom secureRandom = new SecureRandom();
 
   private final UserRepository userRepository;
@@ -71,6 +78,7 @@ public class AuthService {
     User user = authMapper.toUser(request);
     user.setPassword(passwordEncoder.encode(request.getPassword()));
     user.setRoles(Set.of(Role.USER));
+    user.setAuthProvider(AuthProvider.PASSWORD);
     user.setCityVisibility(ProfileFieldVisibility.FRIENDS);
     user.setHometownVisibility(ProfileFieldVisibility.FRIENDS);
     user.setWorkVisibility(ProfileFieldVisibility.FRIENDS);
@@ -98,7 +106,7 @@ public class AuthService {
                   return new AppException(ErrorCode.USER_NOT_EXISTED);
                 });
 
-    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+    if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
       log.warn("Login failed: Incorrect password for user {}", request.getEmail());
       // Dùng INVALID_CREDENTIALS, không dùng UNAUTHENTICATED, để tránh hiển thị thông báo sai cho user
       throw new AppException(ErrorCode.INVALID_CREDENTIALS);
@@ -137,6 +145,125 @@ public class AuthService {
         .refreshToken(refreshToken)
         .user(authMapper.toUserResponse(user))
         .build();
+  }
+
+  /** Resolves a verified Google identity without persisting an incomplete profile. */
+  @Override
+  public GoogleOAuthLoginResult resolveGoogleLogin(
+      String googleSubject, String rawEmail, String suggestedName) {
+    String email = normalizeEmail(rawEmail);
+    var linkedUser = userRepository.findByGoogleSubject(googleSubject);
+    if (linkedUser.isPresent()) {
+      LoginResult session = issueOAuthSession(linkedUser.get());
+      return GoogleOAuthLoginResult.authenticated(session.getAccessToken(), session.getRefreshToken());
+    }
+
+    var emailUser = userRepository.findByEmail(email);
+    if (emailUser.isPresent()) {
+      User user = emailUser.get();
+      if (!user.isVerified()) {
+        throw new AppException(ErrorCode.UNAUTHENTICATED);
+      }
+      user.setGoogleSubject(googleSubject);
+      user.setAuthProvider(user.getPassword() == null ? AuthProvider.GOOGLE : AuthProvider.PASSWORD_AND_GOOGLE);
+      LoginResult session = issueOAuthSession(userRepository.save(user));
+      return GoogleOAuthLoginResult.authenticated(session.getAccessToken(), session.getRefreshToken());
+    }
+
+    String onboardingToken = UUID.randomUUID().toString();
+    GoogleOnboardingData data = GoogleOnboardingData.builder()
+        .googleSubject(googleSubject)
+        .email(email)
+        .suggestedName(suggestedName == null ? "" : suggestedName)
+        .build();
+    try {
+      redisTemplate.opsForValue().set(GOOGLE_ONBOARDING_KEY_PREFIX + onboardingToken,
+          objectMapper.writeValueAsString(data), 10, TimeUnit.MINUTES);
+    } catch (Exception exception) {
+      throw new AppException(ErrorCode.UNAUTHENTICATED);
+    }
+    return GoogleOAuthLoginResult.profileCompletionRequired(onboardingToken);
+  }
+
+  public GoogleProfileCompletionResponse getGoogleProfileCompletion(String onboardingToken) {
+    GoogleOnboardingData data = getGoogleOnboarding(onboardingToken, false);
+    return GoogleProfileCompletionResponse.builder().suggestedName(data.getSuggestedName()).build();
+  }
+
+  public LoginResult completeGoogleProfile(
+      String onboardingToken, GoogleProfileCompletionRequest request) {
+    GoogleOnboardingData data = getGoogleOnboarding(onboardingToken, true);
+    if (userRepository.existsByEmail(data.getEmail())
+        || userRepository.findByGoogleSubject(data.getGoogleSubject()).isPresent()) {
+      throw new AppException(ErrorCode.USER_EXISTED);
+    }
+    String name = normalizeDisplayName(request.getName());
+    User user = User.builder()
+        .name(name)
+        .email(data.getEmail())
+        .googleSubject(data.getGoogleSubject())
+        .authProvider(AuthProvider.GOOGLE)
+        .roles(Set.of(Role.USER))
+        .verified(true)
+        .cityVisibility(ProfileFieldVisibility.FRIENDS)
+        .hometownVisibility(ProfileFieldVisibility.FRIENDS)
+        .workVisibility(ProfileFieldVisibility.FRIENDS)
+        .relationshipVisibility(ProfileFieldVisibility.FRIENDS)
+        .build();
+    return issueOAuthSession(userRepository.save(user));
+  }
+
+  private LoginResult issueOAuthSession(User user) {
+    if (user.isBanned()) {
+      throw new AppException(ErrorCode.USER_BANNED);
+    }
+    String accessToken = tokenService.generateAccessToken(user.getEmail(), user.getRoles());
+    String refreshToken = tokenService.generateRefreshToken(user.getEmail(), user.getRoles());
+    refreshTokenRepository.deleteByEmail(user.getEmail());
+    refreshTokenRepository.save(RefreshToken.builder()
+        .token(refreshToken)
+        .email(user.getEmail())
+        .expiryDate(Instant.now().plusSeconds(604800))
+        .revoked(false)
+        .build());
+    return LoginResult.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .user(authMapper.toUserResponse(user))
+        .build();
+  }
+
+  private GoogleOnboardingData getGoogleOnboarding(String token, boolean consume) {
+    try {
+      String key = GOOGLE_ONBOARDING_KEY_PREFIX + token;
+      String value = consume ? redisTemplate.opsForValue().getAndDelete(key)
+          : redisTemplate.opsForValue().get(key);
+      if (value == null) {
+        throw new AppException(ErrorCode.UNAUTHENTICATED);
+      }
+      return objectMapper.readValue(value, GoogleOnboardingData.class);
+    } catch (AppException exception) {
+      throw exception;
+    } catch (Exception exception) {
+      throw new AppException(ErrorCode.UNAUTHENTICATED);
+    }
+  }
+
+  private String normalizeEmail(String email) {
+    if (email == null || email.isBlank()) {
+      throw new AppException(ErrorCode.UNAUTHENTICATED);
+    }
+    return email.trim().toLowerCase(java.util.Locale.ROOT);
+  }
+
+  private String normalizeDisplayName(String rawName) {
+    String normalized = rawName == null ? "" : java.text.Normalizer
+        .normalize(rawName, java.text.Normalizer.Form.NFC).trim().replaceAll("\\s+", " ");
+    int length = normalized.codePointCount(0, normalized.length());
+    if (length < 2 || length > 50) {
+      throw new AppException(ErrorCode.UNAUTHENTICATED);
+    }
+    return normalized;
   }
 
   /** Xác thực tài khoản người dùng qua Token nhận được từ email. */
@@ -264,6 +391,7 @@ public class AuthService {
 
     response.setEmail(null);
     response.setRoles(null);
+    response.setAuthProvider(null);
     response.setCreatedAt(null);
     response.setUpdatedAt(null);
 
@@ -380,7 +508,8 @@ public class AuthService {
   /** Yêu cầu đặt lại mật khẩu: Sinh mã OTP 6 số, lưu vào Redis và gửi qua email. */
   public void forgotPassword(ForgotPasswordRequest request) {
     String email = request.getEmail();
-    if (!userRepository.existsByEmail(email)) {
+    var account = userRepository.findByEmail(email);
+    if (account.isEmpty() || account.get().getAuthProvider() == AuthProvider.GOOGLE) {
       // Trả về âm thầm để chống dò quét email
       log.info("Password reset requested for non-existing email: {}", email);
       return;
@@ -457,7 +586,7 @@ public class AuthService {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+    if (user.getPassword() == null || !passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
       throw new AppException(ErrorCode.INVALID_CREDENTIALS);
     }
 
