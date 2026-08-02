@@ -167,6 +167,7 @@ public class PostService {
     private String normalizeSearchQuery(String rawQuery) {
         String normalized = rawQuery == null ? "" : Normalizer.normalize(rawQuery, Normalizer.Form.NFC)
             .trim()
+            .replaceAll("\\p{Pd}", " ")
             .replaceAll("\\s+", " ");
         int length = normalized.codePointCount(0, normalized.length());
         if (length < 2 || length > 100) {

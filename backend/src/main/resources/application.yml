@@ -29,12 +29,6 @@ spring:
           starttls:
             enable: false
 
-  # Cấu hình Mongock cho Migration
-  mongock:
-    migration-scan-package:
-      - com.minifacebook.infrastructure.persistence.migrations
-    enabled: true
-
 # Cấu hình Swagger / OpenAPI
 springdoc:
   api-docs:

@@ -41,11 +41,6 @@ public class Migration_20260605_AddChatIndexes {
         .named("conv_created_idx")
     );
 
-    // Index trên senderId để hỗ trợ thống kê hoặc tìm kiếm tin nhắn theo người gửi
-    msgIndexes.ensureIndex(new Index()
-        .on("senderId", Sort.Direction.ASC)
-        .named("sender_idx")
-    );
   }
 
   @RollbackExecution
@@ -53,6 +48,5 @@ public class Migration_20260605_AddChatIndexes {
     mongoTemplate.indexOps("conversations").dropIndex("participants_idx");
     mongoTemplate.indexOps("conversations").dropIndex("last_message_at_idx");
     mongoTemplate.indexOps("messages").dropIndex("conv_created_idx");
-    mongoTemplate.indexOps("messages").dropIndex("sender_idx");
   }
 }

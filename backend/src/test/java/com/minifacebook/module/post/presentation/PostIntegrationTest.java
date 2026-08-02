@@ -237,4 +237,21 @@ public class PostIntegrationTest extends BaseIntegrationTest {
         assertFalse(suggestionsPayload.at("/data/0").has("myReactionType"));
         assertFalse(suggestionsPayload.at("/data/0").has("email"));
     }
+
+    @Test
+    void searchPosts_TreatsHyphenAsTextSeparator() throws Exception {
+        Post matching = postRepository.save(Post.builder()
+                .authorId(testUser.getId())
+                .content("Release search-token-2026 is available")
+                .build());
+
+        MvcResult result = mockMvc.perform(get("/posts/search")
+                        .param("q", "search-token-2026")
+                        .with(jwt().jwt(builder -> builder.subject(email))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var payload = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertEquals(matching.getId(), payload.at("/data/content/0/id").asText());
+    }
 }
