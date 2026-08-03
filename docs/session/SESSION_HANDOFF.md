@@ -11,14 +11,14 @@
 
 ### Cloudinary Local Integration tiếp nối:
 
-- `application-local.yml` dùng Cloudinary credential local và `verify-on-startup: true`; startup phải log `Cloudinary credentials verified successfully` trước khi test upload.
+- `backend/config/application-local.yml` dùng Cloudinary credential local và `verify-on-startup: true`; startup phải log `Cloudinary credentials verified successfully` trước khi test upload.
 - Cloudinary API key phải có quyền `create/upload` asset. Credential hợp lệ nhưng thiếu permission sẽ báo `Request forbidden due to missing permissions (actions=["create"])`.
 - Sandbox random/Picsum fallback đã bị loại bỏ: config không đúng phải trả `UPLOAD_FAILED`, không tạo post/profile với ảnh giả.
 - MongoDB chỉ lưu media URL; file mới nằm Cloudinary folders `miniface/avatars`, `miniface/covers`, `miniface/posts`. Seed/Picsum/Unsplash URLs cũ không tự migrate.
 
 ### Google OAuth Local Core tiếp nối:
 
-- Google OAuth bật qua `app.oauth.google.enabled=true` trong `application-local.yml`; redirect URI local là `http://localhost:8080/api/login/oauth2/code/google`.
+- Google OAuth bật qua `app.oauth.google.enabled=true` trong `backend/config/application-local.yml`; redirect URI local là `http://localhost:8080/api/login/oauth2/code/google`.
 - OAuth state dùng JSESSIONID tạm trong single backend instance, hủy sau callback; JWT HttpOnly cookie vẫn là application session.
 - Google user mới xác nhận display name trước khi persist; verified email trùng local verified account auto-link; Google-only account không có password và hidden Change/Forgot Password.
 - Chưa production-ready: optional create-password after Google reauthentication, OAuth test coverage, AWS custom HTTPS domains/cookies, production Google consent configuration.

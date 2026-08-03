@@ -8,18 +8,30 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 /**
  * Adapter triển khai gửi email sử dụng nhà cung cấp dịch vụ Resend qua REST API.
  * Đặt tại phân lớp Infrastructure của Auth module.
  */
-// @Service
+@Service
+@Profile("prod")
 @Slf4j
 public class ResendEmailAdapter implements EmailService {
 
   @Value("${app.resend.api-key}")
   private String apiKey;
+
+  @Value("${app.resend.from-email}")
+  private String fromEmail;
+
+  @Value("${app.resend.from-name:MiniFaceBook}")
+  private String fromName;
+
+  @Value("${app.public-api-url}")
+  private String publicApiUrl;
 
   private final RestTemplate restTemplate = new RestTemplate();
 
@@ -31,11 +43,7 @@ public class ResendEmailAdapter implements EmailService {
     headers.setContentType(MediaType.APPLICATION_JSON);
     headers.set("Authorization", "Bearer " + apiKey);
 
-    String verificationLink = "http://localhost:8080/api/auth/verify?token=" + verificationToken;
-    log.info("=========================================================================");
-    log.info("[DEVELOPMENT ONLY] Verification Link for {}:", toEmail);
-    log.info("👉 {}", verificationLink);
-    log.info("=========================================================================");
+    String verificationLink = publicApiUrl + "/auth/verify?token=" + verificationToken;
 
     String htmlContent = "<h3>Welcome to MiniFaceBook!</h3>"
         + "<p>Please verify your email address by clicking the link below:</p>"
@@ -45,7 +53,7 @@ public class ResendEmailAdapter implements EmailService {
         + "<p>If you did not request this, please ignore this email.</p>";
 
     Map<String, Object> body = Map.of(
-        "from", "MiniFaceBook <onboarding@resend.dev>",
+        "from", sender(),
         "to", new String[]{toEmail},
         "subject", "Verify your email - MiniFaceBook",
         "html", htmlContent
@@ -69,18 +77,13 @@ public class ResendEmailAdapter implements EmailService {
     headers.setContentType(MediaType.APPLICATION_JSON);
     headers.set("Authorization", "Bearer " + apiKey);
 
-    log.info("=========================================================================");
-    log.info("[DEVELOPMENT ONLY] Reset Password OTP for {}:", toEmail);
-    log.info("👉 Code: {}", otp);
-    log.info("=========================================================================");
-
     String htmlContent = "<h3>Reset Password Verification</h3>"
         + "<p>You requested to reset your password. Please use the verification code below to proceed:</p>"
         + "<h2 style=\"background-color: #f2f2f2; padding: 10px; display: inline-block; letter-spacing: 5px; color: #2563EB;\">" + otp + "</h2>"
         + "<p>This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>";
 
     Map<String, Object> body = Map.of(
-        "from", "MiniFaceBook <security@resend.dev>",
+        "from", sender(),
         "to", new String[]{toEmail},
         "subject", "Reset your password - MiniFaceBook",
         "html", htmlContent
@@ -94,6 +97,10 @@ public class ResendEmailAdapter implements EmailService {
     } catch (Exception e) {
       log.error("Failed to send reset OTP email to {} via Resend REST API", toEmail, e);
     }
+  }
+
+  private String sender() {
+    return fromName + " <" + fromEmail + ">";
   }
 }
 

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
@@ -13,15 +14,19 @@ import org.springframework.stereotype.Service;
  * Đặt tại phân lớp Infrastructure của Auth module.
  */
 @Service
+@Profile({"local", "test"})
 @Slf4j
 @RequiredArgsConstructor
 public class MailpitEmailAdapter implements EmailService {
 
   private final JavaMailSender mailSender;
 
+  @org.springframework.beans.factory.annotation.Value("${app.public-api-url:http://localhost:8080/api}")
+  private String publicApiUrl;
+
   @Override
   public void sendVerificationEmail(String toEmail, String verificationToken) {
-    String verificationLink = "http://localhost:8080/api/auth/verify?token=" + verificationToken;
+    String verificationLink = publicApiUrl + "/auth/verify?token=" + verificationToken;
     log.info("=========================================================================");
     log.info("[MAILPIT] Verification Link for {}:", toEmail);
     log.info("👉 {}", verificationLink);

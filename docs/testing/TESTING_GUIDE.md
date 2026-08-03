@@ -106,7 +106,7 @@ mvn test -Dtest=ArchitectureTest
 2. **Kỳ vọng:** Cả hai Cookie `accessToken` và `refreshToken` đều được set thời gian sống về `0` (`Max-Age = 0`), xóa sạch dấu vết phiên đăng nhập khỏi trình duyệt.
 
 #### Kịch bản 5: Google OAuth Local Core
-1. Bật `app.oauth.google.enabled=true` trong `application-local.yml` và cấu hình Google redirect URI `http://localhost:8080/api/login/oauth2/code/google`.
+1. Bật `app.oauth.google.enabled=true` trong `backend/config/application-local.yml` và cấu hình Google redirect URI `http://localhost:8080/api/login/oauth2/code/google`.
 2. Bấm Google tại Login; browser phải điều hướng tới Google Account Chooser, không phải Axios/XHR.
 3. Account Google mới phải đi tới `/oauth/complete-profile`, xác nhận tên rồi vào Home.
 4. Account `GOOGLE` không có form Change Password và Forgot Password không được tạo OTP/reset password.

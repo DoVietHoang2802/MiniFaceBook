@@ -1,0 +1,21 @@
+# Copy this file to backend/config/application-local.yml and replace every placeholder.
+# The config directory is gitignored and is discovered automatically by Spring Boot.
+sentry:
+  dsn: ""
+  environment: local
+
+app:
+  jwt:
+    secret: "GENERATE_A_LOCAL_256_BIT_SECRET"
+  cloudinary:
+    cloud-name: "YOUR_CLOUD_NAME"
+    api-key: "YOUR_API_KEY"
+    api-secret: "YOUR_API_SECRET"
+    verify-on-startup: true
+  oauth:
+    google:
+      enabled: true
+      client-id: "YOUR_GOOGLE_CLIENT_ID"
+      client-secret: "YOUR_GOOGLE_CLIENT_SECRET"
+      frontend-url: "http://localhost:5173"
+      secure-cookies: false

@@ -1,5 +1,7 @@
 # Production Readiness Checklist
 
+Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DEPLOYMENT_CHECKLIST.md).
+
 ## Current State
 
 - Core Google OAuth local flow, post search, and image upload validation are committed in `0e07188`.
@@ -17,10 +19,13 @@
 
 ## AWS Production Setup
 
+- [x] Keep local-only credentials in `backend/config/application-local.yml`, outside the built JAR.
+- [x] Add the fail-fast `prod` Spring profile with environment-only secrets and Secure OAuth cookies.
 - [ ] Rotate Cloudinary and Google OAuth credentials that were used during local setup.
 - [ ] Configure AWS HTTPS and the production frontend/backend custom domains.
 - [ ] Store JWT, Cloudinary, Google OAuth, MongoDB, Redis, and mail credentials in environment variables or a secrets manager.
 - [ ] Configure production Google OAuth redirect URI, consent screen, privacy-policy URL, and terms URL.
+- [ ] Verify a Resend sending domain and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `APP_API_URL`.
 - [ ] Enable Secure cookies and restrict CORS to production HTTPS origins.
 - [ ] Validate reverse proxy headers, health checks, Docker restart policy, and persistent MongoDB/Redis storage.
 - [ ] Configure database backup, log retention, monitoring, and error/latency alerts.

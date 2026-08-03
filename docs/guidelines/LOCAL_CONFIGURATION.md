@@ -1,8 +1,10 @@
 # Local Configuration Guide
 
-This guide documents local-only credentials and startup behavior. Do not commit `application-local.yml`, secrets, downloaded OAuth JSON files, or production environment values.
+This guide documents local-only credentials and startup behavior. Do not commit `backend/config/application-local.yml`, secrets, downloaded OAuth JSON files, or production environment values.
 
 ## Local Profile
+
+Copy `backend/config/application-local.example.yml` to `backend/config/application-local.yml`, then set its local-only values. The `config` directory is outside the built JAR and Spring Boot discovers it automatically.
 
 Run the backend with the `local` Spring profile:
 
@@ -10,11 +12,11 @@ Run the backend with the `local` Spring profile:
 mvn "-Dspring-boot.run.profiles=local" spring-boot:run
 ```
 
-Spring loads `application.yml` and overrides it with `application-local.yml`. Restart the backend after changing any credential or configuration value.
+Spring loads `application.yml` and overrides it with `backend/config/application-local.yml`. Restart the backend after changing any credential or configuration value.
 
 ## Cloudinary
 
-`application-local.yml` contains local Cloudinary configuration under `app.cloudinary`.
+`backend/config/application-local.yml` contains local Cloudinary configuration under `app.cloudinary`.
 
 ```yaml
 app:
@@ -76,4 +78,4 @@ Add the developer Gmail account to OAuth Consent Screen test users while the app
 
 ## Production Boundary
 
-AWS must use environment variables or a secrets manager, not `application-local.yml`. Production requires HTTPS, `secure-cookies: true`, real frontend/API domains, production Google redirect URI, and a dedicated restricted Cloudinary key.
+AWS must run with `SPRING_PROFILES_ACTIVE=prod` and use environment variables or a secrets manager, not `backend/config/application-local.yml`. The `application-prod.yml` profile fails startup when required secrets are absent. Production requires HTTPS, `secure-cookies: true`, real frontend/API domains, production Google redirect URI, and a dedicated restricted Cloudinary key.

@@ -87,7 +87,8 @@ app:
     access-token-expiration: 3600 # 1 giờ (giây)
     refresh-token-expiration: 604800 # 7 ngày (giây)
   resend:
-    api-key: ${RESEND_API_KEY:re_123456789}
+    api-key: ${RESEND_API_KEY:}
+  public-api-url: ${APP_API_URL:http://localhost:8080/api}
   cloudinary:
     cloud-name: ${CLOUDINARY_CLOUD_NAME:demo}
     api-key: ${CLOUDINARY_API_KEY:1234567890}

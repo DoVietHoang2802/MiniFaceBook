@@ -1,0 +1,49 @@
+# Production is intentionally fail-fast: required secrets have no fallback values.
+spring:
+  config:
+    activate:
+      on-profile: prod
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+      auto-index-creation: false
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+logging:
+  level:
+    root: INFO
+    com.minifacebook: INFO
+    org.springframework.data.mongodb: WARN
+
+sentry:
+  dsn: ${SENTRY_DSN}
+  environment: production
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+
+server:
+  forward-headers-strategy: framework
+
+app:
+  rate-limit:
+    capacity: ${RATE_LIMIT_CAPACITY:1000}
+  jwt:
+    secret: ${JWT_SECRET}
+  resend:
+    api-key: ${RESEND_API_KEY}
+    from-email: ${RESEND_FROM_EMAIL}
+    from-name: ${RESEND_FROM_NAME:MiniFaceBook}
+  public-api-url: ${APP_API_URL}
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME}
+    api-key: ${CLOUDINARY_API_KEY}
+    api-secret: ${CLOUDINARY_API_SECRET}
+    verify-on-startup: true
+  oauth:
+    google:
+      enabled: ${GOOGLE_OAUTH_ENABLED:true}
+      client-id: ${GOOGLE_CLIENT_ID}
+      client-secret: ${GOOGLE_CLIENT_SECRET}
+      frontend-url: ${APP_FRONTEND_URL}
+      secure-cookies: true
