@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -194,33 +195,57 @@ public class AdminService {
      */
     @Transactional
     public void deletePostByAdmin(String postId, String reason) {
-        PostDocument post = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
+        deletePostsByAdmin(List.of(postId), reason);
+    }
 
-        post.setDeleted(true);
-        post.setDeletedAt(Instant.now());
-        postRepository.save(post);
+    @Transactional
+    public void deletePostsByAdmin(List<String> postIds, String reason) {
+        if (postIds == null || postIds.isEmpty() || postIds.size() > 50) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
 
-        // Gửi thông báo đến tác giả bài viết
-        NotificationEvent notification = NotificationEvent.builder()
-                .actorId("ADMIN")
-                .recipientId(post.getAuthorId())
-                .type("SYSTEM_MODERATION")
-                .entityId(postId)
-                .content("Bài viết của bạn đã bị Quản trị viên xóa. Lý do: " + (reason != null ? reason : "Vi phạm tiêu chuẩn cộng đồng"))
-                .build();
+        Set<String> uniquePostIds = new LinkedHashSet<>();
+        for (String postId : postIds) {
+            if (postId == null || postId.isBlank()) {
+                throw new AppException(ErrorCode.INVALID_KEY);
+            }
+            uniquePostIds.add(postId);
+        }
 
-        eventPublisher.publishEvent(notification);
+        List<PostDocument> posts = new java.util.ArrayList<>();
+        postRepository.findAllById(List.copyOf(uniquePostIds)).forEach(posts::add);
+        if (posts.size() != uniquePostIds.size() || posts.stream().anyMatch(PostDocument::isDeleted)) {
+            throw new AppException(ErrorCode.POST_NOT_FOUND);
+        }
 
-        // Phát sóng tín hiệu WebSocket Realtime xóa bài viết 0ms tới tất cả Client đang lướt Feed
+        Instant now = Instant.now();
+        posts.forEach(post -> {
+            post.setDeleted(true);
+            post.setDeletedAt(now);
+        });
+        postRepository.saveAll(posts);
+
+        String deletionReason = reason == null || reason.isBlank()
+                ? "Vi phạm tiêu chuẩn cộng đồng" : reason.trim();
+        for (PostDocument post : posts) {
+            NotificationEvent notification = NotificationEvent.builder()
+                    .actorId("ADMIN")
+                    .recipientId(post.getAuthorId())
+                    .type("SYSTEM_MODERATION")
+                    .entityId(post.getId())
+                    .content("Bài viết của bạn đã bị Quản trị viên xóa. Lý do: " + deletionReason)
+                    .build();
+            eventPublisher.publishEvent(notification);
+        }
+
         try {
-            messagingTemplate.convertAndSend("/topic/posts/deleted", postId);
+            posts.forEach(post -> messagingTemplate.convertAndSend("/topic/posts/deleted", post.getId()));
             messagingTemplate.convertAndSend("/topic/admin/stats", getDashboardStats());
         } catch (Exception e) {
             log.error("Failed to broadcast post delete event via WebSocket STOMP", e);
         }
 
-        log.info("[ADMIN] Post [{}] deleted by Admin. Reason: {}", postId, reason);
+        log.info("[ADMIN] {} post(s) deleted by Admin. Reason: {}", posts.size(), deletionReason);
     }
 
     /**

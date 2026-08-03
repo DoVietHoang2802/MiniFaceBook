@@ -150,6 +150,9 @@ public class SecurityConfig {
 
     if (googleOAuthProperties.isEnabled()) {
       httpSecurity.oauth2Login(oauth -> oauth
+          .authorizationEndpoint(authorization -> authorization
+              .authorizationRequestResolver(new GoogleAccountChooserAuthorizationRequestResolver(
+                  googleClientRegistrationRepository())))
           .successHandler(googleOAuthSuccessHandler)
           .failureHandler(googleOAuthFailureHandler));
     }

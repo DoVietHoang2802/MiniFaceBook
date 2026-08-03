@@ -130,7 +130,7 @@ const RegisterForm: React.FC = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
+      <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3.5 sm:space-y-4">
         {/* Name Input */}
         <div className="space-y-1.5">
           <label htmlFor="register-name" className={labelClass}>Họ và tên</label>
@@ -138,11 +138,13 @@ const RegisterForm: React.FC = () => {
             <span className={iconClass}><User className="h-5 w-5" /></span>
             <input
               id="register-name"
+              name="registration-name"
               type="text"
               placeholder="Nguyễn Văn A"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={inputClass}
+              autoComplete="off"
               disabled={isLoading}
             />
           </div>
@@ -156,11 +158,13 @@ const RegisterForm: React.FC = () => {
             <span className={iconClass}><Mail className="h-5 w-5" /></span>
             <input
               id="register-email"
+              name="registration-email"
               type="email"
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={inputClass}
+              autoComplete="off"
               disabled={isLoading}
             />
           </div>
@@ -174,11 +178,13 @@ const RegisterForm: React.FC = () => {
             <span className={iconClass}><Lock className="h-5 w-5" /></span>
             <input
               id="register-password"
+              name="registration-password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={inputWithToggleClass}
+              autoComplete="new-password"
               disabled={isLoading}
             />
             <button
@@ -215,11 +221,13 @@ const RegisterForm: React.FC = () => {
             <span className={iconClass}><Lock className="h-5 w-5" /></span>
             <input
               id="register-confirm"
+              name="registration-confirm-password"
               type={showConfirmPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={inputWithToggleClass}
+              autoComplete="new-password"
               disabled={isLoading}
             />
             <button

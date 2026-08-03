@@ -1,6 +1,7 @@
 package com.minifacebook.module.admin.presentation;
 
 import com.minifacebook.module.admin.application.dto.AdminBroadcastRequest;
+import com.minifacebook.module.admin.application.dto.AdminBulkDeletePostsRequest;
 import com.minifacebook.module.admin.application.dto.AdminPostResponse;
 import com.minifacebook.module.admin.application.dto.AdminStatsResponse;
 import com.minifacebook.module.admin.application.dto.AdminUserResponse;
@@ -101,6 +102,17 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .status(200)
                 .message("Đã xóa bài viết vi phạm thành công")
+                .build());
+    }
+
+    @DeleteMapping("/posts")
+    public ResponseEntity<ApiResponse<Void>> deletePosts(
+            @Valid @RequestBody AdminBulkDeletePostsRequest request
+    ) {
+        adminService.deletePostsByAdmin(request.getPostIds(), request.getReason());
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .status(200)
+                .message("Đã xóa các bài viết vi phạm thành công")
                 .build());
     }
 

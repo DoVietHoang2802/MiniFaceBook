@@ -96,7 +96,7 @@ test.describe('Mobile responsive shell', () => {
     expect(listBox!.y + listBox!.height).toBeLessThanOrEqual(mobileNavBox!.y + 1);
   });
 
-  test('uses a compact composer and moves logout into profile overflow actions', async ({ page, request }) => {
+  test('uses a compact composer without unfinished post actions', async ({ page, request }) => {
     await registerAndLogin(
       page,
       request,
@@ -116,9 +116,8 @@ test.describe('Mobile responsive shell', () => {
     const dialog = page.getByTestId('create-post-dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText('Check-in')).toBeHidden();
-    await dialog.getByRole('button', { name: 'Thêm vào bài viết' }).click();
-    await expect(dialog.getByRole('button', { name: /Check-in/ })).toBeVisible();
-    await expect(dialog.getByRole('button', { name: /Khảo sát/ })).toBeVisible();
+    await expect(dialog.getByText('Khảo sát')).toBeHidden();
+    await expect(dialog.getByRole('button', { name: /Ảnh \/ Video/ })).toBeVisible();
     await dialog.getByRole('button', { name: 'Đóng tạo bài viết' }).click();
     await expect(dialog).toBeHidden();
 

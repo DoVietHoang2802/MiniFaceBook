@@ -1,12 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  BarChart3,
   Image as ImageIcon,
   Loader2,
-  MapPin,
-  MoreHorizontal,
-  Smile,
   X,
 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
@@ -31,7 +27,6 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showMoreActions, setShowMoreActions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   const canSubmit = content.trim().length > 0 || files.length > 0;
@@ -45,9 +40,8 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
 
     const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !isSubmitting) {
-        setIsExpanded(false);
-        setShowMoreActions(false);
+        if (event.key === 'Escape' && !isSubmitting) {
+          setIsExpanded(false);
       }
     };
 
@@ -153,7 +147,6 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
       setContent('');
       setFiles([]);
       setIsExpanded(false);
-      setShowMoreActions(false);
     } catch (error) {
       console.error('Lỗi khi đăng bài:', error);
       triggerToast('Không thể đăng bài lúc này. Vui lòng thử lại.');
@@ -178,36 +171,27 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
 
   return (
     <>
-      <section data-testid="create-post-card" className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm sm:mb-6 sm:rounded-2xl sm:p-5">
-        <div className="flex items-center gap-2.5 sm:gap-4">
+      <section data-testid="create-post-card" className="mb-4 w-full rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:mb-6 sm:rounded-2xl sm:p-3">
+        <div className="flex items-center gap-2.5">
           {avatar}
           <button
             type="button"
             onClick={openComposer}
-            className="min-h-11 flex-1 rounded-full bg-slate-100 px-4 text-left text-base font-medium text-slate-400 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 sm:text-sm"
+            className="min-h-10 flex-1 rounded-full bg-slate-100 px-4 text-left text-sm font-medium text-slate-400 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
           >
             Bạn đang nghĩ gì thế?
           </button>
-        </div>
-        <div className="mt-3 grid grid-cols-2 border-t border-slate-100 pt-2">
           <button
             type="button"
             onClick={() => {
               openComposer();
               window.setTimeout(() => fileInputRef.current?.click(), 0);
             }}
-            className="min-h-11 flex items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold text-emerald-600 transition hover:bg-emerald-50"
+            aria-label="Thêm ảnh hoặc video"
+            className="flex h-10 w-11 shrink-0 flex-col items-center justify-center rounded-xl text-emerald-600 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
           >
-            <ImageIcon className="h-4 w-4" />
-            Ảnh / Video
-          </button>
-          <button
-            type="button"
-            onClick={openComposer}
-            className="min-h-11 flex items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold text-amber-500 transition hover:bg-amber-50"
-          >
-            <Smile className="h-4 w-4" />
-            Cảm xúc
+            <ImageIcon className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Ảnh</span>
           </button>
         </div>
       </section>
@@ -227,7 +211,11 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
           <button
             type="button"
             aria-label="Đóng tạo bài viết"
-            onClick={() => !isSubmitting && setIsExpanded(false)}
+            onClick={() => {
+              if (!isSubmitting) {
+                setIsExpanded(false);
+              }
+            }}
             className="absolute inset-0 cursor-default"
           />
           <section
@@ -241,7 +229,11 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
               <button
                 type="button"
                 aria-label="Đóng tạo bài viết"
-                onClick={() => !isSubmitting && setIsExpanded(false)}
+                onClick={() => {
+                  if (!isSubmitting) {
+                    setIsExpanded(false);
+                  }
+                }}
                 className="flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100"
               >
                 <X className="h-5 w-5" />
@@ -296,24 +288,10 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
                 </div>
               )}
 
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
+              <div className="rounded-2xl border border-slate-200 bg-white">
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-sm font-bold text-emerald-600 hover:bg-emerald-50">
                   <ImageIcon className="h-5 w-5" /> Ảnh / Video
                 </button>
-                <button type="button" onClick={() => triggerToast('Tính năng Bày tỏ cảm xúc sẽ ra mắt ở Phase tiếp theo!')} className="flex min-h-12 w-full items-center gap-3 border-t border-slate-100 px-4 text-left text-sm font-bold text-amber-500 hover:bg-amber-50">
-                  <Smile className="h-5 w-5" /> Cảm xúc
-                </button>
-                <div className="relative border-t border-slate-100">
-                  <button type="button" onClick={() => setShowMoreActions((value) => !value)} aria-expanded={showMoreActions} className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-sm font-bold text-slate-600 hover:bg-slate-50">
-                    <MoreHorizontal className="h-5 w-5" /> Thêm vào bài viết
-                  </button>
-                  {showMoreActions && (
-                    <div className="grid grid-cols-2 gap-1 border-t border-slate-100 bg-slate-50 p-2">
-                      <button type="button" onClick={() => triggerToast('Tính năng Đăng ký điểm đến sẽ ra mắt ở Phase tiếp theo!')} className="min-h-11 rounded-xl px-3 text-left text-xs font-bold text-rose-500 hover:bg-rose-50"><MapPin className="mr-1.5 inline h-4 w-4" />Check-in</button>
-                      <button type="button" onClick={() => triggerToast('Tính năng Tạo cuộc bình chọn sẽ ra mắt ở Phase tiếp theo!')} className="min-h-11 rounded-xl px-3 text-left text-xs font-bold text-violet-600 hover:bg-violet-50"><BarChart3 className="mr-1.5 inline h-4 w-4" />Khảo sát</button>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </section>

@@ -27,6 +27,8 @@ import {
   User,
   CheckCircle,
   XCircle,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { adminService } from '../services/adminService';
 import type { AdminStats, AdminUser, AdminPost } from '../services/adminService';
@@ -56,7 +58,9 @@ export const AdminDashboardPage: React.FC = () => {
   const [postTotalElements, setPostTotalElements] = useState(0);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
-  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [postIdsPendingDeletion, setPostIdsPendingDeletion] = useState<string[]>([]);
+  const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
+  const [isDeletingPosts, setIsDeletingPosts] = useState(false);
 
   // Broadcast State
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -97,7 +101,11 @@ export const AdminDashboardPage: React.FC = () => {
     try {
       if (!isSilent) setLoadingPosts(true);
       const res = await adminService.getPosts(postSearch, page, 10);
-      setPosts(res.content || []);
+      const pagePosts = res.content || [];
+      setPosts(pagePosts);
+      setSelectedPostIds((previousIds) => new Set(
+        Array.from(previousIds).filter((postId) => pagePosts.some((post: AdminPost) => post.id === postId))
+      ));
       setPostTotalPages(res.totalPages || 0);
       setPostTotalElements(res.totalElements || 0);
     } catch (err) {
@@ -160,6 +168,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleSearchPostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSelectedPostIds(new Set());
     setPostPage(0);
     fetchPosts(false, 0);
   };
@@ -172,6 +181,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handlePostPageChange = (newPage: number) => {
     if (newPage < 0 || newPage >= postTotalPages) return;
+    setSelectedPostIds(new Set());
     setPostPage(newPage);
     fetchPosts(false, newPage);
   };
@@ -203,14 +213,41 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
+  const togglePostSelection = (postId: string) => {
+    setSelectedPostIds((previousIds) => {
+      const nextIds = new Set(previousIds);
+      if (nextIds.has(postId)) {
+        nextIds.delete(postId);
+      } else {
+        nextIds.add(postId);
+      }
+      return nextIds;
+    });
+  };
+
+  const toggleSelectAllPosts = () => {
+    setSelectedPostIds((previousIds) => (
+      previousIds.size === posts.length ? new Set() : new Set(posts.map((post) => post.id))
+    ));
+  };
+
+  const handleDeletePosts = async () => {
+    if (postIdsPendingDeletion.length === 0 || isDeletingPosts) return;
     try {
-      await adminService.deletePost(postId, deleteReason);
-      setDeletingPostId(null);
+      setIsDeletingPosts(true);
+      if (postIdsPendingDeletion.length === 1) {
+        await adminService.deletePost(postIdsPendingDeletion[0], deleteReason);
+      } else {
+        await adminService.deletePosts(postIdsPendingDeletion, deleteReason);
+      }
+      setPostIdsPendingDeletion([]);
       setDeleteReason('');
+      setSelectedPostIds(new Set());
       fetchPosts();
     } catch (err) {
-      alert('Xóa bài viết thất bại!');
+      alert('Xóa các bài viết thất bại!');
+    } finally {
+      setIsDeletingPosts(false);
     }
   };
 
@@ -600,6 +637,30 @@ export const AdminDashboardPage: React.FC = () => {
             </button>
           </form>
 
+          {posts.length > 0 && (
+            <div data-testid="admin-bulk-post-actions" className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-3 shadow-lg">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={selectedPostIds.size === posts.length}
+                onClick={toggleSelectAllPosts}
+                className="flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs font-bold text-slate-300 transition hover:border-purple-500 hover:text-white"
+              >
+                {selectedPostIds.size === posts.length ? <CheckSquare className="h-4 w-4 text-purple-400" /> : <Square className="h-4 w-4 text-slate-500" />}
+                {selectedPostIds.size === posts.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả trang này'}
+              </button>
+              <span className="text-xs font-bold text-slate-400">Đã chọn: <span className="text-purple-300">{selectedPostIds.size}</span></span>
+              <button
+                type="button"
+                disabled={selectedPostIds.size === 0}
+                onClick={() => setPostIdsPendingDeletion(Array.from(selectedPostIds))}
+                className="ml-auto flex min-h-10 items-center gap-1.5 rounded-xl bg-rose-600 px-3 text-xs font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Trash2 className="h-4 w-4" /> Xóa đã chọn
+              </button>
+            </div>
+          )}
+
           {/* POSTS GRID */}
           {loadingPosts ? (
             <div className="py-16 text-center text-slate-500">
@@ -632,13 +693,25 @@ export const AdminDashboardPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => setDeletingPostId(p.id)}
-                        className="min-h-11 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 transition cursor-pointer text-xs font-bold flex items-center space-x-1"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>Xóa bài</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={selectedPostIds.has(p.id)}
+                          aria-label={`Chọn bài viết của ${p.authorName}`}
+                          onClick={() => togglePostSelection(p.id)}
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${selectedPostIds.has(p.id) ? 'border-purple-500 bg-purple-950 text-purple-300' : 'border-slate-700 bg-slate-950 text-slate-500 hover:text-slate-300'}`}
+                        >
+                          {selectedPostIds.has(p.id) ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => setPostIdsPendingDeletion([p.id])}
+                          className="min-h-11 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 transition cursor-pointer text-xs font-bold flex items-center space-x-1"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Xóa bài</span>
+                        </button>
+                      </div>
                     </div>
 
                     <p className="text-xs text-slate-300 mt-3 line-clamp-3 leading-relaxed">{p.content}</p>
@@ -708,15 +781,15 @@ export const AdminDashboardPage: React.FC = () => {
           )}
 
           {/* MODAL REASON DELETE POST */}
-          {deletingPostId && (
+          {postIdsPendingDeletion.length > 0 && (
             <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-fade-in-up">
                 <div className="flex items-center space-x-2 text-rose-400 font-bold text-base">
                   <ShieldAlert className="h-5 w-5" />
-                  <span>Xác nhận xóa bài viết vi phạm</span>
+                  <span>Xác nhận xóa {postIdsPendingDeletion.length > 1 ? `${postIdsPendingDeletion.length} bài viết` : 'bài viết'} vi phạm</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Nhập lý do xóa bài viết để thông báo tự động tới tác giả:
+                  Nhập lý do xóa để thông báo tự động tới tác giả của các bài viết đã chọn:
                 </p>
                 <textarea
                   rows={3}
@@ -727,15 +800,18 @@ export const AdminDashboardPage: React.FC = () => {
                 />
                 <div className="flex justify-end space-x-2">
                   <button
-                    onClick={() => setDeletingPostId(null)}
+                    onClick={() => setPostIdsPendingDeletion([])}
+                    disabled={isDeletingPosts}
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold cursor-pointer"
                   >
                     Hủy bỏ
                   </button>
                   <button
-                    onClick={() => handleDeletePost(deletingPostId)}
-                    className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer shadow-lg"
+                    onClick={handleDeletePosts}
+                    disabled={isDeletingPosts}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                   >
+                    {isDeletingPosts && <Loader2 className="h-4 w-4 animate-spin" />}
                     Xóa ngay
                   </button>
                 </div>

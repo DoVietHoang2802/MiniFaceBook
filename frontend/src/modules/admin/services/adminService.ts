@@ -75,6 +75,11 @@ export const adminService = {
     return res.data.data;
   },
 
+  deletePosts: async (postIds: string[], reason?: string) => {
+    const res = await axiosClient.delete('/admin/posts', { data: { postIds, reason } });
+    return res.data.data;
+  },
+
   broadcastNotification: async (payload: AdminBroadcastPayload) => {
     const res = await axiosClient.post('/admin/broadcast', payload);
     return res.data.data;
