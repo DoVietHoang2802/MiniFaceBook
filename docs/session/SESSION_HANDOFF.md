@@ -1,9 +1,9 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 04/08/2026
-## 🏁 Trạng thái hiện tại: 🟡 AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã hoạt động. Cần deploy bản sửa CORS để frontend production gọi API được.
+## 🏁 Trạng thái hiện tại: 🟡 AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã hoạt động. CORS credentialed đã xác minh cho `miniface.site` và `www.miniface.site`; Cloudinary production credential cần được thay trước khi test upload.
 
-> ⚠️ **Lưu ý lộ trình:** CORS phải chỉ cho phép `https://miniface.site` và `https://www.miniface.site` qua `CORS_ALLOWED_ORIGINS`. Không commit `.env.production`, EC2 key, Atlas URI, OAuth/Cloudinary/Resend credentials hoặc dữ liệu đăng ký tên miền.
+> ⚠️ **Lưu ý lộ trình:** CORS chỉ cho phép `https://miniface.site` và `https://www.miniface.site` qua `CORS_ALLOWED_ORIGINS`. Cloudinary startup hiện báo API key không hợp lệ, do đó phải xoay/thay credential AWS-only trước khi test upload. Không commit `.env.production`, EC2 key, Atlas URI, OAuth/Cloudinary/Resend credentials hoặc dữ liệu đăng ký tên miền.
 
 ---
 

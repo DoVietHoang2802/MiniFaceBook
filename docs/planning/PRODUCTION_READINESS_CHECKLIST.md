@@ -7,7 +7,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - Backend health is available through `https://api.miniface.site/api/actuator/health`.
 - The frontend is deployed on Vercel at `https://www.miniface.site`.
 - Backend suite (59 tests) passed locally before the CORS deployment.
-- Production browser verification is pending the CORS rebuild and deployment.
+- Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 
 ## High Priority Validation
 
@@ -26,7 +26,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [x] Store JWT, Cloudinary, Google OAuth, MongoDB, Redis, and mail credentials in AWS-only environment variables.
 - [ ] Configure and manually test the production Google OAuth redirect URI, consent screen, privacy-policy URL, and terms URL.
 - [x] Verify a Resend sending domain and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `APP_API_URL`.
-- [ ] Deploy `CORS_ALLOWED_ORIGINS` and verify credentialed requests from both production frontend origins.
+- [x] Deploy `CORS_ALLOWED_ORIGINS` and verify credentialed requests from both production frontend origins.
 - [x] Validate reverse proxy headers, health checks, Docker restart policy, and persistent Redis storage.
 - [ ] Configure database backup, log retention, monitoring, and error/latency alerts.
 - [ ] Run a staging-sized load test for feed, search, upload, and authentication flows.

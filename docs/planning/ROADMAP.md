@@ -351,7 +351,7 @@
     - [x] Deploy React Frontend lên Vercel.
 - [ ] **Sprint 7.3: Domain & Security Setup**
     - [x] Cấu hình custom domain và HTTPS cho `api.miniface.site` và `www.miniface.site`.
-    - [ ] Deploy CORS update, sau đó kiểm tra credentialed API requests từ frontend Vercel.
+    - [x] Deploy CORS update và kiểm tra credentialed API requests từ cả hai frontend origins.
     - [ ] Kiểm tra Google OAuth callback, Cloudinary upload và Resend email trên production.
 
 ---

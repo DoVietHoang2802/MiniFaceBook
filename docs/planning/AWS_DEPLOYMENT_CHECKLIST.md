@@ -12,7 +12,7 @@
 - [x] Vercel frontend deployed with the production API URL.
 - [x] Production DNS and HTTPS configured for the API and frontend domains.
 - [x] Resend domain records verified.
-- [ ] Deploy the production CORS update and verify browser requests from both frontend domains.
+- [x] Deploy the production CORS update and verify browser requests from both frontend domains.
 - [ ] Complete and verify the Google OAuth production consent and callback configuration.
 
 ## Production Architecture
@@ -183,7 +183,7 @@ https://api.<domain>/api/login/oauth2/code/google
 ## 9. Final Release Verification
 
 - [x] Backend health check passes through HTTPS.
-- [ ] Frontend can call the API over HTTPS without CORS errors.
+- [x] Frontend can call the API over HTTPS without CORS errors.
 - [ ] Local password signup/login works.
 - [ ] Google OAuth works with account chooser.
 - [ ] Post image upload works with Cloudinary production credentials.
