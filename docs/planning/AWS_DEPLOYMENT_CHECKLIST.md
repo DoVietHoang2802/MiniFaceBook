@@ -8,9 +8,12 @@
 - [x] SSH access verified with the local EC2 key pair.
 - [x] Docker, Git, Docker Compose, and 1 GB swap verified on the EC2 instance.
 - [x] Elastic IP assigned and added to MongoDB Atlas Network Access.
-- [ ] Backend and Redis deployed to AWS.
-- [ ] Vercel frontend connected to the production API.
-- [ ] Production DNS, HTTPS, Resend, and Google OAuth configured.
+- [x] Backend and Redis deployed to AWS.
+- [x] Vercel frontend deployed with the production API URL.
+- [x] Production DNS and HTTPS configured for the API and frontend domains.
+- [x] Resend domain records verified.
+- [ ] Deploy the production CORS update and verify browser requests from both frontend domains.
+- [ ] Complete and verify the Google OAuth production consent and callback configuration.
 
 ## Production Architecture
 
@@ -107,6 +110,7 @@ GOOGLE_CLIENT_SECRET
 GOOGLE_OAUTH_ENABLED=true
 APP_FRONTEND_URL
 APP_API_URL
+CORS_ALLOWED_ORIGINS
 RESEND_API_KEY
 RESEND_FROM_EMAIL
 RESEND_FROM_NAME
@@ -124,7 +128,11 @@ cp .env.production.example .env.production
 chmod 600 .env.production
 ```
 
-Fill `.env.production` privately, then start the containers:
+Fill `.env.production` privately. Set `CORS_ALLOWED_ORIGINS` to the comma-separated public frontend origins, then start the containers:
+
+```text
+CORS_ALLOWED_ORIGINS=https://miniface.site,https://www.miniface.site
+```
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.prod.yml up --build -d
@@ -133,6 +141,8 @@ curl http://127.0.0.1:8080/api/actuator/health
 ```
 
 ## 5. Configure DNS and HTTPS
+
+Domain configuration is tracked in [DOMAIN_CONFIGURATION.md](DOMAIN_CONFIGURATION.md). DNS is managed through Tenten / GMO-Z.com RunSystem.
 
 1. Point `api.<domain>` to the AWS Elastic IP.
 2. Point the root domain or `www.<domain>` to Vercel.
@@ -143,7 +153,7 @@ curl http://127.0.0.1:8080/api/actuator/health
 ## 6. Deploy Frontend to Vercel
 
 1. Import the GitHub repository into Vercel.
-2. Configure the frontend production API URL as `https://api.<domain>/api`.
+2. Set `VITE_API_BASE_URL` to `https://api.<domain>/api` for Production and Preview. Do not use `VITE_API_URL`.
 3. Connect the frontend domain in Vercel.
 4. Verify login, refresh, and CORS behavior over HTTPS.
 
@@ -172,7 +182,7 @@ https://api.<domain>/api/login/oauth2/code/google
 
 ## 9. Final Release Verification
 
-- [ ] Backend health check passes through HTTPS.
+- [x] Backend health check passes through HTTPS.
 - [ ] Frontend can call the API over HTTPS without CORS errors.
 - [ ] Local password signup/login works.
 - [ ] Google OAuth works with account chooser.

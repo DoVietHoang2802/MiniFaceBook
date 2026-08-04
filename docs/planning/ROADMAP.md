@@ -340,18 +340,19 @@
 
 ---
 
-## 🚀 PHASE 7: PRODUCTION DEPLOYMENT ⏳
+## 🚀 PHASE 7: PRODUCTION DEPLOYMENT 🟡
 *Mục tiêu: Đưa ứng dụng chạy chính thức trên internet.*
 
-- [ ] **Sprint 7.1: Infrastructure Preparation**
-    - [ ] Cấu hình biến môi trường (`Environment Variables`) cho Backend và Frontend.
-    - [ ] Thiết lập file cấu hình CORS cho các tên miền production.
-- [ ] **Sprint 7.2: Cloud Deployment**
-    - [ ] Deploy Spring Boot Backend lên **Render** hoặc **Railway**.
-    - [ ] Deploy React Frontend lên **Vercel** hoặc **Netlify**.
+- [x] **Sprint 7.1: Infrastructure Preparation**
+    - [x] Cấu hình biến môi trường production cho Backend AWS và Frontend Vercel, giữ secrets ngoài Git.
+    - [x] Thiết lập cấu hình CORS đọc từ `CORS_ALLOWED_ORIGINS` cho các tên miền production.
+- [x] **Sprint 7.2: Cloud Deployment**
+    - [x] Deploy Spring Boot Backend và Redis bằng Docker trên AWS EC2, với MongoDB Atlas là database production.
+    - [x] Deploy React Frontend lên Vercel.
 - [ ] **Sprint 7.3: Domain & Security Setup**
-    - [ ] Cấu hình **Custom Domain** và tích hợp **SSL Certificate (HTTPS)**.
-    - [ ] Kiểm tra tích hợp kết nối bảo mật giữa Frontend (Vercel) và Backend (Render).
+    - [x] Cấu hình custom domain và HTTPS cho `api.miniface.site` và `www.miniface.site`.
+    - [ ] Deploy CORS update, sau đó kiểm tra credentialed API requests từ frontend Vercel.
+    - [ ] Kiểm tra Google OAuth callback, Cloudinary upload và Resend email trên production.
 
 ---
 

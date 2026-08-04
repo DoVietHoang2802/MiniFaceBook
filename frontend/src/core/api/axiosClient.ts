@@ -17,7 +17,7 @@ interface FailedRequest {
 
 // Khởi tạo Axios client với cấu hình CORS Credentials chuẩn doanh nghiệp
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
   withCredentials: true, // Bắt buộc gửi và lưu trữ HttpOnly Cookies xuyên suốt domain
 });
 

@@ -68,10 +68,10 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 - **[PROFILE_PRIVACY_POLICY.md](docs/guidelines/PROFILE_PRIVACY_POLICY.md):** Chính sách hiển thị dữ liệu Profile và contract API theo người xem.
 - **[IMAGE_UPLOAD_VALIDATION_PLAN.md](docs/planning/IMAGE_UPLOAD_VALIDATION_PLAN.md):** Policy upload ảnh bài viết, validation và lộ trình Direct Signed Cloudinary Upload.
 - **[GOOGLE_OAUTH_LOGIN_PLAN.md](docs/planning/GOOGLE_OAUTH_LOGIN_PLAN.md):** Kế hoạch Google OAuth/OIDC với JWT HttpOnly cookie và account linking an toàn.
+- **[AWS_DEPLOYMENT_CHECKLIST.md](docs/planning/AWS_DEPLOYMENT_CHECKLIST.md):** Quy trình vận hành AWS, Vercel, DNS, HTTPS và checklist release production.
+- **[DOMAIN_CONFIGURATION.md](docs/planning/DOMAIN_CONFIGURATION.md):** Cấu hình DNS công khai cho frontend và API, không chứa dữ liệu đăng ký tên miền.
 - **[LOCAL_CONFIGURATION.md](docs/guidelines/LOCAL_CONFIGURATION.md):** Cấu hình local Cloudinary, Google OAuth, profile và nguyên tắc giữ secret ngoài Git.
 - **[AI_GUIDELINES.md](docs/guidelines/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
-- **[AI_REPORT_COMMANDS.md](docs/guidelines/AI_REPORT_COMMANDS.md):** Format báo cáo tiến độ chuẩn cho AI.
-- **[DOCUMENTATION_STANDARDS.md](docs/guidelines/DOCUMENTATION_STANDARDS.md):** Đề án chuẩn hóa thư mục tài liệu mới.
 
 ---
 

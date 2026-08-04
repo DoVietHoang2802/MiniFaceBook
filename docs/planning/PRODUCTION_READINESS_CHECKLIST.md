@@ -4,10 +4,10 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 
 ## Current State
 
-- Core Google OAuth local flow, post search, and image upload validation are committed in `0e07188`.
-- Admin bulk post deletion, explicit Google account selection, and local registration autofill guards are ready for review.
-- Frontend build and backend suite (59 tests) passed locally.
-- Production deployment is not yet approved.
+- Backend health is available through `https://api.miniface.site/api/actuator/health`.
+- The frontend is deployed on Vercel at `https://www.miniface.site`.
+- Backend suite (59 tests) passed locally before the CORS deployment.
+- Production browser verification is pending the CORS rebuild and deployment.
 
 ## High Priority Validation
 
@@ -22,12 +22,12 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [x] Keep local-only credentials in `backend/config/application-local.yml`, outside the built JAR.
 - [x] Add the fail-fast `prod` Spring profile with environment-only secrets and Secure OAuth cookies.
 - [ ] Rotate Cloudinary and Google OAuth credentials that were used during local setup.
-- [ ] Configure AWS HTTPS and the production frontend/backend custom domains.
-- [ ] Store JWT, Cloudinary, Google OAuth, MongoDB, Redis, and mail credentials in environment variables or a secrets manager.
-- [ ] Configure production Google OAuth redirect URI, consent screen, privacy-policy URL, and terms URL.
-- [ ] Verify a Resend sending domain and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `APP_API_URL`.
-- [ ] Enable Secure cookies and restrict CORS to production HTTPS origins.
-- [ ] Validate reverse proxy headers, health checks, Docker restart policy, and persistent MongoDB/Redis storage.
+- [x] Configure AWS HTTPS and the production frontend/backend custom domains.
+- [x] Store JWT, Cloudinary, Google OAuth, MongoDB, Redis, and mail credentials in AWS-only environment variables.
+- [ ] Configure and manually test the production Google OAuth redirect URI, consent screen, privacy-policy URL, and terms URL.
+- [x] Verify a Resend sending domain and set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `APP_API_URL`.
+- [ ] Deploy `CORS_ALLOWED_ORIGINS` and verify credentialed requests from both production frontend origins.
+- [x] Validate reverse proxy headers, health checks, Docker restart policy, and persistent Redis storage.
 - [ ] Configure database backup, log retention, monitoring, and error/latency alerts.
 - [ ] Run a staging-sized load test for feed, search, upload, and authentication flows.
 

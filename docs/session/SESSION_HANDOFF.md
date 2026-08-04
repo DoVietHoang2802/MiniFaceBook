@@ -1,9 +1,9 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 31/07/2026
-## 🏁 Trạng thái hiện tại: 🟡 Cloudinary local integration verified; Google OAuth local core implemented but production hardening pending.
+## 📅 Cập nhật ngày: 04/08/2026
+## 🏁 Trạng thái hiện tại: 🟡 AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã hoạt động. Cần deploy bản sửa CORS để frontend production gọi API được.
 
-> ⚠️ **Lưu ý lộ trình:** Core Phase 7 features đã hoàn thành, nhưng production release vẫn chờ Google OAuth production hardening, Cloudinary direct-upload decision, AWS HTTPS/custom domain/secrets và load verification. Chi tiết xem `ROADMAP.md` và các plan liên quan.
+> ⚠️ **Lưu ý lộ trình:** CORS phải chỉ cho phép `https://miniface.site` và `https://www.miniface.site` qua `CORS_ALLOWED_ORIGINS`. Không commit `.env.production`, EC2 key, Atlas URI, OAuth/Cloudinary/Resend credentials hoặc dữ liệu đăng ký tên miền.
 
 ---
 

@@ -2,6 +2,8 @@
 
 *Tài liệu này ghi chú lại chi tiết những thành quả đã đạt được sau mỗi Phase, giải thích rõ công dụng, lợi ích và lý do của những quyết định kiến trúc trong hệ thống Mini FaceBook.*
 
+> 💡 **Cập nhật ngày 04/08/2026:** AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã được kết nối. CORS production đang được đưa vào backend để cho phép các domain frontend chính thức.
+
 ---
 
 ## 🚀 PHASE 0: FOUNDATION & INFRASTRUCTURE (ĐÃ HOÀN THÀNH 🏆)

@@ -6,6 +6,7 @@ import com.minifacebook.infrastructure.filter.TokenBlacklistFilter;
 import com.minifacebook.shared.dto.ApiResponse;
 import com.minifacebook.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,6 +43,9 @@ public class SecurityConfig {
   private final GoogleOAuthProperties googleOAuthProperties;
   private final GoogleOAuthSuccessHandler googleOAuthSuccessHandler;
   private final GoogleOAuthFailureHandler googleOAuthFailureHandler;
+
+  @Value("${app.cors.allowed-origins}")
+  private List<String> allowedOrigins;
 
   private final String[] PUBLIC_POST_ENDPOINTS = {
     "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect",
@@ -202,7 +206,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
+    configuration.setAllowedOrigins(allowedOrigins);
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
     configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control", "Cookie"));
     configuration.setAllowCredentials(true);

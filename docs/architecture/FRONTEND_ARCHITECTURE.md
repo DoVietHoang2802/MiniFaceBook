@@ -69,7 +69,7 @@ Vì Backend và Frontend chạy khác Origin (Cổng 8080 vs 5173), trình duy�
 *   **Frontend Axios:** Phải kích hoạt thuộc tính `withCredentials: true` toàn cục:
     ```typescript
     const axiosClient = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
       withCredentials: true, // Cho phép gửi và lưu trữ HttpOnly Cookies xuyên suốt domain
       headers: {
         'Content-Type': 'application/json',
