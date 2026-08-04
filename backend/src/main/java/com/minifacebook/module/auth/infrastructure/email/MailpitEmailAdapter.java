@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * Đặt tại phân lớp Infrastructure của Auth module.
  */
 @Service
-@Profile({"local", "test"})
+@Profile("!prod")
 @Slf4j
 @RequiredArgsConstructor
 public class MailpitEmailAdapter implements EmailService {
