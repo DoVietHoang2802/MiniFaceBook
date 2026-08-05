@@ -60,8 +60,8 @@ export default function GlobalCallOverlay({
   const drag = (event: PointerEvent<HTMLDivElement>) => {
     const offset = dragOffsetRef.current;
     if (!offset) return;
-    const width = 240;
-    const height = 96;
+    const width = 288;
+    const height = 176;
     setPosition({
       x: Math.max(8, Math.min(event.clientX - offset.x, window.innerWidth - width - 8)),
       y: Math.max(8, Math.min(event.clientY - offset.y, window.innerHeight - height - 8)),
@@ -91,30 +91,32 @@ export default function GlobalCallOverlay({
       />
       {minimized && createPortal(
         <div
-          className="fixed z-[999998] flex h-24 w-60 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/95 text-white shadow-2xl backdrop-blur"
+          className="fixed z-[999998] h-44 w-72 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl"
           style={position ? { left: position.x, top: position.y } : { right: 16, bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
           onPointerDown={startDrag}
           onPointerMove={drag}
           onPointerUp={() => { dragOffsetRef.current = null; }}
         >
           {isVideo && remoteStream ? (
-            <video ref={remotePreviewRef} autoPlay muted playsInline className="h-full w-24 shrink-0 object-cover" />
+            <video ref={remotePreviewRef} autoPlay muted playsInline className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-20 shrink-0 items-center justify-center bg-violet-700 text-xl font-bold">
+            <div className="flex h-full w-full items-center justify-center bg-violet-700 text-5xl font-bold">
               {peerAvatar ? <img src={peerAvatar} alt="" className="h-full w-full object-cover" /> : peerName[0]?.toUpperCase()}
             </div>
           )}
-          <div className="min-w-0 flex-1 p-2">
-            <div className="cursor-grab truncate text-xs font-bold active:cursor-grabbing">
+          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-slate-950/95 via-slate-950/55 to-transparent p-3 pt-10">
+            <div className="min-w-0 cursor-grab active:cursor-grabbing">
+              <div className="truncate text-sm font-bold">
               {peerName}
+              </div>
+              <p className="mt-0.5 text-xs text-violet-100">{callStatus === 'CONNECTED' ? 'Cuộc gọi đang diễn ra' : 'Đang gọi...'}</p>
             </div>
-            <p className="mt-1 text-[11px] text-violet-200">{callStatus === 'CONNECTED' ? 'Cuộc gọi đang diễn ra' : 'Đang gọi...'}</p>
-            <div className="mt-2 flex gap-2">
-              <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRestore} className="rounded-lg bg-slate-700 p-1.5 hover:bg-slate-600" title="Mở lại cuộc gọi" aria-label="Mở lại cuộc gọi">
-                <Maximize2 className="h-3.5 w-3.5" />
+            <div className="flex shrink-0 gap-2">
+              <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRestore} className="rounded-xl bg-slate-700/90 p-2 hover:bg-slate-600" title="Mở lại cuộc gọi" aria-label="Mở lại cuộc gọi">
+                <Maximize2 className="h-4 w-4" />
               </button>
-              <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onEndCall} className="rounded-lg bg-red-600 p-1.5 hover:bg-red-500" title="Kết thúc cuộc gọi" aria-label="Kết thúc cuộc gọi">
-                <PhoneOff className="h-3.5 w-3.5" />
+              <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onEndCall} className="rounded-xl bg-red-600 p-2 hover:bg-red-500" title="Kết thúc cuộc gọi" aria-label="Kết thúc cuộc gọi">
+                <PhoneOff className="h-4 w-4" />
               </button>
             </div>
           </div>
