@@ -159,7 +159,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   const modalJSX = (
     <div
       onClick={handleBackdropClick}
-      className="fixed inset-x-0 top-0 z-[99999] h-[100dvh] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center p-0 md:p-6 animate-fade-in"
+      className="fixed inset-0 z-[99999] h-[100dvh] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center p-0 md:p-6 animate-fade-in"
     >
       <div
         className="bg-white md:rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row w-full h-full md:w-[90vw] md:max-w-6xl md:h-[90vh] animate-scale-up"
