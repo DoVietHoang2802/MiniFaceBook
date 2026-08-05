@@ -506,7 +506,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
       <div key={comment.id} className={`flex gap-2 group animate-fade-in-up ${isReply ? 'py-0.5' : ''}`}>
         <div
           onClick={() => navigate(`/profile/${comment.authorId}`)}
-          className={`${isReply ? 'h-7 w-7' : 'h-8 w-8'} rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer hover:opacity-85 transition-opacity shadow-sm`}
+          className={`${isReply ? 'h-8 w-8 sm:h-7 sm:w-7' : 'h-9 w-9 sm:h-8 sm:w-8'} rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer hover:opacity-85 transition-opacity shadow-sm`}
         >
           {comment.authorAvatar ? (
             <img src={comment.authorAvatar} alt={authorName} className="h-full w-full object-cover" />
@@ -523,12 +523,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
               <div className="bg-slate-100/80 px-3.5 py-2 rounded-2xl break-words">
                 <span
                   onClick={() => navigate(`/profile/${comment.authorId}`)}
-                  className="font-bold text-slate-800 text-[0.85rem] block leading-tight mb-0.5 cursor-pointer hover:text-violet-600 transition-colors"
+                  className="font-bold text-slate-800 text-[0.95rem] sm:text-[0.85rem] block leading-tight mb-0.5 cursor-pointer hover:text-violet-600 transition-colors"
                 >
                   {authorName}
                 </span>
                 {comment.content && (
-                  <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">
+                  <span className="text-slate-700 text-[1rem] sm:text-[0.9rem] leading-snug whitespace-pre-wrap">
                     {comment.content}
                   </span>
                 )}

@@ -173,7 +173,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
       >
         {/* LEFT PANEL: Responsive Image Viewer or Stylized Light Card */}
         {hasImages ? (
-            <div className={`${isCommentComposerFocused ? 'hidden md:flex' : 'flex'} flex-none h-[30dvh] max-h-[250px] w-full bg-slate-950 items-center justify-center relative select-none md:flex-1 md:h-full md:max-h-none md:w-auto group`}>
+            <div className={`${isCommentComposerFocused ? 'hidden md:flex' : 'flex'} flex-none h-[25dvh] max-h-[220px] w-full bg-slate-950 items-center justify-center relative select-none md:flex-1 md:h-full md:max-h-none md:w-auto group`}>
             <img
               src={localPost.imageUrls[currentImgIdx]}
               alt={`Post image ${currentImgIdx + 1}`}

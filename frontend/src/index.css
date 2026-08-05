@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+[data-reaction-press] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
 @theme {
   --color-background: hsl(210 40% 98%);
   --color-card: hsl(0 0% 100%);

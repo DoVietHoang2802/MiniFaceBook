@@ -13,6 +13,7 @@ export function useReactionLongPress({ onTap, onLongPress, onMouseClick }: UseRe
   const timerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
+  const suppressClickRef = useRef(false);
   const lastPointerTypeRef = useRef<string | null>(null);
   const callbacksRef = useRef({ onTap, onLongPress, onMouseClick });
 
@@ -37,6 +38,8 @@ export function useReactionLongPress({ onTap, onLongPress, onMouseClick }: UseRe
     activePointerIdRef.current = event.pointerId;
     lastPointerTypeRef.current = event.pointerType;
     longPressTriggeredRef.current = false;
+    suppressClickRef.current = false;
+    event.preventDefault();
     timerRef.current = window.setTimeout(() => {
       timerRef.current = null;
       longPressTriggeredRef.current = true;
@@ -48,6 +51,10 @@ export function useReactionLongPress({ onTap, onLongPress, onMouseClick }: UseRe
     if (activePointerIdRef.current !== event.pointerId) return;
     clearTimer();
     activePointerIdRef.current = null;
+    if (!longPressTriggeredRef.current) {
+      callbacksRef.current.onTap();
+    }
+    suppressClickRef.current = true;
   };
 
   const cancelPointer = (event: ReactPointerEvent<HTMLElement>) => {
@@ -58,8 +65,9 @@ export function useReactionLongPress({ onTap, onLongPress, onMouseClick }: UseRe
   };
 
   const onClick = (event: ReactMouseEvent<HTMLElement>) => {
-    if (longPressTriggeredRef.current) {
+    if (suppressClickRef.current || longPressTriggeredRef.current) {
       event.preventDefault();
+      suppressClickRef.current = false;
       longPressTriggeredRef.current = false;
       lastPointerTypeRef.current = null;
       return;
@@ -74,6 +82,7 @@ export function useReactionLongPress({ onTap, onLongPress, onMouseClick }: UseRe
   };
 
   return {
+    'data-reaction-press': true,
     onClick,
     onPointerDown,
     onPointerUp: finishPointer,
