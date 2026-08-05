@@ -9,6 +9,7 @@ import ReactionsModal from './ReactionsModal';
 import { postService } from '../services/postService';
 import { useMutation } from '@tanstack/react-query';
 import { sseService } from '../../core/services/sseService';
+import { useReactionLongPress } from '../../../core/hooks/useReactionLongPress';
 
 interface PostDetailModalProps {
   post: PostResponse;
@@ -128,6 +129,12 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
     setIsHoveringReaction(false);
   };
 
+  const reactionLongPressHandlers = useReactionLongPress({
+    onTap: () => handleReact('LIKE'),
+    onLongPress: () => setIsHoveringReaction(true),
+    onMouseClick: () => handleReact(localPost.myReactionType || 'LIKE'),
+  });
+
   const hasImages = localPost.imageUrls && localPost.imageUrls.length > 0;
 
   const topReactionTypes = Object.entries(localPost.reactionsCount || {})
@@ -159,7 +166,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   const modalJSX = (
     <div
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-[99999] h-[100dvh] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center p-0 md:p-6 animate-fade-in"
+      className="fixed inset-0 z-[99999] h-[100dvh] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:p-6 animate-fade-in"
     >
       <div
         className="bg-white md:rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row w-full h-full md:w-[90vw] md:max-w-6xl md:h-[90vh] animate-scale-up"
@@ -318,8 +325,12 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
             <div className="flex items-center justify-between gap-1 pt-1">
               <div
                 className="relative"
-                onMouseEnter={() => setIsHoveringReaction(true)}
-                onMouseLeave={() => setIsHoveringReaction(false)}
+                onPointerEnter={(event) => {
+                  if (event.pointerType === 'mouse') setIsHoveringReaction(true);
+                }}
+                onPointerLeave={(event) => {
+                  if (event.pointerType === 'mouse') setIsHoveringReaction(false);
+                }}
               >
                 {isHoveringReaction && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pb-2">
@@ -328,7 +339,8 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                 )}
 
                 <button
-                  onClick={() => handleReact(localPost.myReactionType || 'LIKE')}
+                  {...reactionLongPressHandlers}
+                  aria-label="Thích bài viết. Nhấn giữ để chọn cảm xúc"
                   className={`flex items-center space-x-1.5 py-1.5 px-3 rounded-lg transition-all cursor-pointer ${
                     localPost.myReactionType && REACTION_ICONS[localPost.myReactionType]
                       ? `${REACTION_ICONS[localPost.myReactionType].color} ${

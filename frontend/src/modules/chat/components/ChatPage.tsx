@@ -51,6 +51,7 @@ import { useCall } from '../context/CallContext';
 import { postService } from '../../post/services/postService';
 import type { PostResponse } from '../../post/types/post.types';
 import PostDetailModal from '../../post/components/PostDetailModal';
+import { useReactionLongPress } from '../../../core/hooks/useReactionLongPress';
 
 const EMOJI_CATEGORIES = [
   {
@@ -92,6 +93,62 @@ interface ChatPageProps {
 
 // Bộ cảm xúc cho tin nhắn (Sprint 4.4 - Message Reactions). Phải khớp ALLOWED_EMOJIS ở backend.
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '😡'];
+
+interface MessageReactionButtonProps {
+  message: MessageResponse;
+  currentUserId: string;
+  isMe: boolean;
+  isPickerOpen: boolean;
+  onPickerChange: (messageId: string | null) => void;
+  onReact: (messageId: string, emoji: string) => void;
+}
+
+function MessageReactionButton({
+  message,
+  currentUserId,
+  isMe,
+  isPickerOpen,
+  onPickerChange,
+  onReact,
+}: MessageReactionButtonProps) {
+  const reactionLongPressHandlers = useReactionLongPress({
+    onTap: () => onReact(message.id, '👍'),
+    onLongPress: () => onPickerChange(message.id),
+    onMouseClick: () => onPickerChange(isPickerOpen ? null : message.id),
+  });
+
+  return (
+    <>
+      <button
+        type="button"
+        {...reactionLongPressHandlers}
+        className="h-11 w-11 md:h-6 md:w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition cursor-pointer"
+        title="Thả cảm xúc"
+        aria-label="Thả thích tin nhắn. Nhấn giữ để chọn cảm xúc"
+      >
+        <Smile className="h-3.5 w-3.5" />
+      </button>
+
+      {isPickerOpen && (
+        <div className={`absolute z-20 bottom-full mb-1 flex items-center gap-0.5 bg-white border border-slate-200 rounded-full px-1.5 py-1 shadow-lg animate-fade-in ${isMe ? 'right-0' : 'left-0'}`}>
+          {REACTION_EMOJIS.map((emoji) => {
+            const active = message.reactions?.[currentUserId] === emoji;
+            return (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => onReact(message.id, emoji)}
+                className={`h-7 w-7 rounded-full flex items-center justify-center text-base hover:scale-125 transition cursor-pointer ${active ? 'bg-violet-100' : 'hover:bg-slate-100'}`}
+              >
+                {emoji}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function ChatPage({
   currentUser: propCurrentUser,
@@ -1625,14 +1682,14 @@ export default function ChatPage({
                                 >
                                   <Reply className="h-3.5 w-3.5" />
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setReactionPickerFor(reactionPickerFor === m.id ? null : m.id)}
-                                  className="h-11 w-11 md:h-6 md:w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition cursor-pointer"
-                                  title="Thả cảm xúc"
-                                >
-                                  <Smile className="h-3.5 w-3.5" />
-                                </button>
+                                <MessageReactionButton
+                                  message={m}
+                                  currentUserId={currentUser.id}
+                                  isMe={isMe}
+                                  isPickerOpen={reactionPickerFor === m.id}
+                                  onPickerChange={setReactionPickerFor}
+                                  onReact={handleReact}
+                                />
 
                                 {/* Sửa - chỉ tin TEXT của mình, trong 15 phút (Sprint 4.5) */}
                                 {!m.deleted && isMe && m.type === 'TEXT' && within15Min(m.createdAt) && (
@@ -1680,24 +1737,6 @@ export default function ChatPage({
                                   </div>
                                 )}
 
-                                {/* Picker popup */}
-                                {reactionPickerFor === m.id && (
-                                  <div className={`absolute z-20 bottom-full mb-1 flex items-center gap-0.5 bg-white border border-slate-200 rounded-full px-1.5 py-1 shadow-lg animate-fade-in ${isMe ? 'right-0' : 'left-0'}`}>
-                                    {REACTION_EMOJIS.map((emo) => {
-                                      const active = m.reactions?.[currentUser.id] === emo;
-                                      return (
-                                        <button
-                                          key={emo}
-                                          type="button"
-                                          onClick={() => handleReact(m.id, emo)}
-                                          className={`h-7 w-7 rounded-full flex items-center justify-center text-base hover:scale-125 transition cursor-pointer ${active ? 'bg-violet-100' : 'hover:bg-slate-100'}`}
-                                        >
-                                          {emo}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                )}
                               </div>
                             </div>
 

@@ -10,6 +10,7 @@ import { sseService } from '../../core/services/sseService';
 import ReactionPicker from './ReactionPicker';
 import ReactionsModal from './ReactionsModal';
 import { REACTION_ICONS } from './reactionConfig';
+import { useReactionLongPress } from '../../../core/hooks/useReactionLongPress';
 
 interface CommentSectionProps {
   postId: string;
@@ -23,6 +24,60 @@ const MAX_RAW_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_FINAL_FILE_BYTES = 10 * 1024 * 1024;
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const COMMENT_EMOJIS = ['😀', '😂', '😍', '🥰', '😢', '😡', '👍', '👎', '🎉', '🔥', '❤️', '🙏'];
+
+interface CommentReactionButtonProps {
+  commentId: string;
+  activeReaction: { label: string; color: string } | null;
+  isPickerOpen: boolean;
+  onPickerChange: (commentId: string | null) => void;
+  onReact: (type: ReactionType) => void;
+}
+
+const CommentReactionButton: React.FC<CommentReactionButtonProps> = ({
+  commentId,
+  activeReaction,
+  isPickerOpen,
+  onPickerChange,
+  onReact,
+}) => {
+  const reactionLongPressHandlers = useReactionLongPress({
+    onTap: () => onReact('LIKE'),
+    onLongPress: () => onPickerChange(commentId),
+    onMouseClick: () => onPickerChange(isPickerOpen ? null : commentId),
+  });
+
+  return (
+    <div
+      className="relative"
+      onPointerEnter={(event) => {
+        if (event.pointerType === 'mouse') onPickerChange(commentId);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === 'mouse') onPickerChange(null);
+      }}
+    >
+      {isPickerOpen && (
+        <div className="absolute bottom-full left-0 z-30 pb-2">
+          <ReactionPicker
+            onSelect={(type) => {
+              onReact(type);
+              onPickerChange(null);
+            }}
+          />
+        </div>
+      )}
+
+      <button
+        type="button"
+        {...reactionLongPressHandlers}
+        aria-label="Thích bình luận. Nhấn giữ để chọn cảm xúc"
+        className={`min-h-11 px-1 text-[11px] font-bold hover:underline ${activeReaction ? activeReaction.color : 'text-slate-500'}`}
+      >
+        {activeReaction?.label || 'Thích'}
+      </button>
+    </div>
+  );
+};
 
 const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, currentUser, onCommentCountChange, onComposerFocusChange }) => {
   const navigate = useNavigate();
@@ -547,30 +602,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
 
           <div className="flex items-center gap-3 px-3 mt-1 relative flex-wrap">
             <span className="text-[11px] text-slate-500">{formatTime(comment.createdAt)}</span>
-            <div
-              className="relative"
-              onMouseEnter={() => setReactionPickerFor(comment.id)}
-              onMouseLeave={() => setReactionPickerFor((prev) => (prev === comment.id ? null : prev))}
-            >
-              {reactionPickerFor === comment.id && (
-                <div className="absolute bottom-full left-0 z-30 pb-2">
-                  <ReactionPicker
-                    onSelect={(type) => {
-                      reactMutation.mutate({ commentId: comment.id, type });
-                      setReactionPickerFor(null);
-                    }}
-                  />
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setReactionPickerFor((previous) => previous === comment.id ? null : comment.id)}
-                className={`min-h-11 px-1 text-[11px] font-bold hover:underline ${activeReaction ? activeReaction.color : 'text-slate-500'}`}
-              >
-                {activeReaction?.label || 'Thích'}
-              </button>
-            </div>
+            <CommentReactionButton
+              commentId={comment.id}
+              activeReaction={activeReaction}
+              isPickerOpen={reactionPickerFor === comment.id}
+              onPickerChange={setReactionPickerFor}
+              onReact={(type) => reactMutation.mutate({ commentId: comment.id, type })}
+            />
             <button
               onClick={() => {
                 // Reply luôn trỏ vào comment gốc (top-level) nếu đang click trên reply

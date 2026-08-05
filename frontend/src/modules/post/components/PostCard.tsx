@@ -11,6 +11,7 @@ import PostDetailModal from './PostDetailModal';
 import ReactionsModal from './ReactionsModal';
 import { chatService } from '../../chat/services/chatService';
 import type { ConversationResponse } from '../../chat/types/chat.types';
+import { useReactionLongPress } from '../../../core/hooks/useReactionLongPress';
 
 interface PostCardProps {
   post: PostResponse;
@@ -45,8 +46,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   const [isLoadingShareConversations, setIsLoadingShareConversations] = useState(false);
   const [sendingToConversationId, setSendingToConversationId] = useState<string | null>(null);
   const reactionAreaRef = React.useRef<HTMLDivElement>(null);
-  const longPressTimerRef = React.useRef<number | null>(null);
-  const longPressTriggeredRef = React.useRef(false);
 
   const deletePostMutation = useMutation({
     mutationFn: () => postService.deletePost(localPost.id),
@@ -103,12 +102,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     document.addEventListener('pointerdown', handlePointerDown);
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [isHoveringReaction]);
-
-  React.useEffect(() => () => {
-    if (longPressTimerRef.current !== null) {
-      window.clearTimeout(longPressTimerRef.current);
-    }
-  }, []);
 
   const openSharePicker = async () => {
     setIsLoadingShareConversations(true);
@@ -174,31 +167,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
     setIsHoveringReaction(false);
   };
 
-  const startReactionLongPress = (event: React.PointerEvent) => {
-    if (event.pointerType === 'mouse') return;
-
-    longPressTriggeredRef.current = false;
-    longPressTimerRef.current = window.setTimeout(() => {
-      longPressTriggeredRef.current = true;
-      setIsHoveringReaction(true);
-    }, 450);
-  };
-
-  const cancelReactionLongPress = () => {
-    if (longPressTimerRef.current !== null) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  };
-
-  const handlePrimaryReaction = () => {
-    cancelReactionLongPress();
-    if (longPressTriggeredRef.current) {
-      longPressTriggeredRef.current = false;
-      return;
-    }
-    handleReact(localPost.myReactionType || 'LIKE');
-  };
+  const reactionLongPressHandlers = useReactionLongPress({
+    onTap: () => handleReact('LIKE'),
+    onLongPress: () => setIsHoveringReaction(true),
+    onMouseClick: () => handleReact(localPost.myReactionType || 'LIKE'),
+  });
 
   const [showReactionsModal, setShowReactionsModal] = useState(false);
 
@@ -435,8 +408,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
           <div
             ref={reactionAreaRef}
             className="flex-1 flex justify-center relative"
-            onMouseEnter={() => setIsHoveringReaction(true)}
-            onMouseLeave={() => setIsHoveringReaction(false)}
+            onPointerEnter={(event) => {
+              if (event.pointerType === 'mouse') setIsHoveringReaction(true);
+            }}
+            onPointerLeave={(event) => {
+              if (event.pointerType === 'mouse') setIsHoveringReaction(false);
+            }}
           >
             {isHoveringReaction && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pb-2">
@@ -445,11 +422,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             )}
 
             <button
-              onClick={handlePrimaryReaction}
-              onPointerDown={startReactionLongPress}
-              onPointerUp={cancelReactionLongPress}
-              onPointerCancel={cancelReactionLongPress}
-              onPointerLeave={cancelReactionLongPress}
+              {...reactionLongPressHandlers}
               aria-label="Thích bài viết. Nhấn giữ để chọn cảm xúc"
               className={`flex min-h-11 items-center space-x-1.5 sm:space-x-2 px-2 w-full rounded-xl transition-all cursor-pointer justify-center select-none touch-none ${localPost.myReactionType && REACTION_ICONS[localPost.myReactionType] ? `${REACTION_ICONS[localPost.myReactionType].color} ${REACTION_ICONS[localPost.myReactionType].bgColor} font-bold` : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
             >
