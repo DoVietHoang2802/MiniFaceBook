@@ -191,6 +191,10 @@ export default function ChatPage({
 
   // Message Reactions: messageId đang mở picker cảm xúc (Sprint 4.4)
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const messageLongPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const messageLongPressIdRef = useRef<string | null>(null);
+  const messageLongPressTriggeredRef = useRef(false);
 
   // Reply to Message: tin nhắn đang được chuẩn bị trả lời (Sprint 4.4)
   const [replyingTo, setReplyingTo] = useState<MessageResponse | null>(null);
@@ -790,6 +794,38 @@ export default function ChatPage({
 
     webSocketService.send('/app/chat.react', { messageId, emoji });
   }, [currentUser.id]);
+
+  const startMessageLongPress = (messageId: string, event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' || !event.isPrimary) return;
+    event.preventDefault();
+    if (messageLongPressTimerRef.current) window.clearTimeout(messageLongPressTimerRef.current);
+    messageLongPressIdRef.current = messageId;
+    messageLongPressTriggeredRef.current = false;
+    messageLongPressTimerRef.current = window.setTimeout(() => {
+      messageLongPressTimerRef.current = null;
+      messageLongPressTriggeredRef.current = true;
+      setReactionPickerFor(messageId);
+    }, 450);
+  };
+
+  const finishMessageLongPress = (messageId: string, event: React.PointerEvent<HTMLDivElement>) => {
+    if (messageLongPressIdRef.current !== messageId) return;
+    if (messageLongPressTimerRef.current) window.clearTimeout(messageLongPressTimerRef.current);
+    messageLongPressTimerRef.current = null;
+    messageLongPressIdRef.current = null;
+    if (!messageLongPressTriggeredRef.current && event.target instanceof HTMLElement && !event.target.closest('img, button, a')) {
+      handleReact(messageId, '👍');
+    }
+    if (messageLongPressTriggeredRef.current) {
+      window.setTimeout(() => { messageLongPressTriggeredRef.current = false; }, 0);
+    }
+  };
+
+  const cancelMessageLongPress = () => {
+    if (messageLongPressTimerRef.current) window.clearTimeout(messageLongPressTimerRef.current);
+    messageLongPressTimerRef.current = null;
+    messageLongPressIdRef.current = null;
+  };
 
   // Chọn ảnh → thêm vào tray preview (tối đa 4), KHÔNG gửi ngay (Sprint 4.4 - Media)
   const handleSelectImages = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1598,7 +1634,22 @@ export default function ChatPage({
                                 </div>
                               </div>
                             )}
-                            <div className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div
+                              data-reaction-press
+                              onPointerDown={(event) => startMessageLongPress(m.id, event)}
+                              onPointerUp={(event) => finishMessageLongPress(m.id, event)}
+                              onPointerCancel={cancelMessageLongPress}
+                              onPointerLeave={cancelMessageLongPress}
+                              onContextMenu={(event) => event.preventDefault()}
+                              onClickCapture={(event) => {
+                                if (messageLongPressTriggeredRef.current) {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  messageLongPressTriggeredRef.current = false;
+                                }
+                              }}
+                              className={`flex items-center gap-1 group ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                            >
                               <div
                                 className={`relative z-10 ${m.deleted ? 'px-4 py-2.5 italic opacity-80' : m.type === 'IMAGE' ? 'p-1' : 'px-4 py-2.5'} rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${m.deleted
                                     ? (isMe ? 'bg-violet-300 text-white rounded-br-md' : 'bg-slate-100 text-slate-400 rounded-bl-md border border-slate-200/60')
@@ -1615,7 +1666,7 @@ export default function ChatPage({
                                       src={m.mediaUrl}
                                       alt="Ảnh"
                                       className="rounded-xl max-w-[220px] max-h-[280px] object-cover block cursor-pointer"
-                                      onClick={() => m.mediaUrl && window.open(m.mediaUrl, '_blank')}
+                                      onClick={() => m.mediaUrl && setPreviewImageUrl(m.mediaUrl)}
                                     />
                                     {/* Overlay progress khi đang upload */}
                                     {m.status === 'PENDING' && uploadProgress[m.id] !== undefined && (
@@ -2424,6 +2475,23 @@ export default function ChatPage({
           currentUser={currentUser}
           onClose={() => setSharedPostDetail(null)}
         />
+      )}
+
+      {previewImageUrl && (
+        <div
+          className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/95 p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+          onClick={() => setPreviewImageUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImageUrl(null)}
+            className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] rounded-full bg-black/50 p-3 text-white"
+            aria-label="Đóng ảnh"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img src={previewImageUrl} alt="Ảnh trong cuộc trò chuyện" className="max-h-full max-w-full rounded-xl object-contain" onClick={(event) => event.stopPropagation()} />
+        </div>
       )}
 
     </div>
