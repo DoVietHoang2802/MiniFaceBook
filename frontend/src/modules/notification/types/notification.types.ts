@@ -4,6 +4,7 @@ export type NotificationType = 'LIKE' | 'COMMENT' | 'FRIEND_REQUEST' | 'FRIEND_A
 /** Một thông báo trả về từ backend (đã enrich thông tin actor). */
 export interface NotificationResponse {
   id: string;
+  recipientId: string;
   actorId: string;
   actorName: string;
   actorAvatar?: string | null;

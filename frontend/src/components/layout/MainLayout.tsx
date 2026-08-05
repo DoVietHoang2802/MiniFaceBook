@@ -163,7 +163,7 @@ export const MainLayout: React.FC = () => {
     loadNotifications,
     markAsRead: markNotifAsRead,
     markAllAsRead: markAllNotifAsRead,
-  } = useNotifications(!!user, (n) => {
+  } = useNotifications(user?.id, (n) => {
     triggerToast(`${n.actorName} ${n.content ?? 'có hoạt động mới'}`);
   });
 

@@ -132,15 +132,16 @@ class WebSocketService {
   /**
    * Gửi message tới server (đi qua @MessageMapping).
    */
-  send(destination: string, body: unknown): void {
+  send(destination: string, body: unknown): boolean {
     if (!this.client?.connected) {
       console.warn('[WebSocket] Not connected, cannot send to', destination);
-      return;
+      return false;
     }
     this.client.publish({
       destination,
       body: JSON.stringify(body),
     });
+    return true;
   }
 
   /**

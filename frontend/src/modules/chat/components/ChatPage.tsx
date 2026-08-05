@@ -396,9 +396,14 @@ export default function ChatPage({
       (payload) => {
         if (payload.type === 'NEW_MESSAGE') {
           const newMsg = payload.data;
+          let isNewConversation = false;
 
           // Cập nhật danh sách conversation
           setConversations((prev) => {
+            if (!prev.some((conversation) => conversation.id === newMsg.conversationId)) {
+              isNewConversation = true;
+              return prev;
+            }
             const updated = prev.map((c) => {
               if (c.id === newMsg.conversationId) {
                 return {
@@ -418,6 +423,10 @@ export default function ChatPage({
             // Sắp xếp lại hội thoại có tin nhắn mới nhất lên đầu
             return [...updated].sort((a, b) => new Date(b.lastMessageAt || b.createdAt).getTime() - new Date(a.lastMessageAt || a.createdAt).getTime());
           });
+
+          if (isNewConversation) {
+            void loadConversations();
+          }
 
           // Nếu là hội thoại đang active, append vào khung chat
           if (activeConversationRef.current?.id === newMsg.conversationId) {
@@ -1020,12 +1029,15 @@ export default function ChatPage({
 
     try {
       // Gửi message qua WebSocket STOMP
-      webSocketService.send('/app/chat.send', {
+      const sent = webSocketService.send('/app/chat.send', {
         conversationId: activeConversation.id,
         content: contentToSend,
         type: 'TEXT',
         replyToMessageId: replyingTo?.id ?? null
       });
+      if (!sent) {
+        throw new Error('WebSocket is disconnected');
+      }
       // Clear reply state sau khi gửi thành công
       setReplyingTo(null);
     } catch {
@@ -1211,7 +1223,7 @@ export default function ChatPage({
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Search friends or messages"
-                className="w-full pl-9 pr-3 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-xs text-slate-700 transition-all font-medium"
+                className="w-full pl-9 pr-3 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[16px] sm:text-xs text-slate-700 transition-all font-medium"
               />
             </div>
             <button
@@ -1927,7 +1939,7 @@ export default function ChatPage({
                   enterKeyHint="send"
                   autoComplete="off"
                   onFocus={handleComposerFocus}
-                  className="w-full min-h-11 pl-4 pr-11 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-base sm:text-sm text-slate-700 transition-all font-medium"
+                  className="w-full min-h-11 pl-4 pr-11 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[16px] sm:text-sm text-slate-700 transition-all font-medium"
                 />
                 <button 
                   type="button" 
@@ -2195,7 +2207,7 @@ export default function ChatPage({
                   value={friendSearchText}
                   onChange={(e) => setFriendSearchText(e.target.value)}
                   placeholder="Tìm bạn bè..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-xs text-slate-700 transition-all font-medium"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 text-[16px] sm:text-xs text-slate-700 transition-all font-medium"
                 />
               </div>
             </div>

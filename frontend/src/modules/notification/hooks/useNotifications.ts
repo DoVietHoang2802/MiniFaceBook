@@ -11,7 +11,7 @@ import { webSocketService } from '../../chat/services/webSocketService';
  * - Có thông báo mới → prepend vào danh sách + tăng badge (+ toast tùy chọn).
  * - Cung cấp hành động đánh dấu đã đọc / tất cả đã đọc với Optimistic UI.
  */
-export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationResponse) => void) {
+export function useNotifications(userId?: string, onNew?: (n: NotificationResponse) => void) {
   const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
 
   // Nạp số chưa đọc + subscribe realtime khi đăng nhập.
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!userId) {
       setNotifications([]);
       setUnreadCount(0);
       setLoaded(false);
@@ -73,7 +73,7 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
       .catch(() => {});
 
     const handleIncomingNotif = (raw: NotificationResponse) => {
-      if (!raw) return;
+      if (!raw || raw.recipientId !== userId) return;
       const notif = normalizeNotification(raw);
       setNotifications((prev) => {
         if (prev.some((n) => n.id === notif.id)) return prev; // chống trùng
@@ -107,7 +107,7 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
       unsubscribeSSE();
       unsubWS();
     };
-  }, [isLoggedIn]);
+  }, [userId]);
 
   return {
     notifications,
