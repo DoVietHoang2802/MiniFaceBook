@@ -6,19 +6,7 @@
  *
  * <p>Lưu ý: SSE chỉ one-way (server → client). Client gửi request qua REST.
  */
-const BACKEND_ORIGIN = 'http://localhost:8080';
-
-/**
- * Lấy JWT token từ localStorage (key 'accessToken').
- * Nếu không có, trả về null.
- */
-function getAccessToken(): string | null {
-  try {
-    return localStorage.getItem('accessToken') || null;
-  } catch {
-    return null;
-  }
-}
+import { apiUrl } from '../../../core/api/apiUrl';
 
 export class SseService {
   private connections = new Map<string, EventSource>();
@@ -35,14 +23,9 @@ export class SseService {
     // Nếu đã có connection cho URL này, thêm listener
     let eventSource = this.connections.get(url);
     if (!eventSource) {
-      // Build absolute URL with token query param if available
-      const token = getAccessToken();
-      let absoluteUrl = `${BACKEND_ORIGIN}${url}`;
-      if (token) {
-        const separator = url.includes('?') ? '&' : '?';
-        absoluteUrl += `${separator}access_token=${encodeURIComponent(token)}`;
-      }
-      console.log('[SseService] Connecting to:', absoluteUrl);
+      // EventSource sends the HttpOnly session cookie with credentials; never expose JWTs in URLs.
+      const absoluteUrl = apiUrl(url);
+      console.log('[SseService] Connecting to:', url);
       eventSource = new EventSource(absoluteUrl, { withCredentials: true });
       eventSource.onmessage = (event) => {
         try {

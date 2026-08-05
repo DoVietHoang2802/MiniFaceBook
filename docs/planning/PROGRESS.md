@@ -2,7 +2,7 @@
 
 *Tài liệu này ghi chú lại chi tiết những thành quả đã đạt được sau mỗi Phase, giải thích rõ công dụng, lợi ích và lý do của những quyết định kiến trúc trong hệ thống Mini FaceBook.*
 
-> 💡 **Cập nhật ngày 04/08/2026:** AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã được kết nối. CORS credentialed đã xác minh cho cả hai frontend domain. Cloudinary production credential cần được thay trước khi xác nhận upload production.
+> 💡 **Cập nhật ngày 05/08/2026:** AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã được kết nối. Đã thay các realtime `localhost` URLs bằng cấu hình production dùng chung, bổ sung UI xác thực email và đổi tên hiển thị. Cloudinary production credential cần được thay trước khi xác nhận upload production.
 
 ---
 

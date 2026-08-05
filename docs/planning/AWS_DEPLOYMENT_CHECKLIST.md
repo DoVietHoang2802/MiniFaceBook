@@ -155,7 +155,7 @@ Domain configuration is tracked in [DOMAIN_CONFIGURATION.md](DOMAIN_CONFIGURATIO
 1. Import the GitHub repository into Vercel.
 2. Set `VITE_API_BASE_URL` to `https://api.<domain>/api` for Production and Preview. Do not use `VITE_API_URL`.
 3. Connect the frontend domain in Vercel.
-4. Verify login, refresh, and CORS behavior over HTTPS.
+4. Verify login, refresh, CORS, SSE, and SockJS behavior over HTTPS. All frontend transports must derive their URLs from `VITE_API_BASE_URL`.
 
 ## 7. Configure Resend
 

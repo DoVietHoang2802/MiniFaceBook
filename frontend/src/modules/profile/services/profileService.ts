@@ -31,6 +31,7 @@ export interface ApiResponse<T> {
 export const profileService = {
   // Cập nhật thông tin trang cá nhân
   updateProfile: async (data: { 
+    name?: string;
     avatar?: string; 
     bio?: string;
     city?: string;

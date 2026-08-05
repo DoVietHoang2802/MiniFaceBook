@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -36,6 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
+
+  @Value("${app.oauth.google.secure-cookies:false}")
+  private boolean secureCookies;
 
   /** Đăng ký tài khoản người dùng mới. */
   @PostMapping("/register")
@@ -249,7 +253,7 @@ public class AuthController {
   private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
     ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
         .httpOnly(true)
-        .secure(false) // Trong dev để false, prod để true
+        .secure(secureCookies)
         .path("/api")
         .maxAge(3600) // 1 giờ
         .sameSite("Strict")
@@ -257,7 +261,7 @@ public class AuthController {
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
         .httpOnly(true)
-        .secure(false)
+        .secure(secureCookies)
         .path("/api")
         .maxAge(604800) // 7 ngày
         .sameSite("Strict")
@@ -270,7 +274,7 @@ public class AuthController {
   private void clearTokenCookies(HttpServletResponse response) {
     ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
         .httpOnly(true)
-        .secure(false)
+        .secure(secureCookies)
         .path("/api")
         .maxAge(0)
         .sameSite("Strict")
@@ -278,7 +282,7 @@ public class AuthController {
 
     ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
         .httpOnly(true)
-        .secure(false)
+        .secure(secureCookies)
         .path("/api")
         .maxAge(0)
         .sameSite("Strict")

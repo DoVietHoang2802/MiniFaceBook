@@ -2,7 +2,9 @@ package com.minifacebook.infrastructure.config;
 
 import com.minifacebook.infrastructure.security.WebSocketAuthInterceptor;
 import com.minifacebook.infrastructure.security.WebSocketChannelInterceptor;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -34,6 +36,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   private final WebSocketAuthInterceptor webSocketAuthInterceptor;
   private final WebSocketChannelInterceptor webSocketChannelInterceptor;
 
+  @Value("${app.cors.allowed-origins}")
+  private List<String> allowedOrigins;
+
   @Override
   public void configureMessageBroker(MessageBrokerRegistry registry) {
     // Prefix cho các message từ client gửi lên server (đi qua @MessageMapping)
@@ -51,7 +56,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry
         .addEndpoint("/ws")
-        .setAllowedOriginPatterns("http://localhost:5173", "http://localhost:5174")
+        .setAllowedOrigins(allowedOrigins.toArray(String[]::new))
         .addInterceptors(webSocketAuthInterceptor) // Đọc JWT từ Cookie khi handshake
         .withSockJS(); // SockJS fallback cho browser không hỗ trợ WebSocket native
   }

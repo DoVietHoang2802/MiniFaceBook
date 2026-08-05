@@ -1,5 +1,6 @@
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { apiUrl } from '../../../core/api/apiUrl';
 
 /** Một "ý định subscribe" được ghi nhớ để tự đăng ký lại sau mỗi lần (re)connect. */
 interface SubscriptionIntent {
@@ -43,7 +44,7 @@ class WebSocketService {
     this.connectionPromise = new Promise((resolve, reject) => {
       this.client = new Client({
         webSocketFactory: () =>
-          new SockJS('http://localhost:8080/api/ws', null, {
+          new SockJS(apiUrl('ws'), null, {
             transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
           }),
         // Cookie tự đính kèm vì SockJS cùng origin (proxy hoặc CORS withCredentials)

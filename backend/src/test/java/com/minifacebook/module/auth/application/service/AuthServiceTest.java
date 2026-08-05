@@ -103,10 +103,10 @@ public class AuthServiceTest {
     @Test
     void updateProfile_EvictsCache() {
         // Arrange
-        UpdateProfileRequest request = UpdateProfileRequest.builder().bio("New Bio").build();
-        User user = User.builder().id("123").email(email).bio("Old Bio").build();
-        User savedUser = User.builder().id("123").email(email).bio("New Bio").build();
-        UserResponse response = UserResponse.builder().email(email).bio("New Bio").build();
+        UpdateProfileRequest request = UpdateProfileRequest.builder().name("  New   Name  ").bio("New Bio").build();
+        User user = User.builder().id("123").email(email).name("Old Name").bio("Old Bio").build();
+        User savedUser = User.builder().id("123").email(email).name("New Name").bio("New Bio").build();
+        UserResponse response = UserResponse.builder().email(email).name("New Name").bio("New Bio").build();
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(savedUser);
@@ -117,6 +117,8 @@ public class AuthServiceTest {
 
         // Assert
         assertNotNull(actualResponse);
+        assertEquals("New Name", user.getName());
+        assertEquals("New Name", actualResponse.getName());
         assertEquals("New Bio", actualResponse.getBio());
         verify(redisTemplate, times(1)).delete(cacheKey);
     }

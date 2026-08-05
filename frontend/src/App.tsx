@@ -12,6 +12,7 @@ import RegisterForm from './modules/auth/components/RegisterForm';
 import ForgotPasswordForm from './modules/auth/components/ForgotPasswordForm';
 import OAuthCallbackPage from './modules/auth/components/OAuthCallbackPage';
 import OAuthCompleteProfilePage from './modules/auth/components/OAuthCompleteProfilePage';
+import VerifyEmailPage from './modules/auth/components/VerifyEmailPage';
 import PostFeed from './modules/post/components/PostFeed';
 import SearchPage from './modules/post/components/SearchPage';
 import FriendsPage from './modules/friends/components/FriendsPage';
@@ -63,6 +64,7 @@ function App() {
               <Route element={<AuthLayout />}>
                 <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
                 <Route path="/oauth/complete-profile" element={<OAuthCompleteProfilePage />} />
+                <Route path="/verify" element={<VerifyEmailPage />} />
               </Route>
 
               {/* Protected routes (chỉ dành cho thành viên đã đăng nhập) */}

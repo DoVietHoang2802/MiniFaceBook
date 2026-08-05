@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { MessageSquare, Share2, Shield, Flame } from 'lucide-react';
+import { apiUrl } from '../../core/api/apiUrl';
 
 export const AuthLayout: React.FC = () => {
   return (
@@ -16,7 +17,7 @@ export const AuthLayout: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex items-center space-x-4">
+        {import.meta.env.DEV && <div className="flex items-center space-x-4">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400 hidden sm:inline-block">
             Hạ tầng Sandbox local
           </span>
@@ -28,7 +29,7 @@ export const AuthLayout: React.FC = () => {
           >
             <span>Mailpit UI</span>
           </a>
-        </div>
+        </div>}
       </header>
 
       <main className="flex-grow flex flex-col items-center px-6 py-6 sm:py-10 z-10 max-w-7xl w-full mx-auto justify-center animate-fade-in-up">
@@ -111,7 +112,7 @@ export const AuthLayout: React.FC = () => {
           <div className="flex space-x-6">
             <a href="#privacy" className="hover:underline">Điều khoản bảo mật</a>
             <a href="#terms" className="hover:underline">Điều khoản dịch vụ</a>
-            <a href="http://localhost:8080/api/docs" target="_blank" rel="noopener noreferrer" className="hover:underline text-violet-600 font-semibold">Swagger API Docs</a>
+            <a href={apiUrl('docs')} target="_blank" rel="noopener noreferrer" className="hover:underline text-violet-600 font-semibold">Swagger API Docs</a>
           </div>
         </div>
       </footer>

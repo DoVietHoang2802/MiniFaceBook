@@ -408,11 +408,14 @@ public class AuthService implements GoogleOAuthLoginPort {
     return response;
   }
 
-  /** Cập nhật thông tin Trang cá nhân (avatar, bio). */
+  /** Cập nhật thông tin Trang cá nhân. */
   public UserResponse updateProfile(String email, UpdateProfileRequest request) {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+    if (request.getName() != null) {
+      user.setName(normalizeDisplayName(request.getName()));
+    }
     if (request.getAvatar() != null) {
       user.setAvatar(request.getAvatar());
     }

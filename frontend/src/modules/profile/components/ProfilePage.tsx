@@ -53,6 +53,10 @@ const avatarFileSchema = z.instanceof(File)
 const bioSchema = z.string()
   .max(255, 'Tiểu sử không được vượt quá 255 ký tự');
 
+const displayNameSchema = z.string()
+  .min(2, 'Tên hiển thị phải có ít nhất 2 ký tự')
+  .max(50, 'Tên hiển thị không được vượt quá 50 ký tự');
+
 const DEFAULT_PROFILE_VISIBILITY: ProfileFieldVisibility = 'FRIENDS';
 
 const getVisibility = (value?: ProfileFieldVisibility | null): ProfileFieldVisibility =>
@@ -183,9 +187,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   const [bio, setBio] = useState(
     isOwnProfile ? (initialUser?.bio || auth.user?.bio || '') : ''
   );
+  const [displayName, setDisplayName] = useState(
+    isOwnProfile ? (initialUser?.name || auth.user?.name || '') : ''
+  );
   const [isLoading, setIsLoading] = useState(!isOwnProfile);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
   
   // Trạng thái tệp tin và upload
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -632,6 +641,33 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
       setErrorMessage(errorMsg);
     } finally {
       setIsSavingBio(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const normalizedName = displayName.normalize('NFC').trim().replace(/\s+/g, ' ');
+    const validationResult = displayNameSchema.safeParse(normalizedName);
+    if (!validationResult.success) {
+      setErrorMessage(validationResult.error.issues[0].message);
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      const response = await profileService.updateProfile({ name: normalizedName });
+      setUser(response.data);
+      setDisplayName(response.data.name || normalizedName);
+      if (isOwnProfile && auth.setUser) {
+        auth.setUser(response.data as any);
+      }
+      setIsEditingName(false);
+      setSuccessMessage('Cập nhật tên hiển thị thành công!');
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || 'Không thể cập nhật tên hiển thị.');
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -1214,9 +1250,40 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                 </h3>
 
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên hiển thị</span>
-                    <span className="text-xs font-extrabold text-slate-700">{(user as any).name || user.email?.split('@')[0] || 'Người dùng'}</span>
+                  <div className="pb-3.5 border-b border-slate-100">
+                    <div className="flex justify-between items-center gap-3">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên hiển thị</span>
+                      {!isEditingName && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDisplayName(user.name || '');
+                            setIsEditingName(true);
+                          }}
+                          className="text-xs font-bold text-violet-600 hover:underline"
+                        >
+                          Chỉnh sửa
+                        </button>
+                      )}
+                    </div>
+                    {isEditingName ? (
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                        <input
+                          type="text"
+                          value={displayName}
+                          onChange={(event) => setDisplayName(event.target.value)}
+                          maxLength={50}
+                          aria-label="Tên hiển thị"
+                          className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                        />
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => setIsEditingName(false)} disabled={isSavingName} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-50">Huỷ</button>
+                          <button type="button" onClick={handleSaveName} disabled={isSavingName} className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-500 disabled:opacity-60">{isSavingName ? 'Đang lưu...' : 'Lưu'}</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="mt-1 block text-xs font-extrabold text-slate-700">{user.name || user.email?.split('@')[0] || 'Người dùng'}</span>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-center pb-3.5 border-b border-slate-100">

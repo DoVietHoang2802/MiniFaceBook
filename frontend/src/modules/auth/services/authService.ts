@@ -57,6 +57,11 @@ export const authService = {
     return response.data;
   },
 
+  verifyEmail: async (token: string): Promise<ApiResponse<string>> => {
+    const response = await axiosClient.get<ApiResponse<string>>('/auth/verify', { params: { token } });
+    return response.data;
+  },
+
   completeGoogleProfile: async (name: string): Promise<ApiResponse<UserResponse>> => {
     const response = await axiosClient.post<ApiResponse<UserResponse>>(
       '/auth/oauth/google/complete-profile',
