@@ -10,6 +10,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 - SSE and SockJS production endpoints are deployed; browser-level verification of notifications, realtime post counts, chat, and calls remains required.
 - Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
+- WebRTC signals carry a unique call session ID so delayed END/ICE messages from a previous call cannot terminate its replacement.
 
 ## High Priority Validation
 

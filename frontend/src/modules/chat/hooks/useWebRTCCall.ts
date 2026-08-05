@@ -167,6 +167,7 @@ export const useWebRTCCall = (
 
     if (targetId) {
       sendSignal({
+        callId: active?.callId || incoming?.callId,
         type: 'END',
         callerId: user.id,
         calleeId: targetId,
@@ -184,6 +185,7 @@ export const useWebRTCCall = (
   const rejectCall = useCallback(() => {
     if (incomingCallRef.current && currentUser?.id) {
       sendSignal({
+        callId: incomingCallRef.current.callId,
         type: 'REJECT',
         callerId: currentUser.id,
         calleeId: incomingCallRef.current.callerId,
@@ -194,12 +196,13 @@ export const useWebRTCCall = (
 
   // Create PeerConnection & setup handlers
   const createPeerConnection = useCallback(
-    (targetUserId: string) => {
+    (targetUserId: string, callId: string) => {
       const pc = new RTCPeerConnection(STUN_SERVERS);
 
       pc.onicecandidate = (event) => {
         if (event.candidate && currentUser?.id) {
           sendSignal({
+            callId,
             type: 'ICE_CANDIDATE',
             callerId: currentUser.id,
             calleeId: targetUserId,
@@ -236,13 +239,15 @@ export const useWebRTCCall = (
       localStreamRef.current = stream;
       setLocalStream(stream);
 
-      const pc = createPeerConnection(calleeId);
+      const callId = crypto.randomUUID();
+      const pc = createPeerConnection(calleeId, callId);
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
       const callInfo: CallSignalMessage = {
+        callId,
         type: 'OFFER',
         callerId: currentUser?.id || '',
         callerName: currentUser?.name || 'Người dùng',
@@ -264,7 +269,7 @@ export const useWebRTCCall = (
 
   // Accept incoming call (Callee)
   const acceptCall = async () => {
-    if (!incomingCall) return;
+    if (!incomingCall?.callId) return;
 
     try {
       const reqVideo = !!incomingCall.isVideo;
@@ -272,7 +277,7 @@ export const useWebRTCCall = (
       localStreamRef.current = stream;
       setLocalStream(stream);
 
-      const pc = createPeerConnection(incomingCall.callerId);
+      const pc = createPeerConnection(incomingCall.callerId, incomingCall.callId);
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       if (incomingCall.sdp) {
@@ -290,6 +295,7 @@ export const useWebRTCCall = (
       setIncomingCall(null);
 
       sendSignal({
+        callId: incomingCall.callId,
         type: 'ANSWER',
         callerId: currentUser?.id || '',
         calleeId: incomingCall.callerId,
@@ -369,11 +375,14 @@ export const useWebRTCCall = (
     const unsubscribe = webSocketService.subscribe<CallSignalMessage>(
       `/topic/call/${currentUser.id}`,
       async (msg) => {
+        const currentCallId = activeCallRef.current?.callId || incomingCallRef.current?.callId;
         switch (msg.type) {
           case 'OFFER': {
+            if (!msg.callId) return;
             if (callStatusRef.current !== 'IDLE') {
               // Auto-reject if busy
               sendSignal({
+                callId: msg.callId,
                 type: 'REJECT',
                 callerId: currentUser.id,
                 calleeId: msg.callerId,
@@ -388,7 +397,7 @@ export const useWebRTCCall = (
           }
 
           case 'ANSWER': {
-            if (peerConnRef.current && msg.sdp) {
+            if (peerConnRef.current && msg.sdp && msg.callId === currentCallId) {
               await peerConnRef.current.setRemoteDescription(new RTCSessionDescription(msg.sdp));
               callStatusRef.current = 'CONNECTED';
               setCallStatus('CONNECTED');
@@ -404,7 +413,7 @@ export const useWebRTCCall = (
           }
 
           case 'ICE_CANDIDATE': {
-            if (msg.candidate) {
+            if (msg.candidate && msg.callId === currentCallId) {
               if (peerConnRef.current && peerConnRef.current.remoteDescription) {
                 await peerConnRef.current.addIceCandidate(new RTCIceCandidate(msg.candidate));
               } else {
@@ -417,7 +426,9 @@ export const useWebRTCCall = (
           case 'REJECT':
           case 'CANCEL':
           case 'END': {
-            cleanupCall();
+            if (msg.callId === currentCallId) {
+              cleanupCall();
+            }
             break;
           }
 

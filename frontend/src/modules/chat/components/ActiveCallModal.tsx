@@ -44,7 +44,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
       localVideoRef.current.srcObject = localStream;
       void localVideoRef.current.play().catch(() => {});
     }
-  }, [isVideo, localStream]);
+  }, [isCameraDisabled, isVideo, localStream]);
 
   // Attach remote stream to video & audio
   useEffect(() => {

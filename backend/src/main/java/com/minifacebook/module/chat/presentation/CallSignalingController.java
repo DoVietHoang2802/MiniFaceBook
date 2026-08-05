@@ -13,6 +13,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
@@ -23,27 +24,32 @@ public class CallSignalingController {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
 
-    // Track active user calls (userId -> peerUserId) for automatic cleanup on disconnect/F5
-    private static final Map<String, String> ACTIVE_USER_CALLS = new ConcurrentHashMap<>();
+    // Track each user and call ID so stale END messages cannot clear a newer call.
+    private static final Map<String, ActiveCall> ACTIVE_USER_CALLS = new ConcurrentHashMap<>();
+
+    private record ActiveCall(String peerUserId, String callId) {}
 
     @MessageMapping("/call.signal")
     public void handleCallSignal(@Payload CallSignalMessage message, Principal principal) {
-        if (principal == null || message == null || message.getCalleeId() == null) {
+        if (principal == null || message == null || message.getCalleeId() == null || message.getCallId() == null) {
             return;
         }
 
         String type = message.getType();
         String callerId = message.getCallerId();
         String calleeId = message.getCalleeId();
+        String callId = message.getCallId();
 
         log.debug("Relaying WebRTC call signal [{}] from [{}] to [{}]", type, callerId, calleeId);
 
         if ("OFFER".equals(type) || "ANSWER".equals(type)) {
-            ACTIVE_USER_CALLS.put(callerId, calleeId);
-            ACTIVE_USER_CALLS.put(calleeId, callerId);
+            ACTIVE_USER_CALLS.put(callerId, new ActiveCall(calleeId, callId));
+            ACTIVE_USER_CALLS.put(calleeId, new ActiveCall(callerId, callId));
         } else if ("END".equals(type) || "REJECT".equals(type) || "CANCEL".equals(type)) {
-            ACTIVE_USER_CALLS.remove(callerId);
-            ACTIVE_USER_CALLS.remove(calleeId);
+            ACTIVE_USER_CALLS.computeIfPresent(callerId,
+                (userId, activeCall) -> Objects.equals(activeCall.callId(), callId) ? null : activeCall);
+            ACTIVE_USER_CALLS.computeIfPresent(calleeId,
+                (userId, activeCall) -> Objects.equals(activeCall.callId(), callId) ? null : activeCall);
         }
 
         // Transfer WebRTC signal to the target user topic /topic/call/{calleeId}
@@ -62,12 +68,15 @@ public class CallSignalingController {
         String email = principal.getName();
         userRepository.findByEmail(email).ifPresent(user -> {
             String userId = user.getId();
-            String peerUserId = ACTIVE_USER_CALLS.remove(userId);
-            if (peerUserId != null) {
-                ACTIVE_USER_CALLS.remove(peerUserId);
+            ActiveCall activeCall = ACTIVE_USER_CALLS.remove(userId);
+            if (activeCall != null) {
+                String peerUserId = activeCall.peerUserId();
+                ACTIVE_USER_CALLS.computeIfPresent(peerUserId,
+                    (peerId, peerCall) -> Objects.equals(peerCall.callId(), activeCall.callId()) ? null : peerCall);
                 log.info("[WebRTC] User [{}] disconnected during call. Sending END signal to peer [{}]", userId, peerUserId);
                 
                 CallSignalMessage endMsg = CallSignalMessage.builder()
+                        .callId(activeCall.callId())
                         .type("END")
                         .callerId(userId)
                         .calleeId(peerUserId)

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CallSignalMessage {
+    private String callId;
     private String type; // "OFFER", "ANSWER", "ICE_CANDIDATE", "REJECT", "END"
     private String callerId;
     private String callerName;
