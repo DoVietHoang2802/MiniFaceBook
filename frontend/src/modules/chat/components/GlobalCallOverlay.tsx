@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useCallback, useRef, useState, type PointerEvent } from 'react';
 import { Maximize2, PhoneOff } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import ActiveCallModal from './ActiveCallModal';
@@ -38,21 +38,26 @@ export default function GlobalCallOverlay({
 }: GlobalCallOverlayProps) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
+  const dragSizeRef = useRef({ width: 288, height: 176 });
   const remotePreviewRef = useRef<HTMLVideoElement>(null);
   const isCallActive = callStatus === 'CALLING' || callStatus === 'CONNECTED';
   const peerName = activeCall?.callerName || incomingCall?.callerName || 'Người dùng';
   const peerAvatar = activeCall?.callerAvatar || incomingCall?.callerAvatar;
   const isVideo = Boolean(activeCall?.isVideo || incomingCall?.isVideo);
 
-  useEffect(() => {
-    if (remotePreviewRef.current && remoteStream) {
-      remotePreviewRef.current.srcObject = remoteStream;
-      void remotePreviewRef.current.play().catch(() => {});
+  const attachRemotePreview = useCallback((video: HTMLVideoElement | null) => {
+    remotePreviewRef.current = video;
+    if (video && remoteStream) {
+      video.srcObject = remoteStream;
+      video.muted = true;
+      video.playsInline = true;
+      void video.play().catch(() => {});
     }
-  }, [minimized, remoteStream]);
+  }, [remoteStream]);
 
   const startDrag = (event: PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
+    dragSizeRef.current = { width: rect.width, height: rect.height };
     dragOffsetRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -60,8 +65,7 @@ export default function GlobalCallOverlay({
   const drag = (event: PointerEvent<HTMLDivElement>) => {
     const offset = dragOffsetRef.current;
     if (!offset) return;
-    const width = 288;
-    const height = 176;
+    const { width, height } = dragSizeRef.current;
     setPosition({
       x: Math.max(8, Math.min(event.clientX - offset.x, window.innerWidth - width - 8)),
       y: Math.max(8, Math.min(event.clientY - offset.y, window.innerHeight - height - 8)),
@@ -91,14 +95,15 @@ export default function GlobalCallOverlay({
       />
       {minimized && createPortal(
         <div
-          className="fixed z-[999998] h-44 w-72 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl"
-          style={position ? { left: position.x, top: position.y } : { right: 16, bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          className="fixed bottom-24 right-3 z-[999998] h-28 w-44 touch-none select-none overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-2xl sm:bottom-4 sm:right-4 sm:h-44 sm:w-72"
+          style={position ? { left: position.x, top: position.y } : undefined}
           onPointerDown={startDrag}
           onPointerMove={drag}
           onPointerUp={() => { dragOffsetRef.current = null; }}
+          onPointerCancel={() => { dragOffsetRef.current = null; }}
         >
           {isVideo && remoteStream ? (
-            <video ref={remotePreviewRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+            <video ref={attachRemotePreview} autoPlay muted playsInline className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-violet-700 text-5xl font-bold">
               {peerAvatar ? <img src={peerAvatar} alt="" className="h-full w-full object-cover" /> : peerName[0]?.toUpperCase()}

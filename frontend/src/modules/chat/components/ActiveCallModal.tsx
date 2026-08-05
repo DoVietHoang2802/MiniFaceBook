@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, CameraOff, Mic, MicOff, Minimize2, PhoneOff } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { CallStatus } from '../types/call.types';
@@ -37,6 +37,25 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraDisabled, setIsCameraDisabled] = useState(false);
   const [duration, setDuration] = useState(0);
+
+  const attachLocalVideo = useCallback((video: HTMLVideoElement | null) => {
+    localVideoRef.current = video;
+    if (video && localStream && !isCameraDisabled) {
+      video.srcObject = localStream;
+      video.muted = true;
+      video.playsInline = true;
+      void video.play().catch(() => {});
+    }
+  }, [isCameraDisabled, localStream]);
+
+  const attachRemoteVideo = useCallback((video: HTMLVideoElement | null) => {
+    remoteVideoRef.current = video;
+    if (video && remoteStream) {
+      video.srcObject = remoteStream;
+      video.playsInline = true;
+      void video.play().catch(() => {});
+    }
+  }, [remoteStream]);
 
   // Attach local stream
   useEffect(() => {
@@ -125,7 +144,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
           {isVideo && remoteStream ? (
             /* Remote Video */
             <video
-              ref={remoteVideoRef}
+              ref={attachRemoteVideo}
               autoPlay
               playsInline
               muted
@@ -154,7 +173,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
             <div className="absolute bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 h-40 w-28 overflow-hidden rounded-2xl border-2 border-violet-500/50 bg-slate-900 shadow-2xl sm:h-48 sm:w-36">
               {hasLocalVideo && !isCameraDisabled ? (
                 <video
-                  ref={localVideoRef}
+                  ref={attachLocalVideo}
                   autoPlay
                   playsInline
                   muted

@@ -7,6 +7,15 @@ const CallProvider = lazy(async () => ({
   default: (await import('../../modules/chat/context/CallContext')).CallProvider,
 }));
 
+function CallProviderLoading() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-50 text-slate-600">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-lg font-black text-white shadow-lg shadow-violet-600/25">H</div>
+      <div className="flex items-center gap-2 text-sm font-semibold"><Loader2 className="h-4 w-4 animate-spin" /> Đang mở MiniFace...</div>
+    </div>
+  );
+}
+
 export const ProtectedRoute: React.FC = () => {
   const { user, isCheckingAuth } = useAuth();
 
@@ -33,13 +42,7 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  return (
-    <Suspense fallback={null}>
-      <CallProvider>
-        <Outlet />
-      </CallProvider>
-    </Suspense>
-  );
+  return <Suspense fallback={<CallProviderLoading />}><CallProvider><Outlet /></CallProvider></Suspense>;
 };
 
 export default ProtectedRoute;
