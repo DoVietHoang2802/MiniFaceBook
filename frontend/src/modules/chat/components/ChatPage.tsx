@@ -126,7 +126,7 @@ function MessageReactionButton({
         title="Thả cảm xúc"
         aria-label="Thả thích tin nhắn. Nhấn giữ để chọn cảm xúc"
       >
-        <Smile className="h-3.5 w-3.5" />
+        <Smile className="h-5 w-5 md:h-3.5 md:w-3.5" />
       </button>
 
       {isPickerOpen && (
@@ -1731,7 +1731,7 @@ export default function ChatPage({
                                   className="h-11 w-11 md:h-6 md:w-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition cursor-pointer"
                                   title="Trả lời"
                                 >
-                                  <Reply className="h-3.5 w-3.5" />
+                                  <Reply className="h-5 w-5 md:h-3.5 md:w-3.5" />
                                 </button>
                                 <MessageReactionButton
                                   message={m}
@@ -1958,10 +1958,10 @@ export default function ChatPage({
                 <button 
                   type="button" 
                   onClick={() => imageInputRef.current?.click()} 
-                  className="h-11 w-11 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer"
+                  className="h-12 w-12 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-violet-600 transition cursor-pointer"
                   title="Chọn ảnh tải lên"
                 >
-                  <ImageIcon className="h-4.5 w-4.5" />
+                  <ImageIcon className="h-5 w-5 sm:h-4.5 sm:w-4.5" />
                 </button>
                 <input
                   ref={imageInputRef}
@@ -2042,17 +2042,17 @@ export default function ChatPage({
                   enterKeyHint="send"
                   autoComplete="off"
                   onFocus={handleComposerFocus}
-                  className="w-full min-h-11 pl-4 pr-11 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[16px] sm:text-sm text-slate-700 transition-all font-medium"
+                  className="w-full min-h-12 pl-4 pr-14 py-2 rounded-full bg-slate-100/70 border border-transparent focus:outline-none focus:ring-1 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white text-[16px] sm:min-h-11 sm:pr-11 sm:text-sm text-slate-700 transition-all font-medium"
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className={`absolute right-1 h-11 w-11 rounded-full flex items-center justify-center transition cursor-pointer ${
+                  className={`absolute right-1 h-12 w-12 sm:h-11 sm:w-11 rounded-full flex items-center justify-center transition cursor-pointer ${
                     showEmojiPicker ? 'text-violet-600 bg-violet-100' : 'text-slate-400 hover:bg-slate-200/50 hover:text-violet-600'
                   }`}
                   title="Biểu tượng cảm xúc"
                 >
-                  <Smile className="h-4.5 w-4.5" />
+                  <Smile className="h-5 w-5 sm:h-4.5 sm:w-4.5" />
                 </button>
               </div>
 
@@ -2061,21 +2061,21 @@ export default function ChatPage({
                 <button
                   type="button"
                   onClick={() => handleSendMessage(undefined, "👍")}
-                  className="h-11 w-11 text-violet-600 rounded-full hover:bg-slate-100 transition shrink-0 cursor-pointer flex items-center justify-center"
+                  className="h-12 w-12 sm:h-11 sm:w-11 text-violet-600 rounded-full hover:bg-slate-100 transition shrink-0 cursor-pointer flex items-center justify-center"
                   title="Gửi nút Like nhanh"
                 >
-                  <ThumbsUp className="h-5 w-5 fill-current" />
+                  <ThumbsUp className="h-6 w-6 sm:h-5 sm:w-5 fill-current" />
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="h-11 w-11 bg-violet-600 text-white rounded-full hover:bg-violet-500 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
+                  className="h-12 w-12 sm:h-11 sm:w-11 bg-violet-600 text-white rounded-full hover:bg-violet-500 transition shrink-0 cursor-pointer flex items-center justify-center shadow-sm"
                 >
                   {isSending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Send className="h-4 w-4" />
+                    <Send className="h-5 w-5 sm:h-4 sm:w-4" />
                   )}
                 </button>
               )}
