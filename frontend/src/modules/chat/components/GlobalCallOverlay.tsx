@@ -52,8 +52,7 @@ export default function GlobalCallOverlay({
   }, [minimized, remoteStream]);
 
   const startDrag = (event: PointerEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.parentElement?.getBoundingClientRect();
-    if (!rect) return;
+    const rect = event.currentTarget.getBoundingClientRect();
     dragOffsetRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -94,6 +93,9 @@ export default function GlobalCallOverlay({
         <div
           className="fixed z-[999998] flex h-24 w-60 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/95 text-white shadow-2xl backdrop-blur"
           style={position ? { left: position.x, top: position.y } : { right: 16, bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          onPointerDown={startDrag}
+          onPointerMove={drag}
+          onPointerUp={() => { dragOffsetRef.current = null; }}
         >
           {isVideo && remoteStream ? (
             <video ref={remotePreviewRef} autoPlay muted playsInline className="h-full w-24 shrink-0 object-cover" />
@@ -103,20 +105,15 @@ export default function GlobalCallOverlay({
             </div>
           )}
           <div className="min-w-0 flex-1 p-2">
-            <div
-              className="cursor-grab truncate text-xs font-bold active:cursor-grabbing"
-              onPointerDown={startDrag}
-              onPointerMove={drag}
-              onPointerUp={() => { dragOffsetRef.current = null; }}
-            >
+            <div className="cursor-grab truncate text-xs font-bold active:cursor-grabbing">
               {peerName}
             </div>
             <p className="mt-1 text-[11px] text-violet-200">{callStatus === 'CONNECTED' ? 'Cuộc gọi đang diễn ra' : 'Đang gọi...'}</p>
             <div className="mt-2 flex gap-2">
-              <button type="button" onClick={onRestore} className="rounded-lg bg-slate-700 p-1.5 hover:bg-slate-600" title="Mở lại cuộc gọi" aria-label="Mở lại cuộc gọi">
+              <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onRestore} className="rounded-lg bg-slate-700 p-1.5 hover:bg-slate-600" title="Mở lại cuộc gọi" aria-label="Mở lại cuộc gọi">
                 <Maximize2 className="h-3.5 w-3.5" />
               </button>
-              <button type="button" onClick={onEndCall} className="rounded-lg bg-red-600 p-1.5 hover:bg-red-500" title="Kết thúc cuộc gọi" aria-label="Kết thúc cuộc gọi">
+              <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={onEndCall} className="rounded-lg bg-red-600 p-1.5 hover:bg-red-500" title="Kết thúc cuộc gọi" aria-label="Kết thúc cuộc gọi">
                 <PhoneOff className="h-3.5 w-3.5" />
               </button>
             </div>
