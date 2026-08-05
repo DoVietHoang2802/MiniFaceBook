@@ -3,6 +3,7 @@ package com.minifacebook.module.chat.presentation;
 import com.minifacebook.module.chat.application.dto.ConversationCreateRequest;
 import com.minifacebook.module.chat.application.dto.ConversationResponse;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
+import com.minifacebook.module.chat.application.dto.MessageSendRequest;
 import com.minifacebook.module.chat.application.service.ConversationService;
 import com.minifacebook.module.chat.application.service.MessageService;
 import com.minifacebook.shared.dto.ApiResponse;
@@ -82,6 +83,18 @@ public class ConversationController {
       @PathVariable("id") String conversationId) {
     conversationService.markAllAsSeen(conversationId, jwt.getSubject());
     return ApiResponse.success("Đã đánh dấu đã xem thành công", null);
+  }
+
+  @PostMapping("/{id}/messages")
+  @Operation(summary = "Gửi tin nhắn", description = "Gửi tin nhắn vào một cuộc hội thoại hiện có. POST messages require sharedPostId.")
+  public ApiResponse<MessageResponse> sendMessage(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable("id") String conversationId,
+      @RequestBody MessageSendRequest request) {
+    // The path is authoritative; do not let a body conversationId target another conversation.
+    request.setConversationId(conversationId);
+    MessageResponse response = messageService.sendMessage(jwt.getSubject(), request);
+    return ApiResponse.success("Đã gửi tin nhắn thành công", response);
   }
 
   @PostMapping(value = "/{id}/messages/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

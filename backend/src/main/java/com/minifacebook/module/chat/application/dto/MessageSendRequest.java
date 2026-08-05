@@ -27,6 +27,9 @@ public class MessageSendRequest {
 
   private String mediaUrl;
 
+  /** Post ID for POST messages. The server derives the displayed preview from this ID. */
+  private String sharedPostId;
+
   /** ID tin nhắn được trả lời (null nếu không phải reply) - Sprint 4.4. */
   private String replyToMessageId;
 }

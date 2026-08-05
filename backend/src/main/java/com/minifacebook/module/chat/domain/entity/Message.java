@@ -23,6 +23,10 @@ public class Message {
   private String content;
   private MessageType type;
   private String mediaUrl;
+
+  /** Server-derived snapshot of the post for POST messages. */
+  private SharedPostPreview sharedPost;
+
   private Instant deliveredAt; // null nếu chưa nhận được
   private Instant seenAt;      // null nếu chưa đọc
   private Instant createdAt;

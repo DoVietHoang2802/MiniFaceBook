@@ -24,6 +24,14 @@ export const chatService = {
     return res.data.data;
   },
 
+  sendPost: async (conversationId: string, sharedPostId: string) => {
+    const res = await axiosClient.post<ApiResponse<MessageResponse>>(
+      `/conversations/${conversationId}/messages`,
+      { type: 'POST', sharedPostId }
+    );
+    return res.data.data;
+  },
+
   markAsSeen: async (conversationId: string) => {
     const res = await axiosClient.put<ApiResponse<void>>(`/conversations/${conversationId}/seen`);
     return res.data;

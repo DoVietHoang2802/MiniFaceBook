@@ -9,6 +9,8 @@ import { REACTION_ICONS } from './reactionConfig';
 import ReactionPicker from './ReactionPicker';
 import PostDetailModal from './PostDetailModal';
 import ReactionsModal from './ReactionsModal';
+import { chatService } from '../../chat/services/chatService';
+import type { ConversationResponse } from '../../chat/types/chat.types';
 
 interface PostCardProps {
   post: PostResponse;
@@ -38,6 +40,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   const [showMenu, setShowMenu] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [showSharePicker, setShowSharePicker] = useState(false);
+  const [shareConversations, setShareConversations] = useState<ConversationResponse[]>([]);
+  const [isLoadingShareConversations, setIsLoadingShareConversations] = useState(false);
+  const [sendingToConversationId, setSendingToConversationId] = useState<string | null>(null);
   const reactionAreaRef = React.useRef<HTMLDivElement>(null);
   const longPressTimerRef = React.useRef<number | null>(null);
   const longPressTriggeredRef = React.useRef(false);
@@ -103,6 +109,31 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
       window.clearTimeout(longPressTimerRef.current);
     }
   }, []);
+
+  const openSharePicker = async () => {
+    setIsLoadingShareConversations(true);
+    setShowSharePicker(true);
+    try {
+      const page = await chatService.getConversations(0, 100);
+      setShareConversations(page.content);
+    } catch {
+      alert('Không tải được danh sách cuộc trò chuyện.');
+    } finally {
+      setIsLoadingShareConversations(false);
+    }
+  };
+
+  const handleShareToConversation = async (conversationId: string) => {
+    setSendingToConversationId(conversationId);
+    try {
+      await chatService.sendPost(conversationId, localPost.id);
+      setShowSharePicker(false);
+    } catch {
+      alert('Không thể chia sẻ bài viết.');
+    } finally {
+      setSendingToConversationId(null);
+    }
+  };
 
   const reactionMutation = useMutation({
     mutationFn: (type: ReactionType) => postService.reactToPost(localPost.id, { type }),
@@ -442,7 +473,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             <span className="text-xs font-bold">Bình luận</span>
           </button>
 
-          <button className="flex min-h-11 items-center space-x-1.5 sm:space-x-2 px-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center">
+          <button
+            type="button"
+            onClick={() => void openSharePicker()}
+            className="flex min-h-11 items-center space-x-1.5 sm:space-x-2 px-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all cursor-pointer flex-1 justify-center"
+          >
             <Share2 className="h-4.5 w-4.5" />
             <span className="text-xs font-bold">Chia sẻ</span>
           </button>
@@ -450,6 +485,48 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
         {showReactionsModal && (
           <ReactionsModal postId={localPost.id} onClose={() => setShowReactionsModal(false)} />
+        )}
+
+        {showSharePicker && (
+          <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/30 p-3 sm:items-center" onMouseDown={() => setShowSharePicker(false)}>
+            <div className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Chia sẻ bài viết">
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                <div>
+                  <h2 className="text-sm font-black text-slate-800">Chia sẻ vào cuộc trò chuyện</h2>
+                  <p className="mt-0.5 text-xs text-slate-400">Chọn một cuộc trò chuyện hiện có</p>
+                </div>
+                <button type="button" onClick={() => setShowSharePicker(false)} className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" aria-label="Đóng">
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="max-h-72 overflow-y-auto p-2" onMouseDown={(event) => event.stopPropagation()}>
+                {isLoadingShareConversations ? (
+                  <p className="px-3 py-6 text-center text-xs font-medium text-slate-400">Đang tải cuộc trò chuyện...</p>
+                ) : shareConversations.length === 0 ? (
+                  <p className="px-3 py-6 text-center text-xs font-medium text-slate-400">Chưa có cuộc trò chuyện nào để chia sẻ.</p>
+                ) : shareConversations.map((conversation) => {
+                  const recipient = conversation.participants.find((participant) => participant.id !== currentUser?.id);
+                  if (!recipient) return null;
+                  const isSending = sendingToConversationId === conversation.id;
+                  return (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      disabled={isSending}
+                      onClick={() => void handleShareToConversation(conversation.id)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-violet-50 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-100">
+                        {recipient.avatar ? <img src={recipient.avatar} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center text-xs font-bold text-slate-500">{recipient.name.charAt(0).toUpperCase()}</span>}
+                      </div>
+                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{recipient.name}</span>
+                      <span className="text-xs font-bold text-violet-600">{isSending ? 'Đang gửi' : 'Chia sẻ'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         )}
 
         {isDetailModalOpen && (

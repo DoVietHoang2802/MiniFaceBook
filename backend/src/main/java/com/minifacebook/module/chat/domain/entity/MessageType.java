@@ -6,5 +6,6 @@ package com.minifacebook.module.chat.domain.entity;
 public enum MessageType {
   TEXT,
   IMAGE,
-  FILE
+  FILE,
+  POST
 }

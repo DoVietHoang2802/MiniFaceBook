@@ -14,8 +14,11 @@ import com.minifacebook.module.chat.domain.entity.LastMessageSummary;
 import com.minifacebook.module.chat.domain.entity.Message;
 import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.entity.ReplyPreview;
+import com.minifacebook.module.chat.domain.entity.SharedPostPreview;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
+import com.minifacebook.module.post.domain.entity.Post;
+import com.minifacebook.module.post.domain.repository.PostRepository;
 import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
@@ -46,6 +49,7 @@ public class MessageService {
   private final MessageRepository messageRepository;
   private final ConversationRepository conversationRepository;
   private final UserRepository userRepository;
+  private final PostRepository postRepository;
   private final StringRedisTemplate redisTemplate;
   private final ChatEventPublisher chatRedisPublisher;
   private final MediaService mediaService;
@@ -60,6 +64,9 @@ public class MessageService {
 
   @Transactional
   public MessageResponse sendMessage(String senderEmail, MessageSendRequest request) {
+    if (request.getType() == null) {
+      throw new AppException(ErrorCode.INVALID_KEY);
+    }
     User sender = getUserByEmail(senderEmail);
     String senderId = sender.getId();
     String conversationId = request.getConversationId();
@@ -89,12 +96,15 @@ public class MessageService {
           .build();
     }
 
+    SharedPostPreview sharedPost = buildSharedPostPreview(request);
+
     Message message = Message.builder()
         .conversationId(conversationId)
         .senderId(senderId)
-        .content(request.getContent())
+        .content(request.getType() == MessageType.POST ? null : request.getContent())
         .type(request.getType())
-        .mediaUrl(request.getMediaUrl())
+        .mediaUrl(request.getType() == MessageType.POST ? null : request.getMediaUrl())
+        .sharedPost(sharedPost)
         .createdAt(Instant.now())
         .replyTo(replyPreview)
         .build();
@@ -114,6 +124,8 @@ public class MessageService {
       contentPreview = sanitized.isBlank() ? "📷 Đã gửi một ảnh" : ("📷 " + sanitized);
     } else if (request.getType() == MessageType.FILE) {
       contentPreview = sanitized.isBlank() ? "📎 Đã gửi một file" : ("📎 " + sanitized);
+    } else if (request.getType() == MessageType.POST) {
+      contentPreview = "Đã chia sẻ một bài viết";
     }
 
     LastMessageSummary lastMessageSummary = LastMessageSummary.builder()
@@ -154,6 +166,7 @@ public class MessageService {
         .content(message.getContent())
         .type(message.getType())
         .mediaUrl(message.getMediaUrl())
+        .sharedPost(message.getSharedPost())
         .deliveredAt(message.getDeliveredAt())
         .seenAt(message.getSeenAt())
         .createdAt(message.getCreatedAt())
@@ -216,6 +229,7 @@ public class MessageService {
             .content(msg.isDeleted() ? null : msg.getContent())
             .type(msg.getType())
             .mediaUrl(msg.isDeleted() ? null : msg.getMediaUrl())
+            .sharedPost(msg.isDeleted() ? null : msg.getSharedPost())
             .deliveredAt(msg.getDeliveredAt())
             .seenAt(msg.getSeenAt())
             .createdAt(msg.getCreatedAt())
@@ -377,6 +391,7 @@ public class MessageService {
       message.setDeleted(true);
       message.setContent(null);
       message.setMediaUrl(null);
+      message.setSharedPost(null);
       messageRepository.save(message);
 
       MessageUpdateEvent event = MessageUpdateEvent.builder()
@@ -401,11 +416,42 @@ public class MessageService {
   private String buildShortPreview(Message msg) {
     if (msg.getType() == MessageType.IMAGE) return "📷 Ảnh";
     if (msg.getType() == MessageType.FILE) return "📎 Tệp đính kèm";
+    if (msg.getType() == MessageType.POST) return "Đã chia sẻ một bài viết";
     String raw = msg.getContent() != null ? msg.getContent() : "";
     String sanitized = raw.replaceAll("<[^>]*>", "");
     if (sanitized.length() > 80) {
       return sanitized.substring(0, 77) + "...";
     }
     return sanitized;
+  }
+
+  private SharedPostPreview buildSharedPostPreview(MessageSendRequest request) {
+    if (request.getType() != MessageType.POST) {
+      if (request.getSharedPostId() != null && !request.getSharedPostId().isBlank()) {
+        throw new AppException(ErrorCode.INVALID_KEY);
+      }
+      return null;
+    }
+    if (request.getSharedPostId() == null || request.getSharedPostId().isBlank()) {
+      throw new AppException(ErrorCode.INVALID_KEY);
+    }
+
+    Post post = postRepository.findById(request.getSharedPostId())
+        .filter(candidate -> !candidate.isDeleted())
+        .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+    User author = userRepository.findById(post.getAuthorId()).orElse(null);
+    String content = post.getContent() == null ? "" : post.getContent().replaceAll("<[^>]*>", "").trim();
+    String contentPreview = content.length() > 180 ? content.substring(0, 177) + "..." : content;
+    String imageUrl = post.getImageUrls() == null || post.getImageUrls().isEmpty()
+        ? null : post.getImageUrls().getFirst();
+
+    return SharedPostPreview.builder()
+        .postId(post.getId())
+        .authorName(author != null && author.getName() != null && !author.getName().isBlank()
+            ? author.getName() : "Người dùng")
+        .authorAvatar(author != null ? author.getAvatar() : null)
+        .contentPreview(contentPreview)
+        .imageUrl(imageUrl)
+        .build();
   }
 }

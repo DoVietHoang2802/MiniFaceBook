@@ -48,6 +48,9 @@ import { useAuth } from '../../../core/auth/AuthContext';
 import { useToast } from '../../../core/toast/ToastContext';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useCall } from '../context/CallContext';
+import { postService } from '../../post/services/postService';
+import type { PostResponse } from '../../post/types/post.types';
+import PostDetailModal from '../../post/components/PostDetailModal';
 
 const EMOJI_CATEGORIES = [
   {
@@ -183,6 +186,8 @@ export default function ChatPage({
   const [showAllMediaModal, setShowAllMediaModal] = useState(false);
   const [showAllFilesModal, setShowAllFilesModal] = useState(false);
   const [showAllSuggestionsModal, setShowAllSuggestionsModal] = useState(false);
+  const [sharedPostDetail, setSharedPostDetail] = useState<PostResponse | null>(null);
+  const [openingSharedPostId, setOpeningSharedPostId] = useState<string | null>(null);
 
   // Refs for tracking closures and scrolling
   // Refs for tracking closures and scrolling
@@ -366,7 +371,13 @@ export default function ChatPage({
                   ...c,
                   lastMessage: {
                     senderId: newMsg.sender.id,
-                    contentPreview: newMsg.type === 'TEXT' ? newMsg.content : newMsg.type === 'IMAGE' ? '📷 Đã gửi một ảnh' : '📎 Đã gửi một file',
+                    contentPreview: newMsg.type === 'TEXT'
+                      ? (newMsg.content || '')
+                      : newMsg.type === 'IMAGE'
+                        ? '📷 Đã gửi một ảnh'
+                        : newMsg.type === 'FILE'
+                          ? '📎 Đã gửi một file'
+                          : 'Đã chia sẻ một bài viết',
                     type: newMsg.type,
                     sentAt: newMsg.createdAt,
                   },
@@ -851,12 +862,24 @@ export default function ChatPage({
   const startEditing = (m: MessageResponse) => {
     setEditingMessage(m);
     setReplyingTo(null);
-    setMessageInput(m.content);
+    setMessageInput(m.content ?? '');
   };
 
   const cancelEditing = () => {
     setEditingMessage(null);
     setMessageInput('');
+  };
+
+  const openSharedPost = async (postId: string) => {
+    setOpeningSharedPostId(postId);
+    try {
+      const response = await postService.getPost(postId);
+      setSharedPostDetail(response.data);
+    } catch {
+      triggerToast('Không tìm thấy bài viết này.');
+    } finally {
+      setOpeningSharedPostId(null);
+    }
   };
 
   // Lưu chỉnh sửa (Optimistic UI)
@@ -955,7 +978,13 @@ export default function ChatPage({
         messageId: replyingTo.id,
         senderId: replyingTo.sender.id,
         senderName: replyingTo.sender.name,
-        contentPreview: replyingTo.type === 'IMAGE' ? '📷 Ảnh' : replyingTo.type === 'FILE' ? '📎 Tệp đính kèm' : (replyingTo.content?.slice(0, 80) ?? '')
+        contentPreview: replyingTo.type === 'IMAGE'
+          ? '📷 Ảnh'
+          : replyingTo.type === 'FILE'
+            ? '📎 Tệp đính kèm'
+            : replyingTo.type === 'POST'
+              ? 'Đã chia sẻ một bài viết'
+              : (replyingTo.content?.slice(0, 80) ?? '')
       } : undefined
     };
 
@@ -1539,6 +1568,34 @@ export default function ChatPage({
                                       </div>
                                     )}
                                   </div>
+                                ) : m.type === 'POST' && m.sharedPost ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => void openSharedPost(m.sharedPost!.postId)}
+                                    disabled={openingSharedPostId === m.sharedPost.postId}
+                                    className="w-60 overflow-hidden rounded-xl border border-slate-200 bg-white text-left text-slate-800 transition hover:border-violet-300 hover:shadow-sm disabled:cursor-wait"
+                                    aria-label="Mở bài viết được chia sẻ"
+                                  >
+                                    {m.sharedPost.imageUrl && (
+                                      <img src={m.sharedPost.imageUrl} alt="" className="h-28 w-full object-cover" />
+                                    )}
+                                    <div className="p-3">
+                                      <div className="mb-2 flex items-center gap-2">
+                                        <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full bg-slate-100">
+                                          {m.sharedPost.authorAvatar ? (
+                                            <img src={m.sharedPost.authorAvatar} alt="" className="h-full w-full object-cover" />
+                                          ) : (
+                                            <span className="flex h-full w-full items-center justify-center text-[10px] font-bold text-slate-500">{m.sharedPost.authorName.charAt(0).toUpperCase()}</span>
+                                          )}
+                                        </div>
+                                        <span className="truncate text-xs font-bold">{m.sharedPost.authorName}</span>
+                                      </div>
+                                      <p className="line-clamp-3 whitespace-pre-wrap text-xs leading-relaxed text-slate-600">{m.sharedPost.contentPreview || 'Bài viết có ảnh được chia sẻ'}</p>
+                                      <span className="mt-2 block text-[10px] font-bold text-violet-600">{openingSharedPostId === m.sharedPost.postId ? 'Đang mở...' : 'Bài viết được chia sẻ'}</span>
+                                    </div>
+                                  </button>
+                                ) : m.type === 'POST' ? (
+                                  <span className="text-xs text-slate-500">Bài viết được chia sẻ không còn khả dụng</span>
                                 ) : (
                                   m.content
                                 )}
@@ -1679,7 +1736,7 @@ export default function ChatPage({
                                   {m.status === 'FAILED' && (
                                     <span className="text-rose-500 font-black cursor-pointer" title="Lỗi gửi, bấm để thử lại" onClick={() => {
                                       // Resend logic
-                                      setMessageInput(m.content);
+                                      setMessageInput(m.content ?? '');
                                       setMessages(prev => prev.filter(item => item.id !== m.id));
                                     }}>⚠️</span>
                                   )}
@@ -1778,7 +1835,7 @@ export default function ChatPage({
                     Đang trả lời {replyingTo.sender.id === currentUser.id ? 'chính bạn' : replyingTo.sender.name}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {replyingTo.type === 'IMAGE' ? '📷 Ảnh' : replyingTo.type === 'FILE' ? '📎 Tệp đính kèm' : replyingTo.content}
+                    {replyingTo.type === 'IMAGE' ? '📷 Ảnh' : replyingTo.type === 'FILE' ? '📎 Tệp đính kèm' : replyingTo.type === 'POST' ? 'Đã chia sẻ một bài viết' : replyingTo.content}
                   </p>
                 </div>
                 <button
@@ -2320,6 +2377,14 @@ export default function ChatPage({
             </div>
           </div>
         </div>
+      )}
+
+      {sharedPostDetail && (
+        <PostDetailModal
+          post={sharedPostDetail}
+          currentUser={currentUser}
+          onClose={() => setSharedPostDetail(null)}
+        />
       )}
 
     </div>

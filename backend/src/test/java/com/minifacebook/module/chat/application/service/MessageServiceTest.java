@@ -16,8 +16,11 @@ import com.minifacebook.module.chat.application.port.ChatEventPublisher;
 import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.entity.Message;
 import com.minifacebook.module.chat.domain.entity.MessageType;
+import com.minifacebook.module.chat.domain.entity.SharedPostPreview;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
+import com.minifacebook.module.post.domain.entity.Post;
+import com.minifacebook.module.post.domain.repository.PostRepository;
 import com.minifacebook.shared.domain.service.MediaService;
 import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
@@ -48,6 +51,7 @@ public class MessageServiceTest {
   @Mock private MessageRepository messageRepository;
   @Mock private ConversationRepository conversationRepository;
   @Mock private UserRepository userRepository;
+  @Mock private PostRepository postRepository;
   @Mock private StringRedisTemplate redisTemplate;
   @Mock private ChatEventPublisher chatRedisPublisher;
   @Mock private MediaService mediaService;
@@ -144,6 +148,38 @@ public class MessageServiceTest {
   }
 
   @Test
+  void getMessages_ShouldReturnPersistedSharedPostPreview() {
+    Pageable pageable = PageRequest.of(0, 10);
+    SharedPostPreview preview = SharedPostPreview.builder()
+        .postId("post-1")
+        .authorName(friend.getName())
+        .authorAvatar(friend.getAvatar())
+        .contentPreview("A shared post")
+        .imageUrl("https://images.example/post.jpg")
+        .build();
+    Message message = Message.builder()
+        .id("post-message")
+        .conversationId(conv.getId())
+        .senderId(friend.getId())
+        .type(MessageType.POST)
+        .sharedPost(preview)
+        .createdAt(Instant.now())
+        .build();
+
+    when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
+    when(conversationRepository.findById(conv.getId())).thenReturn(Optional.of(conv));
+    when(messageRepository.findByConversationId(conv.getId(), pageable))
+        .thenReturn(new PageImpl<>(List.of(message)));
+    when(userRepository.findAllByIds(conv.getParticipantIds())).thenReturn(List.of(me, friend));
+
+    Page<MessageResponse> result = messageService.getMessages(conv.getId(), me.getEmail(), pageable);
+
+    assertEquals(MessageType.POST, result.getContent().get(0).getType());
+    assertNotNull(result.getContent().get(0).getSharedPost());
+    assertEquals("post-1", result.getContent().get(0).getSharedPost().getPostId());
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   void sendMessage_ShouldSaveMessageAndPublishEvent_WhenValid() {
     MessageSendRequest req = MessageSendRequest.builder()
@@ -176,6 +212,62 @@ public class MessageServiceTest {
     verify(messageRepository).save(any(Message.class));
     verify(conversationRepository).save(any(Conversation.class));
     verify(chatRedisPublisher).publishNewMessage(any(String.class), any(), any());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void sendMessage_ShouldDeriveAndReturnSharedPostPreview_WhenPostMessageIsValid() {
+    Post post = Post.builder()
+        .id("post-1")
+        .authorId(friend.getId())
+        .content("A post shared from the server")
+        .imageUrls(List.of("https://images.example/post.jpg"))
+        .build();
+    MessageSendRequest request = MessageSendRequest.builder()
+        .conversationId(conv.getId())
+        .type(MessageType.POST)
+        .sharedPostId(post.getId())
+        .build();
+
+    when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
+    when(conversationRepository.findById(conv.getId())).thenReturn(Optional.of(conv));
+    when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
+    when(userRepository.findById(friend.getId())).thenReturn(Optional.of(friend));
+    when(messageRepository.save(any(Message.class))).thenAnswer(invocation -> {
+      Message saved = invocation.getArgument(0);
+      saved.setId("post-message");
+      return saved;
+    });
+    when(userRepository.findAllByIds(conv.getParticipantIds())).thenReturn(List.of(me, friend));
+    ValueOperations<String, String> ops = org.mockito.Mockito.mock(ValueOperations.class);
+    when(redisTemplate.opsForValue()).thenReturn(ops);
+
+    MessageResponse response = messageService.sendMessage(me.getEmail(), request);
+
+    assertEquals(MessageType.POST, response.getType());
+    assertNotNull(response.getSharedPost());
+    assertEquals(post.getId(), response.getSharedPost().getPostId());
+    assertEquals(friend.getName(), response.getSharedPost().getAuthorName());
+    assertEquals(friend.getAvatar(), response.getSharedPost().getAuthorAvatar());
+    assertEquals("A post shared from the server", response.getSharedPost().getContentPreview());
+    assertEquals("https://images.example/post.jpg", response.getSharedPost().getImageUrl());
+    assertEquals("Đã chia sẻ một bài viết", conv.getLastMessageSummary().getContentPreview());
+  }
+
+  @Test
+  void sendMessage_ShouldRejectPostMessageWithoutPostId() {
+    MessageSendRequest request = MessageSendRequest.builder()
+        .conversationId(conv.getId())
+        .type(MessageType.POST)
+        .build();
+
+    when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
+    when(conversationRepository.findById(conv.getId())).thenReturn(Optional.of(conv));
+
+    AppException ex = assertThrows(AppException.class,
+        () -> messageService.sendMessage(me.getEmail(), request));
+
+    assertEquals(ErrorCode.INVALID_KEY, ex.getErrorCode());
   }
 
   @Test

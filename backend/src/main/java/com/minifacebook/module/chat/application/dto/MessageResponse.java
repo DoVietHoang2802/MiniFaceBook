@@ -2,6 +2,7 @@ package com.minifacebook.module.chat.application.dto;
 
 import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.entity.ReplyPreview;
+import com.minifacebook.module.chat.domain.entity.SharedPostPreview;
 import java.time.Instant;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,7 @@ public class MessageResponse {
   private String content;
   private MessageType type;
   private String mediaUrl;
+  private SharedPostPreview sharedPost;
   private Instant deliveredAt;
   private Instant seenAt;
   private Instant createdAt;

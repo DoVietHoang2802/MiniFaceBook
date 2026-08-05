@@ -12,6 +12,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
 - WebRTC signals carry a unique call session ID so delayed END/ICE messages from a previous call cannot terminate its replacement.
 - Post notifications use persistent post IDs and open the exact post detail route; friend notifications open the friends screen.
+- Posts can be shared into an existing conversation as a server-validated preview card; recipients can open the current post from chat.
 
 ## High Priority Validation
 

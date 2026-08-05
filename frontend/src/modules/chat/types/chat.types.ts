@@ -7,7 +7,7 @@ export interface ParticipantResponse {
 export interface LastMessageSummary {
   senderId: string;
   contentPreview: string;
-  type: 'TEXT' | 'IMAGE' | 'FILE';
+  type: 'TEXT' | 'IMAGE' | 'FILE' | 'POST';
   sentAt: string;
 }
 
@@ -27,13 +27,22 @@ export interface ReplyPreview {
   contentPreview: string;
 }
 
+export interface SharedPostPreview {
+  postId: string;
+  authorName: string;
+  authorAvatar?: string | null;
+  contentPreview: string;
+  imageUrl?: string | null;
+}
+
 export interface MessageResponse {
   id: string;
   conversationId: string;
   sender: ParticipantResponse;
-  content: string;
-  type: 'TEXT' | 'IMAGE' | 'FILE';
+  content: string | null;
+  type: 'TEXT' | 'IMAGE' | 'FILE' | 'POST';
   mediaUrl?: string;
+  sharedPost?: SharedPostPreview | null;
   deliveredAt?: string;
   seenAt?: string;
   createdAt: string;

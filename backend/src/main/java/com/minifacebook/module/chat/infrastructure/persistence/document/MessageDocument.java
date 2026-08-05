@@ -2,6 +2,7 @@ package com.minifacebook.module.chat.infrastructure.persistence.document;
 
 import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.entity.ReplyPreview;
+import com.minifacebook.module.chat.domain.entity.SharedPostPreview;
 import java.time.Instant;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,9 @@ public class MessageDocument {
   private MessageType type;
 
   private String mediaUrl;
+
+  /** Server-derived snapshot of a shared post. */
+  private SharedPostPreview sharedPost;
 
   private Instant deliveredAt;
 
