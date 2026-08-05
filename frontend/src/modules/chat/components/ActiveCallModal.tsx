@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, CameraOff, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { Camera, CameraOff, Mic, MicOff, Minimize2, PhoneOff } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { CallStatus } from '../types/call.types';
 
@@ -10,7 +10,9 @@ interface ActiveCallModalProps {
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   isVideo: boolean;
+  minimized: boolean;
   onEndCall: () => void;
+  onMinimize: () => void;
   onToggleMic: (muted: boolean) => void;
   onToggleCamera: (disabled: boolean) => void;
 }
@@ -22,7 +24,9 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
   localStream,
   remoteStream,
   isVideo,
+  minimized,
   onEndCall,
+  onMinimize,
   onToggleMic,
   onToggleCamera,
 }) => {
@@ -82,6 +86,10 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
 
   const hasLocalVideo = Boolean(localStream?.getVideoTracks().length);
 
+  if (minimized) {
+    return createPortal(<audio ref={remoteAudioRef} autoPlay playsInline />, document.body);
+  }
+
   return createPortal(
     <div className="fixed inset-0 z-[999999] bg-slate-950 animate-fade-in">
       <div className="app-dynamic-height relative w-full overflow-hidden bg-slate-950 shadow-2xl">
@@ -102,6 +110,14 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={onMinimize}
+            className="rounded-xl bg-slate-900/70 p-2 text-slate-100 shadow-lg transition hover:bg-slate-800"
+            title="Thu nhỏ cuộc gọi"
+          >
+            <Minimize2 className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Call Content Area */}

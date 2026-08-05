@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   SlidersHorizontal,
   Phone,
+  PhoneOff,
   Video,
   Smile,
   Image as ImageIcon,
@@ -27,7 +28,8 @@ import {
   CornerDownRight,
   Pencil,
   Trash2,
-  Info
+  Info,
+  Maximize2
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -185,6 +187,7 @@ export default function ChatPage({
   const [showAllMediaModal, setShowAllMediaModal] = useState(false);
   const [showAllFilesModal, setShowAllFilesModal] = useState(false);
   const [showAllSuggestionsModal, setShowAllSuggestionsModal] = useState(false);
+  const [isCallMinimized, setIsCallMinimized] = useState(false);
 
   // Refs for tracking closures and scrolling
   // Refs for tracking closures and scrolling
@@ -262,6 +265,14 @@ export default function ChatPage({
     toggleMic,
     toggleCamera,
   } = useWebRTCCall(currentUser, handleCallCompleted);
+
+  const isCallActive = callStatus === 'CALLING' || callStatus === 'CONNECTED';
+
+  useEffect(() => {
+    if (!isCallActive) {
+      setIsCallMinimized(false);
+    }
+  }, [isCallActive]);
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -2377,7 +2388,7 @@ export default function ChatPage({
         />
       )}
 
-      {(callStatus === 'CALLING' || callStatus === 'CONNECTED') && (
+      {isCallActive && (
         <ActiveCallModal
           status={callStatus}
           peerName={activeCall?.callerName || activePartner?.name || 'Người dùng'}
@@ -2385,10 +2396,34 @@ export default function ChatPage({
           localStream={localStream}
           remoteStream={remoteStream}
           isVideo={!!activeCall?.isVideo}
+          minimized={isCallMinimized}
           onEndCall={endCall}
+          onMinimize={() => setIsCallMinimized(true)}
           onToggleMic={toggleMic}
           onToggleCamera={toggleCamera}
         />
+      )}
+
+      {isCallActive && isCallMinimized && (
+        <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-[999998] flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/95 p-2 pl-3 text-white shadow-2xl backdrop-blur">
+          <button
+            type="button"
+            onClick={() => setIsCallMinimized(false)}
+            className="flex items-center gap-2 text-left"
+            title="Mở lại cuộc gọi"
+          >
+            <span className="text-xs font-bold">{callStatus === 'CONNECTED' ? 'Cuộc gọi đang diễn ra' : 'Đang gọi...'}</span>
+            <Maximize2 className="h-4 w-4 text-violet-300" />
+          </button>
+          <button
+            type="button"
+            onClick={endCall}
+            className="rounded-xl bg-red-600 p-2 text-white transition hover:bg-red-500"
+            title="Kết thúc cuộc gọi"
+          >
+            <PhoneOff className="h-4 w-4" />
+          </button>
+        </div>
       )}
     </div>
   );
