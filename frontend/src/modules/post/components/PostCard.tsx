@@ -247,27 +247,49 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
                 onMouseLeave={() => setShowMenu(false)}
               >
                 {currentUser?.id === localPost.authorId ? (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      handleDeletePost();
-                    }}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Xóa bài viết</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setIsDetailModalOpen(true);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Xem bài viết
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        handleDeletePost();
+                      }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-rose-500 hover:bg-rose-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Xóa bài viết</span>
+                    </button>
+                  </>
                 ) : (
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                      setIsHidden(true);
-                    }}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-xs font-bold transition cursor-pointer"
-                  >
-                    <EyeOff className="h-4 w-4 text-slate-400" />
-                    <span>Ẩn bài viết</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setIsDetailModalOpen(true);
+                      }}
+                      className="w-full px-3 py-2 text-left text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Xem bài viết
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        setIsHidden(true);
+                      }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-lg text-xs font-bold transition cursor-pointer"
+                    >
+                      <EyeOff className="h-4 w-4 text-slate-400" />
+                      <span>Ẩn bài viết</span>
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -299,20 +321,29 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
               const isLast = idx === 3;
               const remainingCount = localPost.imageUrls!.length - 4;
 
+              const isSingleImage = localPost.imageUrls!.length === 1;
               let itemClasses = 'relative aspect-square';
-              if (localPost.imageUrls!.length === 1) {
-                itemClasses = 'relative h-[min(65dvh,420px)] w-full';
+              if (isSingleImage) {
+                itemClasses = 'relative w-full bg-slate-100';
               } else if (localPost.imageUrls!.length === 3 && idx === 0) {
                 itemClasses = 'relative row-span-2 h-full w-full';
               }
 
               return (
-                <div key={idx} className={itemClasses}>
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setIsDetailModalOpen(true)}
+                  className={`${itemClasses} block cursor-pointer overflow-hidden`}
+                  aria-label="Xem chi tiết bài viết"
+                >
                   <img 
                     src={url} 
                     alt="Post image" 
                     loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover transition duration-500 hover:scale-102 cursor-pointer"
+                    className={isSingleImage
+                      ? 'block max-h-[70dvh] w-full object-contain transition duration-500 hover:scale-[1.01]'
+                      : 'absolute inset-0 h-full w-full object-cover transition duration-500 hover:scale-102'}
                   />
 
                   {isLast && remainingCount > 0 && (
@@ -320,7 +351,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
                       <span className="text-white text-3xl font-black font-outfit">+{remainingCount}</span>
                     </div>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
