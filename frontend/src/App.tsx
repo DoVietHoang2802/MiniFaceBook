@@ -1,27 +1,36 @@
-import { useLayoutEffect } from 'react';
+import { lazy, Suspense, useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './core/auth/AuthContext';
 import { ToastProvider } from './core/toast/ToastContext';
 import { ThemeProvider } from './core/theme/ThemeContext';
 import GuestRoute from './components/layout/GuestRoute';
 import ProtectedRoute from './components/layout/ProtectedRoute';
-import AuthLayout from './components/layout/AuthLayout';
-import MainLayout from './components/layout/MainLayout';
-import LoginForm from './modules/auth/components/LoginForm';
-import RegisterForm from './modules/auth/components/RegisterForm';
-import ForgotPasswordForm from './modules/auth/components/ForgotPasswordForm';
-import OAuthCallbackPage from './modules/auth/components/OAuthCallbackPage';
-import OAuthCompleteProfilePage from './modules/auth/components/OAuthCompleteProfilePage';
-import VerifyEmailPage from './modules/auth/components/VerifyEmailPage';
-import PostFeed from './modules/post/components/PostFeed';
-import SearchPage from './modules/post/components/SearchPage';
-import FriendsPage from './modules/friends/components/FriendsPage';
-import ChatPage from './modules/chat/components/ChatPage';
-import ProfilePage from './modules/profile/components/ProfilePage';
-import SettingsPage from './modules/profile/components/SettingsPage';
 import { AdminRoute } from './components/layout/AdminRoute';
-import { AdminLayout } from './components/layout/AdminLayout';
-import { AdminDashboardPage } from './modules/admin/pages/AdminDashboardPage';
+
+const AuthLayout = lazy(() => import('./components/layout/AuthLayout'));
+const MainLayout = lazy(() => import('./components/layout/MainLayout'));
+const LoginForm = lazy(() => import('./modules/auth/components/LoginForm'));
+const RegisterForm = lazy(() => import('./modules/auth/components/RegisterForm'));
+const ForgotPasswordForm = lazy(() => import('./modules/auth/components/ForgotPasswordForm'));
+const OAuthCallbackPage = lazy(() => import('./modules/auth/components/OAuthCallbackPage'));
+const OAuthCompleteProfilePage = lazy(() => import('./modules/auth/components/OAuthCompleteProfilePage'));
+const VerifyEmailPage = lazy(() => import('./modules/auth/components/VerifyEmailPage'));
+const PostFeed = lazy(() => import('./modules/post/components/PostFeed'));
+const SearchPage = lazy(() => import('./modules/post/components/SearchPage'));
+const FriendsPage = lazy(() => import('./modules/friends/components/FriendsPage'));
+const ChatPage = lazy(() => import('./modules/chat/components/ChatPage'));
+const ProfilePage = lazy(() => import('./modules/profile/components/ProfilePage'));
+const SettingsPage = lazy(() => import('./modules/profile/components/SettingsPage'));
+const AdminLayout = lazy(async () => ({
+  default: (await import('./components/layout/AdminLayout')).AdminLayout,
+}));
+const AdminDashboardPage = lazy(async () => ({
+  default: (await import('./modules/admin/pages/AdminDashboardPage')).AdminDashboardPage,
+}));
+
+function PageLoader() {
+  return <div className="min-h-screen bg-slate-50" aria-label="Đang tải trang" />;
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -54,14 +63,14 @@ function App() {
             <Routes>
               {/* Guest routes (chỉ dành cho khách chưa đăng nhập) */}
               <Route element={<GuestRoute />}>
-                <Route element={<AuthLayout />}>
+                <Route element={<Suspense fallback={<PageLoader />}><AuthLayout /></Suspense>}>
                   <Route path="/login" element={<LoginForm />} />
                   <Route path="/register" element={<RegisterForm />} />
                   <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                 </Route>
               </Route>
 
-              <Route element={<AuthLayout />}>
+              <Route element={<Suspense fallback={<PageLoader />}><AuthLayout /></Suspense>}>
                 <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
                 <Route path="/oauth/complete-profile" element={<OAuthCompleteProfilePage />} />
                 <Route path="/verify" element={<VerifyEmailPage />} />
@@ -70,7 +79,7 @@ function App() {
               {/* Protected routes (chỉ dành cho thành viên đã đăng nhập) */}
               <Route element={<ProtectedRoute />}>
                 {/* Layout người dùng mạng xã hội */}
-                <Route element={<MainLayout />}>
+                <Route element={<Suspense fallback={<PageLoader />}><MainLayout /></Suspense>}>
                   <Route path="/" element={<PostFeed />} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/friends" element={<FriendsPage />} />
@@ -81,7 +90,7 @@ function App() {
 
                 {/* Standalone Admin Portal Layout */}
                 <Route element={<AdminRoute />}>
-                  <Route element={<AdminLayout />}>
+                  <Route element={<Suspense fallback={<PageLoader />}><AdminLayout /></Suspense>}>
                     <Route path="/admin" element={<AdminDashboardPage />} />
                   </Route>
                 </Route>
