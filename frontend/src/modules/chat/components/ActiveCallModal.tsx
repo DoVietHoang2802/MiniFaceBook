@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, PhoneOff } from 'lucide-react';
+import { Camera, CameraOff, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import type { CallStatus } from '../types/call.types';
 
 interface ActiveCallModalProps {
@@ -11,6 +12,7 @@ interface ActiveCallModalProps {
   isVideo: boolean;
   onEndCall: () => void;
   onToggleMic: (muted: boolean) => void;
+  onToggleCamera: (disabled: boolean) => void;
 }
 
 const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
@@ -22,12 +24,14 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
   isVideo,
   onEndCall,
   onToggleMic,
+  onToggleCamera,
 }) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   const [isMuted, setIsMuted] = useState(false);
+  const [isCameraDisabled, setIsCameraDisabled] = useState(false);
   const [duration, setDuration] = useState(0);
 
   // Attach local stream
@@ -36,7 +40,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
       localVideoRef.current.srcObject = localStream;
       void localVideoRef.current.play().catch(() => {});
     }
-  }, [localStream]);
+  }, [isVideo, localStream]);
 
   // Attach remote stream to video & audio
   useEffect(() => {
@@ -47,7 +51,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
     if (remoteAudioRef.current && remoteStream) {
       remoteAudioRef.current.srcObject = remoteStream;
     }
-  }, [remoteStream]);
+  }, [isVideo, remoteStream]);
 
   // Duration timer when CONNECTED
   useEffect(() => {
@@ -70,9 +74,15 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
     onToggleMic(nextState);
   };
 
+  const handleCameraToggle = () => {
+    const nextState = !isCameraDisabled;
+    setIsCameraDisabled(nextState);
+    onToggleCamera(nextState);
+  };
+
   const hasLocalVideo = Boolean(localStream?.getVideoTracks().length);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[999999] bg-slate-950 animate-fade-in">
       <div className="app-dynamic-height relative w-full overflow-hidden bg-slate-950 shadow-2xl">
         {/* Header Bar */}
@@ -126,7 +136,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
           {/* Local Video Picture-in-Picture */}
           {isVideo && localStream && (
             <div className="absolute bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 h-40 w-28 overflow-hidden rounded-2xl border-2 border-violet-500/50 bg-slate-900 shadow-2xl sm:h-48 sm:w-36">
-              {hasLocalVideo ? (
+              {hasLocalVideo && !isCameraDisabled ? (
                 <video
                   ref={localVideoRef}
                   autoPlay
@@ -137,7 +147,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-slate-300">
-                  Camera unavailable
+                  {hasLocalVideo ? 'Camera off' : 'Camera unavailable'}
                 </div>
               )}
             </div>
@@ -159,6 +169,20 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
             {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
           </button>
 
+          {isVideo && (
+            <button
+              onClick={handleCameraToggle}
+              className={`rounded-2xl border p-3.5 transition-all cursor-pointer ${
+                isCameraDisabled
+                  ? 'border-red-500/40 bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                  : 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+              }`}
+              title={isCameraDisabled ? 'Bật camera' : 'Tắt camera'}
+            >
+              {isCameraDisabled ? <CameraOff className="h-5 w-5" /> : <Camera className="h-5 w-5" />}
+            </button>
+          )}
+
           {/* End Call Button */}
           <button
             onClick={onEndCall}
@@ -172,7 +196,8 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
         {/* Hidden Audio Element for Remote Stream */}
         <audio ref={remoteAudioRef} autoPlay playsInline />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

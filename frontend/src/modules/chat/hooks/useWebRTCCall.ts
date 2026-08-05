@@ -403,6 +403,14 @@ export const useWebRTCCall = (
     }
   };
 
+  const toggleCamera = (disabled: boolean) => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach((track) => {
+        track.enabled = !disabled;
+      });
+    }
+  };
+
   return {
     callStatus,
     incomingCall,
@@ -414,5 +422,6 @@ export const useWebRTCCall = (
     rejectCall,
     endCall,
     toggleMic,
+    toggleCamera,
   };
 };

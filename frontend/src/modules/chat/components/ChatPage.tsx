@@ -260,6 +260,7 @@ export default function ChatPage({
     rejectCall,
     endCall,
     toggleMic,
+    toggleCamera,
   } = useWebRTCCall(currentUser, handleCallCompleted);
 
   useEffect(() => {
@@ -2386,6 +2387,7 @@ export default function ChatPage({
           isVideo={!!activeCall?.isVideo}
           onEndCall={endCall}
           onToggleMic={toggleMic}
+          onToggleCamera={toggleCamera}
         />
       )}
     </div>
