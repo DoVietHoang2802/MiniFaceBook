@@ -9,6 +9,7 @@ import { REACTION_ICONS } from './reactionConfig';
 import ReactionPicker from './ReactionPicker';
 import PostDetailModal from './PostDetailModal';
 import ReactionsModal from './ReactionsModal';
+import MobileReactionActionSheet from './MobileReactionActionSheet';
 import { chatService } from '../../chat/services/chatService';
 import type { ConversationResponse } from '../../chat/types/chat.types';
 import { useReactionLongPress } from '../../../core/hooks/useReactionLongPress';
@@ -37,6 +38,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
 
   const [localPost, setLocalPost] = useState(post);
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
+  const [isMobileReactionSheetOpen, setIsMobileReactionSheetOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
@@ -165,11 +167,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
   const handleReact = (type: ReactionType) => {
     reactionMutation.mutate(type);
     setIsHoveringReaction(false);
+    setIsMobileReactionSheetOpen(false);
   };
 
   const reactionLongPressHandlers = useReactionLongPress({
     onTap: () => handleReact('LIKE'),
-    onLongPress: () => setIsHoveringReaction(true),
+    onLongPress: () => setIsMobileReactionSheetOpen(true),
     onMouseClick: () => handleReact(localPost.myReactionType || 'LIKE'),
   });
 
@@ -416,7 +419,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
             }}
           >
             {isHoveringReaction && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pb-2">
+              <div className="absolute bottom-full left-1/2 z-50 hidden -translate-x-1/2 pb-2 md:block">
                 <ReactionPicker onSelect={handleReact} />
               </div>
             )}
@@ -459,6 +462,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onPostDeleted })
         {showReactionsModal && (
           <ReactionsModal postId={localPost.id} onClose={() => setShowReactionsModal(false)} />
         )}
+        <MobileReactionActionSheet
+          isOpen={isMobileReactionSheetOpen}
+          onClose={() => setIsMobileReactionSheetOpen(false)}
+          onReact={handleReact}
+        />
 
         {showSharePicker && (
           <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/30 p-3 sm:items-center" onMouseDown={() => setShowSharePicker(false)}>

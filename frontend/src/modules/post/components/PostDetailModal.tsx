@@ -6,6 +6,7 @@ import { REACTION_ICONS } from './reactionConfig';
 import ReactionPicker from './ReactionPicker';
 import CommentSection from './CommentSection';
 import ReactionsModal from './ReactionsModal';
+import MobileReactionActionSheet from './MobileReactionActionSheet';
 import { postService } from '../services/postService';
 import { useMutation } from '@tanstack/react-query';
 import { sseService } from '../../core/services/sseService';
@@ -79,6 +80,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
 
   const [currentImgIdx, setCurrentImgIdx] = useState(0);
   const [isHoveringReaction, setIsHoveringReaction] = useState(false);
+  const [isMobileReactionSheetOpen, setIsMobileReactionSheetOpen] = useState(false);
   const [showReactionsModal, setShowReactionsModal] = useState(false);
 
   const formatTime = (dateStr: string) => {
@@ -127,11 +129,12 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   const handleReact = (type: ReactionType) => {
     reactionMutation.mutate(type);
     setIsHoveringReaction(false);
+    setIsMobileReactionSheetOpen(false);
   };
 
   const reactionLongPressHandlers = useReactionLongPress({
     onTap: () => handleReact('LIKE'),
-    onLongPress: () => setIsHoveringReaction(true),
+    onLongPress: () => setIsMobileReactionSheetOpen(true),
     onMouseClick: () => handleReact(localPost.myReactionType || 'LIKE'),
   });
 
@@ -333,7 +336,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                 }}
               >
                 {isHoveringReaction && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 z-50 pb-2">
+                  <div className="absolute bottom-full left-1/2 z-50 hidden -translate-x-1/2 pb-2 md:block">
                     <ReactionPicker onSelect={handleReact} />
                   </div>
                 )}
@@ -399,6 +402,11 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
           onClose={() => setShowReactionsModal(false)}
         />
       )}
+      <MobileReactionActionSheet
+        isOpen={isMobileReactionSheetOpen}
+        onClose={() => setIsMobileReactionSheetOpen(false)}
+        onReact={handleReact}
+      />
     </div>
   );
 

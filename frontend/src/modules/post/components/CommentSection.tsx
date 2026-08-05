@@ -11,6 +11,7 @@ import ReactionPicker from './ReactionPicker';
 import ReactionsModal from './ReactionsModal';
 import { REACTION_ICONS } from './reactionConfig';
 import { useReactionLongPress } from '../../../core/hooks/useReactionLongPress';
+import MobileReactionActionSheet from './MobileReactionActionSheet';
 
 interface CommentSectionProps {
   postId: string;
@@ -31,6 +32,7 @@ interface CommentReactionButtonProps {
   isPickerOpen: boolean;
   onPickerChange: (commentId: string | null) => void;
   onReact: (type: ReactionType) => void;
+  onMobileLongPress: () => void;
 }
 
 const CommentReactionButton: React.FC<CommentReactionButtonProps> = ({
@@ -39,10 +41,11 @@ const CommentReactionButton: React.FC<CommentReactionButtonProps> = ({
   isPickerOpen,
   onPickerChange,
   onReact,
+  onMobileLongPress,
 }) => {
   const reactionLongPressHandlers = useReactionLongPress({
     onTap: () => onReact('LIKE'),
-    onLongPress: () => onPickerChange(commentId),
+    onLongPress: onMobileLongPress,
     onMouseClick: () => onPickerChange(isPickerOpen ? null : commentId),
   });
 
@@ -57,7 +60,7 @@ const CommentReactionButton: React.FC<CommentReactionButtonProps> = ({
       }}
     >
       {isPickerOpen && (
-        <div className="absolute bottom-full left-0 z-30 pb-2">
+          <div className="absolute bottom-full left-0 z-30 hidden pb-2 md:block">
           <ReactionPicker
             onSelect={(type) => {
               onReact(type);
@@ -89,6 +92,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
   const [isFocused, setIsFocused] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
+  const [mobileReactionSheetFor, setMobileReactionSheetFor] = useState<CommentResponse | null>(null);
   const [showReactionsFor, setShowReactionsFor] = useState<string | null>(null);
   const [activeCommentMenu, setActiveCommentMenu] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<{ id: string; authorName: string } | null>(null);
@@ -493,6 +497,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
       .slice(0, 3);
   };
 
+  const startReply = (comment: CommentResponse, authorName: string) => {
+    setReplyTo({ id: comment.parentId || comment.id, authorName });
+    textareaRef.current?.focus();
+  };
+
   // Helper: render 1 comment item (dùng chung cho cả top-level và reply)
   const renderComment = (comment: CommentResponse, isReply: boolean) => {
     const authorName = comment.authorName?.includes('@')
@@ -608,13 +617,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
               isPickerOpen={reactionPickerFor === comment.id}
               onPickerChange={setReactionPickerFor}
               onReact={(type) => reactMutation.mutate({ commentId: comment.id, type })}
+              onMobileLongPress={() => setMobileReactionSheetFor(comment)}
             />
             <button
               onClick={() => {
-                // Reply luôn trỏ vào comment gốc (top-level) nếu đang click trên reply
-                const targetId = comment.parentId || comment.id;
-                setReplyTo({ id: targetId, authorName });
-                textareaRef.current?.focus();
+                startReply(comment, authorName);
               }}
               className="min-h-11 px-1 text-[11px] font-bold text-slate-500 hover:underline cursor-pointer"
             >
@@ -785,7 +792,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                 </button>
               </div>
             </div>
-
             {(content.trim().length > 0 || image) && (
               <button
                 onClick={handleSubmit}
@@ -850,6 +856,29 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
           onClose={() => setShowReactionsFor(null)}
         />
       )}
+      <MobileReactionActionSheet
+        isOpen={mobileReactionSheetFor !== null}
+        onClose={() => setMobileReactionSheetFor(null)}
+        onReact={(type) => {
+          if (mobileReactionSheetFor) {
+            reactMutation.mutate({ commentId: mobileReactionSheetFor.id, type });
+          }
+        }}
+        comment={mobileReactionSheetFor ? {
+          authorName: mobileReactionSheetFor.authorName || 'Người dùng Hizo',
+          content: mobileReactionSheetFor.content,
+          imageUrl: mobileReactionSheetFor.imageUrl,
+        } : undefined}
+        onReply={() => {
+          if (mobileReactionSheetFor) {
+            const authorName = mobileReactionSheetFor.authorName?.includes('@')
+              ? mobileReactionSheetFor.authorName.split('@')[0]
+              : (mobileReactionSheetFor.authorName || 'Người dùng Hizo');
+            startReply(mobileReactionSheetFor, authorName);
+          }
+        }}
+        onReport={() => window.alert('Tính năng báo cáo bình luận sẽ sớm có.')}
+      />
     </div>
   );
 };
