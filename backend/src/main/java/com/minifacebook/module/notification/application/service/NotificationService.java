@@ -85,12 +85,11 @@ public class NotificationService {
         .findById(recipientId)
         .ifPresent(
             recipient -> {
-              NotificationResponse payload = toResponse(saved, resolveActor(actorId));
-              // WebSocket STOMP broadcast
+                NotificationResponse payload = toResponse(saved, resolveActor(actorId));
+              // User queue isolates private notifications from other connected accounts.
               try {
                 messagingTemplate.convertAndSendToUser(
                     recipient.getEmail(), "/queue/notifications", payload);
-                messagingTemplate.convertAndSend("/topic/notifications", payload);
               } catch (Exception ex) {
                 log.error("Failed to push notification via WebSocket STOMP", ex);
               }

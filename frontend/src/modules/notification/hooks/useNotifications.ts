@@ -91,7 +91,7 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
       onNewRef.current?.(notif);
     };
 
-    // Subscribe SSE + WebSocket STOMP song song (Kép 2 kênh đảm bảo 100% Realtime)
+    // Subscribe SSE + user-scoped WebSocket queue so other accounts never receive this event.
     const unsubscribeSSE = sseService.subscribe<NotificationResponse>(
       '/api/events/notifications',
       handleIncomingNotif
@@ -99,7 +99,7 @@ export function useNotifications(isLoggedIn: boolean, onNew?: (n: NotificationRe
 
     webSocketService.connect();
     const unsubWS = webSocketService.subscribe<NotificationResponse>(
-      '/topic/notifications',
+      '/user/queue/notifications',
       handleIncomingNotif
     );
 
