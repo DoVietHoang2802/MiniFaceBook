@@ -15,9 +15,10 @@ interface CommentSectionProps {
   postAuthorId?: string;
   currentUser: any;
   onCommentCountChange?: (delta: number) => void;
+  onComposerFocusChange?: (focused: boolean) => void;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, currentUser, onCommentCountChange }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, currentUser, onCommentCountChange, onComposerFocusChange }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
@@ -56,8 +57,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
       // Mới nhất: theo ngày giảm dần
       return commentsCopy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } else {
-      // Tất cả bình luận: mặc định API (createdAt desc)
-      return commentsCopy;
+      // Timeline mode: parent comments and replies remain in chronological order.
+      return commentsCopy.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     }
   };
 
@@ -584,8 +585,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
+                onFocus={() => {
+                  setIsFocused(true);
+                  onComposerFocusChange?.(true);
+                }}
+                onBlur={() => {
+                  setIsFocused(false);
+                  onComposerFocusChange?.(false);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={replyTo ? `Trả lời ${replyTo.authorName}...` : 'Viết bình luận...'}
                 className="w-full bg-transparent outline-none resize-none px-3 py-2 text-[16px] sm:text-[0.9rem] text-slate-700 min-h-[36px] max-h-[120px] overflow-y-auto leading-relaxed"
@@ -626,7 +633,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
       ) : (
         <div className="space-y-3 pb-3">
           {topLevelComments.map((comment: CommentResponse) => {
-            const replies = repliesByParentId[comment.id] || [];
+            const replies = [...(repliesByParentId[comment.id] || [])]
+              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
             return (
               <div key={comment.id}>
                 {renderComment(comment, false)}

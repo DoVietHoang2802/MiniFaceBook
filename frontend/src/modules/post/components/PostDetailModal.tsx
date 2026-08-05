@@ -26,6 +26,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   onPostUpdate,
 }) => {
   const [localPost, setLocalPost] = useState(post);
+  const [isCommentComposerFocused, setIsCommentComposerFocused] = useState(false);
 
   useEffect(() => {
     onPostUpdate?.(localPost);
@@ -165,7 +166,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
       >
         {/* LEFT PANEL: Responsive Image Viewer or Stylized Light Card */}
         {hasImages ? (
-            <div className="flex-none h-[40dvh] max-h-[360px] w-full bg-slate-950 flex items-center justify-center relative select-none md:flex-1 md:h-full md:max-h-none md:w-auto group">
+            <div className={`${isCommentComposerFocused ? 'hidden md:flex' : 'flex'} flex-none h-[40dvh] max-h-[360px] w-full bg-slate-950 items-center justify-center relative select-none md:flex-1 md:h-full md:max-h-none md:w-auto group`}>
             <img
               src={localPost.imageUrls[currentImgIdx]}
               alt={`Post image ${currentImgIdx + 1}`}
@@ -270,7 +271,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
           </div>
 
           {/* Pinned Post Info & Actions (Non-scrollable, overflow visible) */}
-          <div className="p-4 pb-2 border-b border-slate-100 shrink-0 space-y-3 bg-white z-10">
+          <div className={`${isCommentComposerFocused ? 'hidden md:block' : 'block'} p-4 pb-2 border-b border-slate-100 shrink-0 space-y-3 bg-white z-10`}>
             {localPost.content && (
               <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-medium pb-1">
                 {localPost.content}
@@ -368,6 +369,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
               postId={localPost.id}
               postAuthorId={localPost.authorId}
               currentUser={currentUser}
+              onComposerFocusChange={setIsCommentComposerFocused}
               onCommentCountChange={(delta) => {
                 setLocalPost((prev) => ({
                   ...prev,
