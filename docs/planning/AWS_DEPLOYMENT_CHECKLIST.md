@@ -119,13 +119,13 @@ SENTRY_DSN
 
 The backend production profile intentionally fails to start if required secrets are missing.
 
-After the deployment changes are committed, run on AWS:
+After CI approves a reviewed commit SHA, update the existing AWS checkout to that exact SHA. Keep the previous SHA as the rollback target:
 
 ```bash
-git clone https://github.com/DoVietHoang2802/MiniFaceBook.git
-cd MiniFaceBook/deploy
-cp .env.production.example .env.production
-chmod 600 .env.production
+cd ~/apps/MiniFaceBook
+git fetch origin
+git checkout <approved-commit-sha>
+cd deploy
 ```
 
 Fill `.env.production` privately. Set `CORS_ALLOWED_ORIGINS` to the comma-separated public frontend origins, then start the containers:
@@ -138,6 +138,7 @@ CORS_ALLOWED_ORIGINS=https://miniface.site,https://www.miniface.site
 docker compose --env-file .env.production -f docker-compose.prod.yml up --build -d
 docker compose --env-file .env.production -f docker-compose.prod.yml ps
 curl http://127.0.0.1:8080/api/actuator/health
+curl https://api.<domain>/api/actuator/health
 ```
 
 ## 5. Configure DNS and HTTPS
@@ -153,7 +154,7 @@ Domain configuration is tracked in [DOMAIN_CONFIGURATION.md](DOMAIN_CONFIGURATIO
 ## 6. Deploy Frontend to Vercel
 
 1. Import the GitHub repository into Vercel.
-2. Set `VITE_API_BASE_URL` to `https://api.<domain>/api` for Production and Preview. Do not use `VITE_API_URL`.
+2. Set `VITE_API_BASE_URL` to `https://api.<domain>/api` for Production. Preview builds are UI-only unless a separately allowlisted preview API origin is provisioned. Do not use `VITE_API_URL`.
 3. Connect the frontend domain in Vercel.
 4. Verify login, refresh, CORS, SSE, and SockJS behavior over HTTPS. All frontend transports must derive their URLs from `VITE_API_BASE_URL`.
 
@@ -191,6 +192,8 @@ https://api.<domain>/api/login/oauth2/code/google
 - [ ] Resend verification and reset emails arrive.
 - [ ] Docker containers restart after a server reboot.
 - [ ] MongoDB backup, log retention, and monitoring are configured.
+- [ ] `/dev/**` is denied in production; CSRF/Origin policy is verified.
+- [ ] Deployed backend/frontend SHAs, timestamp, smoke evidence and rollback SHA are recorded in `SESSION_HANDOFF.md`.
 
 ## Secret Rules
 

@@ -8,6 +8,15 @@
 
 ## 🎨 PHẦN A: THÀNH TỰU CỐT LÕI FRONTEND (FE)
 
+### Highlight: Delivered a Realtime Social Product Across Web and Mobile
+* **Situation:** A social application needed consistent behavior across feed, comments, chat and calls while users moved between desktop and touch-first mobile surfaces.
+* **Task:** Keep private realtime events scoped to recipients, preserve conversational context, and make rich interactions usable without desktop-only hover behavior.
+* **Action:** Built recipient-scoped SSE/STOMP notification delivery, post deep links, server-validated shared-post cards, global WebRTC call PiP, mobile long-press reactions, comment attachments and an in-app chat image lightbox.
+* **Result:** Produced an end-to-end portfolio system that demonstrates event-driven backend design, React state coordination, responsive interaction design and manual production verification discipline.
+* **CV Bullet (English):** *Built a full-stack realtime social platform with recipient-scoped SSE/STOMP events, WebRTC call persistence, server-validated post sharing, and touch-first mobile interaction patterns across feed, comments, and chat.*
+
+---
+
 ### 🥇 Highlight 1: Thiết kế Axios Client chống "Bão Request" (Token Refresh Storm Mutex Lock)
 *   **Situation (Bối cảnh):** Khi Access Token hết hạn, việc người dùng tải trang chủ gọi đồng thời nhiều API sẽ kích hoạt hàng loạt request lỗi 401. Điều này dẫn đến việc gọi đồng thời nhiều request xoay vòng token `/auth/refresh`, khiến hệ thống **Refresh Token Rotation (RTR)** ở Backend hiểu lầm là bị tấn công chiếm đoạt session (Replay Attack) và tự động khóa sạch tài khoản người dùng.
 *   **Task (Nhiệm vụ):** Thiết kế cơ chế khóa (Mutex Lock) ở phía Client để hoãn tất cả các request phát sinh lỗi 401 tiếp theo, chỉ cho phép duy nhất một request âm thầm đi lấy Access Token mới ngầm, sau đó tự động gửi lại toàn bộ request đang xếp hàng chờ.

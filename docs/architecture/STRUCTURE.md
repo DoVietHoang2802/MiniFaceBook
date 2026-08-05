@@ -25,7 +25,7 @@ Hệ thống tài liệu là **"Sách lược & Nhật ký"** của dự án. N�
 ---
 
 ## 🧠 2. Hệ thống kỹ năng (Internal Skills)
-Nằm trong thư mục `.antigravity/skills/`. Đây là **"Cẩm nang thực thi chuyên sâu"** dành riêng cho AI, đảm bảo mọi dòng code đều đạt chuẩn Senior.
+Quy tắc thực thi hiện hành nằm trong `.agents/AGENTS.md`; cấu hình command/agent/skill của Kilo nằm trong `.kilo/`.
 
 - **spring-boot-mastery:** Tiêu chuẩn Modular Clean Architecture, MapStruct, Lombok.
 - **security-expert:** Tiêu chuẩn bảo mật (Refresh Token Rotation, HttpOnly Cookies).

@@ -2,7 +2,7 @@
 
 *Tài liệu này ghi chú lại chi tiết những thành quả đã đạt được sau mỗi Phase, giải thích rõ công dụng, lợi ích và lý do của những quyết định kiến trúc trong hệ thống Mini FaceBook.*
 
-> 💡 **Cập nhật ngày 05/08/2026:** AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã được kết nối. Đã thay các realtime `localhost` URLs bằng cấu hình production dùng chung, bổ sung UI xác thực email và đổi tên hiển thị. Cloudinary production credential cần được thay trước khi xác nhận upload production.
+> 💡 **Cập nhật ngày 05/08/2026:** Production topology AWS/Vercel/Atlas/Redis đã hoạt động. Hệ thống hiện có deep link notification → post, post sharing vào chat, global WebRTC PiP, comment attachment/reply notification, mobile long-press reactions và chat image lightbox. Các browser-level release gates được quản lý riêng trong `PRODUCTION_READINESS_CHECKLIST.md`.
 
 ---
 
@@ -14,8 +14,8 @@
 
 
 
-## 📝 PHASE 2: CONTENT & NEWS FEED (ĐANG TRIỂN KHAI 🚧)
-**Đánh giá tổng quan:** Khởi động hệ thống Bài viết (Post System) với kiến trúc Module độc lập. Thiết lập cấu trúc dữ liệu NoSQL tối ưu cho News Feed.
+## 📝 PHASE 2: CONTENT & NEWS FEED (ĐÃ HOÀN THÀNH ✅)
+**Đánh giá tổng quan:** Post/feed, detail route, reactions, nested replies, comment image attachment, realtime count và notification deep links đã được triển khai. Hardening production còn theo checklist release.
 
 ### 🏆 Các tính năng & Kiến trúc đang thiết lập:
 #### 1. Sprint 2.1: Hạ tầng Bài viết (Post System)
@@ -190,7 +190,7 @@ Dự án đã hoàn tất việc chuyển đổi tư duy và hạ tầng sang **
   - [x] Vượt qua 100% kiểm thử kiến trúc ArchUnit sau khi di chuyển DTOs, Mappers và Security hạ tầng về đúng phân lớp Clean Architecture.
   - [x] **[Nâng cấp bảo mật]** Phát hiện, vá lỗi thành công lỗ hổng đăng xuất (Logout) không thu hồi token trong MongoDB, đồng thời tiến hành clean compile và kiểm thử thực tế thành công 100%.
 - **Phiên 18/05/2026 (Sprint 1.2 - Frontend Initialization & UI/UX Pro Max Integration):**
-  - [x] **[Tích hợp Kỹ năng mới]** Tải xuống, quy hoạch và tích hợp thành công Custom Skill [ui-ux-pro-max](file:///d:/Project_MiniFace/.antigravity/skills/ui-ux-pro-max/SKILL.md) (45KB cẩm nang thiết kế) vào thư mục nội bộ `.antigravity/skills/ui-ux-pro-max/`.
+  - [x] **[Historical]** Từng tích hợp cẩm nang `ui-ux-pro-max` trong cấu trúc legacy. Quy tắc/config agent hiện hành đã chuyển sang `.agents/AGENTS.md` và `.kilo/`.
   - [x] **[Giao thức Bắt buộc]** Cập nhật [SESSION_HANDOFF.md](file:///d:/Project_MiniFace/docs/session/SESSION_HANDOFF.md) thiết lập quy tắc bắt buộc số 4: Mặc định tự động kích hoạt và tuân thủ 100% cẩm nang thiết kế cho mọi tác vụ liên quan đến giao diện, Frontend và CSS.
   - [x] **[Tài liệu hóa UI/UX Spec]** Tạo mới tệp [docs/guidelines/UI_UX_DESIGN.md](file:///d:/Project_MiniFace/docs/guidelines/UI_UX_DESIGN.md) lưu trữ toàn bộ triết lý thiết kế Sleek Dark Mode, Design Tokens màu HSL/Fonts, phân tích chi tiết và đề xuất cải tiến 3 màn hình cốt lõi dựa trên mockup của người dùng, cùng checklist kiểm định chất lượng nghiêm ngặt.
 

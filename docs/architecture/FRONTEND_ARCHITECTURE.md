@@ -12,7 +12,7 @@ frontend/
 └── src/
     ├── core/               # Trái tim ứng dụng (Hạ tầng, Interceptors, Global Types)
     ├── components/         # UI Elements dùng chung toàn cục (Atomic UI Components)
-    └── modules/            # Các Module nghiệp vụ khép kín (Auth, Feed, Profile)
+    └── modules/            # Các module nghiệp vụ khép kín
 ```
 
 ---
@@ -38,8 +38,18 @@ Các component tái sử dụng nhiều nơi, được chia nhỏ theo mô hình
 ### 📁 C. Thư mục `modules/` (Đóng gói nghiệp vụ khép kín - QUAN TRỌNG)
 Tất cả các tính năng nghiệp vụ lớn được phân tách thành từng thư mục con độc lập:
 *   `modules/auth/`: Module Xác thực và Đăng ký.
-*   `modules/feed/`: Module Trang chủ và Dòng thời gian.
+*   `modules/post/`: Feed, post detail/deep link, reactions, nested comments và media.
+*   `modules/friends/`: Friend request, suggestions và relationship state.
+*   `modules/chat/`: Conversation, media, shared post, STOMP, WebRTC global call context/PiP.
+*   `modules/notification/`: Recipient-scoped notifications, SSE/STOMP synchronization và deep links.
 *   `modules/profile/`: Module Trang cá nhân người dùng.
+*   `modules/admin/`: Dashboard và moderation dành cho admin.
+
+### Realtime Ownership
+
+- REST URL, SSE URL and SockJS URL derive from `VITE_API_BASE_URL`.
+- SSE carries post-count and notification streams; STOMP carries chat, calls, typing and message reactions.
+- Browser clients use credentialed cookies; token query strings are not a supported frontend contract.
 
 Mỗi thư mục module nghiệp vụ con **bắt buộc phải tuân thủ** cấu trúc con khép kín như sau:
 ```

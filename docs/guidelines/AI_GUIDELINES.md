@@ -10,7 +10,7 @@
 Khi có sự mâu thuẫn hoặc mơ hồ về thông tin, AI phải tuân thủ tuyệt đối thứ tự sau:
 1.  **Project Docs:** (Roadmap, System Design, Session Handoff, Progress).
 2.  **User Instructions:** (Yêu cầu trực tiếp và bối cảnh hiện tại của USER).
-3.  **Internal Skills:** (Bộ kỹ năng trong thư mục `.antigravity/skills`).
+3.  **Project Governance:** Đọc `.agents/AGENTS.md`; command, agent và skill của Kilo thuộc `.kilo/`.
 
 **⚠️ QUY TẮC VÀNG:** Nếu một Skill mâu thuẫn với Docs của dự án, AI **KHÔNG ĐƯỢC TỰ Ý LÀM THEO SKILL**. Phải dừng lại, báo cáo ngay mâu thuẫn cho USER và tiến hành cập nhật lại Skill sau khi thống nhất.
 

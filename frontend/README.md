@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# MiniFace Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite client for MiniFace.
 
-Currently, two official plugins are available:
+## Responsibilities
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Cookie-based authentication, Google OAuth callback and profile completion.
+- Feed, post detail/deep links, reactions, nested comments and comment attachments.
+- Friends, notification badges/deep links, responsive mobile navigation and admin routes.
+- 1-1 chat with media, post sharing, typing, reactions, replies, unread state and in-app image lightbox.
+- WebRTC calls with STOMP signaling, global draggable PiP and mobile-safe controls.
 
-## React Compiler
+## Local Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The default Vite URL is `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Environment
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+VITE_API_BASE_URL=http://localhost:8080/api
 ```
+
+Production Vercel builds use `https://api.miniface.site/api`. Do not use `VITE_API_URL`; all REST, SSE and SockJS URLs derive from `VITE_API_BASE_URL`.
+
+## Scripts
+
+```bash
+npm run dev       # Vite development server
+npm run build     # TypeScript check and production build
+npm run test:e2e  # Playwright suite
+```
+
+## Module Map
+
+| Module | Main responsibility |
+|---|---|
+| `core/` | API client, auth context, monitoring and shared hooks. |
+| `modules/auth` | Registration, login, OAuth and verification. |
+| `modules/post` | Feed, post detail, comments, media and reactions. |
+| `modules/friends` | Requests, lists, suggestions and profile relations. |
+| `modules/chat` | Conversations, media, post sharing, STOMP and WebRTC. |
+| `modules/notification` | Notification state, deep links and recipient-scoped realtime events. |
+| `modules/profile` | Profile and account settings. |
+| `modules/admin` | Moderation and system operations. |
+
+## Mobile Expectations
+
+- Use 16px text inputs to avoid iOS auto-zoom.
+- Important actions need touch targets of at least 44px.
+- Tap is the default quick action; long-press opens reaction choices where supported.
+- Respect safe-area insets and dynamic viewport behavior.
+
+## Further Reading
+
+- [Root README](../README.md)
+- [API Reference](../docs/api/API_REFERENCE.md)
+- [Mobile Responsive Plan](../docs/planning/MOBILE_RESPONSIVE_PLAN.md)
+- [Testing Guide](../docs/testing/TESTING_GUIDE.md)

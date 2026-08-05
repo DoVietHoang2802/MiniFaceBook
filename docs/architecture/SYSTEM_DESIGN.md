@@ -20,7 +20,7 @@
   - `expiryDate` (Instant, index)
   - `revoked` (Boolean, default: false)
   - `createdAt` (Instant)
-- **Messages:** `conversationId` (index), `senderId`, `content`, `type` (TEXT/IMAGE/FILE), `mediaUrl`, `deliveredAt`/`seenAt` (status SENT/DELIVERED/SEEN), `reactions` (Map), `replyTo` (snapshot), `editedAt`, `deleted`, `deletedFor` (Set), `createdAt` (compound index `conversationId+createdAt`).
+- **Messages:** `conversationId` (index), `senderId`, `content`, `type` (TEXT/IMAGE/FILE/POST), `mediaUrl`, server-derived `sharedPost` snapshot, delivered/seen status, reactions, reply snapshot, edit/delete state and `conversationId+createdAt` index.
 - **Conversations:** `participantIds` (array 2 ID), `lastMessageSummary` (denormalized), `lastMessageAt`, `createdAt`.
 - **Friends:** `requesterId`, `recipientId`, `status`, `unique_pair` (Compound Index).
 
@@ -38,7 +38,10 @@ Thay vì chia nhỏ thành Microservices ngay từ đầu (gây phức tạp v�
 - **Auth Module:** Quản lý định danh và quyền hạn.
 - **User Module:** Quản lý thông tin cá nhân.
 - **Chat Module:** Xử lý tin nhắn realtime.
-- **Social Module:** Quản lý bài đăng, bình luận, tương tác.
+- **Post Module:** Bài đăng, comments/replies, media, reactions và detail deep links.
+- **Friendship Module:** Friend request, suggestions và relationship state.
+- **Notification Module:** Event-driven notification, unread cache, SSE/STOMP delivery.
+- **Admin Module:** Moderation, user controls và system broadcast.
 
 ### 3. Clean Architecture (Per Module)
 Mỗi module bên trong Backend được tổ chức thành 4 lớp để đảm bảo tính độc lập:
@@ -48,8 +51,8 @@ Mỗi module bên trong Backend được tổ chức thành 4 lớp để đảm
 - **Presentation:** Giao tiếp với thế giới bên ngoài (REST Controllers, STOMP Endpoints).
 
 ### 4. Modular Frontend (React + Vite)
-Được cấu trúc theo mô hình **Kiến trúc Phân lớp Module** để tương thích 1:1 với Backend, đảm bảo tính đóng gói khép kín cho các domain lớn (Auth, Feed, Profile) và phân tách cơ sở hạ tầng stateless (`core/`) khỏi logic nghiệp vụ (`modules/`).
-👉 Chi tiết đặc tả xem tại: [FRONTEND_ARCHITECTURE.md](file:///d:/Project_MiniFace/docs/architecture/FRONTEND_ARCHITECTURE.md)
+Được cấu trúc theo mô hình **Kiến trúc Phân lớp Module** cho Auth, Post, Friends, Chat, Notification, Profile và Admin; `core/` giữ API/auth/monitoring/shared hooks.
+👉 Chi tiết đặc tả xem tại: [FRONTEND_ARCHITECTURE.md](./FRONTEND_ARCHITECTURE.md)
 
 ---
 

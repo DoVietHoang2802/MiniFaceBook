@@ -67,4 +67,4 @@ Tài liệu này là nguồn thông tin duy nhất (Single Source of Truth) qu�
 ## 🧪 QUY TRÌNH KIỂM THỬ & BÀN GIAO (VERIFICATION)
 1.  **Local Testing:** Khởi chạy Backend và Frontend local, chạy thử các luồng nghiệp vụ.
 2.  **Playwright Tests:** Chạy `npx playwright test` để đảm bảo hệ thống không bị lỗi hồi quy (regression).
-3.  **CI/CD Pipeline:** Push mã nguồn lên GitHub, kiểm tra build và SonarCloud Quality Gate chạy thành công.
+3.  **CI Pipeline:** Push mã nguồn lên GitHub để chạy backend tests và Playwright. SonarCloud/Quality Gate và CD chưa được cấu hình trong workflow hiện tại.

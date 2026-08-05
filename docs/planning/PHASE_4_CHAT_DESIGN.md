@@ -94,8 +94,9 @@ public class Message {
     private String senderId;
     
     private String content;
-    private MessageType type;  // TEXT, IMAGE, FILE
+    private MessageType type;  // TEXT, IMAGE, FILE, POST
     private String mediaUrl;   // Cloudinary URL (nullable)
+    private SharedPostPreview sharedPost; // server-derived snapshot for POST messages
     
     // Status tracking (nullable Instant)
     private Instant deliveredAt;  // ✓✓
@@ -109,7 +110,8 @@ public class Message {
 public enum MessageType {
     TEXT,
     IMAGE,
-    FILE
+    FILE,
+    POST
 }
 ```
 

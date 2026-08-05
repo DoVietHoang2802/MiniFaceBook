@@ -1,7 +1,7 @@
 # 💎 Hướng dẫn Thiết kế Hệ thống UI/UX Premium - MiniFaceBook
 ## 🎨 Phiên Bản: Notion-inspired Light Slate Mode (Vizo Slate Light Theme)
 
-Tài liệu này ghi nhận toàn bộ triết lý thiết kế, quy chuẩn kỹ thuật, hệ thống Design Tokens và các giải pháp cải tiến giao diện đột phá được đúc kết từ cẩm nang **[ui-ux-pro-max](file:///d:/Project_MiniFace/.antigravity/skills/ui-ux-pro-max/SKILL.md)** áp dụng riêng cho dự án **MiniFaceBook**. 
+Tài liệu này ghi nhận triết lý thiết kế, quy chuẩn kỹ thuật, Design Tokens và các giải pháp UI/UX áp dụng riêng cho dự án **MiniFaceBook**. Quy tắc agent hiện hành được quản lý trong `.agents/AGENTS.md` và `.kilo/`.
 
 ---
 

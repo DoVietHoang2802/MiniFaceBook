@@ -600,6 +600,8 @@ Một module chỉ được xem là hoàn thành responsive khi đáp ứng đ�
 
 ## 13. BÁO CÁO TRIỂN KHAI THỰC TẾ (30/07/2026)
 
+> **Cập nhật 05/08/2026:** Mobile hardening tiếp tục với `100dvh`/safe-area cho Post Detail, comment composer focus mode, comment image attachment, 16px input chống iOS zoom, long-press reactions (tap = Like, hold = picker/action sheet), chat image lightbox, WebRTC PiP và touch target 48px ở composer Messenger. Test thực tế phải bao gồm iOS Safari và Android Chrome; không dùng hover làm cách duy nhất để thực hiện hành động.
+
 ### 13.1. Hạng mục đã hoàn thành
 
 - Responsive foundation: `viewport-fit=cover`, CSS safe-area, `100dvh`, layout tokens, focus-visible và reduced motion.

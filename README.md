@@ -1,4 +1,4 @@
-# 🚀 MiniFaceBook - Professional Backend Foundation
+# MiniFaceBook
 
 > [!CAUTION]
 > ### 🛑 BẮT BUỘC ĐỐI VỚI AI (MANDATORY STARTUP PROTOCOL)
@@ -16,7 +16,14 @@
 
 ---
 
-## 🛠 Tech Stack (Production Ready)
+## Current Status
+- Public frontend: `https://www.miniface.site`
+- Public API health: `https://api.miniface.site/api/actuator/health`
+- Production topology: Vercel (React SPA) + AWS EC2 Docker (Spring Boot, Redis) + MongoDB Atlas + Cloudinary + Resend.
+- GitHub Actions is **CI only**. Backend releases to AWS remain an explicit, manual, SHA-reviewed operation.
+- See [Production Readiness](docs/planning/PRODUCTION_READINESS_CHECKLIST.md) for verified capabilities, release gates, and known risks.
+
+## 🛠 Tech Stack
 - **Backend:** Java 21 (LTS) + Spring Boot 3.x - Modular Clean Architecture.
 - **Realtime:** Spring WebSocket (STOMP) + Redis Pub/Sub.
 - **Database:** MongoDB (Atlas) làm DB chính + Redis (Caching & JWT Blacklist).
@@ -36,13 +43,13 @@ Chi tiết cách kiểm tra các tính năng bảo mật và kiến trúc, vui l
 - **Core Tools:** Lombok, MapStruct, ArchUnit, Bucket4j.
 - **Services:** Cloudinary (Media), Resend (Email), Google Gemini (AI), **Sentry (Error Tracking)**.
 - **Frontend:** React + TypeScript + shadcn/ui + Tailwind v4 + Zod + TanStack Query, responsive mobile shell với safe-area và touch-first UX.
-- **DevOps:** Docker Compose, GitHub Actions.
+- **DevOps:** Docker Compose, Vercel, AWS EC2, GitHub Actions CI.
 - **Testing:** JUnit 5, Mockito, MockMvc, Testcontainers, Playwright, **K6 (Load Testing)**.
 
 ---
 
-## 🗺️ Project Roadmap (Tóm tắt)
-Dự án được chia làm **7 giai đoạn** phát triển chính. 
+## 🗺️ Project Roadmap
+Dự án được chia làm **9 phase (0-8)**. Phase 0-6 hoàn thành core; Phase 7 đã triển khai hạ tầng production với release gates còn mở; Phase 8 chứa tính năng mở rộng.
 > 📑 Xem chi tiết tại: **[docs/planning/ROADMAP.md](docs/planning/ROADMAP.md)**
 
 | Phase | Tên | Trạng thái |
@@ -53,10 +60,11 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 | 3 | Social Graph & Friends | ✅ Hoàn thành |
 | 4 | Realtime Chat | ✅ Hoàn thành (Sprint 4.1→4.5) |
 | 5 | Notification System | ✅ Hoàn thành (Sprint 5.1→5.4 + System Broadcast) |
-| 6 | Navigation, Performance & Testing | ✅ Hoàn thành core (Sprint 6.1→6.6, gồm Mobile Responsive UX + Playwright mobile); K6 load test còn optional |
-| 7 | Extended Features | ✅ Hoàn thành (Sprint 8.3 WebRTC Call, 8.5 Nested Reply, 8.6 Standalone Admin Portal & Profile UX Fixes) |
+| 6 | Navigation, Performance & Testing | ✅ Core hoàn thành; load/restore verification là release gate |
+| 7 | Production Deployment | 🟡 Đã vận hành AWS/Vercel/HTTPS; cần hoàn tất release gates |
+| 8 | Extended Features | 🟡 1-1 WebRTC, nested replies, admin, post sharing đã có; Group Chat/Stories/AI còn mở |
 
-**Tiến độ core: hoàn thành.** Các hardening/extended features đang hoàn thiện trước production gồm Google OAuth production flow, Cloudinary direct signed upload, production secrets/domain/HTTPS và load verification.
+**Tiến độ core: hoàn thành.** Không coi là “production-ready” cho đến khi các gate bảo mật, backup/rollback, OAuth/media/email browser smoke, realtime/call two-account và load verification được đóng.
 
 ---
 
@@ -72,6 +80,8 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 - **[DOMAIN_CONFIGURATION.md](docs/planning/DOMAIN_CONFIGURATION.md):** Cấu hình DNS công khai cho frontend và API, không chứa dữ liệu đăng ký tên miền.
 - **[LOCAL_CONFIGURATION.md](docs/guidelines/LOCAL_CONFIGURATION.md):** Cấu hình local Cloudinary, Google OAuth, profile và nguyên tắc giữ secret ngoài Git.
 - **[AI_GUIDELINES.md](docs/guidelines/AI_GUIDELINES.md):** Quy tắc làm việc dành cho AI.
+- **[API_REFERENCE.md](docs/api/API_REFERENCE.md):** Hợp đồng REST, SSE, STOMP và WebRTC signaling hiện tại.
+- **[DOCUMENTATION_STATUS.md](docs/DOCUMENTATION_STATUS.md):** Bảng theo dõi tính chính xác và trạng thái cập nhật tài liệu.
 
 ---
 
@@ -100,7 +110,7 @@ Dự án được chia làm **7 giai đoạn** phát triển chính.
 ## 🤖 Guide for AI Assistant (BẮT BUỘC)
 Trước khi thực hiện bất kỳ Task nào, AI phải đọc tài liệu theo thứ tự:
 1. `README.md` -> 2. `docs/architecture/STRUCTURE.md` -> 3. `docs/planning/ROADMAP.md` -> 4. `docs/planning/PROGRESS.md`.
-- Tuân thủ nghiêm ngặt các Skill trong thư mục `.antigravity/skills/`.
+- Tuân thủ `.agents/AGENTS.md` và cấu hình Kilo trong `.kilo/`.
 - Luôn sử dụng Swagger Annotations (springdoc-openapi) cho mọi Controller.
 - Business logic nằm hoàn toàn trong Service.
 - **Git Automation:** Khi người dùng yêu cầu "đẩy lên git", hãy tự động stage (`git add .`), commit với message mô tả đúng các thay đổi, và push lên remote ngay lập tức.

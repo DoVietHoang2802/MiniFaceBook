@@ -200,15 +200,17 @@ mvn test -Dtest=ArchitectureTest
     sonar-scanner -Dsonar.projectKey=DoVietHoang2802_MiniFaceBook -Dsonar.organization=doviethoang2802 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="YOUR_SONAR_TOKEN"
     ```
 
-### 5.7. CI/CD Pipeline (GitHub Actions)
-*   **Mô tả:** Mọi thay đổi khi push hoặc tạo Pull Request lên nhánh `main` và `develop` sẽ kích hoạt tự động workflow tại `.github/workflows/ci.yml`.
+### 5.7. CI Pipeline (GitHub Actions)
+*   **Mô tả:** Mọi thay đổi khi push hoặc tạo Pull Request lên nhánh `main` và `develop` sẽ kích hoạt workflow CI tại `.github/workflows/ci.yml`. Workflow này **không deploy** AWS hoặc Vercel.
 *   **Các bước CI tự động:**
     1. Khởi chạy Docker Compose (MongoDB, Redis, Mailpit) trên máy ảo.
     2. Build & chạy JUnit Tests Backend.
     3. Run Backend ở background.
     4. Install Frontend deps & Playwright browsers.
     5. Chạy Playwright E2E Tests.
-    6. Quét chất lượng mã nguồn bằng SonarCloud và kiểm tra Sonar Quality Gate.
+    6. Chạy Playwright Chromium và mobile Chromium.
+
+> SonarCloud, dependency scanning, frontend lint/build gate, deploy smoke test và production promotion chưa nằm trong workflow hiện tại; không được ghi nhận là CI pass.
 
 ---
 

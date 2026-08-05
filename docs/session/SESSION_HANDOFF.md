@@ -1,9 +1,9 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 04/08/2026
-## 🏁 Trạng thái hiện tại: 🟡 AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã hoạt động. SSE/SockJS production, email verification UI, đổi tên hiển thị và global WebRTC call PIP đã deploy. Cloudinary production credential cần được thay trước khi test upload.
+## 📅 Cập nhật ngày: 05/08/2026
+## 🏁 Trạng thái hiện tại: 🟡 Production topology đang vận hành; source hiện có auth cookie, REST/SSE/STOMP, chat/media/post sharing, WebRTC global PiP, social notifications/deep links, comment image/reply và mobile touch UX.
 
-> ⚠️ **Lưu ý lộ trình:** SSE, SockJS và REST phải dùng cùng `VITE_API_BASE_URL`; backend WebSocket chỉ cho phép origins trong `CORS_ALLOWED_ORIGINS`. Cloudinary startup hiện báo API key không hợp lệ, do đó phải xoay/thay credential AWS-only trước khi test upload. Không commit `.env.production`, EC2 key, Atlas URI, OAuth/Cloudinary/Resend credentials hoặc dữ liệu đăng ký tên miền.
+> ⚠️ **Release gates:** GitHub Actions là CI-only, không phải CD. Trước release rộng rãi phải deny `/dev/**` ở prod, quyết định CSRF/Origin policy, xoay toàn bộ credential từng lộ, xác minh SHA deployed, backup/restore + rollback drill, browser smoke hai account cho realtime/call/media/OAuth/email và load test. Không commit `.env.production`, key AWS, URI Atlas hoặc bất kỳ secret nào.
 
 ---
 
@@ -521,7 +521,7 @@
 1. **Docs Over Skills:** Nếu Skill mâu thuẫn với Docs, AI PHẢI dừng lại, báo cáo USER và sửa Skill theo Docs. Tuyệt đối không tự ý làm sai lệch cấu trúc dự án.
 2. **Anomaly Reporting:** Bất kỳ dấu hiệu bất thường nào (Lỗi Build, xung đột thư viện, mâu thuẫn logic) đều phải báo cáo ngay cho USER trước khi can thiệp.
 3. **Architecture Guard:** Cấm phá vỡ quy tắc Clean Architecture. Phải chạy `mvn test` để kiểm tra `ArchitectureTest.java` sau mỗi thay đổi lớn ở Backend.
-4. **Default UI/UX Skill:** Mặc định tự động kích hoạt và tuân thủ 100% cẩm nang [ui-ux-pro-max](file:///d:/Project_MiniFace/.antigravity/skills/ui-ux-pro-max/SKILL.md) và cẩm nang thiết kế [docs/guidelines/UI_UX_DESIGN.md](file:///d:/Project_MiniFace/docs/guidelines/UI_UX_DESIGN.md) cho tất cả các tác vụ liên quan đến giao diện, thiết kế, Frontend và CSS.
+4. **UI/UX Guidance:** Tuân thủ `.agents/AGENTS.md`, cấu hình `.kilo/` và [UI_UX_DESIGN.md](../guidelines/UI_UX_DESIGN.md) cho mọi tác vụ giao diện, frontend và CSS.
 5. **Session Bootstrap Verification (Bắt buộc Khởi động Phiên):** AI ở lượt trả lời đầu tiên của phiên mới **bắt buộc** phải tuân thủ nghiêm ngặt **Luật 9.6 (AI_GUIDELINES.md)**, chạy lệnh đọc 5 tệp tài liệu cốt lõi (`README.md`, `docs/session/SESSION_HANDOFF.md`, `docs/planning/ROADMAP.md`, `docs/planning/PROGRESS.md`, `docs/guidelines/AI_GUIDELINES.md`) và in ra bảng **Startup Verification Table** tóm tắt mục tiêu phiên để chứng minh đã đọc, trước khi được làm bất kỳ việc gì khác.
 
 ---

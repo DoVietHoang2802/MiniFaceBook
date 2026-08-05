@@ -6,7 +6,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 
 - Backend health is available through `https://api.miniface.site/api/actuator/health`.
 - The frontend is deployed on Vercel at `https://www.miniface.site`.
-- Backend suite (59 tests) passed locally before the CORS deployment.
+- Latest documented local backend suite passed with 65 tests; CI status and deployed SHA must still be recorded for each release.
 - Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 - SSE and SockJS production endpoints are deployed; browser-level verification of notifications, realtime post counts, chat, and calls remains required.
 - Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
@@ -23,6 +23,8 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [ ] Manually verify Google OAuth locally for a new user, returning user, verified-email auto-link, banned account, logout, and refresh.
 - [x] Add Google OAuth automated coverage for callback handling, onboarding-token expiry/replay, account linking, account bans, and Google-only password guards.
 - [ ] Re-run the complete Playwright suite and investigate any long-suite auth/session flakes.
+- [ ] Deny or profile-exclude every `/dev/**` route in production and verify it returns `404`/`403`.
+- [ ] Define and test CSRF/Origin policy for state-changing cookie-authenticated requests.
 
 ## AWS Production Setup
 
@@ -38,6 +40,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [x] Validate reverse proxy headers, health checks, Docker restart policy, and persistent Redis storage.
 - [ ] Configure database backup, log retention, monitoring, and error/latency alerts.
 - [ ] Run a staging-sized load test for feed, search, upload, and authentication flows.
+- [ ] Record deployed backend/frontend SHA, UTC timestamp, smoke-test evidence and rollback target for each release.
 
 ## Deferred Enhancements
 

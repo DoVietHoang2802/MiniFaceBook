@@ -1,12 +1,12 @@
 # Google OAuth Login Plan
 
-> **Status:** Local OAuth core implemented; production hardening and optional password-creation flow pending
+> **Status:** OAuth core, production callback/origins and browser smoke flow implemented; optional password-creation reauthentication, consent/review operations and repeatable browser regression remain open
 > **Scope:** Sign in/sign up with Google using OAuth 2.0 Authorization Code and OpenID Connect
 > **Primary constraint:** Reuse MiniFaceBook JWT HttpOnly-cookie sessions; never expose a Google client secret or application JWT in a URL.
 
 ## Implementation Status
 
-### Implemented Locally
+### Implemented
 
 - Spring OAuth2 Client feature flag and Google browser authorization route.
 - Google OIDC subject persistence with partial unique Mongo index.
@@ -15,11 +15,11 @@
 - Generic OAuth failure redirect and API 401 entrypoint to prevent Axios/XHR CORS redirects to Google.
 - Provider-aware password UI/recovery guard for `GOOGLE` accounts.
 
-### Still Pending Before Production
+### Still Pending / Hardening
 
 - Google reauthentication before optional first local password creation.
-- Dedicated OAuth unit/integration/Playwright coverage.
-- AWS custom HTTPS app/API domains, Secure cookie policy and production Google consent screen.
+- Handler/service coverage and production browser smoke exist; dedicated repeatable OAuth Playwright coverage remains desirable.
+- Google consent-screen publication/review and operational audit evidence for automatic verified-email linking.
 - Production audit notification for automatic verified-email linking.
 
 ## 1. Goal And Non-Goals

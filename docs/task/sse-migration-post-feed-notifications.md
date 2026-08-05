@@ -1,11 +1,13 @@
 # Task: SSE Migration for Post Feed Updates & Notifications
 
-**Status:** Pending  
+**Status:** Implemented as a dual-transport design; scale/load validation remains open
 **Priority:** Medium  
 **Estimated Time:** 2-3 days  
 **Related:** Phase 5, Realtime architecture
 
 ---
+
+> **Current implementation:** Post count streams use SSE; notifications use recipient-scoped SSE plus STOMP fallback/compatibility. Chat and WebRTC remain STOMP responsibilities. This is not a full removal of WebSocket.
 
 ## 🎯 Objective
 

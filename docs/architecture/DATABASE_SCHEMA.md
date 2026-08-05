@@ -68,7 +68,10 @@ Lưu trữ thông tin bài viết của người dùng trên News Feed.
 | `authorId` | String | Liên kết tới `users._id` của người đăng bài. |
 | `content` | String | Nội dung văn bản của bài viết (có thể rỗng nếu chỉ đăng ảnh). |
 | `imageUrls` | Array (String) | Danh sách link ảnh đã được mã hóa và tải lên Cloudinary. |
-| `reactIds` | Array (String) | Danh sách `users._id` đã thả tương tác (Like) vào bài viết. |
+| `reactionsCount` | Map (`ReactionType` → Number) | Tổng theo LIKE/LOVE/HAHA/WOW/SAD/ANGRY, phục vụ feed/detail realtime. |
+| `reactCount` | Number | Tổng lượt reaction. |
+| `commentCount` | Number | Tổng comment/reply đang hiển thị. |
+| `deleted`, `deletedAt` | Boolean, Instant | Soft-delete, không trả bài đã xóa qua public detail/feed. |
 | `createdAt` | Instant (ISODate) | Thời điểm đăng bài. **(Index Descending)** |
 | `updatedAt` | Instant (ISODate) | Thời điểm chỉnh sửa bài viết gần nhất. |
 
@@ -87,6 +90,7 @@ Lưu trữ các bình luận cấp 1 của người dùng trên bài viết.
 | `postId` | String | Liên kết tới `posts._id`. **(Index Ascending)** |
 | `parentId` | String | Liên kết tới `comments._id` cho bình luận con (Nested Reply). Nullable (Null nếu là bình luận cấp 1). |
 | `authorId` | String | Liên kết tới `users._id`. |
+| `imageUrl` | String | Cloudinary URL cho một ảnh đính kèm comment/reply. Nullable. |
 | `authorName` | String | Tên người bình luận (Denormalized để truy vấn nhanh). |
 | `authorAvatar`| String | Avatar người bình luận. |
 | `content` | String | Nội dung văn bản của bình luận. |

@@ -312,7 +312,7 @@
     - [x] Viết **Unit Test** bằng JUnit 5 (coverage > 70%). ✅
         - *Đã có bước đệm:* Module Chat đã được hardening thêm test cho edit/delete message và rollback Optimistic UI ngày 12/06/2026.
     - [x] Viết **Integration Test** bằng MockMvc + Testcontainers. ✅
-- [x] **Sprint 6.3: CI/CD Pipeline** ✅ *(3/3 HOÀN THÀNH)*
+- [x] **Sprint 6.3: CI Pipeline** ✅ *(workflow hiện tại kiểm thử; CD là release procedure thủ công)*
     - [x] Viết **E2E Test** bằng Playwright cho các luồng chính. ✅
     - [x] Thiết lập **GitHub Actions** tự động Build & Test khi push code. ✅
     - [x] Cấu hình **SonarQube/SonarCloud** để kiểm tra code quality. ✅
@@ -334,7 +334,7 @@
     - [x] Xây dựng Mobile Header và Bottom Navigation 5 mục với unread badges, safe-area và route-aware active state.
     - [x] Chuyển Notification panel thành responsive Bottom Sheet trên mobile, giữ anchored panel trên desktop.
     - [x] Hoàn thiện Chat single-pane full-width, route-authoritative Back, `100dvh`, composer và profile sheet mobile.
-    - [x] Chuyển Reaction Picker sang touch/long-press; chuẩn hóa action Feed/Profile/Admin đạt touch target tối thiểu 44px.
+    - [x] Chuyển Reaction Picker sang touch/long-press; action sheet cho comment/reply, tray neo trong nút Like cho post và touch target tối thiểu 44px.
     - [x] Thêm Playwright project `mobile-chromium` 360×800 và mobile responsive E2E (2/2 pass).
     - [x] Frontend production build pass; ghi nhận residual auth/session 401 ở full desktop suite dài để hardening riêng.
 
@@ -353,7 +353,8 @@
     - [x] Cấu hình custom domain và HTTPS cho `api.miniface.site` và `www.miniface.site`.
     - [x] Deploy CORS update và kiểm tra credentialed API requests từ cả hai frontend origins.
     - [x] Deploy và kiểm tra SSE/SockJS production URLs; browser-level flow test còn lại cho notification, realtime post, chat và gọi 1-1.
-    - [ ] Kiểm tra Google OAuth callback, Cloudinary upload và Resend email trên production.
+    - [x] Kiểm tra Google OAuth callback, Cloudinary upload và Resend email trên production.
+    - [ ] Đóng release gates: deny `/dev/**` ở prod, CSRF/Origin policy, backup-restore, rollback drill, deployed-SHA provenance và load verification.
 
 ---
 
@@ -372,7 +373,7 @@
 - [x] **Sprint 8.3: Voice & Video Call 1-1 (WebRTC & WebSocket Signaling)** ✅
     - [x] **Giao thức WebRTC P2P**: Khởi tạo `RTCPeerConnection` nối trực tiếp giữa 2 máy client với Google STUN miễn phí (**0đ chi phí**).
     - [x] **STOMP Signaling Controller**: Triển khai `CallSignalingController.java` rơ-le tín hiệu SDP Offer/Answer và ICE Candidates qua `/topic/call/{calleeId}`.
-    - [x] **Trải nghiệm cuộc gọi Messenger**: `IncomingCallModal.tsx` phát âm thanh chuông reo, avatar người gọi + nút Nghe & Từ chối. `ActiveCallModal.tsx` hỗ trợ xem video/avatar, nút Mute Mic và Kết thúc cuộc gọi màu đỏ.
+    - [x] **Trải nghiệm cuộc gọi Messenger**: incoming/active call, local preview, remote full-screen, global draggable PiP qua route navigation và call session ID chống signal cũ.
 - [ ] **Sprint 8.4: AI-Assisted Features (Trend 2026)**
     - [ ] Tích hợp **Google Gemini API** để tóm tắt hội thoại dài.
     - [ ] **AI Sentiment Analysis**: Phân tích cảm xúc tin nhắn/bài viết.
@@ -395,11 +396,11 @@
 | 3 | Social Graph & Friends | ✅ HOÀN THÀNH | 100% |
 | 4 | Realtime Chat | ✅ HOÀN THÀNH | 100% (Sprint 4.1→4.5 trọn vẹn) |
 | 5 | Notification System | ✅ HOÀN THÀNH | 100% (Tích hợp SSE & đồng bộ Realtime) |
-| 6 | Navigation, Performance & Testing | 🟡 ĐANG THỰC HIỆN | 85% (Hoàn thành Sprint 6.1→6.4 + 6.5 UI) |
-| 7 | Production Deployment | ⏳ Chưa bắt đầu | 0% |
-| 8 | Extended Features | ⏳ Chưa bắt đầu | 0% |
+| 6 | Navigation, Performance & Testing | ✅ CORE HOÀN THÀNH | 95% (K6/load + full browser matrix còn mở) |
+| 7 | Production Deployment | 🟡 ĐANG VẬN HÀNH | 80% (hạ tầng/HTTPS live, release gates còn mở) |
+| 8 | Extended Features | 🟡 ĐANG MỞ RỘNG | 55% (call, nested reply, admin, post sharing hoàn thành) |
 
-**Tổng tiến độ: ~98%** (Phase 0-5 hoàn thành trọn vẹn, Phase 6 gần hoàn tất)
+**Tổng tiến độ: ~92%** (core đã hoàn thành; % không thay thế cho production release gates).
 
 ---
 

@@ -1,11 +1,13 @@
 # Task: WebSocket Real-time Broadcast for Comment Reactions
 
-**Status:** In Progress  
+**Status:** Implemented; production multi-account verification remains a release gate
 **Priority:** High  
 **Estimated Time:** 2-3 hours  
 **Related:** Comment Reactions feature, Phase 5
 
 ---
+
+> **Current implementation:** `CommentReactionEvent` is emitted by comment reactions, backend broadcasters publish updates, and frontend subscribers synchronize reaction counts. This document remains as historical implementation notes.
 
 ## 🎯 Objective
 
