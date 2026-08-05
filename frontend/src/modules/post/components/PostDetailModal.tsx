@@ -169,7 +169,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
       className="fixed inset-0 z-[99999] h-[100dvh] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:p-6 animate-fade-in"
     >
       <div
-        className="bg-white md:rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row w-full h-full md:w-[90vw] md:max-w-6xl md:h-[90vh] animate-scale-up"
+        className="bg-white md:rounded-3xl overflow-visible md:overflow-hidden shadow-2xl flex flex-col md:flex-row w-full h-full md:w-[90vw] md:max-w-6xl md:h-[90vh] animate-scale-up"
       >
         {/* LEFT PANEL: Responsive Image Viewer or Stylized Light Card */}
         {hasImages ? (
