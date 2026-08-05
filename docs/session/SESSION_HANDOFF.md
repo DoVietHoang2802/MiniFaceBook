@@ -1,7 +1,7 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
 ## 📅 Cập nhật ngày: 04/08/2026
-## 🏁 Trạng thái hiện tại: 🟡 AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã hoạt động. SSE/SockJS production, email verification UI và đổi tên hiển thị đã deploy. Cloudinary production credential cần được thay trước khi test upload.
+## 🏁 Trạng thái hiện tại: 🟡 AWS backend HTTPS, MongoDB Atlas, Redis, Resend DNS và Vercel frontend đã hoạt động. SSE/SockJS production, email verification UI, đổi tên hiển thị đã deploy; global WebRTC call PIP sẵn sàng deploy. Cloudinary production credential cần được thay trước khi test upload.
 
 > ⚠️ **Lưu ý lộ trình:** SSE, SockJS và REST phải dùng cùng `VITE_API_BASE_URL`; backend WebSocket chỉ cho phép origins trong `CORS_ALLOWED_ORIGINS`. Cloudinary startup hiện báo API key không hợp lệ, do đó phải xoay/thay credential AWS-only trước khi test upload. Không commit `.env.production`, EC2 key, Atlas URI, OAuth/Cloudinary/Resend credentials hoặc dữ liệu đăng ký tên miền.
 

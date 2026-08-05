@@ -34,6 +34,9 @@ export const useWebRTCCall = (
   const activeCallRef = useRef<CallSignalMessage | null>(null);
   const incomingCallRef = useRef<CallSignalMessage | null>(null);
   const callStatusRef = useRef<CallStatus>('IDLE');
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const currentUserRef = useRef(currentUser);
+  const onCallCompletedRef = useRef(onCallCompleted);
   const ringingTimeoutRef = useRef<any>(null);
   const ringingDeadlineRef = useRef<number | null>(null);
   const connectedStartTimeRef = useRef<number | null>(null);
@@ -49,6 +52,18 @@ export const useWebRTCCall = (
   useEffect(() => {
     callStatusRef.current = callStatus;
   }, [callStatus]);
+
+  useEffect(() => {
+    localStreamRef.current = localStream;
+  }, [localStream]);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  useEffect(() => {
+    onCallCompletedRef.current = onCallCompleted;
+  }, [onCallCompleted]);
 
   useEffect(() => {
     if (callStatus === 'CONNECTED') {
@@ -85,6 +100,9 @@ export const useWebRTCCall = (
 
   // Clean up WebRTC peer connection & media streams
   const cleanupCall = useCallback(() => {
+    const user = currentUserRef.current;
+    const onCallCompleted = onCallCompletedRef.current;
+
     if (callStatusRef.current !== 'IDLE' && onCallCompleted) {
       const isConn = callStatusRef.current === 'CONNECTED';
       const durationSecs =
@@ -107,7 +125,7 @@ export const useWebRTCCall = (
         isVideo,
         durationSecs,
         peerId,
-        initiatedByMe: callerId === currentUser?.id,
+        initiatedByMe: callerId === user?.id,
       });
     }
 
@@ -120,36 +138,47 @@ export const useWebRTCCall = (
       peerConnRef.current.close();
       peerConnRef.current = null;
     }
-    if (localStream) {
-      localStream.getTracks().forEach((t) => t.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
       setLocalStream(null);
     }
     setRemoteStream(null);
     setCallStatus('IDLE');
     setIncomingCall(null);
     setActiveCall(null);
+    activeCallRef.current = null;
+    incomingCallRef.current = null;
+    callStatusRef.current = 'IDLE';
     connectedStartTimeRef.current = null;
     iceCandidatesQueue.current = [];
-  }, [localStream, currentUser?.id, onCallCompleted]);
+  }, []);
 
-  // End active call
-  const endCall = useCallback(() => {
-    const actCall = activeCallRef.current || activeCall;
-    const incCall = incomingCallRef.current || incomingCall;
+  const sendEndSignal = useCallback(() => {
+    const user = currentUserRef.current;
+    if (callStatusRef.current === 'IDLE' || !user?.id) return;
+
+    const active = activeCallRef.current;
+    const incoming = incomingCallRef.current;
     const targetId =
-      actCall?.calleeId === currentUser?.id
-        ? actCall?.callerId
-        : actCall?.calleeId || incCall?.callerId;
+      active?.calleeId === user.id
+        ? active?.callerId
+        : active?.calleeId || incoming?.callerId;
 
-    if (targetId && currentUser?.id) {
+    if (targetId) {
       sendSignal({
         type: 'END',
-        callerId: currentUser.id,
+        callerId: user.id,
         calleeId: targetId,
       });
     }
+  }, [sendSignal]);
+
+  // End active call
+  const endCall = useCallback(() => {
+    sendEndSignal();
     cleanupCall();
-  }, [activeCall, incomingCall, currentUser?.id, sendSignal, cleanupCall]);
+  }, [sendEndSignal, cleanupCall]);
 
   // Reject incoming call
   const rejectCall = useCallback(() => {
@@ -200,9 +229,11 @@ export const useWebRTCCall = (
   ) => {
     try {
       cleanupCall();
+      callStatusRef.current = 'CALLING';
       setCallStatus('CALLING');
 
       const { stream, isVideo: actualIsVideo } = await getMediaStreamSafe(isVideo);
+      localStreamRef.current = stream;
       setLocalStream(stream);
 
       const pc = createPeerConnection(calleeId);
@@ -221,7 +252,9 @@ export const useWebRTCCall = (
         isVideo: actualIsVideo,
       };
 
-      setActiveCall({ ...callInfo, callerName: calleeName, callerAvatar: calleeAvatar });
+      const active = { ...callInfo, callerName: calleeName, callerAvatar: calleeAvatar };
+      activeCallRef.current = active;
+      setActiveCall(active);
       sendSignal(callInfo);
     } catch (err) {
       console.error('Error starting WebRTC call:', err);
@@ -236,6 +269,7 @@ export const useWebRTCCall = (
     try {
       const reqVideo = !!incomingCall.isVideo;
       const { stream } = await getMediaStreamSafe(reqVideo);
+      localStreamRef.current = stream;
       setLocalStream(stream);
 
       const pc = createPeerConnection(incomingCall.callerId);
@@ -248,6 +282,9 @@ export const useWebRTCCall = (
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
+      activeCallRef.current = incomingCall;
+      incomingCallRef.current = null;
+      callStatusRef.current = 'CONNECTED';
       setActiveCall(incomingCall);
       setCallStatus('CONNECTED');
       setIncomingCall(null);
@@ -272,31 +309,27 @@ export const useWebRTCCall = (
     }
   };
 
-  // Auto end call on F5 / Page reload / Tab close
+  // Try to signal before the socket closes; server-side disconnect handling is the fallback.
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (callStatusRef.current !== 'IDLE' && currentUser?.id) {
-        const targetId =
-          activeCallRef.current?.calleeId === currentUser.id
-            ? activeCallRef.current?.callerId
-            : activeCallRef.current?.calleeId || incomingCallRef.current?.callerId;
-
-        if (targetId) {
-          const validTargetId: string = targetId;
-          sendSignal({
-            type: 'END',
-            callerId: currentUser.id,
-            calleeId: validTargetId,
-          });
-        }
-      }
+    const handlePageExit = () => {
+      sendEndSignal();
+      cleanupCall();
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('beforeunload', handlePageExit);
+    window.addEventListener('pagehide', handlePageExit);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('beforeunload', handlePageExit);
+      window.removeEventListener('pagehide', handlePageExit);
     };
-  }, [currentUser?.id, sendSignal]);
+  }, [sendEndSignal, cleanupCall]);
+
+  useEffect(() => {
+    return () => {
+      sendEndSignal();
+      cleanupCall();
+    };
+  }, [sendEndSignal, cleanupCall]);
 
   // 30s Ringing Timeout safety
   useEffect(() => {
@@ -347,6 +380,8 @@ export const useWebRTCCall = (
               });
               return;
             }
+            incomingCallRef.current = msg;
+            callStatusRef.current = 'RINGING';
             setIncomingCall(msg);
             setCallStatus('RINGING');
             break;
@@ -355,6 +390,7 @@ export const useWebRTCCall = (
           case 'ANSWER': {
             if (peerConnRef.current && msg.sdp) {
               await peerConnRef.current.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+              callStatusRef.current = 'CONNECTED';
               setCallStatus('CONNECTED');
               // Process queued ICE candidates
               while (iceCandidatesQueue.current.length > 0) {

@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../core/auth/AuthContext';
 import { useToast } from '../../core/toast/ToastContext';
-import { useWebSocket } from '../../modules/chat/hooks/useWebSocket';
 import { useChatUnread } from '../../modules/chat/hooks/useChatUnread';
 import { useNotifications } from '../../modules/notification/hooks/useNotifications';
 import { friendService } from '../../modules/friends/services/friendService';
@@ -77,9 +76,6 @@ export const MainLayout: React.FC = () => {
       user.email === 'nguyen.van.an@seed.miniface.com'
     )
   );
-
-  // Kích hoạt kết nối WebSocket & heartbeat cho presence
-  useWebSocket(!!user);
 
   // Tổng tin nhắn chưa đọc cho chấm đỏ nút Chats sidebar (Phase 5.4 - realtime).
   const { totalUnread: chatUnread } = useChatUnread(!!user, user?.id);

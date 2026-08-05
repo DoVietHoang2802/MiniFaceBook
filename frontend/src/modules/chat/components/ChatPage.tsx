@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   SlidersHorizontal,
   Phone,
-  PhoneOff,
   Video,
   Smile,
   Image as ImageIcon,
@@ -28,8 +27,7 @@ import {
   CornerDownRight,
   Pencil,
   Trash2,
-  Info,
-  Maximize2
+  Info
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -49,9 +47,7 @@ import type {
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useToast } from '../../../core/toast/ToastContext';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useWebRTCCall } from '../hooks/useWebRTCCall';
-import IncomingCallModal from './IncomingCallModal';
-import ActiveCallModal from './ActiveCallModal';
+import { useCall } from '../context/CallContext';
 
 const EMOJI_CATEGORIES = [
   {
@@ -187,7 +183,6 @@ export default function ChatPage({
   const [showAllMediaModal, setShowAllMediaModal] = useState(false);
   const [showAllFilesModal, setShowAllFilesModal] = useState(false);
   const [showAllSuggestionsModal, setShowAllSuggestionsModal] = useState(false);
-  const [isCallMinimized, setIsCallMinimized] = useState(false);
 
   // Refs for tracking closures and scrolling
   // Refs for tracking closures and scrolling
@@ -220,59 +215,7 @@ export default function ChatPage({
   // Lưu scrollHeight trước khi prepend để giữ nguyên vị trí cuộn
   const prependPrevHeightRef = useRef<number | null>(null);
 
-  const handleCallCompleted = useCallback(
-    (summary: { status: 'CONNECTED' | 'MISSED'; isVideo: boolean; durationSecs: number; peerId: string; initiatedByMe: boolean }) => {
-      if (!summary.initiatedByMe) return;
-      const conv = activeConversationRef.current;
-      if (!conv) return;
-
-      let content = '';
-      if (summary.status === 'CONNECTED') {
-        const m = Math.floor(summary.durationSecs / 60);
-        const s = summary.durationSecs % 60;
-        const durationStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        content = summary.isVideo
-          ? `📹 Cuộc gọi video đã kết thúc • ${durationStr}`
-          : `📞 Cuộc gọi thoại đã kết thúc • ${durationStr}`;
-      } else {
-        content = summary.isVideo ? `📹 Cuộc gọi video nhỡ` : `📞 Cuộc gọi thoại nhỡ`;
-      }
-
-      try {
-        webSocketService.send('/app/chat.send', {
-          conversationId: conv.id,
-          content: content,
-          type: 'TEXT',
-        });
-      } catch (e) {
-        console.warn('Failed to send call system message:', e);
-      }
-    },
-    []
-  );
-
-  // WebRTC Call Hook (Voice & Video 1-1)
-  const {
-    callStatus,
-    incomingCall,
-    activeCall,
-    localStream,
-    remoteStream,
-    startCall,
-    acceptCall,
-    rejectCall,
-    endCall,
-    toggleMic,
-    toggleCamera,
-  } = useWebRTCCall(currentUser, handleCallCompleted);
-
-  const isCallActive = callStatus === 'CALLING' || callStatus === 'CONNECTED';
-
-  useEffect(() => {
-    if (!isCallActive) {
-      setIsCallMinimized(false);
-    }
-  }, [isCallActive]);
+  const { startCall } = useCall();
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
@@ -1457,7 +1400,7 @@ export default function ChatPage({
 
                 <button 
                   type="button"
-                  onClick={() => activePartner && startCall(activePartner.id, activePartner.name, false, activePartner.avatar)}
+                  onClick={() => activePartner && startCall(activePartner.id, activePartner.name, false, activePartner.avatar, activeConversation?.id)}
                   aria-label="Gọi thoại"
                   className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-violet-50 hover:text-violet-600 transition cursor-pointer"
                   title="Gọi thoại"
@@ -1466,7 +1409,7 @@ export default function ChatPage({
                 </button>
                 <button 
                   type="button"
-                  onClick={() => activePartner && startCall(activePartner.id, activePartner.name, true, activePartner.avatar)}
+                  onClick={() => activePartner && startCall(activePartner.id, activePartner.name, true, activePartner.avatar, activeConversation?.id)}
                   aria-label="Gọi video"
                   className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-violet-50 hover:text-violet-600 transition cursor-pointer"
                   title="Gọi video"
@@ -2379,52 +2322,6 @@ export default function ChatPage({
         </div>
       )}
 
-      {/* WebRTC Call Modals */}
-      {incomingCall && (
-        <IncomingCallModal
-          incomingCall={incomingCall}
-          onAccept={acceptCall}
-          onReject={rejectCall}
-        />
-      )}
-
-      {isCallActive && (
-        <ActiveCallModal
-          status={callStatus}
-          peerName={activeCall?.callerName || activePartner?.name || 'Người dùng'}
-          peerAvatar={activeCall?.callerAvatar || activePartner?.avatar}
-          localStream={localStream}
-          remoteStream={remoteStream}
-          isVideo={!!activeCall?.isVideo}
-          minimized={isCallMinimized}
-          onEndCall={endCall}
-          onMinimize={() => setIsCallMinimized(true)}
-          onToggleMic={toggleMic}
-          onToggleCamera={toggleCamera}
-        />
-      )}
-
-      {isCallActive && isCallMinimized && (
-        <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-[999998] flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/95 p-2 pl-3 text-white shadow-2xl backdrop-blur">
-          <button
-            type="button"
-            onClick={() => setIsCallMinimized(false)}
-            className="flex items-center gap-2 text-left"
-            title="Mở lại cuộc gọi"
-          >
-            <span className="text-xs font-bold">{callStatus === 'CONNECTED' ? 'Cuộc gọi đang diễn ra' : 'Đang gọi...'}</span>
-            <Maximize2 className="h-4 w-4 text-violet-300" />
-          </button>
-          <button
-            type="button"
-            onClick={endCall}
-            className="rounded-xl bg-red-600 p-2 text-white transition hover:bg-red-500"
-            title="Kết thúc cuộc gọi"
-          >
-            <PhoneOff className="h-4 w-4" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

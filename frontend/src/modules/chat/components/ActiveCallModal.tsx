@@ -55,7 +55,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
     if (remoteAudioRef.current && remoteStream) {
       remoteAudioRef.current.srcObject = remoteStream;
     }
-  }, [isVideo, remoteStream]);
+  }, [isVideo, minimized, remoteStream]);
 
   // Duration timer when CONNECTED
   useEffect(() => {

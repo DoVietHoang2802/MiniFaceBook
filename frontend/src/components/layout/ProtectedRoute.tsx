@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../core/auth/AuthContext';
 import { Flame, Loader2 } from 'lucide-react';
+
+const CallProvider = lazy(async () => ({
+  default: (await import('../../modules/chat/context/CallContext')).CallProvider,
+}));
 
 export const ProtectedRoute: React.FC = () => {
   const { user, isCheckingAuth } = useAuth();
@@ -29,7 +33,13 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <Suspense fallback={null}>
+      <CallProvider>
+        <Outlet />
+      </CallProvider>
+    </Suspense>
+  );
 };
 
 export default ProtectedRoute;
