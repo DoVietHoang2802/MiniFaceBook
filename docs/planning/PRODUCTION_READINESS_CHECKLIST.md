@@ -9,7 +9,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - Backend suite (59 tests) passed locally before the CORS deployment.
 - Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 - SSE and SockJS production endpoints are deployed; browser-level verification of notifications, realtime post counts, chat, and calls remains required.
-- Active WebRTC calls now persist across protected-route navigation through a global draggable PIP; verify route changes and page reload cleanup with two accounts.
+- Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
 
 ## High Priority Validation
 
