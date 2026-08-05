@@ -62,6 +62,14 @@ public class PostController {
         return ApiResponse.success("News feed fetched successfully", response);
     }
 
+    @GetMapping("/{postId}")
+    @Operation(summary = "Lấy chi tiết bài viết", description = "Lấy một bài viết đang hiển thị để mở từ thông báo hoặc liên kết chia sẻ")
+    public ApiResponse<PostResponse> getPost(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String postId) {
+        return ApiResponse.success("Post fetched successfully", postService.getPost(jwt.getSubject(), postId));
+    }
+
     @GetMapping("/search")
     @Operation(summary = "Tìm kiếm bài viết", description = "Tìm kiếm bài viết công khai theo nội dung")
     public ApiResponse<Page<PostResponse>> searchPosts(

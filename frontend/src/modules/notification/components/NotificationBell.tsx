@@ -19,6 +19,7 @@ interface NotificationBellProps {
 const TYPE_META: Record<NotificationType, { icon: typeof Heart; color: string; bg: string }> = {
   LIKE: { icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
   COMMENT: { icon: MessageCircle, color: 'text-sky-500', bg: 'bg-sky-50' },
+  COMMENT_REACTION: { icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
   FRIEND_REQUEST: { icon: UserPlus, color: 'text-violet-500', bg: 'bg-violet-50' },
   FRIEND_ACCEPTED: { icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
   SYSTEM_ANNOUNCEMENT: { icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50' },

@@ -16,6 +16,7 @@ const OAuthCallbackPage = lazy(() => import('./modules/auth/components/OAuthCall
 const OAuthCompleteProfilePage = lazy(() => import('./modules/auth/components/OAuthCompleteProfilePage'));
 const VerifyEmailPage = lazy(() => import('./modules/auth/components/VerifyEmailPage'));
 const PostFeed = lazy(() => import('./modules/post/components/PostFeed'));
+const PostDetailPage = lazy(() => import('./modules/post/components/PostDetailPage'));
 const SearchPage = lazy(() => import('./modules/post/components/SearchPage'));
 const FriendsPage = lazy(() => import('./modules/friends/components/FriendsPage'));
 const ChatPage = lazy(() => import('./modules/chat/components/ChatPage'));
@@ -81,6 +82,7 @@ function App() {
                 {/* Layout người dùng mạng xã hội */}
                 <Route element={<Suspense fallback={<PageLoader />}><MainLayout /></Suspense>}>
                   <Route path="/" element={<PostFeed />} />
+                  <Route path="/posts/:postId" element={<PostDetailPage />} />
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/friends" element={<FriendsPage />} />
                   <Route path="/chats/:recipientId?" element={<ChatPage />} />

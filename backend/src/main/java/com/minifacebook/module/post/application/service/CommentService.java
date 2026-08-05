@@ -146,7 +146,7 @@ public class CommentService {
                             .recipientId(comment.getAuthorId())
                             .actorId(user.getId())
                             .type("COMMENT_REACTION")
-                            .entityId(commentId)
+                            .entityId(comment.getPostId())
                             .content("đã bày tỏ cảm xúc về bình luận của bạn")
                             .build());
         }

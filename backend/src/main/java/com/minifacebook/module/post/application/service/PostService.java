@@ -69,6 +69,16 @@ public class PostService {
         return posts.map(post -> mapToResponse(post, currentUser.getId()));
     }
 
+    /** Returns one visible post for notification and shared-post deep links. */
+    public PostResponse getPost(String email, String postId) {
+        User currentUser = userRepository.findByEmail(email)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        Post post = postRepository.findById(postId)
+            .filter(candidate -> !candidate.isDeleted())
+            .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        return mapToResponse(post, currentUser.getId());
+    }
+
     /** Searches public, non-deleted post text through MongoDB's text index. */
     public Page<PostResponse> searchPosts(String email, String rawQuery, Pageable pageable) {
         User currentUser = userRepository.findByEmail(email)

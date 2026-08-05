@@ -158,14 +158,14 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
   const modalJSX = (
     <div
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-[99999] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center p-0 md:p-6 animate-fade-in"
+      className="app-dynamic-height fixed inset-0 z-[99999] bg-slate-950/50 backdrop-blur-[6px] flex items-center justify-center p-0 md:p-6 animate-fade-in"
     >
       <div
         className="bg-white md:rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row w-full h-full md:w-[90vw] md:max-w-6xl md:h-[90vh] animate-scale-up"
       >
         {/* LEFT PANEL: Responsive Image Viewer or Stylized Light Card */}
         {hasImages ? (
-          <div className="flex-1 bg-slate-950 flex items-center justify-center relative select-none h-[40vh] md:h-full group">
+            <div className="flex-none h-[40dvh] max-h-[360px] w-full bg-slate-950 flex items-center justify-center relative select-none md:flex-1 md:h-full md:max-h-none md:w-auto group">
             <img
               src={localPost.imageUrls[currentImgIdx]}
               alt={`Post image ${currentImgIdx + 1}`}
@@ -231,7 +231,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
         )}
 
         {/* RIGHT PANEL: Details & Comments (Fixed width to prevent flex squishing) */}
-        <div className="w-full md:w-[400px] lg:w-[440px] shrink-0 bg-white flex flex-col h-[60vh] md:h-full border-l border-slate-100">
+        <div className="w-full flex-1 min-h-0 bg-white flex flex-col md:w-[400px] lg:w-[440px] md:shrink-0 md:h-full border-l border-slate-100">
           {/* Header of details pane */}
           <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
             <div className="flex items-center space-x-3">

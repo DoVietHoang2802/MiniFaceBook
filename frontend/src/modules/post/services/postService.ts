@@ -20,6 +20,11 @@ export const postService = {
     return response.data;
   },
 
+  getPost: async (postId: string) => {
+    const response = await axiosClient.get<{ data: PostResponse }>(`/posts/${postId}`);
+    return response.data;
+  },
+
   searchPosts: async (query: string, page: number = 0, size: number = 10, signal?: AbortSignal) => {
     const response = await axiosClient.get<{ data: Page<PostResponse> }>('/posts/search', {
       params: { q: query, page, size },
