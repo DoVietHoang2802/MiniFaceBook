@@ -34,6 +34,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      void localVideoRef.current.play().catch(() => {});
     }
   }, [localStream]);
 
@@ -41,6 +42,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      void remoteVideoRef.current.play().catch(() => {});
     }
     if (remoteAudioRef.current && remoteStream) {
       remoteAudioRef.current.srcObject = remoteStream;
@@ -68,11 +70,13 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
     onToggleMic(nextState);
   };
 
+  const hasLocalVideo = Boolean(localStream?.getVideoTracks().length);
+
   return (
     <div className="fixed inset-0 z-[999999] bg-slate-950 animate-fade-in">
-      <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950 shadow-2xl">
+      <div className="app-dynamic-height relative w-full overflow-hidden bg-slate-950 shadow-2xl">
         {/* Header Bar */}
-        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between bg-gradient-to-b from-slate-950/90 to-transparent p-4 pb-10">
+        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between bg-gradient-to-b from-slate-950/90 to-transparent px-4 pb-10 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-violet-600 flex items-center justify-center text-white font-bold text-sm">
               {peerAvatar ? (
@@ -121,20 +125,27 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
 
           {/* Local Video Picture-in-Picture */}
           {isVideo && localStream && (
-            <div className="absolute bottom-24 right-4 h-40 w-28 overflow-hidden rounded-2xl border-2 border-violet-500/50 bg-slate-900 shadow-2xl sm:h-48 sm:w-36">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover transform -scale-x-100"
-              />
+            <div className="absolute bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 h-40 w-28 overflow-hidden rounded-2xl border-2 border-violet-500/50 bg-slate-900 shadow-2xl sm:h-48 sm:w-36">
+              {hasLocalVideo ? (
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  onLoadedMetadata={(event) => void event.currentTarget.play().catch(() => {})}
+                  className="w-full h-full object-cover transform -scale-x-100"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] font-semibold text-slate-300">
+                  Camera unavailable
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Basic Control Bar */}
-        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-6 bg-gradient-to-t from-slate-950/90 to-transparent p-4 pt-10">
+        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-6 bg-gradient-to-t from-slate-950/90 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-10">
           {/* Mute Mic Button */}
           <button
             onClick={handleMicToggle}
