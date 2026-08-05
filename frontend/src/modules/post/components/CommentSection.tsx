@@ -491,9 +491,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
   };
 
   return (
-    <div className="pt-3 mt-1 border-t border-slate-100 animate-fade-in-up">
+    <div className="mt-1 flex h-full min-h-0 flex-col border-t border-slate-100 pt-3 animate-fade-in-up">
       {/* Sort Selector Dropdown */}
-      <div className="relative mb-4">
+      <div className="relative mb-3 shrink-0">
         <button
           onClick={() => setShowSortDropdown(!showSortDropdown)}
           className="flex items-center space-x-1 text-slate-500 hover:text-slate-800 text-xs font-bold transition cursor-pointer select-none"
@@ -550,7 +550,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
         )}
       </div>
 
-      <div className="flex items-start gap-2 mb-4">
+      <div className="order-3 flex shrink-0 items-start gap-2 border-t border-slate-100 pt-3">
         <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5">
           {currentUser?.avatar ? (
             <img src={currentUser.avatar} alt="Avatar" className="h-full w-full object-cover" />
@@ -618,12 +618,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
         </div>
       </div>
 
+      <div className="order-2 min-h-0 flex-1 overflow-y-auto pr-1">
       {isLoading ? (
         <div className="flex justify-center py-4">
           <Loader2 className="h-5 w-5 text-slate-400 animate-spin" />
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 pb-3">
           {topLevelComments.map((comment: CommentResponse) => {
             const replies = repliesByParentId[comment.id] || [];
             return (
@@ -645,6 +646,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
           )}
         </div>
       )}
+      </div>
 
       {showReactionsFor && (
         <ReactionsModal
