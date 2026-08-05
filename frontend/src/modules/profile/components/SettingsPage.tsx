@@ -20,7 +20,6 @@ import { useToast } from '../../../core/toast/ToastContext';
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useTheme } from '../../../core/theme/ThemeContext';
 import { profileService } from '../services/profileService';
-import { authService } from '../../auth/services/authService';
 
 type SettingsSection = 'security' | 'appearance' | 'contact';
 
@@ -79,8 +78,7 @@ const SettingsPage: React.FC = () => {
       await profileService.changePassword({ oldPassword, newPassword });
       triggerToast('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
 
-      await authService.logout();
-      logout();
+      await logout();
       navigate('/login');
     } catch (err: any) {
       if (!err.response) {

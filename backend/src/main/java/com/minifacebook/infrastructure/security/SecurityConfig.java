@@ -48,7 +48,7 @@ public class SecurityConfig {
   private List<String> allowedOrigins;
 
   private final String[] PUBLIC_POST_ENDPOINTS = {
-    "/auth/login", "/auth/register", "/auth/refresh", "/auth/introspect",
+    "/auth/login", "/auth/register", "/auth/refresh", "/auth/logout", "/auth/introspect",
     "/auth/forgot-password", "/auth/forgot-password/verify", "/auth/reset-password",
     "/auth/oauth/google/complete-profile"
   };

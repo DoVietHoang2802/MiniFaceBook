@@ -44,7 +44,9 @@ export const authService = {
 
   // Đăng xuất và xóa session cookie
   logout: async (): Promise<{ message: string }> => {
-    const response = await axiosClient.post<{ message: string }>('/auth/logout');
+    const response = await axiosClient.post<{ message: string }>('/auth/logout', undefined, {
+      skipAuthRefresh: true,
+    });
     return response.data;
   },
 

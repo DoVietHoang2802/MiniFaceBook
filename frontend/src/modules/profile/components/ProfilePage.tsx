@@ -27,7 +27,6 @@ import {
 import imageCompression from 'browser-image-compression';
 import { profileService } from '../services/profileService';
 import type { ProfileFieldVisibility, UserProfileResponse } from '../services/profileService';
-import { authService } from '../../auth/services/authService';
 import type { UserResponse } from '../../auth/services/authService';
 import { useAuth } from '../../../core/auth/AuthContext';
 
@@ -706,12 +705,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   };
 
   const handleLogoutClick = async () => {
-    try {
-      await authService.logout();
-      if (activeLogout) activeLogout();
-    } catch (err) {
-      if (activeLogout) activeLogout(); // Fallback nếu có lỗi mạng
-    }
+    await activeLogout?.();
   };
 
   // Trình bày định dạng ngày tháng sang trọng

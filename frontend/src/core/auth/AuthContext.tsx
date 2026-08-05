@@ -56,6 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await authService.logout();
+    } catch {
+      // Local logout must still succeed when a session has already expired.
     } finally {
       authGenerationRef.current += 1;
       setUserState(null);
