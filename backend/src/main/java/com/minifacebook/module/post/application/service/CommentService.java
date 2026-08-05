@@ -54,7 +54,7 @@ public class CommentService {
 
         String imageUrl = null;
         if (request.getImage() != null && !request.getImage().isEmpty()) {
-            imageUrl = mediaService.uploadAvatar(request.getImage());
+            imageUrl = mediaService.uploadPostImage(request.getImage());
         }
 
         String parentId = request.getParentId();

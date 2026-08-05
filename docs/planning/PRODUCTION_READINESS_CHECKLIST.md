@@ -14,6 +14,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - Post notifications use persistent post IDs and open the exact post detail route; friend notifications open the friends screen.
 - Posts can be shared into an existing conversation as a server-validated preview card; recipients can open the current post from chat.
 - Comment replies notify the parent-comment author, mobile comment input prevents Safari focus zoom, and Friends tab badges preload on page entry.
+- Comments and replies support one validated image attachment, tap emoji selection, and touch-friendly reaction controls.
 
 ## High Priority Validation
 

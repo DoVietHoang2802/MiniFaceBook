@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, Loader2, MoreHorizontal, Send, Smile, Trash2, ChevronDown, X } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import { postService } from '../services/postService';
 import type { CommentResponse, ReactionType, CommentReactionEvent } from '../types/post.types';
 import { webSocketService } from '../../chat/services/webSocketService';
@@ -18,16 +19,26 @@ interface CommentSectionProps {
   onComposerFocusChange?: (focused: boolean) => void;
 }
 
+const MAX_RAW_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_FINAL_FILE_BYTES = 10 * 1024 * 1024;
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const COMMENT_EMOJIS = ['😀', '😂', '😍', '🥰', '😢', '😡', '👍', '👎', '🎉', '🔥', '❤️', '🙏'];
+
 const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, currentUser, onCommentCountChange, onComposerFocusChange }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [content, setContent] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [isPreparingImage, setIsPreparingImage] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   const [showReactionsFor, setShowReactionsFor] = useState<string | null>(null);
   const [activeCommentMenu, setActiveCommentMenu] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<{ id: string; authorName: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const receivedCommentIds = useRef<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery({
@@ -190,13 +201,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
     handleInput();
   }, [content]);
 
+  useEffect(() => () => {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+  }, [imagePreviewUrl]);
+
   const commentMutation = useMutation({
-    mutationFn: ({ content: newContent, parentId }: { content: string; parentId?: string }) =>
-      postService.addComment(postId, newContent, undefined, parentId),
-    onMutate: async ({ content: newContent, parentId }) => {
+    mutationFn: ({ content: newContent, image: newImage, parentId }: { content: string; image?: File; parentId?: string }) =>
+      postService.addComment(postId, newContent, newImage, parentId),
+    onMutate: async ({ content: newContent, image: newImage, parentId }) => {
       await queryClient.cancelQueries({ queryKey: ['comments', postId] });
       const previousComments = queryClient.getQueryData(['comments', postId]);
 
+      const optimisticImageUrl = newImage ? URL.createObjectURL(newImage) : null;
       const optimisticComment: CommentResponse = {
         id: `temp-${Date.now()}`,
         postId,
@@ -205,7 +221,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
         authorName: currentUser?.name || 'Tôi',
         authorAvatar: currentUser?.avatar || null,
         content: newContent,
-        imageUrl: null,
+        imageUrl: optimisticImageUrl,
         createdAt: new Date().toISOString(),
         reactionCounts: {},
         myReaction: null,
@@ -224,7 +240,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
       });
 
       onCommentCountChange?.(1);
-      return { previousComments };
+      return { previousComments, optimisticCommentId: optimisticComment.id, optimisticImageUrl };
     },
     onError: (err: any, _newContent, context) => {
       alert(`Lỗi khi bình luận: ${err.response?.data?.message || err.message}`);
@@ -233,7 +249,23 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
       }
       onCommentCountChange?.(-1);
     },
-    onSettled: () => {
+    onSuccess: (response, _variables, context) => {
+      if (!context?.optimisticCommentId || !response.data) return;
+      queryClient.setQueryData(['comments', postId], (old: any) => {
+        if (!old?.data?.content) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            content: old.data.content.map((comment: CommentResponse) =>
+              comment.id === context.optimisticCommentId ? response.data : comment
+            ),
+          },
+        };
+      });
+    },
+    onSettled: (_data, _error, _variables, context) => {
+      if (context?.optimisticImageUrl) URL.revokeObjectURL(context.optimisticImageUrl);
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
     },
   });
@@ -318,13 +350,68 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
   });
 
   const handleSubmit = () => {
-    if (!content.trim()) return;
-    commentMutation.mutate({ content: content.trim(), parentId: replyTo?.id });
+    if (!content.trim() && !image) return;
+    commentMutation.mutate({ content: content.trim(), image: image || undefined, parentId: replyTo?.id });
     setContent('');
+    setImage(null);
+    setImagePreviewUrl(null);
     setReplyTo(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = '36px';
     }
+  };
+
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = '';
+    if (!selectedFile) return;
+    if (!SUPPORTED_IMAGE_TYPES.has(selectedFile.type)) {
+      alert('Chỉ chấp nhận ảnh JPG, PNG, WEBP hoặc GIF.');
+      return;
+    }
+    if (selectedFile.size > MAX_RAW_FILE_BYTES) {
+      alert('Ảnh gốc vượt quá 20MB.');
+      return;
+    }
+
+    setIsPreparingImage(true);
+    let processedFile = selectedFile;
+    if (selectedFile.type !== 'image/gif') {
+      try {
+        const compressedBlob = await imageCompression(selectedFile, {
+          maxSizeMB: 6,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: 'image/webp',
+        });
+        processedFile = new File([compressedBlob], selectedFile.name.replace(/\.[^/.]+$/, '.webp'), {
+          type: 'image/webp',
+          lastModified: Date.now(),
+        });
+      } catch (error) {
+        console.error('Không thể nén ảnh bình luận:', error);
+      }
+    }
+    setIsPreparingImage(false);
+
+    if (processedFile.size > MAX_FINAL_FILE_BYTES) {
+      alert('Ảnh sau xử lý vượt quá 10MB.');
+      return;
+    }
+
+    setImage(processedFile);
+    setImagePreviewUrl((previousUrl) => {
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      return URL.createObjectURL(processedFile);
+    });
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setImagePreviewUrl((previousUrl) => {
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      return null;
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -385,9 +472,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                 >
                   {authorName}
                 </span>
-                <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">
-                  {comment.content}
-                </span>
+                {comment.content && (
+                  <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">
+                    {comment.content}
+                  </span>
+                )}
+                {comment.imageUrl && (
+                  <img
+                    src={comment.imageUrl}
+                    alt="Ảnh đính kèm trong bình luận"
+                    className="mt-2 max-h-72 w-auto max-w-full rounded-xl border border-slate-200 object-contain"
+                  />
+                )}
               </div>
 
               {reactionTotal > 0 && (
@@ -419,7 +515,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
               <button
                 onClick={() => setActiveCommentMenu(activeCommentMenu === comment.id ? null : comment.id)}
                 title="Tùy chọn bình luận"
-                className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0 cursor-pointer"
+                className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all shrink-0 cursor-pointer"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
@@ -468,8 +564,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
               )}
 
               <button
-                onClick={() => reactMutation.mutate({ commentId: comment.id, type: (comment.myReaction || 'LIKE') as ReactionType })}
-                className={`text-[11px] font-bold hover:underline ${activeReaction ? activeReaction.color : 'text-slate-500'}`}
+                type="button"
+                onClick={() => setReactionPickerFor((previous) => previous === comment.id ? null : comment.id)}
+                className={`min-h-11 px-1 text-[11px] font-bold hover:underline ${activeReaction ? activeReaction.color : 'text-slate-500'}`}
               >
                 {activeReaction?.label || 'Thích'}
               </button>
@@ -481,7 +578,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                 setReplyTo({ id: targetId, authorName });
                 textareaRef.current?.focus();
               }}
-              className="text-[11px] font-bold text-slate-500 hover:underline cursor-pointer"
+              className="min-h-11 px-1 text-[11px] font-bold text-slate-500 hover:underline cursor-pointer"
             >
               Phản hồi
             </button>
@@ -577,10 +674,42 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
             </div>
           )}
 
+          {imagePreviewUrl && (
+            <div className="relative mb-2 w-fit rounded-xl border border-slate-200 bg-slate-50 p-1.5">
+              <img src={imagePreviewUrl} alt="Xem trước ảnh đính kèm" className="max-h-40 max-w-56 rounded-lg object-contain" />
+              <button
+                type="button"
+                onClick={removeImage}
+                title="Xóa ảnh đính kèm"
+                className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-700 text-white shadow hover:bg-slate-900"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end">
             <div className={`w-full flex items-end bg-slate-100/70 border rounded-2xl transition-all duration-200 ${
               isFocused ? 'border-blue-500/50 bg-white shadow-[0_0_0_4px_rgba(59,130,246,0.1)]' : 'border-transparent'
             }`}>
+              {showEmojiPicker && (
+                <div className="absolute bottom-full right-0 z-40 mb-2 grid w-64 grid-cols-6 gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  {COMMENT_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        setContent((previous) => previous + emoji);
+                        setShowEmojiPicker(false);
+                        textareaRef.current?.focus();
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl text-xl hover:bg-slate-100 active:scale-95"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
               <textarea
                 ref={textareaRef}
                 value={content}
@@ -599,16 +728,27 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                 rows={1}
               />
               <div className="flex items-center px-2 py-1.5 shrink-0 space-x-1">
-                <button title="Chọn biểu cảm" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker((previous) => !previous)}
+                  title="Chọn biểu cảm"
+                  className={`min-h-11 min-w-11 p-1.5 rounded-full transition-colors ${showEmojiPicker ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200/50'}`}
+                >
                   <Smile className="h-4.5 w-4.5" />
                 </button>
-                <button title="Đính kèm ảnh" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors">
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isPreparingImage}
+                  title="Đính kèm ảnh"
+                  className="min-h-11 min-w-11 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors disabled:opacity-50"
+                >
                   <Camera className="h-4.5 w-4.5" />
                 </button>
               </div>
             </div>
 
-            {content.trim().length > 0 && (
+            {(content.trim().length > 0 || image) && (
               <button
                 onClick={handleSubmit}
                 disabled={commentMutation.isPending}
@@ -624,6 +764,15 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
           </div>
         </div>
       </div>
+
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleImageChange}
+        aria-label="Chọn ảnh đính kèm cho bình luận"
+      />
 
       <div className="order-2 min-h-0 flex-1 overflow-y-auto pr-1">
       {isLoading ? (
