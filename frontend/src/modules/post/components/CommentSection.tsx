@@ -352,6 +352,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
 
   // Helper: render 1 comment item (dùng chung cho cả top-level và reply)
   const renderComment = (comment: CommentResponse, isReply: boolean) => {
+    const authorName = comment.authorName?.includes('@')
+      ? comment.authorName.split('@')[0]
+      : (comment.authorName || 'Người dùng Hizo');
     const topReactionTypes = getTopReactionTypes(comment.reactionCounts || {});
     const reactionTotal = Object.values(comment.reactionCounts || {}).reduce((sum, count) => sum + count, 0);
     const activeReaction = comment.myReaction ? REACTION_ICONS[comment.myReaction] : null;
@@ -363,10 +366,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
           className={`${isReply ? 'h-7 w-7' : 'h-8 w-8'} rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer hover:opacity-85 transition-opacity shadow-sm`}
         >
           {comment.authorAvatar ? (
-            <img src={comment.authorAvatar} alt={comment.authorName} className="h-full w-full object-cover" />
+            <img src={comment.authorAvatar} alt={authorName} className="h-full w-full object-cover" />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-xs bg-slate-50">
-              {comment.authorName?.charAt(0).toUpperCase() || 'U'}
+              {authorName.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
@@ -379,7 +382,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                   onClick={() => navigate(`/profile/${comment.authorId}`)}
                   className="font-bold text-slate-800 text-[0.85rem] block leading-tight mb-0.5 cursor-pointer hover:text-violet-600 transition-colors"
                 >
-                  {comment.authorName}
+                  {authorName}
                 </span>
                 <span className="text-slate-700 text-[0.9rem] leading-snug whitespace-pre-wrap">
                   {comment.content}
@@ -474,7 +477,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
               onClick={() => {
                 // Reply luôn trỏ vào comment gốc (top-level) nếu đang click trên reply
                 const targetId = comment.parentId || comment.id;
-                setReplyTo({ id: targetId, authorName: comment.authorName });
+                setReplyTo({ id: targetId, authorName });
                 textareaRef.current?.focus();
               }}
               className="text-[11px] font-bold text-slate-500 hover:underline cursor-pointer"
@@ -585,7 +588,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
                 onBlur={() => setIsFocused(false)}
                 onKeyDown={handleKeyDown}
                 placeholder={replyTo ? `Trả lời ${replyTo.authorName}...` : 'Viết bình luận...'}
-                className="w-full bg-transparent outline-none resize-none px-3 py-2 text-[0.9rem] text-slate-700 min-h-[36px] max-h-[120px] overflow-y-auto leading-relaxed"
+                className="w-full bg-transparent outline-none resize-none px-3 py-2 text-[16px] sm:text-[0.9rem] text-slate-700 min-h-[36px] max-h-[120px] overflow-y-auto leading-relaxed"
                 rows={1}
               />
               <div className="flex items-center px-2 py-1.5 shrink-0 space-x-1">

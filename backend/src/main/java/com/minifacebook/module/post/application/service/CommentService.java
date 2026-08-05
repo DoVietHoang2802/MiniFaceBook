@@ -58,8 +58,9 @@ public class CommentService {
         }
 
         String parentId = request.getParentId();
+        Comment parentComment = null;
         if (parentId != null && !parentId.isBlank()) {
-            commentRepository.findById(parentId)
+            parentComment = commentRepository.findById(parentId)
                     .filter(c -> !c.isDeleted())
                     .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
         }
@@ -78,14 +79,28 @@ public class CommentService {
         postRepository.save(post);
         postRealtimeBroadcaster.broadcastCounts(post);
 
-        eventPublisher.publishEvent(
-                NotificationEvent.builder()
-                        .recipientId(post.getAuthorId())
-                        .actorId(user.getId())
-                        .type("COMMENT")
-                        .entityId(postId)
-                        .content("đã bình luận về bài viết của bạn")
-                        .build());
+        if (!post.getAuthorId().equals(user.getId())) {
+            eventPublisher.publishEvent(
+                    NotificationEvent.builder()
+                            .recipientId(post.getAuthorId())
+                            .actorId(user.getId())
+                            .type("COMMENT")
+                            .entityId(postId)
+                            .content("đã bình luận về bài viết của bạn")
+                            .build());
+        }
+        if (parentComment != null
+                && !parentComment.getAuthorId().equals(user.getId())
+                && !parentComment.getAuthorId().equals(post.getAuthorId())) {
+            eventPublisher.publishEvent(
+                    NotificationEvent.builder()
+                            .recipientId(parentComment.getAuthorId())
+                            .actorId(user.getId())
+                            .type("COMMENT")
+                            .entityId(postId)
+                            .content("đã trả lời bình luận của bạn")
+                            .build());
+        }
 
         // Build response và broadcast comment event qua SSE
         CommentResponse response = mapToResponse(savedComment, user, Map.of(), null);

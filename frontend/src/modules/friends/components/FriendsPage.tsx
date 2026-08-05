@@ -137,30 +137,26 @@ export default function FriendsPage({ triggerToast: propTriggerToast, onStartCha
     }
   };
 
-  // ===== Load danh sách theo tab =====
-  const loadList = useCallback((tab: TabKey) => {
-    if (tab === 'search') return;
+  // Preload all relationship lists so every tab badge is correct before a tab is opened.
+  const loadAllLists = useCallback(() => {
     setIsLoadingList(true);
-    const loader =
-      tab === 'friends'
-        ? friendService.getFriends()
-        : tab === 'pending'
-          ? friendService.getPendingRequests()
-          : friendService.getSentRequests();
-
-    loader
-      .then((data) => {
-        if (tab === 'friends') setFriends(data);
-        else if (tab === 'pending') setPending(data);
-        else setSent(data);
-      })
-      .catch(() => triggerToast('Không tải được danh sách.'))
-      .finally(() => setIsLoadingList(false));
+    void Promise.allSettled([
+      friendService.getFriends(),
+      friendService.getPendingRequests(),
+      friendService.getSentRequests(),
+    ]).then(([friendsResult, pendingResult, sentResult]) => {
+      if (friendsResult.status === 'fulfilled') setFriends(friendsResult.value);
+      if (pendingResult.status === 'fulfilled') setPending(pendingResult.value);
+      if (sentResult.status === 'fulfilled') setSent(sentResult.value);
+      if ([friendsResult, pendingResult, sentResult].some((result) => result.status === 'rejected')) {
+        triggerToast('Một số danh sách bạn bè chưa tải được.');
+      }
+    }).finally(() => setIsLoadingList(false));
   }, [triggerToast]);
 
   useEffect(() => {
-    loadList(activeTab);
-  }, [activeTab, loadList]);
+    loadAllLists();
+  }, [loadAllLists]);
 
   // ===== Helper cập nhật relationshipStatus 1 dòng trong search (Optimistic) =====
   const patchSearchRow = (userId: string, patch: Partial<UserSearchResponse>) => {

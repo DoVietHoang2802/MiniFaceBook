@@ -137,6 +137,7 @@ export const MainLayout: React.FC = () => {
 
     const syncMobileViewport = () => {
       if (window.matchMedia('(max-width: 767px)').matches) {
+        if (viewport.scale > 1.01) return;
         document.documentElement.style.setProperty('--mobile-visual-viewport-height', `${viewport.height}px`);
       }
     };
