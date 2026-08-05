@@ -69,10 +69,10 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/90 backdrop-blur-lg animate-fade-in p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full h-[520px] shadow-2xl flex flex-col relative overflow-hidden">
+    <div className="fixed inset-0 z-[999999] bg-slate-950 animate-fade-in">
+      <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950 shadow-2xl">
         {/* Header Bar */}
-        <div className="p-4 bg-slate-900/80 border-b border-slate-800/80 flex items-center justify-between z-20">
+        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between bg-gradient-to-b from-slate-950/90 to-transparent p-4 pb-10">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-violet-600 flex items-center justify-center text-white font-bold text-sm">
               {peerAvatar ? (
@@ -91,13 +91,14 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
         </div>
 
         {/* Call Content Area */}
-        <div className="flex-1 relative bg-slate-950 flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-slate-950">
           {isVideo && remoteStream ? (
             /* Remote Video */
             <video
               ref={remoteVideoRef}
               autoPlay
               playsInline
+              muted
               className="w-full h-full object-cover"
             />
           ) : (
@@ -120,7 +121,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
 
           {/* Local Video Picture-in-Picture */}
           {isVideo && localStream && (
-            <div className="absolute bottom-4 right-4 w-36 h-48 bg-slate-900 border-2 border-violet-500/50 rounded-2xl overflow-hidden shadow-2xl z-10">
+            <div className="absolute bottom-24 right-4 h-40 w-28 overflow-hidden rounded-2xl border-2 border-violet-500/50 bg-slate-900 shadow-2xl sm:h-48 sm:w-36">
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -133,7 +134,7 @@ const ActiveCallModal: React.FC<ActiveCallModalProps> = ({
         </div>
 
         {/* Basic Control Bar */}
-        <div className="p-4 bg-slate-900 border-t border-slate-800 flex items-center justify-center gap-6 z-20">
+        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-6 bg-gradient-to-t from-slate-950/90 to-transparent p-4 pt-10">
           {/* Mute Mic Button */}
           <button
             onClick={handleMicToggle}

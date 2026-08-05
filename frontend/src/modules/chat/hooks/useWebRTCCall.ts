@@ -14,6 +14,7 @@ export interface WebRTCCallCompletedSummary {
   isVideo: boolean;
   durationSecs: number;
   peerId: string;
+  initiatedByMe: boolean;
 }
 
 export const useWebRTCCall = (
@@ -34,6 +35,7 @@ export const useWebRTCCall = (
   const incomingCallRef = useRef<CallSignalMessage | null>(null);
   const callStatusRef = useRef<CallStatus>('IDLE');
   const ringingTimeoutRef = useRef<any>(null);
+  const ringingDeadlineRef = useRef<number | null>(null);
   const connectedStartTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -96,6 +98,7 @@ export const useWebRTCCall = (
         (actCall?.calleeId === currentUser?.id
           ? actCall?.callerId
           : actCall?.calleeId || incCall?.callerId) || '';
+      const callerId = actCall?.callerId || incCall?.callerId;
 
       const isVideo = !!(actCall?.isVideo || incCall?.isVideo);
 
@@ -104,6 +107,7 @@ export const useWebRTCCall = (
         isVideo,
         durationSecs,
         peerId,
+        initiatedByMe: callerId === currentUser?.id,
       });
     }
 
@@ -111,6 +115,7 @@ export const useWebRTCCall = (
       clearTimeout(ringingTimeoutRef.current);
       ringingTimeoutRef.current = null;
     }
+    ringingDeadlineRef.current = null;
     if (peerConnRef.current) {
       peerConnRef.current.close();
       peerConnRef.current = null;
@@ -296,15 +301,31 @@ export const useWebRTCCall = (
   // 30s Ringing Timeout safety
   useEffect(() => {
     if (callStatus === 'CALLING' || callStatus === 'RINGING') {
-      ringingTimeoutRef.current = setTimeout(() => {
-        console.warn('[WebRTC] Ringing 30s timeout reached, ending call');
-        endCall();
-      }, 30000);
-    } else if (callStatus === 'CONNECTED') {
       if (ringingTimeoutRef.current) {
         clearTimeout(ringingTimeoutRef.current);
-        ringingTimeoutRef.current = null;
       }
+      const deadline = ringingDeadlineRef.current ?? Date.now() + 30000;
+      ringingDeadlineRef.current = deadline;
+      const timeout = window.setTimeout(() => {
+        console.warn('[WebRTC] Ringing 30s timeout reached, ending call');
+        endCall();
+      }, Math.max(0, deadline - Date.now()));
+      ringingTimeoutRef.current = timeout;
+
+      return () => {
+        clearTimeout(timeout);
+        if (ringingTimeoutRef.current === timeout) {
+          ringingTimeoutRef.current = null;
+        }
+      };
+    }
+
+    if (ringingTimeoutRef.current) {
+      clearTimeout(ringingTimeoutRef.current);
+      ringingTimeoutRef.current = null;
+    }
+    if (callStatus === 'CONNECTED' || callStatus === 'IDLE') {
+      ringingDeadlineRef.current = null;
     }
   }, [callStatus, endCall]);
 

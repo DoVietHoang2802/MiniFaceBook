@@ -218,7 +218,8 @@ export default function ChatPage({
   const prependPrevHeightRef = useRef<number | null>(null);
 
   const handleCallCompleted = useCallback(
-    (summary: { status: 'CONNECTED' | 'MISSED'; isVideo: boolean; durationSecs: number; peerId: string }) => {
+    (summary: { status: 'CONNECTED' | 'MISSED'; isVideo: boolean; durationSecs: number; peerId: string; initiatedByMe: boolean }) => {
+      if (!summary.initiatedByMe) return;
       const conv = activeConversationRef.current;
       if (!conv) return;
 
