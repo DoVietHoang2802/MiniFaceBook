@@ -352,7 +352,7 @@
 - [ ] **Sprint 7.3: Domain & Security Setup**
     - [x] Cấu hình custom domain và HTTPS cho `api.miniface.site` và `www.miniface.site`.
     - [x] Deploy CORS update và kiểm tra credentialed API requests từ cả hai frontend origins.
-    - [ ] Deploy và kiểm tra SSE/SockJS production URLs cho notification, realtime post, chat và gọi 1-1.
+    - [x] Deploy và kiểm tra SSE/SockJS production URLs; browser-level flow test còn lại cho notification, realtime post, chat và gọi 1-1.
     - [ ] Kiểm tra Google OAuth callback, Cloudinary upload và Resend email trên production.
 
 ---
