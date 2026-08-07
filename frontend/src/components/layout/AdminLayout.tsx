@@ -56,7 +56,7 @@ export const AdminLayout: React.FC = () => {
       <header className="min-h-16 border-b border-slate-800/80 bg-[#0f172a]/90 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between sticky top-0 z-50 shadow-2xl pt-[env(safe-area-inset-top)]">
         {/* Left: Brand Identity */}
         <div className="flex min-w-0 items-center space-x-2 sm:space-x-4">
-          <button type="button" className="flex min-w-0 items-center space-x-2 sm:space-x-3 cursor-pointer text-left" onClick={() => navigate('/')} aria-label="Về trang chủ MiniFaceBook">
+          <button type="button" className="flex min-w-0 items-center space-x-2 sm:space-x-3 cursor-pointer text-left" onClick={() => navigate('/')} aria-label="Về trang chủ Vizo">
             <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 p-0.5 shadow-lg shadow-purple-900/30 flex items-center justify-center">
               <div className="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Shield className="h-5 w-5 text-purple-400" />
@@ -89,10 +89,10 @@ export const AdminLayout: React.FC = () => {
           <button
             onClick={() => navigate('/')}
             className="flex h-11 min-w-11 items-center justify-center space-x-2 px-3 rounded-xl bg-slate-800/80 hover:bg-purple-900/40 text-slate-300 hover:text-purple-300 border border-slate-700/60 hover:border-purple-500/40 text-xs font-semibold transition cursor-pointer"
-            title="Quay lại giao diện người dùng MiniFaceBook"
+            title="Quay lại giao diện người dùng Vizo"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Về trang chủ MiniFaceBook</span>
+            <span className="hidden sm:inline">Về trang chủ Vizo</span>
           </button>
 
           {/* User Profile Pill */}

@@ -78,7 +78,7 @@ const LoginForm: React.FC = () => {
       {/* Tiêu đề chính */}
       <div className="text-center mb-6 sm:mb-8">
         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mb-2 font-outfit">Chào mừng trở lại</h2>
-        <p className="text-slate-500 text-sm">Kết nối và trò chuyện cùng bạn bè trên MiniFaceBook</p>
+        <p className="text-slate-500 text-sm">Kết nối và trò chuyện cùng bạn bè trên Vizo</p>
       </div>
 
       {authError && (

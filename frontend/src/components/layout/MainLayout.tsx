@@ -438,10 +438,10 @@ export const MainLayout: React.FC = () => {
             className="flex items-center space-x-2.5 cursor-pointer hover:opacity-90 transition shrink-0"
           >
             <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-500/20">
-              <span className="text-white font-black text-lg font-outfit">H</span>
+              <span className="text-white font-black text-lg font-outfit">V</span>
             </div>
             <span className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit hidden sm:block">
-              Hizo
+              Vizo
             </span>
           </div>
           {activeTab === 'feed' && (

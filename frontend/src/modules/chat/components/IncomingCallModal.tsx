@@ -96,7 +96,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
 
         {/* Caller Info */}
         <h3 className="text-xl font-bold mb-1 text-slate-100">
-          {incomingCall.callerName || 'Người dùng MiniFaceBook'}
+          {incomingCall.callerName || 'Người dùng Vizo'}
         </h3>
         <p className="text-xs font-medium text-violet-400 mb-8 animate-pulse">
           {incomingCall.isVideo ? 'Cuộc gọi Video đến...' : 'Cuộc gọi Thoại đến...'}

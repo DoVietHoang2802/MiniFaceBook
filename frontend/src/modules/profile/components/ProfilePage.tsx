@@ -711,11 +711,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
   // Trình bày định dạng ngày tháng sang trọng
   const formatJoinedDate = (dateStr?: string) => {
     try {
-      if (!dateStr) return 'Thành viên MiniFaceBook';
+      if (!dateStr) return 'Thành viên Vizo';
       const date = new Date(dateStr);
       return `Thành viên từ ngày ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     } catch (e) {
-      return 'Thành viên MiniFaceBook';
+      return 'Thành viên Vizo';
     }
   };
 
@@ -1638,7 +1638,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ initialUser, onLogout }) => {
                             {friend.name || 'Bạn bè'}
                           </h4>
                           <p className="text-[10px] text-slate-400 font-bold truncate max-w-[180px]">
-                            {friend.bio || "Bạn bè trên MiniFaceBook"}
+                            {friend.bio || "Bạn bè trên Vizo"}
                           </p>
                         </div>
                       </div>

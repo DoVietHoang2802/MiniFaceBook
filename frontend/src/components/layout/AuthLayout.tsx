@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { MessageSquare, Share2, Shield, Flame } from 'lucide-react';
+import { MessageSquare, Shield, Users, Zap } from 'lucide-react';
 import { apiUrl } from '../../core/api/apiUrl';
 
 export const AuthLayout: React.FC = () => {
@@ -39,18 +39,18 @@ export const AuthLayout: React.FC = () => {
           <div className="lg:col-span-7 space-y-8 text-left hidden lg:block pr-8">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-100 text-xs font-bold text-violet-600">
               <span className="h-2 w-2 rounded-full bg-violet-500 animate-pulse"></span>
-              <span>Phiên bản Enterprise v1.2</span>
+              <span>Production MVP</span>
             </div>
 
             <h1 className="text-5xl font-black tracking-tight leading-[1.1] text-slate-900">
-              Kết nối sâu sắc, <br />
+              Kết nối gần hơn, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-500">
-                Chia sẻ chân thực.
+                chia sẻ theo cách của bạn.
               </span>
             </h1>
 
             <p className="text-slate-500 text-lg max-w-lg leading-relaxed">
-              Vizo mang lại một trải nghiệm mạng xã hội thế hệ mới: Nhanh hơn, bảo mật hơn và thông minh vượt trội.
+              Vizo là nơi để kết nối, trò chuyện thời gian thực và chia sẻ những điều quan trọng với bạn bè.
             </p>
 
             {/* Các đặc trưng công nghệ */}
@@ -67,11 +67,11 @@ export const AuthLayout: React.FC = () => {
 
               <div className="flex items-start space-x-3">
                 <div className="p-2 rounded-lg bg-white border border-slate-200 mt-1 text-indigo-600 shadow-sm">
-                  <Share2 className="h-5 w-5" />
+                  <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Đồ thị mạng xã hội</h4>
-                  <p className="text-slate-500 text-xs mt-1">Đồ thị quan hệ bạn bè Neo4j</p>
+                  <h4 className="font-bold text-slate-800 text-sm">Kết nối bạn bè</h4>
+                  <p className="text-slate-500 text-xs mt-1">MongoDB, quan hệ và gợi ý bạn bè</p>
                 </div>
               </div>
 
@@ -80,18 +80,18 @@ export const AuthLayout: React.FC = () => {
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Bảo mật tối đa</h4>
-                  <p className="text-slate-500 text-xs mt-1">HttpOnly Cookies & Token Rotation</p>
+                  <h4 className="font-bold text-slate-800 text-sm">Bảo mật phiên đăng nhập</h4>
+                  <p className="text-slate-500 text-xs mt-1">HttpOnly Cookies, token rotation và rate limiting</p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-3">
                 <div className="p-2 rounded-lg bg-white border border-slate-200 mt-1 text-amber-600 shadow-sm">
-                  <Flame className="h-5 w-5" />
+                  <Zap className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Vite & Tailwind v4</h4>
-                  <p className="text-slate-500 text-xs mt-1">Build thần tốc, UI mượt mà</p>
+                  <h4 className="font-bold text-slate-800 text-sm">Trải nghiệm mượt mà</h4>
+                  <p className="text-slate-500 text-xs mt-1">React 19, Vite 8 và Tailwind CSS v4</p>
                 </div>
               </div>
             </div>
@@ -108,7 +108,7 @@ export const AuthLayout: React.FC = () => {
       {/* Footer tối giản */}
       <footer className="w-full border-t border-slate-200 py-6 z-10 bg-white mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
-          <p>© 2026 Vizo Project. Bảo lưu mọi quyền.</p>
+          <p>© 2026 Vizo. Bảo lưu mọi quyền.</p>
           <div className="flex space-x-6">
             <a href="#privacy" className="hover:underline">Điều khoản bảo mật</a>
             <a href="#terms" className="hover:underline">Điều khoản dịch vụ</a>

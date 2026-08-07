@@ -19,9 +19,9 @@ export function MobileHeader({ onHome, onSearch, showSearch }: MobileHeaderProps
         aria-label="Về Trang chủ"
       >
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-lg font-black text-white shadow-md shadow-violet-500/20">
-          H
+          V
         </span>
-        <span className="font-outfit text-lg font-black tracking-tight">Hizo</span>
+        <span className="font-outfit text-lg font-black tracking-tight">Vizo</span>
       </button>
 
       {showSearch && (

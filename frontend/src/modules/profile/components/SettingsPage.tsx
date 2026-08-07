@@ -185,7 +185,7 @@ const SettingsPage: React.FC = () => {
                 <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Đăng nhập bằng Google</h3>
                 <div className="flex items-start space-x-3 rounded-xl border border-violet-100 bg-violet-50 p-4 text-violet-700 dark:border-violet-900/40 dark:bg-violet-950/30 dark:text-violet-300">
                   <Shield className="mt-0.5 h-5 w-5 shrink-0 text-violet-500" />
-                  <p className="text-sm leading-relaxed">Tài khoản của bạn đang đăng nhập qua Google nên không có mật khẩu MiniFaceBook để thay đổi.</p>
+                  <p className="text-sm leading-relaxed">Tài khoản của bạn đang đăng nhập qua Google nên không có mật khẩu Vizo để thay đổi.</p>
                 </div>
               </div>
             )}
@@ -358,7 +358,7 @@ const SettingsPage: React.FC = () => {
                     Giao diện
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
-                    Chọn chế độ sáng hoặc tối cho MiniFaceBook
+                    Chọn chế độ sáng hoặc tối cho Vizo
                   </p>
                 </div>
 
@@ -456,7 +456,7 @@ const SettingsPage: React.FC = () => {
                   <div className="space-y-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                     <p>
                       <span className="font-bold text-slate-800 dark:text-slate-100">1. Phạm vi.</span>{' '}
-                      MiniFaceBook là nền tảng mạng xã hội demo/portfolio. Bằng việc sử dụng dịch vụ,
+                      Vizo là nền tảng mạng xã hội demo/portfolio. Bằng việc sử dụng dịch vụ,
                       bạn đồng ý với các điều khoản dưới đây.
                     </p>
                     <p>

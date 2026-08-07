@@ -506,7 +506,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
   const renderComment = (comment: CommentResponse, isReply: boolean) => {
     const authorName = comment.authorName?.includes('@')
       ? comment.authorName.split('@')[0]
-      : (comment.authorName || 'Người dùng Hizo');
+      : (comment.authorName || 'Người dùng Vizo');
     const topReactionTypes = getTopReactionTypes(comment.reactionCounts || {});
     const reactionTotal = Object.values(comment.reactionCounts || {}).reduce((sum, count) => sum + count, 0);
     const activeReaction = comment.myReaction ? REACTION_ICONS[comment.myReaction] : null;
@@ -865,7 +865,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
           }
         }}
         comment={mobileReactionSheetFor ? {
-          authorName: mobileReactionSheetFor.authorName || 'Người dùng Hizo',
+          authorName: mobileReactionSheetFor.authorName || 'Người dùng Vizo',
           content: mobileReactionSheetFor.content,
           imageUrl: mobileReactionSheetFor.imageUrl,
         } : undefined}
@@ -873,7 +873,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, postAuthorId, c
           if (mobileReactionSheetFor) {
             const authorName = mobileReactionSheetFor.authorName?.includes('@')
               ? mobileReactionSheetFor.authorName.split('@')[0]
-              : (mobileReactionSheetFor.authorName || 'Người dùng Hizo');
+                : (mobileReactionSheetFor.authorName || 'Người dùng Vizo');
             startReply(mobileReactionSheetFor, authorName);
           }
         }}

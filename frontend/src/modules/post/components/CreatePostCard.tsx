@@ -253,7 +253,7 @@ const CreatePostCard: React.FC<CreatePostCardProps> = ({ onPostCreated, currentU
               <div className="mb-4 flex items-center gap-3">
                 {avatar}
                 <div>
-                  <p className="text-sm font-black text-slate-800">{currentUser?.name || currentUser?.email?.split('@')[0] || 'Người dùng Hizo'}</p>
+                  <p className="text-sm font-black text-slate-800">{currentUser?.name || currentUser?.email?.split('@')[0] || 'Người dùng Vizo'}</p>
                   <span className="inline-flex rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-500">Công khai</span>
                 </div>
               </div>
