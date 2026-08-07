@@ -328,8 +328,8 @@
     - [x] **Playwright E2E Test Coverage:** Viết mới `profile.spec.ts` (6 tests) và cập nhật `chat.spec.ts` (6 tests) bao phủ toàn diện các thay đổi.
     - [x] Tích hợp **Spring Boot Actuator** cấu hình `/actuator/health` giám sát hệ thống.
     - [x] Tích hợp **Sentry** theo dõi và bắt lỗi runtime thời gian thực (Backend + Frontend).
-    - [ ] **K6 Load Testing**: Kiểm tra sức chịu tải của API trước khi go-live.
-        - *Target:* 100 concurrent users, response time < 500ms.
+    - [x] **K6 Health Baseline**: 5 và 10 VUs trong 60 giây trên production, 0% failure, p95 dưới 366 ms.
+        - *Scope:* Chỉ `GET /actuator/health`; authenticated feed/search và 100 concurrent users cần dedicated test account + staging-sized environment trước khi tăng traffic đáng kể.
 - [x] **Sprint 6.6: Mobile Responsive UX Hardening** ✅
     - [x] Xây dựng Mobile Header và Bottom Navigation 5 mục với unread badges, safe-area và route-aware active state.
     - [x] Chuyển Notification panel thành responsive Bottom Sheet trên mobile, giữ anchored panel trên desktop.

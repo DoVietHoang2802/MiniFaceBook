@@ -13,9 +13,9 @@ This tracker records whether documentation reflects the source tree rather than 
 | Frontend | `frontend/src` + `frontend/README.md` | Updated | Documents Vite config, routes, transports and build command. |
 | Data model | Mongo documents + `DATABASE_SCHEMA.md` | Updated | Includes post counters/soft delete, comment image and chat shared-post snapshot. |
 | Realtime | SSE controllers, STOMP config, call hook | Updated | REST uses `VITE_API_BASE_URL`; notifications use recipient-scoped SSE/STOMP; chat/calls use STOMP. |
-| Deployment | `deploy/`, Vercel, `AWS_DEPLOYMENT_CHECKLIST.md` | Needs operational evidence | Manual, SHA-reviewed backend release; Actions is CI only. |
-| Security/release | `SecurityConfig`, readiness checklist | Open gates | `/dev/**`, CSRF/Origin policy, secret rotation, backup/restore, rollback and load verification. |
-| Testing | `ci.yml`, backend tests, Playwright | Updated | CI runs backend tests plus Chromium/mobile Playwright. Additional scanners are not claimed as active. |
+| Deployment | `deploy/`, Vercel, `AWS_DEPLOYMENT_CHECKLIST.md` | Updated | Manual SHA-reviewed backend release `1627b10`; Actions is CI only. |
+| Security/release | `SecurityConfig`, readiness checklist | Open gates | CSRF/Origin policy, secret rotation, backup/restore and k6 verification remain. `/dev/**` is denied in production. |
+| Testing | `ci.yml`, backend tests, Playwright, `tests/performance/k6-read-only.js` | Updated | CI runs backend tests plus Chromium/mobile Playwright. Production k6 health baseline passed at 5/10 VUs; authenticated feed/search throughput remains a separate test-account run. |
 
 ## Documentation Maintenance Checklist
 

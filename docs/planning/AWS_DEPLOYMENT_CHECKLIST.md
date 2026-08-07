@@ -13,7 +13,9 @@
 - [x] Production DNS and HTTPS configured for the API and frontend domains.
 - [x] Resend domain records verified.
 - [x] Deploy the production CORS update and verify browser requests from both frontend domains.
-- [ ] Complete and verify the Google OAuth production consent and callback configuration.
+- [x] Complete and verify the Google OAuth production consent and callback configuration.
+- [x] Configure server-side DeepSeek chat AI with production-only credentials, rate limits and a 20-second timeout.
+- [x] Configure Sentry production error capture and email alerts.
 
 ## Production Architecture
 
@@ -115,6 +117,9 @@ RESEND_API_KEY
 RESEND_FROM_EMAIL
 RESEND_FROM_NAME
 SENTRY_DSN
+AI_ENABLED=true
+DEEPSEEK_API_KEY
+AI_MODEL=deepseek-v4-flash
 ```
 
 The backend production profile intentionally fails to start if required secrets are missing.
@@ -199,15 +204,15 @@ https://api.<domain>/api/login/oauth2/code/google
 - [x] Backend health check passes through HTTPS.
 - [x] Frontend can call the API over HTTPS without CORS errors.
 - [ ] Local password signup/login works.
-- [ ] Google OAuth works with account chooser.
-- [ ] Post image upload works with Cloudinary production credentials.
-- [ ] Search, chat, notifications, and Admin bulk deletion work.
-- [ ] Resend verification and reset emails arrive.
+- [x] Google OAuth works with account chooser.
+- [x] Post image upload works with Cloudinary production credentials.
+- [x] Search, chat, notifications, and Admin bulk deletion work.
+- [x] Resend verification and reset emails arrive.
 - [ ] Docker containers restart after a server reboot.
-- [ ] MongoDB backup, log retention, and monitoring are configured.
+- [ ] MongoDB backup, log retention and CloudWatch alerting are configured; Sentry email alerting is active.
 - [x] `/dev/**` is profile-excluded and denied in production.
 - [ ] CSRF/Origin policy is verified.
-- [ ] Deployed backend/frontend SHAs, timestamp, smoke evidence and rollback SHA are recorded in `SESSION_HANDOFF.md`.
+- [x] Backend SHA `1627b10`, UTC timestamp `2026-08-07T08:19:10Z`, health evidence and rollback `f00ef6a` are recorded in `SESSION_HANDOFF.md`.
 
 ## Secret Rules
 

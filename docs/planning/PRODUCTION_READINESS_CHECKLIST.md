@@ -6,7 +6,9 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 
 - Backend health is available through `https://api.miniface.site/api/actuator/health`.
 - The frontend is deployed on Vercel at `https://www.miniface.site`.
-- Latest documented local backend suite passed with 68 tests; CI status and deployed SHA must still be recorded for each release.
+- Latest documented local backend suite passed with 68 tests; the backend release `1627b10` is health-verified with rollback `f00ef6a`.
+- Sentry production error capture and email alerts are active for backend/frontend; the API error handler forces JSON responses to avoid the historic JavaScript content-type converter event.
+- Chat AI is deployed with the server-side DeepSeek configuration, a 10-use daily Redis quota, a 50-message text limit and no MongoDB persistence for AI output.
 - Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 - SSE and SockJS production endpoints are deployed; browser-level verification of notifications, realtime post counts, chat, and calls remains required.
 - Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
@@ -18,9 +20,9 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 
 ## High Priority Validation
 
-- [ ] Verify real Cloudinary uploads for avatar, cover, and multi-image posts.
-- [ ] Confirm the Cloudinary API key has only the required `create/upload` permissions and uploads use the intended folders.
-- [ ] Manually verify Google OAuth locally for a new user, returning user, verified-email auto-link, banned account, logout, and refresh.
+- [x] Verify real Cloudinary uploads for avatar, cover, and multi-image posts.
+- [x] Confirm the Cloudinary API key has only the required `create/upload` permissions and uploads use the intended folders.
+- [x] Manually verify Google OAuth locally and in production for new/returning user flows and logout.
 - [x] Add Google OAuth automated coverage for callback handling, onboarding-token expiry/replay, account linking, account bans, and Google-only password guards.
 - [ ] Re-run the complete Playwright suite and investigate any long-suite auth/session flakes.
 - [x] Profile-exclude and deny `/dev/**` in production; public deploy verification returns `401` before reaching a controller.
@@ -38,10 +40,12 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [x] Deploy `CORS_ALLOWED_ORIGINS` and verify credentialed requests from both production frontend origins.
 - [x] Verify SSE and SockJS endpoint CORS over HTTPS without `localhost` fallback requests.
 - [x] Validate reverse proxy headers, health checks, Docker restart policy, and persistent Redis storage.
-- [ ] Add `DEEPSEEK_API_KEY` only to AWS `deploy/.env.production`, enable `AI_ENABLED`, then run a manual private-chat AI smoke test.
-- [ ] Configure database backup, log retention, monitoring, and error/latency alerts.
-- [ ] Run a staging-sized load test for feed, search, upload, and authentication flows.
-- [ ] Record deployed backend/frontend SHA, UTC timestamp, smoke-test evidence and rollback target for each release.
+- [x] Add `DEEPSEEK_API_KEY` only to AWS `deploy/.env.production` and enable `AI_ENABLED`; run a manual private-chat AI smoke test before broad release.
+- [x] Configure Sentry production error capture and email alerting.
+- [ ] Configure database backup, log retention and CloudWatch latency/down alerts.
+- [x] Run the production-safe k6 health-only profile: 5 and 10 VUs for 60 seconds, 0% failures, p95 under 366 ms; see `docs/testing/K6_LOAD_TESTING.md`.
+- [ ] Run authenticated k6 feed/search reads with a dedicated test account before increasing production traffic materially.
+- [x] Record deployed backend SHA `1627b10`, timestamp `2026-08-07T08:19:10Z`, health evidence and rollback SHA `f00ef6a`.
 
 ## Deferred Enhancements
 

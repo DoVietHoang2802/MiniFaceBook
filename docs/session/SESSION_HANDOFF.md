@@ -1,9 +1,16 @@
 # 🤝 SESSION HANDOFF - MiniFaceBook Project
 
-## 📅 Cập nhật ngày: 05/08/2026
-## 🏁 Trạng thái hiện tại: 🟡 Production topology đang vận hành; source hiện có auth cookie, REST/SSE/STOMP, chat/media/post sharing, WebRTC global PiP, social notifications/deep links, comment image/reply và mobile touch UX.
+## 📅 Cập nhật ngày: 07/08/2026
+## 🏁 Trạng thái hiện tại: 🟢 Production MVP đang vận hành; source hiện có auth cookie, REST/SSE/STOMP, chat/media/post sharing, WebRTC global PiP, social notifications/deep links, comment image/reply, mobile touch UX và chat AI theo yêu cầu.
 
-> ⚠️ **Release gates:** GitHub Actions là CI-only, không phải CD. Trước release rộng rãi phải deny `/dev/**` ở prod, quyết định CSRF/Origin policy, xoay toàn bộ credential từng lộ, xác minh SHA deployed, backup/restore + rollback drill, browser smoke hai account cho realtime/call/media/OAuth/email và load test. Không commit `.env.production`, key AWS, URI Atlas hoặc bất kỳ secret nào.
+> ⚠️ **Open release gates:** GitHub Actions là CI-only, không phải CD. `/dev/**` đã bị deny và backend SHA `1627b10` (rollback `f00ef6a`) health-verified lúc `2026-08-07T08:19:10Z`. Còn CSRF/Origin policy, full secret rotation, backup/restore drill, CloudWatch alerting và k6 evidence. Không commit `.env.production`, key AWS, URI Atlas hoặc bất kỳ secret nào.
+
+## Release Snapshot (07/08/2026)
+
+- Backend release: `1627b10 fix(api): return JSON for error responses`; health `UP`; rollback `f00ef6a`.
+- Chat AI: DeepSeek server-side only, `deepseek-v4-flash`, max 10 successful uses/user/day, 50 unread text messages, 60-second per-task cooldown, 20-second request timeout. AI output is not stored in MongoDB.
+- Monitoring: Sentry backend/frontend capture and email alerts are active. A historic 05/08 content-type converter event is mitigated by forcing JSON content type for API error responses.
+- Load test: 5-VU and 10-VU k6 health-only profiles passed for 60 seconds with 0% failure and p95 below 366 ms. `docs/testing/K6_LOAD_TESTING.md` records evidence; authenticated feed/search remains an optional dedicated-test-account run before traffic growth.
 
 ---
 
