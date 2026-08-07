@@ -86,4 +86,3 @@ Tài liệu product, architecture, deployment và testing hiện hành được 
    npm run dev
    ```
    *Ứng dụng Web sẽ chạy tại `http://localhost:5173`*
-
