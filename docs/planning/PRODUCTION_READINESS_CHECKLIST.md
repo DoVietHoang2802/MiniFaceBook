@@ -23,7 +23,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [ ] Manually verify Google OAuth locally for a new user, returning user, verified-email auto-link, banned account, logout, and refresh.
 - [x] Add Google OAuth automated coverage for callback handling, onboarding-token expiry/replay, account linking, account bans, and Google-only password guards.
 - [ ] Re-run the complete Playwright suite and investigate any long-suite auth/session flakes.
-- [ ] Deny or profile-exclude every `/dev/**` route in production and verify it returns `404`/`403`.
+- [x] Profile-exclude `/dev/**` controller in production; deploy verification must return `404`.
 - [ ] Define and test CSRF/Origin policy for state-changing cookie-authenticated requests.
 
 ## AWS Production Setup
