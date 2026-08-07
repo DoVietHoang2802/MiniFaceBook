@@ -6,7 +6,7 @@ These scripts run only on the AWS EC2 instance. They never belong in a frontend 
 
 1. Create a private S3 bucket in the same AWS region as EC2.
 2. Enable S3 default encryption and block all public access.
-3. Create an EC2 IAM role limited to `s3:PutObject`, `s3:GetObject`, `s3:HeadObject` and `s3:ListBucket` for only this bucket/prefix. Copy `aws/miniface-backup-policy.json`, replacing `YOUR_PRIVATE_BACKUP_BUCKET` first.
+3. Create an EC2 IAM role limited to `s3:PutObject`, `s3:GetObject` and `s3:ListBucket` for only this bucket/prefix. Copy `aws/miniface-backup-policy.json`, replacing `YOUR_PRIVATE_BACKUP_BUCKET` first.
 4. Add `BACKUP_S3_BUCKET=<bucket-name>` to the server-only `.env.production` file.
 5. Configure an S3 lifecycle rule to expire `miniface/mongodb/` objects after the chosen retention period, initially 30 days.
 
