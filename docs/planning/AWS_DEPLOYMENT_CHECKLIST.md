@@ -212,7 +212,7 @@ https://api.<domain>/api/login/oauth2/code/google
 - [ ] MongoDB backup, log retention and CloudWatch alerting are configured; Sentry email alerting is active.
 - [x] `/dev/**` is profile-excluded and denied in production.
 - [ ] CSRF/Origin policy is verified.
-- [x] Backend SHA `1627b10`, UTC timestamp `2026-08-07T08:19:10Z`, health evidence and rollback `f00ef6a` are recorded in `SESSION_HANDOFF.md`.
+- [x] Backend SHA `1627b10`, UTC timestamp `2026-08-07T08:19:10Z`, health evidence and rollback `f00ef6a` are recorded in the server release ledger.
 
 ## Secret Rules
 

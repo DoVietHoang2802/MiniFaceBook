@@ -214,12 +214,7 @@ mvn test -Dtest=ArchitectureTest
 
 ---
 
-## � 6. Hướng dẫn kiểm thử theo từng Phase
+## 6. Load And Cache Verification
 
-Để dễ đọc và dễ tra cứu, hướng dẫn test chi tiết của mỗi Phase được tách thành file riêng trong thư mục `docs/testing/`:
-
-| Phase | File hướng dẫn | Nội dung |
-|:-----:|----------------|----------|
-| Phase 3 | **[PHASE_3_FRIENDS_TESTING.md](./PHASE_3_FRIENDS_TESTING.md)** | Friend Request, Friend List, Search |
-| Phase 4 | **[PHASE_4_CHAT_TESTING.md](./PHASE_4_CHAT_TESTING.md)** | WebSocket, Presence, Chat CRUD, Status (SENT/DELIVERED/SEEN), Typing, Reactions, Reply, Media, Edit/Delete, Infinite Scroll (4.1→4.5) |
-| Phase 6 | **[PHASE_6_IMPROVEMENTS_TESTING.md](./PHASE_6_IMPROVEMENTS_TESTING.md)** | Infinite Scroll Feed, Change Password page, AppException alignment, Redis Cache profile sync |
+- [K6 Load Testing](K6_LOAD_TESTING.md) documents the production-safe health baseline and the reproducible Redis cache benchmark.
+- Historical phase-by-phase test notes are intentionally local-only; maintained browser coverage lives in `frontend/tests/`.

@@ -59,5 +59,5 @@ npm run test:e2e  # Playwright suite
 
 - [Root README](../README.md)
 - [API Reference](../docs/api/API_REFERENCE.md)
-- [Mobile Responsive Plan](../docs/planning/MOBILE_RESPONSIVE_PLAN.md)
 - [Testing Guide](../docs/testing/TESTING_GUIDE.md)
+- [Documentation Index](../docs/README.md)

@@ -63,3 +63,22 @@ test_image_large.jpg
 # ===== PLAYWRIGHT =====
 playwright-report/
 test-results/
+
+# ===== LOCAL-ONLY PROJECT NOTES =====
+# Historical planning and assistant working notes stay in the original local checkout,
+# but do not belong in the product repository.
+docs/DOCUMENTATION_STATUS.md
+docs/guidelines/AI_GUIDELINES.md
+docs/guidelines/AI_REPORT_COMMANDS.md
+docs/guidelines/CV_PORTFOLIO_HIGHLIGHTS.md
+docs/guidelines/DOCUMENTATION_STANDARDS.md
+docs/planning/GOOGLE_OAUTH_LOGIN_PLAN.md
+docs/planning/IMAGE_UPLOAD_VALIDATION_PLAN.md
+docs/planning/MOBILE_RESPONSIVE_PLAN.md
+docs/planning/PHASE_4_CHAT_DESIGN.md
+docs/planning/PROGRESS.md
+docs/planning/SEARCH_FEATURE_PLAN.md
+docs/session/
+docs/task/
+docs/testing/PHASE_*.md
+docs/ui_mockups/
