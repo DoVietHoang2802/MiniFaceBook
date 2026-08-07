@@ -205,7 +205,7 @@ https://api.<domain>/api/login/oauth2/code/google
 - [ ] Resend verification and reset emails arrive.
 - [ ] Docker containers restart after a server reboot.
 - [ ] MongoDB backup, log retention, and monitoring are configured.
-- [x] `/dev/**` is profile-excluded in production.
+- [x] `/dev/**` is profile-excluded and denied in production.
 - [ ] CSRF/Origin policy is verified.
 - [ ] Deployed backend/frontend SHAs, timestamp, smoke evidence and rollback SHA are recorded in `SESSION_HANDOFF.md`.
 

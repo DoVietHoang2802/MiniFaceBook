@@ -21,7 +21,20 @@ git checkout --detach "$SHA"
 
 cd "$COMPOSE_DIR"
 docker compose --env-file .env.production -f docker-compose.prod.yml up --build -d
-curl --fail --silent --show-error http://127.0.0.1:8080/api/actuator/health >/dev/null
+
+health_ok=false
+for attempt in {1..20}; do
+  if curl --fail --silent --show-error http://127.0.0.1:8080/api/actuator/health >/dev/null; then
+    health_ok=true
+    break
+  fi
+  sleep 3
+done
+
+if [[ "$health_ok" != "true" ]]; then
+  echo "Backend did not become healthy after 60 seconds" >&2
+  exit 1
+fi
 
 printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$SHA" "$previous_sha" "health-up" >> "$RELEASE_LOG"
 printf 'Release verified. Current SHA: %s; rollback SHA: %s\n' "$SHA" "$previous_sha"

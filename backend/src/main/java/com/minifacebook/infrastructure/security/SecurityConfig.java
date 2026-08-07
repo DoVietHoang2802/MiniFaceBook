@@ -54,7 +54,7 @@ public class SecurityConfig {
   };
 
   private final String[] PUBLIC_GET_ENDPOINTS = {
-    "/auth/verify", "/dev/seed", "/dev/sentry-test", "/dev/make-admin", "/dev/**"
+    "/auth/verify"
   };
 
   private final String[] SWAGGER_ENDPOINTS = {
@@ -79,8 +79,10 @@ public class SecurityConfig {
             request
                 .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS)
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
-                .permitAll()
+                 .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
+                 .permitAll()
+                 .requestMatchers("/dev/**")
+                 .denyAll()
                 .requestMatchers(SWAGGER_ENDPOINTS)
                 .permitAll()
                 .requestMatchers(WEBSOCKET_ENDPOINTS)
