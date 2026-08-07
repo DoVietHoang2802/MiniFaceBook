@@ -6,9 +6,10 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 
 - Backend health is available through `https://api.miniface.site/api/actuator/health`.
 - The frontend is deployed on Vercel at `https://www.miniface.site`.
-- Latest documented local backend suite passed with 68 tests; the backend release `1627b10` is health-verified with rollback `f00ef6a`.
+- Latest documented local backend suite passed with 69 tests and 1 opt-in benchmark skipped; the backend release `1627b10` is health-verified with rollback `f00ef6a`.
 - Sentry production error capture and email alerts are active for backend/frontend; the API error handler forces JSON responses to avoid the historic JavaScript content-type converter event.
 - Chat AI is deployed with the server-side DeepSeek configuration, a 10-use daily Redis quota, a 50-message text limit and no MongoDB persistence for AI output.
+- Redis A/B benchmark for a 50-friend list shows a 7.2-7.7x mean-latency improvement and a 6.0-6.2x p95 improvement on warm hits; see `docs/testing/K6_LOAD_TESTING.md`.
 - Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 - SSE and SockJS production endpoints are deployed; browser-level verification of notifications, realtime post counts, chat, and calls remains required.
 - Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
