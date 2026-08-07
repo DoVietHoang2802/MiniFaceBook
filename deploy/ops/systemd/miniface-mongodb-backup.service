@@ -1,0 +1,10 @@
+[Unit]
+Description=MiniFace MongoDB Atlas backup to S3
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ec2-user
+WorkingDirectory=/home/ec2-user/apps/MiniFaceBook
+ExecStart=/home/ec2-user/apps/MiniFaceBook/deploy/ops/backup-mongodb-atlas.sh

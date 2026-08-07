@@ -141,6 +141,19 @@ curl http://127.0.0.1:8080/api/actuator/health
 curl https://api.<domain>/api/actuator/health
 ```
 
+## 4.1 Backup, Rollback And Alerts
+
+Operational scripts are tracked in [`deploy/ops`](../../deploy/ops/README.md).
+
+1. Create a private S3 bucket in the EC2 region; block public access and enable default encryption.
+2. Attach an IAM role to EC2 using the least-privilege template `deploy/ops/aws/miniface-backup-policy.json`, after replacing the bucket placeholder.
+3. Add `BACKUP_S3_BUCKET` only to EC2 `.env.production`.
+4. Run `deploy/ops/backup-mongodb-atlas.sh` once and then `verify-mongodb-backup.sh`; do not enable the timer until both pass.
+5. Configure a 30-day S3 lifecycle rule for `miniface/mongodb/`, then install `miniface-mongodb-backup.timer`.
+6. Perform a restore drill into a temporary Atlas database before treating backup as complete.
+7. Release with `deploy/ops/release.sh <approved-sha>` and rollback with `deploy/ops/rollback.sh <known-good-sha>`.
+8. Configure Sentry and CloudWatch alarms using `deploy/ops/MONITORING_RUNBOOK.md`.
+
 ## 5. Configure DNS and HTTPS
 
 Domain configuration is tracked in [DOMAIN_CONFIGURATION.md](DOMAIN_CONFIGURATION.md). DNS is managed through Tenten / GMO-Z.com RunSystem.
