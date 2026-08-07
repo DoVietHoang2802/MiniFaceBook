@@ -5,6 +5,7 @@ import io.sentry.Sentry;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -28,6 +29,7 @@ public class GlobalExceptionHandler {
     apiResponse.setMessage(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED.getMessage());
 
     return ResponseEntity.status(ErrorCode.MAX_UPLOAD_SIZE_EXCEEDED.getStatusCode())
+        .contentType(MediaType.APPLICATION_JSON)
         .body(apiResponse);
   }
 
@@ -43,6 +45,7 @@ public class GlobalExceptionHandler {
     apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
 
     return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
+        .contentType(MediaType.APPLICATION_JSON)
         .body(apiResponse);
   }
 
@@ -59,7 +62,9 @@ public class GlobalExceptionHandler {
     apiResponse.setStatus(errorCode.getCode());
     apiResponse.setMessage(errorCode.getMessage());
 
-    return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
+    return ResponseEntity.status(errorCode.getStatusCode())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(apiResponse);
   }
 
   // Bắt lỗi khi người dùng không có quyền truy cập (Security)
@@ -68,6 +73,7 @@ public class GlobalExceptionHandler {
     ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
 
     return ResponseEntity.status(errorCode.getStatusCode())
+        .contentType(MediaType.APPLICATION_JSON)
         .body(
             ApiResponse.builder()
                 .status(errorCode.getCode())
@@ -109,7 +115,9 @@ public class GlobalExceptionHandler {
             ? mapAttribute(errorCode.getMessage(), attributes)
             : errorCode.getMessage());
 
-    return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
+    return ResponseEntity.status(errorCode.getStatusCode())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(apiResponse);
   }
 
   private String mapAttribute(String message, Map<String, Object> attributes) {
