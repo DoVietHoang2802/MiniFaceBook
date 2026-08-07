@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import imageCompression from 'browser-image-compression';
 import {
   Search,
@@ -27,7 +28,10 @@ import {
   CornerDownRight,
   Pencil,
   Trash2,
-  Info
+  Info,
+  Sparkles,
+  ListChecks,
+  HeartPulse
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 import { presenceService } from '../services/presenceService';
@@ -42,7 +46,9 @@ import type {
   MessageStatusEvent,
   TypingEvent,
   MessageReactionEvent,
-  MessageUpdateEvent
+  MessageUpdateEvent,
+  AiInsightResponse,
+  AiInsightTask
 } from '../types/chat.types';
 import { useAuth } from '../../../core/auth/AuthContext';
 import { useToast } from '../../../core/toast/ToastContext';
@@ -249,6 +255,9 @@ export default function ChatPage({
   const [showAllSuggestionsModal, setShowAllSuggestionsModal] = useState(false);
   const [sharedPostDetail, setSharedPostDetail] = useState<PostResponse | null>(null);
   const [openingSharedPostId, setOpeningSharedPostId] = useState<string | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [isGeneratingAiInsight, setIsGeneratingAiInsight] = useState(false);
+  const [aiInsight, setAiInsight] = useState<AiInsightResponse | null>(null);
 
   // Refs for tracking closures and scrolling
   // Refs for tracking closures and scrolling
@@ -1023,6 +1032,24 @@ export default function ChatPage({
     }
   };
 
+  const handleAiInsight = async (task: AiInsightTask) => {
+    if (!activeConversation || isGeneratingAiInsight) return;
+
+    setIsGeneratingAiInsight(true);
+    setAiInsight(null);
+    try {
+      const insight = await chatService.generateAiInsight(activeConversation.id, task);
+      setAiInsight(insight);
+    } catch (error) {
+      const message = axios.isAxiosError(error) && typeof error.response?.data?.message === 'string'
+        ? error.response.data.message
+        : 'Không thể tạo phân tích AI, vui lòng thử lại sau.';
+      triggerToast(message);
+    } finally {
+      setIsGeneratingAiInsight(false);
+    }
+  };
+
   // 6. Gửi tin nhắn mới (Optimistic UI)
   const handleSendMessage = async (e?: React.FormEvent, customContent?: string) => {
     if (e) e.preventDefault();
@@ -1472,7 +1499,7 @@ export default function ChatPage({
         {activeConversation ? (
           <>
             {/* Header chat */}
-            <div className="px-2 sm:px-4 py-1.5 sm:py-2.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
+            <div className="relative px-2 sm:px-4 py-1.5 sm:py-2.5 border-b border-slate-200 bg-white flex items-center justify-between z-10">
               <div className="flex items-center gap-3 flex-grow min-w-0">
                 <button
                   onClick={() => {
@@ -1519,7 +1546,23 @@ export default function ChatPage({
                 </div>
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
-
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAiPanel((open) => !open);
+                    setAiInsight(null);
+                  }}
+                  aria-label="Mở trợ lý AI"
+                  aria-expanded={showAiPanel}
+                  className={`h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center transition cursor-pointer ${
+                    showAiPanel
+                      ? 'text-violet-600 bg-violet-50 hover:bg-violet-100'
+                      : 'text-slate-500 hover:bg-violet-50 hover:text-violet-600'
+                  }`}
+                  title="Trợ lý AI"
+                >
+                  <Sparkles className="h-4.5 w-4.5" />
+                </button>
                 <button 
                   type="button"
                   onClick={() => activePartner && startCall(activePartner.id, activePartner.name, false, activePartner.avatar, activeConversation?.id)}
@@ -1553,6 +1596,82 @@ export default function ChatPage({
                   <Info className="h-4 w-4" />
                 </button>
               </div>
+              {showAiPanel && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Đóng trợ lý AI"
+                    onClick={() => setShowAiPanel(false)}
+                    className="fixed inset-0 z-30 sm:hidden"
+                  />
+                  <section className="absolute right-2 top-full z-40 mt-2 w-[min(22rem,calc(100vw-1rem))] rounded-2xl border border-violet-100 bg-white p-3 shadow-2xl animate-fade-in max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:top-auto max-sm:mt-0 max-sm:w-auto max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:px-5 max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="flex items-center gap-1.5 text-sm font-black text-slate-800">
+                          <Sparkles className="h-4 w-4 text-violet-500" /> Trợ lý AI
+                        </p>
+                        <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-slate-500">
+                          Chỉ phân tích tối đa 50 tin nhắn text mới nhất.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAiPanel(false)}
+                        className="h-9 w-9 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                        aria-label="Đóng"
+                      >
+                        <X className="mx-auto h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {!aiInsight && !isGeneratingAiInsight && (
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleAiInsight('UNREAD_SUMMARY')}
+                          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:border-violet-300 hover:bg-violet-50"
+                        >
+                          <ListChecks className="h-5 w-5 shrink-0 text-violet-600" />
+                          <span><span className="block text-xs font-bold text-slate-800">Tóm tắt tin chưa đọc</span><span className="block text-[11px] text-slate-500">Các ý chính bạn đã bỏ lỡ</span></span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleAiInsight('EMOTION_ANALYSIS')}
+                          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition hover:border-pink-300 hover:bg-pink-50"
+                        >
+                          <HeartPulse className="h-5 w-5 shrink-0 text-pink-500" />
+                          <span><span className="block text-xs font-bold text-slate-800">Phân tích cảm xúc</span><span className="block text-[11px] text-slate-500">Sắc thái chung của đoạn chat</span></span>
+                        </button>
+                      </div>
+                    )}
+
+                    {isGeneratingAiInsight && (
+                      <div className="flex min-h-32 flex-col items-center justify-center gap-2 text-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
+                        <p className="text-xs font-semibold text-slate-600">AI đang phân tích tin nhắn...</p>
+                      </div>
+                    )}
+
+                    {aiInsight && (
+                      <div>
+                        <div className="rounded-xl bg-violet-50 p-3 text-sm leading-relaxed whitespace-pre-wrap text-slate-700">
+                          {aiInsight.insight}
+                        </div>
+                        <p className="mt-2 text-[11px] font-medium text-slate-400">
+                          Phân tích {aiInsight.sourceMessageCount} tin nhắn. Còn {aiInsight.remainingDailyUses}/10 lượt hôm nay.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setAiInsight(null)}
+                          className="mt-3 min-h-10 w-full rounded-xl bg-violet-600 px-3 text-xs font-bold text-white hover:bg-violet-700"
+                        >
+                          Chọn tác vụ khác
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                </>
+              )}
             </div>
 
             {/* Khung chứa các tin nhắn */}

@@ -78,6 +78,11 @@ public enum ErrorCode {
   EDIT_TIME_EXPIRED(3008, "Đã quá thời gian cho phép chỉnh sửa (15 phút)", HttpStatus.BAD_REQUEST),
   DELETE_TIME_EXPIRED(3009, "Đã quá thời gian cho phép thu hồi (15 phút)", HttpStatus.BAD_REQUEST),
   CANNOT_EDIT_NON_TEXT(3010, "Chỉ có thể chỉnh sửa tin nhắn văn bản", HttpStatus.BAD_REQUEST),
+  AI_NO_UNREAD_MESSAGES(3011, "Không có tin nhắn văn bản chưa đọc để AI phân tích", HttpStatus.BAD_REQUEST),
+  AI_DAILY_LIMIT_EXCEEDED(3012, "Bạn đã dùng hết 10 lượt AI hôm nay", HttpStatus.TOO_MANY_REQUESTS),
+  AI_COOLDOWN_ACTIVE(3013, "Bạn có thể dùng lại tác vụ AI này sau ít phút", HttpStatus.TOO_MANY_REQUESTS),
+  AI_UNAVAILABLE(3014, "AI đang bận hoặc chưa được cấu hình, vui lòng thử lại sau", HttpStatus.SERVICE_UNAVAILABLE),
+  AI_PROVIDER_QUOTA_EXCEEDED(3015, "Tính năng AI tạm thời đã hết lượt sử dụng", HttpStatus.SERVICE_UNAVAILABLE),
 
   // ===== NOTIFICATION (Phase 5.1) =====
   NOTIFICATION_NOT_FOUND(4001, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),

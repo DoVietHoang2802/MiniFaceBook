@@ -1,5 +1,12 @@
 ﻿import axiosClient from '../../../core/api/axiosClient';
-import type { ApiResponse, ConversationResponse, MessageResponse, Page } from '../types/chat.types';
+import type {
+  AiInsightResponse,
+  AiInsightTask,
+  ApiResponse,
+  ConversationResponse,
+  MessageResponse,
+  Page,
+} from '../types/chat.types';
 
 export const chatService = {
   getConversations: async (page = 0, size = 20) => {
@@ -39,6 +46,14 @@ export const chatService = {
 
   getTotalUnread: async () => {
     const res = await axiosClient.get<ApiResponse<number>>('/conversations/unread/total');
+    return res.data.data;
+  },
+
+  generateAiInsight: async (conversationId: string, task: AiInsightTask) => {
+    const res = await axiosClient.post<ApiResponse<AiInsightResponse>>(
+      `/conversations/${conversationId}/ai-insights`,
+      { task }
+    );
     return res.data.data;
   },
 

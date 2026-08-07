@@ -99,3 +99,12 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
 }
+
+export type AiInsightTask = 'UNREAD_SUMMARY' | 'EMOTION_ANALYSIS';
+
+export interface AiInsightResponse {
+  task: AiInsightTask;
+  insight: string;
+  sourceMessageCount: number;
+  remainingDailyUses: number;
+}

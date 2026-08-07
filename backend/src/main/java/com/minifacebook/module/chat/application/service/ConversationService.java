@@ -1,9 +1,12 @@
 package com.minifacebook.module.chat.application.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.chat.application.dto.ConversationCreateRequest;
 import com.minifacebook.module.chat.application.dto.ConversationResponse;
+import com.minifacebook.module.chat.application.dto.AiMessageContext;
 import com.minifacebook.module.chat.application.dto.MessageStatusEvent;
 import com.minifacebook.module.chat.application.dto.ParticipantResponse;
 import com.minifacebook.module.chat.domain.entity.Conversation;
@@ -46,6 +49,7 @@ public class ConversationService {
   private final FriendshipRepository friendshipRepository;
   private final StringRedisTemplate redisTemplate;
   private final ChatEventPublisher chatRedisPublisher;
+  private final ObjectMapper objectMapper;
 
   private User getUserByEmail(String email) {
     return userRepository
@@ -183,6 +187,7 @@ public class ConversationService {
       throw new AppException(ErrorCode.NOT_A_PARTICIPANT);
     }
 
+    cacheUnreadAiContext(conversationId, currentUserId);
     Instant now = Instant.now();
     messageRepository.markAsSeen(conversationId, currentUserId, now);
 
@@ -214,6 +219,27 @@ public class ConversationService {
           List.of(otherUserId),
           event
       );
+    }
+  }
+
+  private void cacheUnreadAiContext(String conversationId, String userId) {
+    List<AiMessageContext> context = messageRepository.findRecentUnreadTextMessages(conversationId, userId, 50)
+        .stream()
+        .map(message -> new AiMessageContext(
+            message.getSenderId(), message.getContent(), message.getCreatedAt()))
+        .toList();
+    if (context.isEmpty()) {
+      return;
+    }
+
+    try {
+      redisTemplate.opsForValue().set(
+          "ai:unread-snapshot:" + conversationId + ":" + userId,
+          objectMapper.writeValueAsString(context),
+          24,
+          TimeUnit.HOURS);
+    } catch (JsonProcessingException exception) {
+      log.warn("Unable to cache unread AI context for conversation {}", conversationId, exception);
     }
   }
 

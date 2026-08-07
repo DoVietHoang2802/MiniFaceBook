@@ -1,14 +1,17 @@
 package com.minifacebook.module.chat.infrastructure.persistence.repository;
 
 import com.minifacebook.module.chat.domain.entity.Message;
+import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
 import com.minifacebook.module.chat.infrastructure.mapper.ChatMapper;
 import com.minifacebook.module.chat.infrastructure.persistence.document.MessageDocument;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -47,6 +50,21 @@ public class MessageRepositoryImpl implements MessageRepository {
   @Override
   public int countUnreadMessages(String conversationId, String userId) {
     return mongoRepository.countByConversationIdAndSenderIdNotAndSeenAtIsNull(conversationId, userId);
+  }
+
+  @Override
+  public List<Message> findRecentUnreadTextMessages(String conversationId, String userId, int limit) {
+    Query query = new Query(
+        Criteria.where("conversationId").is(conversationId)
+            .and("senderId").ne(userId)
+            .and("seenAt").isNull()
+            .and("type").is(MessageType.TEXT)
+            .and("deleted").ne(true)
+            .and("deletedFor").ne(userId)
+            .and("content").ne(null)
+    );
+    query.with(Sort.by(Sort.Direction.DESC, "createdAt")).limit(limit);
+    return mongoTemplate.find(query, MessageDocument.class).stream().map(mapper::toDomain).toList();
   }
 
   @Override

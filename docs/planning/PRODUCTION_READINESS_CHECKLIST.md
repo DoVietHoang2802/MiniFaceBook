@@ -6,7 +6,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 
 - Backend health is available through `https://api.miniface.site/api/actuator/health`.
 - The frontend is deployed on Vercel at `https://www.miniface.site`.
-- Latest documented local backend suite passed with 65 tests; CI status and deployed SHA must still be recorded for each release.
+- Latest documented local backend suite passed with 68 tests; CI status and deployed SHA must still be recorded for each release.
 - Production CORS preflight succeeds for both `miniface.site` and `www.miniface.site` with credentials enabled.
 - SSE and SockJS production endpoints are deployed; browser-level verification of notifications, realtime post counts, chat, and calls remains required.
 - Active WebRTC calls persist across protected-route navigation through a global draggable PIP; browser-level verification of route changes and page reload cleanup remains required.
@@ -38,6 +38,7 @@ Deployment execution order is documented in [AWS_DEPLOYMENT_CHECKLIST.md](AWS_DE
 - [x] Deploy `CORS_ALLOWED_ORIGINS` and verify credentialed requests from both production frontend origins.
 - [x] Verify SSE and SockJS endpoint CORS over HTTPS without `localhost` fallback requests.
 - [x] Validate reverse proxy headers, health checks, Docker restart policy, and persistent Redis storage.
+- [ ] Add `DEEPSEEK_API_KEY` only to AWS `deploy/.env.production`, enable `AI_ENABLED`, then run a manual private-chat AI smoke test.
 - [ ] Configure database backup, log retention, monitoring, and error/latency alerts.
 - [ ] Run a staging-sized load test for feed, search, upload, and authentication flows.
 - [ ] Record deployed backend/frontend SHA, UTC timestamp, smoke-test evidence and rollback target for each release.

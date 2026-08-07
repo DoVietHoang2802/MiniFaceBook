@@ -9,6 +9,8 @@ import com.minifacebook.module.auth.domain.model.User;
 import com.minifacebook.module.auth.domain.repository.UserRepository;
 import com.minifacebook.module.chat.application.dto.ConversationCreateRequest;
 import com.minifacebook.module.chat.application.dto.ConversationResponse;
+import com.minifacebook.module.chat.domain.entity.Message;
+import com.minifacebook.module.chat.domain.entity.MessageType;
 import com.minifacebook.module.chat.domain.entity.Conversation;
 import com.minifacebook.module.chat.domain.repository.ConversationRepository;
 import com.minifacebook.module.chat.domain.repository.MessageRepository;
@@ -19,11 +21,14 @@ import com.minifacebook.shared.exception.AppException;
 import com.minifacebook.shared.exception.ErrorCode;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -42,6 +47,7 @@ public class ConversationServiceTest {
   @Mock private StringRedisTemplate redisTemplate;
   @Mock private ValueOperations<String, String> valueOperations;
   @Mock private ChatEventPublisher chatRedisPublisher;
+  @Spy private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
   @InjectMocks private ConversationService conversationService;
 
@@ -116,5 +122,37 @@ public class ConversationServiceTest {
 
     assertNotNull(res);
     assertEquals("conv_stranger", res.getId());
+  }
+
+  @Test
+  void markAllAsSeen_ShouldCacheUnreadTextForAiBeforeMarkingSeen() {
+    Message unreadMessage = Message.builder()
+        .id("message-1")
+        .conversationId("conv1")
+        .senderId(friend.getId())
+        .content("Bạn có rảnh tối nay không?")
+        .type(MessageType.TEXT)
+        .build();
+
+    when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
+    when(conversationRepository.findById("conv1")).thenReturn(Optional.of(Conversation.builder()
+        .id("conv1")
+        .participantIds(List.of(me.getId(), friend.getId()))
+        .build()));
+    when(messageRepository.findRecentUnreadTextMessages("conv1", me.getId(), 50))
+        .thenReturn(List.of(unreadMessage));
+    when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+    conversationService.markAllAsSeen("conv1", me.getEmail());
+
+    org.mockito.Mockito.verify(valueOperations).set(
+        org.mockito.ArgumentMatchers.eq("ai:unread-snapshot:conv1:1"),
+        org.mockito.ArgumentMatchers.contains("rảnh tối nay"),
+        org.mockito.ArgumentMatchers.eq(24L),
+        org.mockito.ArgumentMatchers.eq(TimeUnit.HOURS));
+    org.mockito.Mockito.verify(messageRepository).markAsSeen(
+        org.mockito.ArgumentMatchers.eq("conv1"),
+        org.mockito.ArgumentMatchers.eq(me.getId()),
+        org.mockito.ArgumentMatchers.any());
   }
 }

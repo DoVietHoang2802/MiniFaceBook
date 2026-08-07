@@ -96,6 +96,15 @@ app:
     cloud-name: ${CLOUDINARY_CLOUD_NAME:demo}
     api-key: ${CLOUDINARY_API_KEY:1234567890}
     api-secret: ${CLOUDINARY_API_SECRET:abcdefghijklmnopqrstuvwxyz}
+  ai:
+    enabled: ${AI_ENABLED:false}
+    base-url: ${AI_BASE_URL:https://api.deepseek.com}
+    api-key: ${DEEPSEEK_API_KEY:}
+    model: ${AI_MODEL:deepseek-v4-flash}
+    daily-limit: ${AI_DAILY_LIMIT:10}
+    message-limit: ${AI_MESSAGE_LIMIT:50}
+    cooldown-seconds: ${AI_COOLDOWN_SECONDS:60}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:20}
   oauth:
     google:
       enabled: ${GOOGLE_OAUTH_ENABLED:false}

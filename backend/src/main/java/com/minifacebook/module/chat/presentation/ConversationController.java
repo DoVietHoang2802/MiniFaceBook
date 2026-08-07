@@ -2,8 +2,11 @@ package com.minifacebook.module.chat.presentation;
 
 import com.minifacebook.module.chat.application.dto.ConversationCreateRequest;
 import com.minifacebook.module.chat.application.dto.ConversationResponse;
+import com.minifacebook.module.chat.application.dto.AiInsightRequest;
+import com.minifacebook.module.chat.application.dto.AiInsightResponse;
 import com.minifacebook.module.chat.application.dto.MessageResponse;
 import com.minifacebook.module.chat.application.dto.MessageSendRequest;
+import com.minifacebook.module.chat.application.service.ChatAiInsightService;
 import com.minifacebook.module.chat.application.service.ConversationService;
 import com.minifacebook.module.chat.application.service.MessageService;
 import com.minifacebook.shared.dto.ApiResponse;
@@ -36,6 +39,7 @@ public class ConversationController {
 
   private final ConversationService conversationService;
   private final MessageService messageService;
+  private final ChatAiInsightService chatAiInsightService;
 
   @GetMapping
   @Operation(summary = "Lấy danh sách chat", description = "Lấy danh sách các cuộc trò chuyện của user hiện tại, sắp xếp theo tin nhắn mới nhất")
@@ -83,6 +87,17 @@ public class ConversationController {
       @PathVariable("id") String conversationId) {
     conversationService.markAllAsSeen(conversationId, jwt.getSubject());
     return ApiResponse.success("Đã đánh dấu đã xem thành công", null);
+  }
+
+  @PostMapping("/{id}/ai-insights")
+  @Operation(summary = "Tóm tắt hoặc phân tích cảm xúc tin chưa đọc", description = "Tối đa 50 tin text chưa đọc, tối đa 10 lượt AI mỗi user mỗi ngày")
+  public ApiResponse<AiInsightResponse> generateAiInsight(
+      @AuthenticationPrincipal Jwt jwt,
+      @PathVariable("id") String conversationId,
+      @RequestBody @Valid AiInsightRequest request) {
+    AiInsightResponse response = chatAiInsightService.generateInsight(
+        jwt.getSubject(), conversationId, request.getTask());
+    return ApiResponse.success("Đã tạo phân tích AI", response);
   }
 
   @PostMapping("/{id}/messages")
